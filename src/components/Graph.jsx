@@ -1,99 +1,100 @@
 import { useEffect, useRef } from 'react'
 import cytoscape from 'cytoscape'
-import dagre from 'cytoscape-dagre'
+import cola from 'cytoscape-cola'
 
-cytoscape.use(dagre)
+cytoscape.use(cola)
 
 const STYLE = [
+  // ── Nodes ──────────────────────────────────────────────
   {
-    selector: 'node[nodeType = "entity"]',
+    selector: 'node',
     style: {
-      'background-color': '#2563eb',
-      'label': 'data(label)',
-      'color': '#ffffff',
+      label: 'data(label)',
+      color: '#fff',
       'text-valign': 'center',
       'text-halign': 'center',
-      'shape': 'roundrectangle',
+      'font-size': '12px',
+      'font-weight': '600',
+      'text-wrap': 'wrap',
+      'text-max-width': '120px',
       'width': 'label',
       'height': 'label',
-      'padding': '14px',
-      'font-size': '13px',
-      'font-weight': '600',
-      'border-width': 0,
+      padding: '14px',
     },
+  },
+  {
+    selector: 'node[nodeType = "entity"]',
+    style: { 'background-color': '#4A90D9', shape: 'roundrectangle' },
+  },
+  {
+    selector: 'node[entitySubtype = "brand"]',
+    style: { 'background-color': '#E67E22' },
+  },
+  {
+    selector: 'node[entitySubtype = "holding"]',
+    style: { 'background-color': '#8E44AD' },
   },
   {
     selector: 'node[nodeType = "person"]',
-    style: {
-      'background-color': '#059669',
-      'label': 'data(label)',
-      'color': '#ffffff',
-      'text-valign': 'center',
-      'text-halign': 'center',
-      'shape': 'ellipse',
-      'width': 'label',
-      'height': 'label',
-      'padding': '14px',
-      'font-size': '13px',
-      'font-weight': '500',
-    },
+    style: { 'background-color': '#27AE60', shape: 'ellipse' },
   },
   {
     selector: 'node:selected',
+    style: { 'border-width': 3, 'border-color': '#f1c40f' },
+  },
+
+  // ── Edges ──────────────────────────────────────────────
+  {
+    selector: 'edge',
     style: {
-      'border-width': 3,
-      'border-color': '#f59e0b',
+      width: 2,
+      'target-arrow-shape': 'triangle',
+      'curve-style': 'bezier',
+      label: 'data(label)',
+      'font-size': '10px',
+      color: '#8892a4',
+      'text-background-color': '#1a1a2e',
+      'text-background-opacity': 1,
+      'text-background-padding': '3px',
+      'line-color': '#3a3a5c',
+      'target-arrow-color': '#3a3a5c',
     },
   },
   {
-    selector: 'edge[edgeType = "owns"]',
-    style: {
-      'width': 2,
-      'line-color': '#475569',
-      'target-arrow-color': '#475569',
-      'target-arrow-shape': 'triangle',
-      'curve-style': 'bezier',
-      'label': 'data(label)',
-      'font-size': '11px',
-      'color': '#94a3b8',
-      'text-background-color': '#0f172a',
-      'text-background-opacity': 1,
-      'text-background-padding': '3px',
-    },
+    selector: 'edge[ownershipType = "full"], edge[ownershipType = "majority"]',
+    style: { 'line-color': '#2ECC71', 'target-arrow-color': '#2ECC71' },
+  },
+  {
+    selector: 'edge[ownershipType = "minority"]',
+    style: { 'line-color': '#F39C12', 'target-arrow-color': '#F39C12' },
+  },
+  {
+    selector: 'edge[ownershipType = "controlling"]',
+    style: { 'line-color': '#E74C3C', 'target-arrow-color': '#E74C3C' },
   },
   {
     selector: 'edge[edgeType = "role"]',
     style: {
-      'width': 1.5,
-      'line-color': '#6366f1',
-      'target-arrow-color': '#6366f1',
-      'target-arrow-shape': 'triangle',
-      'curve-style': 'bezier',
       'line-style': 'dashed',
-      'label': 'data(label)',
-      'font-size': '11px',
-      'color': '#818cf8',
-      'text-background-color': '#0f172a',
-      'text-background-opacity': 1,
-      'text-background-padding': '3px',
+      'line-color': '#6c7ae0',
+      'target-arrow-color': '#6c7ae0',
     },
   },
 ]
 
 const LAYOUT = {
-  name: 'dagre',
-  rankDir: 'TB',
-  nodeSep: 70,
-  rankSep: 90,
+  name: 'cola',
   animate: true,
-  animationDuration: 350,
+  maxSimulationTime: 2000,
+  randomize: false,
+  nodeSpacing: 50,
   fit: true,
   padding: 60,
 }
 
 export default function Graph({ elements, onNodeClick }) {
   const containerRef = useRef(null)
-  const cyRef = useRef(null)
+  const cyRef        = useRef(null)
 
   useEffect(() => {
     cyRef.current = cytoscape({
@@ -102,8 +103,8 @@ export default function Graph({ elements, onNodeClick }) {
       layout: { name: 'preset' },
       userZoomingEnabled: true,
       userPanningEnabled: true,
-      minZoom: 0.2,
-      maxZoom: 3,
+      minZoom: 0.15,
+      maxZoom: 4,
     })
 
     cyRef.current.on('tap', 'node', (evt) => {
@@ -123,7 +124,7 @@ export default function Graph({ elements, onNodeClick }) {
     }
 
     const existingIds = new Set(cy.elements().map(el => el.id()))
-    const isReset = !elements.some(el => existingIds.has(el.data.id))
+    const isReset     = !elements.some(el => existingIds.has(el.data.id))
 
     if (isReset) {
       cy.elements().remove()
@@ -139,11 +140,11 @@ export default function Graph({ elements, onNodeClick }) {
 
   return (
     <div className="graph-wrapper">
-      <div ref={containerRef} className="graph-container" />
+      <div ref={containerRef} className="graph-canvas" />
       {elements.length === 0 && (
         <div className="graph-empty">
           <div className="graph-empty-icon">⬡</div>
-          <p>Search for a company or person above<br />to explore its ownership graph</p>
+          <p>Search for a company or person<br />to explore its ownership graph</p>
         </div>
       )}
     </div>
