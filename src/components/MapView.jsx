@@ -26,13 +26,10 @@ function countryFill(data, isSelected, isHovered) {
   return `rgb(${r},${g},${b})`
 }
 
-const DEFAULT_CENTER = [0, 20]
-const DEFAULT_ZOOM   = 1
-
 export default function MapView({ countryData = [], selectedCountry, onCountryClick }) {
   const [hoveredNum, setHoveredNum] = useState(null)
   const [tooltip,    setTooltip]    = useState(null)
-  const [position,   setPosition]   = useState({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM })
+  const [resetKey,   setResetKey]   = useState(0)
 
   const numericMap = useMemo(() => buildNumericMap(countryData), [countryData])
 
@@ -40,10 +37,6 @@ export default function MapView({ countryData = [], selectedCountry, onCountryCl
     const rect = evt.currentTarget.getBoundingClientRect()
     setTooltip(t => t ? { ...t, x: evt.clientX - rect.left, y: evt.clientY - rect.top } : t)
   }
-
-  const handleMoveEnd = (pos) => setPosition(pos)
-
-  const reset = () => setPosition({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM })
 
   return (
     <div className="map-wrapper" onMouseMove={handleMouseMove}>
@@ -53,7 +46,7 @@ export default function MapView({ countryData = [], selectedCountry, onCountryCl
         </div>
       )}
 
-      <button className="map-reset-btn" onClick={reset} title="Reset view">
+      <button className="map-reset-btn" onClick={() => setResetKey(k => k + 1)} title="Reset view">
         <FiRotateCcw />
       </button>
 
@@ -63,13 +56,7 @@ export default function MapView({ countryData = [], selectedCountry, onCountryCl
         projectionConfig={{ scale: 140 }}
         style={{ width: '100%', height: '100%' }}
       >
-        <ZoomableGroup
-          center={position.center}
-          zoom={position.zoom}
-          onMoveEnd={handleMoveEnd}
-          minZoom={1}
-          maxZoom={12}
-        >
+        <ZoomableGroup key={resetKey} minZoom={1} maxZoom={12}>
           <Geographies geography={worldData}>
             {({ geographies }) =>
               geographies.map((geo) => {
