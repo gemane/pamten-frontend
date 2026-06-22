@@ -25,6 +25,9 @@ export const getEntity = (id) =>
 export const getPerson = (id) =>
   client.get(`/persons/${id}`)
 
+export const getEntitiesByCountry = () =>
+  client.get('/entities/by-country')
+
 export const getScraperStatus = () =>
   client.get('/scraper/status')
 

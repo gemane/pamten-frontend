@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback } from 'react'
-import { FiSearch, FiDatabase } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe } from 'react-icons/fi'
 import SearchBar    from './components/SearchBar'
 import Graph        from './components/Graph'
 import NodePanel    from './components/NodePanel'
 import ScraperPanel from './components/ScraperPanel'
-import { getFullProfile, search } from './services/api'
+import MapView      from './components/MapView'
+import MapPanel     from './components/MapPanel'
+import { getFullProfile, search, getEntitiesByCountry } from './services/api'
 
 function buildElements(profile, loadedIds) {
   const els = []
@@ -93,11 +95,14 @@ function buildElements(profile, loadedIds) {
 }
 
 export default function App() {
-  const [activeTab,    setActiveTab]    = useState('graph')
-  const [elements,     setElements]     = useState([])
-  const [selectedNode, setSelectedNode] = useState(null)
-  const [loading,      setLoading]      = useState(false)
-  const [error,        setError]        = useState(null)
+  const [activeTab,       setActiveTab]       = useState('graph')
+  const [elements,        setElements]        = useState([])
+  const [selectedNode,    setSelectedNode]    = useState(null)
+  const [loading,         setLoading]         = useState(false)
+  const [error,           setError]           = useState(null)
+  const [countryData,     setCountryData]     = useState([])
+  const [countryLoading,  setCountryLoading]  = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState(null)
   const loadedIds = useRef(new Set())
 
   const loadEntity = useCallback(async (entityId) => {
@@ -143,6 +148,33 @@ export default function App() {
     setSelectedNode(nodeData)
   }, [])
 
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab)
+    if (tab === 'map' && countryData.length === 0) {
+      setCountryLoading(true)
+      getEntitiesByCountry()
+        .then(({ data }) => setCountryData(data))
+        .catch(() => {})
+        .finally(() => setCountryLoading(false))
+    }
+  }, [countryData.length])
+
+  const handleEntityFromMap = useCallback(async (entityId) => {
+    setActiveTab('graph')
+    setSelectedCountry(null)
+    setError(null)
+    setLoading(true)
+    loadedIds.current = new Set()
+    try {
+      const els = await loadEntity(entityId)
+      setElements(els)
+    } catch {
+      setError('Could not load entity into graph.')
+    } finally {
+      setLoading(false)
+    }
+  }, [loadEntity])
+
   // Called from ScraperPanel after a successful scrape
   const handleLoadIntoGraph = useCallback(async (queryStr) => {
     setActiveTab('graph')
@@ -175,14 +207,21 @@ export default function App() {
           <div className="tab-toggle">
             <button
               className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('graph')}
+              onClick={() => handleTabChange('graph')}
               title="Search & graph"
             >
               <FiSearch />
             </button>
             <button
+              className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`}
+              onClick={() => handleTabChange('map')}
+              title="Geographic map"
+            >
+              <FiGlobe />
+            </button>
+            <button
               className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('scraper')}
+              onClick={() => handleTabChange('scraper')}
               title="Wikidata scraper"
             >
               <FiDatabase />
@@ -200,6 +239,18 @@ export default function App() {
           </>
         )}
 
+        {activeTab === 'map' && (
+          <div className="left-panel__detail">
+            <MapPanel
+              countryData={countryData}
+              selectedCountry={selectedCountry}
+              onSelectCountry={setSelectedCountry}
+              onLoadEntity={handleEntityFromMap}
+              loading={countryLoading}
+            />
+          </div>
+        )}
+
         {activeTab === 'scraper' && (
           <div className="left-panel__detail">
             <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} />
@@ -208,7 +259,14 @@ export default function App() {
       </div>
 
       <div className="right-panel">
-        <Graph elements={elements} onNodeClick={handleNodeClick} />
+        {activeTab === 'map'
+          ? <MapView
+              countryData={countryData}
+              selectedCountry={selectedCountry}
+              onCountryClick={setSelectedCountry}
+            />
+          : <Graph elements={elements} onNodeClick={handleNodeClick} />
+        }
       </div>
     </div>
   )
