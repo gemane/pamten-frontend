@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback } from 'react'
-import { FiSearch, FiDatabase, FiGlobe } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi'
 import SearchBar    from './components/SearchBar'
 import Graph        from './components/Graph'
 import NodePanel    from './components/NodePanel'
 import ScraperPanel from './components/ScraperPanel'
 import MapView      from './components/MapView'
 import MapPanel     from './components/MapPanel'
+import AuthModal    from './components/AuthModal'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { getFullProfile, search, getEntitiesByCountry } from './services/api'
 
 function buildElements(profile, loadedIds) {
@@ -94,8 +96,11 @@ function buildElements(profile, loadedIds) {
   return els
 }
 
-export default function App() {
+function AppInner() {
+  const { user, logout } = useAuth()
+  const [showAuth, setShowAuth] = useState(false)
   const [activeTab,       setActiveTab]       = useState('graph')
+
   const [elements,        setElements]        = useState([])
   const [selectedNode,    setSelectedNode]    = useState(null)
   const [loading,         setLoading]         = useState(false)
@@ -197,6 +202,7 @@ export default function App() {
   return (
     <div className="app">
       {loading && <div className="loading-bar" />}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
 
       <div className="left-panel">
         <div className="left-panel__header">
@@ -204,7 +210,8 @@ export default function App() {
             <span className="logo">Pamten</span>
             <span className="logo-sub">Ownership Graph</span>
           </div>
-          <div className="tab-toggle">
+          <div className="header-right">
+            <div className="tab-toggle">
             <button
               className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`}
               onClick={() => handleTabChange('graph')}
@@ -226,6 +233,22 @@ export default function App() {
             >
               <FiDatabase />
             </button>
+            </div>
+
+            {user ? (
+              <div className="user-badge">
+                <FiUser />
+                <span className="user-badge__email">{user.email.split('@')[0]}</span>
+                <span className={`user-badge__role user-badge__role--${user.role}`}>{user.role}</span>
+                <button className="user-badge__logout" onClick={logout} title="Sign out">
+                  <FiLogOut />
+                </button>
+              </div>
+            ) : (
+              <button className="login-btn" onClick={() => setShowAuth(true)}>
+                <FiLogIn /> Sign in
+              </button>
+            )}
           </div>
         </div>
 
@@ -253,7 +276,7 @@ export default function App() {
 
         {activeTab === 'scraper' && (
           <div className="left-panel__detail">
-            <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} />
+            <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
           </div>
         )}
       </div>
@@ -269,5 +292,13 @@ export default function App() {
         }
       </div>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
   )
 }

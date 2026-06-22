@@ -58,7 +58,8 @@ function ResultList({ result }) {
   )
 }
 
-export default function ScraperPanel({ onLoadIntoGraph }) {
+export default function ScraperPanel({ onLoadIntoGraph, user }) {
+  const isAdmin = user?.role === 'admin'
   const [status,  setStatus]  = useState(null)
   const [query,   setQuery]   = useState('')
   const [depth,   setDepth]   = useState(2)
@@ -102,7 +103,21 @@ export default function ScraperPanel({ onLoadIntoGraph }) {
         Search Wikidata for a company and import its ownership structure into the graph.
       </p>
 
-      {status && !status.enabled && (
+      {!user && (
+        <div className="scraper-disabled-msg">
+          <FiAlertCircle />
+          Sign in as admin to run the scraper.
+        </div>
+      )}
+
+      {user && !isAdmin && (
+        <div className="scraper-disabled-msg">
+          <FiAlertCircle />
+          Only admins can run the scraper. Your role is <code>{user.role}</code>.
+        </div>
+      )}
+
+      {status && !status.enabled && isAdmin && (
         <div className="scraper-disabled-msg">
           <FiAlertCircle />
           Set <code>SCRAPER_ENABLED=true</code> in Render to activate.
@@ -117,7 +132,7 @@ export default function ScraperPanel({ onLoadIntoGraph }) {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={running || (status && !status.enabled)}
+          disabled={running || !isAdmin || (status && !status.enabled)}
         />
 
         <div className="scraper-depth">
@@ -140,7 +155,7 @@ export default function ScraperPanel({ onLoadIntoGraph }) {
         <button
           className="scraper-run-btn"
           onClick={handleRun}
-          disabled={running || !query.trim() || (status && !status.enabled)}
+          disabled={running || !query.trim() || !isAdmin || (status && !status.enabled)}
         >
           {running
             ? <><FiLoader className="spin" /> Scraping…</>

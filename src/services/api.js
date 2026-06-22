@@ -4,6 +4,13 @@ const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://pamten-backend-yrbh.onrender.com',
 })
 
+// Attach JWT token to every request if present
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('pamten_token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
 export const search = (q) =>
   client.get('/search/', { params: { q } })
 
@@ -27,6 +34,15 @@ export const getPerson = (id) =>
 
 export const getEntitiesByCountry = () =>
   client.get('/entities/by-country')
+
+export const authRegister = (email, password) =>
+  client.post('/auth/register', { email, password })
+
+export const authLogin = (email, password) =>
+  client.post('/auth/login', { email, password })
+
+export const authMe = () =>
+  client.get('/auth/me')
 
 export const getScraperStatus = () =>
   client.get('/scraper/status')
