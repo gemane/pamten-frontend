@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiZoomIn } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiZoomIn, FiList, FiClock } from 'react-icons/fi'
 import { getFullProfile } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
+import TimelinePanel  from './TimelinePanel'
 
 function MetaRow({ icon: Icon, label, value }) {
   if (!value) return null
@@ -30,7 +31,7 @@ function PersonView({ raw }) {
       <h2 className="panel-name">{raw.full_name}</h2>
       {raw.description && <p className="panel-desc">{raw.description}</p>}
       <div className="panel-meta">
-        <MetaRow icon={FiMapPin}    label="Nationality" value={raw.nationality} />
+        <MetaRow icon={FiMapPin} label="Nationality" value={raw.nationality} />
       </div>
       {raw.wikipedia_url && (
         <a className="panel-link" href={raw.wikipedia_url} target="_blank" rel="noreferrer">
@@ -41,7 +42,7 @@ function PersonView({ raw }) {
   )
 }
 
-function EntityView({ profile, onExpand }) {
+function EntityOverview({ profile, onExpand }) {
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
 
   const fmt = (n) =>
@@ -56,9 +57,9 @@ function EntityView({ profile, onExpand }) {
       {entity.description && <p className="panel-desc">{entity.description}</p>}
 
       <div className="panel-meta">
-        <MetaRow icon={FiMapPin}    label="Country"  value={entity.country} />
-        <MetaRow icon={FiCalendar}  label="Founded"  value={entity.founded} />
-        <MetaRow icon={FiDollarSign} label="Revenue" value={entity.revenue != null ? fmt(entity.revenue) : null} />
+        <MetaRow icon={FiMapPin}     label="Country"  value={entity.country} />
+        <MetaRow icon={FiCalendar}   label="Founded"  value={entity.founded} />
+        <MetaRow icon={FiDollarSign} label="Revenue"  value={entity.revenue != null ? fmt(entity.revenue) : null} />
         {headquarters && (
           <MetaRow icon={FiMapPin} label="HQ" value={`${headquarters.city}, ${headquarters.country}`} />
         )}
@@ -69,10 +70,7 @@ function EntityView({ profile, onExpand }) {
           {owners.map((o, i) => (
             <div key={i} className="rel-item">
               <span className="rel-item__name">{o.owner?.name || o.owner?.full_name || '—'}</span>
-              <OwnershipBadge
-                type={o.relationship?.ownership_type}
-                percent={o.relationship?.stake_percent}
-              />
+              <OwnershipBadge type={o.relationship?.ownership_type} percent={o.relationship?.stake_percent} />
             </div>
           ))}
         </Section>
@@ -83,10 +81,7 @@ function EntityView({ profile, onExpand }) {
           {subsidiaries.map((s, i) => (
             <div key={i} className="rel-item">
               <span className="rel-item__name">{s.entity.name}</span>
-              <OwnershipBadge
-                type={s.relationship?.ownership_type}
-                percent={s.relationship?.stake_percent}
-              />
+              <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
             </div>
           ))}
         </Section>
@@ -110,15 +105,36 @@ function EntityView({ profile, onExpand }) {
   )
 }
 
+function PanelTabs({ active, onChange }) {
+  return (
+    <div className="panel-tabs">
+      <button
+        className={`panel-tab ${active === 'overview' ? 'panel-tab--active' : ''}`}
+        onClick={() => onChange('overview')}
+      >
+        <FiList /> Overview
+      </button>
+      <button
+        className={`panel-tab ${active === 'timeline' ? 'panel-tab--active' : ''}`}
+        onClick={() => onChange('timeline')}
+      >
+        <FiClock /> Timeline
+      </button>
+    </div>
+  )
+}
+
 export default function NodePanel({ node, onExpand }) {
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [profile,     setProfile]     = useState(null)
+  const [loading,     setLoading]     = useState(false)
+  const [activeView,  setActiveView]  = useState('overview')
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {
       setProfile(null)
       return
     }
+    setActiveView('overview')
     setLoading(true)
     setProfile(null)
     getFullProfile(node.id)
@@ -136,9 +152,7 @@ export default function NodePanel({ node, onExpand }) {
     )
   }
 
-  if (node.nodeType === 'person') {
-    return <PersonView raw={node.raw || {}} />
-  }
+  if (node.nodeType === 'person') return <PersonView raw={node.raw || {}} />
 
   if (loading) {
     return (
@@ -150,5 +164,12 @@ export default function NodePanel({ node, onExpand }) {
 
   if (!profile) return null
 
-  return <EntityView profile={profile} onExpand={onExpand} />
+  return (
+    <>
+      <PanelTabs active={activeView} onChange={setActiveView} />
+      {activeView === 'overview'
+        ? <EntityOverview profile={profile} onExpand={onExpand} />
+        : <TimelinePanel entityId={profile.entity.id} />}
+    </>
+  )
 }
