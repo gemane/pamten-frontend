@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback } from 'react'
-import SearchBar from './components/SearchBar'
-import Graph     from './components/Graph'
-import NodePanel from './components/NodePanel'
-import { getFullProfile } from './services/api'
+import { FiSearch, FiDatabase } from 'react-icons/fi'
+import SearchBar    from './components/SearchBar'
+import Graph        from './components/Graph'
+import NodePanel    from './components/NodePanel'
+import ScraperPanel from './components/ScraperPanel'
+import { getFullProfile, search } from './services/api'
 
 function buildElements(profile, loadedIds) {
   const els = []
@@ -91,6 +93,7 @@ function buildElements(profile, loadedIds) {
 }
 
 export default function App() {
+  const [activeTab,    setActiveTab]    = useState('graph')
   const [elements,     setElements]     = useState([])
   const [selectedNode, setSelectedNode] = useState(null)
   const [loading,      setLoading]      = useState(false)
@@ -128,9 +131,7 @@ export default function App() {
     setLoading(true)
     try {
       const newEls = await loadEntity(entityId)
-      if (newEls.length > 0) {
-        setElements(prev => [...prev, ...newEls])
-      }
+      if (newEls.length > 0) setElements(prev => [...prev, ...newEls])
     } catch {
       setError('Could not expand node.')
     } finally {
@@ -142,20 +143,68 @@ export default function App() {
     setSelectedNode(nodeData)
   }, [])
 
+  // Called from ScraperPanel after a successful scrape
+  const handleLoadIntoGraph = useCallback(async (queryStr) => {
+    setActiveTab('graph')
+    setError(null)
+    setLoading(true)
+    loadedIds.current = new Set()
+    try {
+      const { data: results } = await search(queryStr)
+      const entity = results.find(r => r.type === 'Entity')
+      if (!entity) throw new Error('Entity not found')
+      const els = await loadEntity(entity.node.id)
+      setElements(els)
+    } catch {
+      setError('Could not load scraped entity into graph.')
+    } finally {
+      setLoading(false)
+    }
+  }, [loadEntity])
+
   return (
     <div className="app">
       {loading && <div className="loading-bar" />}
 
       <div className="left-panel">
         <div className="left-panel__header">
-          <span className="logo">Pamten</span>
-          <span className="logo-sub">Ownership Graph</span>
+          <div className="logo-group">
+            <span className="logo">Pamten</span>
+            <span className="logo-sub">Ownership Graph</span>
+          </div>
+          <div className="tab-toggle">
+            <button
+              className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`}
+              onClick={() => setActiveTab('graph')}
+              title="Search & graph"
+            >
+              <FiSearch />
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`}
+              onClick={() => setActiveTab('scraper')}
+              title="Wikidata scraper"
+            >
+              <FiDatabase />
+            </button>
+          </div>
         </div>
-        <SearchBar onSelect={handleSearchSelect} />
-        {error && <div className="error-msg">{error}</div>}
-        <div className="left-panel__detail">
-          <NodePanel node={selectedNode} onExpand={handleExpand} />
-        </div>
+
+        {activeTab === 'graph' && (
+          <>
+            <SearchBar onSelect={handleSearchSelect} />
+            {error && <div className="error-msg">{error}</div>}
+            <div className="left-panel__detail">
+              <NodePanel node={selectedNode} onExpand={handleExpand} />
+            </div>
+          </>
+        )}
+
+        {activeTab === 'scraper' && (
+          <div className="left-panel__detail">
+            <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} />
+          </div>
+        )}
       </div>
 
       <div className="right-panel">

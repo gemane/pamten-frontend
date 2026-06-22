@@ -24,3 +24,9 @@ export const getEntity = (id) =>
 
 export const getPerson = (id) =>
   client.get(`/persons/${id}`)
+
+export const getScraperStatus = () =>
+  client.get('/scraper/status')
+
+export const runScraper = (query, depth = 2) =>
+  client.post('/scraper/run', { query, depth })
