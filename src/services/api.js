@@ -44,8 +44,9 @@ export const authLogin = (email, password) =>
 export const authMe = () =>
   client.get('/auth/me')
 
-export const getScraperStatus = () =>
-  client.get('/scraper/status')
+export const getScraperStatus  = () => client.get('/scraper/status')
+export const getScraperSources = () => client.get('/scraper/sources')
+export const toggleScraperSource = (name) => client.patch(`/scraper/sources/${name}/toggle`)
 
 export const runScraper = (query, depth = 2) =>
   client.post('/scraper/run', { query, depth })
