@@ -153,6 +153,8 @@ body {
 .header-right {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  min-width: 0;
   gap: 8px;
 }
 
@@ -190,7 +192,7 @@ body {
 .user-badge__email {
   color: #cbd5e1;
   font-weight: 500;
-  max-width: 80px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -260,11 +262,18 @@ body {
 
 .left-panel__header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px 12px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 10px;
   border-bottom: 1px solid #2a2a4a;
   flex-shrink: 0;
+}
+
+.left-panel__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
 }
 
 .logo-group {

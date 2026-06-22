@@ -206,9 +206,11 @@ function AppInner() {
 
       <div className="left-panel">
         <div className="left-panel__header">
-          <div className="logo-group">
-            <span className="logo">Pamten</span>
-            <span className="logo-sub">Ownership Graph</span>
+          <div className="left-panel__header-row">
+            <div className="logo-group">
+              <span className="logo">Pamten</span>
+              <span className="logo-sub">Ownership Graph</span>
+            </div>
           </div>
           <div className="header-right">
             <div className="tab-toggle">
@@ -238,8 +240,12 @@ function AppInner() {
             {user ? (
               <div className="user-badge">
                 <FiUser />
-                <span className="user-badge__email">{user.email.split('@')[0]}</span>
-                <span className={`user-badge__role user-badge__role--${user.role}`}>{user.role}</span>
+                <span className="user-badge__email">
+                  {user.email.split('@')[0].split('.')[0]}
+                </span>
+                <span className={`user-badge__role user-badge__role--${user.role}`}>
+                  {user.role}
+                </span>
                 <button className="user-badge__logout" onClick={logout} title="Sign out">
                   <FiLogOut />
                 </button>
