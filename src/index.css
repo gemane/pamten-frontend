@@ -573,30 +573,38 @@ body {
   z-index: 10;
 }
 
-.map-zoom-controls {
+.map-reset-btn {
   position: absolute;
   top: 12px;
   right: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 10;
-}
-
-.map-zoom-controls button {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   background: #1e2a45;
   border: 1px solid #2a3a5a;
   border-radius: 6px;
   color: #8892a4;
-  font-size: 16px;
-  line-height: 1;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  z-index: 10;
   transition: color 0.15s, background 0.15s;
 }
 
-.map-zoom-controls button:hover { background: #2a3a5a; color: #eaeaea; }
+.map-reset-btn:hover { background: #2a3a5a; color: #eaeaea; }
+
+.map-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #374151;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
 
 .map-empty {
   position: absolute;
