@@ -6,13 +6,14 @@ const TYPE_COLORS = {
 }
 
 export default function OwnershipBadge({ type, percent }) {
-  const color = TYPE_COLORS[type] || '#8892a4'
+  const resolved = (type && type !== 'unknown') ? type : null
+  const color = TYPE_COLORS[resolved] || '#8892a4'
   return (
     <span
       className="ownership-badge"
       style={{ borderColor: color, color }}
     >
-      {type || 'owned'}
+      {resolved || 'owned'}
       {percent != null ? ` · ${percent}%` : ''}
     </span>
   )
