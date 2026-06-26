@@ -93,7 +93,7 @@ const LAYOUT = {
   padding: 60,
 }
 
-const EXAMPLE_QUERIES = ['Anheuser-Busch InBev', 'Tesla', 'Nestlé']
+const EXAMPLE_QUERIES = ['Anheuser-Busch InBev', 'Samsung', 'Volkswagen']
 
 export default function Graph({ elements, onNodeClick, onExampleClick, onClear }) {
   const containerRef = useRef(null)
