@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FiX } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import cola from 'cytoscape-cola'
@@ -95,9 +95,10 @@ const LAYOUT = {
 
 const EXAMPLE_QUERIES = ['Anheuser-Busch InBev', 'Samsung', 'Volkswagen']
 
-export default function Graph({ elements, onNodeClick, onExampleClick, onClear }) {
+export default function Graph({ elements, onNodeClick, onExampleClick, onClear, onExpand, onToast }) {
   const containerRef = useRef(null)
   const cyRef        = useRef(null)
+  const [tooltip, setTooltip] = useState(null)
 
   useEffect(() => {
     cyRef.current = cytoscape({
@@ -112,6 +113,24 @@ export default function Graph({ elements, onNodeClick, onExampleClick, onClear }
 
     cyRef.current.on('tap', 'node', (evt) => {
       onNodeClick(evt.target.data())
+    })
+
+    cyRef.current.on('dblclick', 'node', (evt) => {
+      const nodeData = evt.target.data()
+      if (nodeData.nodeType === 'entity') {
+        onExpand?.(nodeData.id)
+      } else {
+        onToast?.('Person nodes cannot be expanded', 'info')
+      }
+    })
+
+    cyRef.current.on('mouseover', 'node[nodeType = "entity"]', (evt) => {
+      const { clientX, clientY } = evt.originalEvent
+      setTooltip({ x: clientX, y: clientY })
+    })
+
+    cyRef.current.on('mouseout', 'node[nodeType = "entity"]', () => {
+      setTooltip(null)
     })
 
     return () => cyRef.current?.destroy()
@@ -167,6 +186,15 @@ export default function Graph({ elements, onNodeClick, onExampleClick, onClear }
         <button className="graph-clear-btn" onClick={onClear} title="Clear graph">
           <FiX /> Clear
         </button>
+      )}
+
+      {tooltip && (
+        <div
+          className="graph-node-tooltip"
+          style={{ left: tooltip.x + 12, top: tooltip.y - 36 }}
+        >
+          Double-click to expand
+        </div>
       )}
     </div>
   )

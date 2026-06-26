@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FiSearch } from 'react-icons/fi'
+import { FiSearch, FiX } from 'react-icons/fi'
 import { search } from '../services/api'
 
 export default function SearchBar({ onSelect }) {
@@ -9,6 +9,7 @@ export default function SearchBar({ onSelect }) {
   const [loading, setLoading] = useState(false)
   const timer    = useRef(null)
   const wrapRef  = useRef(null)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     const close = (e) => {
@@ -16,6 +17,17 @@ export default function SearchBar({ onSelect }) {
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        inputRef.current?.blur()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
   }, [])
 
   useEffect(() => {
@@ -42,8 +54,17 @@ export default function SearchBar({ onSelect }) {
 
   const handleSelect = (result) => {
     setQuery(result.node.name || result.node.full_name || '')
+    setResults([])
     setOpen(false)
+    inputRef.current?.blur()
     onSelect(result)
+  }
+
+  const handleClear = () => {
+    setQuery('')
+    setResults([])
+    setOpen(false)
+    inputRef.current?.focus()
   }
 
   const badge = (type) => (
@@ -55,6 +76,7 @@ export default function SearchBar({ onSelect }) {
       <div className={`search-box ${loading ? 'search-box--loading' : ''}`}>
         <FiSearch className="search-icon" />
         <input
+          ref={inputRef}
           className="search-input"
           type="text"
           placeholder="Search companies, brands, people…"
@@ -63,6 +85,11 @@ export default function SearchBar({ onSelect }) {
           onFocus={() => results.length > 0 && setOpen(true)}
         />
         {loading && <span className="search-spinner" />}
+        {query && !loading && (
+          <button className="search-clear-btn" onMouseDown={handleClear} tabIndex={-1} title="Clear">
+            <FiX />
+          </button>
+        )}
       </div>
 
       {open && results.length > 0 && (

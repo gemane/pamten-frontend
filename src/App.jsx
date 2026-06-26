@@ -389,6 +389,8 @@ function AppInner() {
               onNodeClick={handleNodeClick}
               onExampleClick={handleExampleClick}
               onClear={elements.length > 0 ? handleClearGraph : null}
+              onExpand={handleExpand}
+              onToast={showToast}
             />
         }
       </div>
