@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiZoomIn, FiList, FiClock } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiZoomIn, FiList, FiClock, FiLoader } from 'react-icons/fi'
 import { getFullProfile } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
@@ -42,7 +42,7 @@ function PersonView({ raw }) {
   )
 }
 
-function EntityOverview({ profile, onExpand }) {
+function EntityOverview({ profile, onExpand, expandingId }) {
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
 
   const fmt = (n) =>
@@ -98,8 +98,14 @@ function EntityOverview({ profile, onExpand }) {
         </Section>
       )}
 
-      <button className="expand-btn" onClick={() => onExpand(entity.id)}>
-        <FiZoomIn /> Expand into graph
+      <button
+        className="expand-btn"
+        onClick={() => onExpand(entity.id)}
+        disabled={!!expandingId}
+      >
+        {expandingId === entity.id
+          ? <><FiLoader className="spin" /> Expanding…</>
+          : <><FiZoomIn /> Expand into graph</>}
       </button>
     </div>
   )
@@ -124,7 +130,7 @@ function PanelTabs({ active, onChange }) {
   )
 }
 
-export default function NodePanel({ node, onExpand }) {
+export default function NodePanel({ node, onExpand, expandingId }) {
   const [profile,     setProfile]     = useState(null)
   const [loading,     setLoading]     = useState(false)
   const [activeView,  setActiveView]  = useState('overview')
@@ -168,7 +174,7 @@ export default function NodePanel({ node, onExpand }) {
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} onExpand={onExpand} />
+        ? <EntityOverview profile={profile} onExpand={onExpand} expandingId={expandingId} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )

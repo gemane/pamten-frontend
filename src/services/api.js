@@ -50,3 +50,9 @@ export const toggleScraperSource = (name) => client.patch(`/scraper/sources/${na
 
 export const runScraper = (query, depth = 2) =>
   client.post('/scraper/run', { query, depth })
+
+export const runScraperSecEdgar = (company) =>
+  client.post('/scraper/sec-edgar/run', null, { params: { company } })
+
+export const runScraperAll = (company, depth = 2) =>
+  client.post('/scraper/run-all', null, { params: { company, depth } })

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { FiX } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import cola from 'cytoscape-cola'
 
@@ -92,7 +93,9 @@ const LAYOUT = {
   padding: 60,
 }
 
-export default function Graph({ elements, onNodeClick }) {
+const EXAMPLE_QUERIES = ['AB InBev', 'Tesla', 'Nestlé']
+
+export default function Graph({ elements, onNodeClick, onExampleClick, onClear }) {
   const containerRef = useRef(null)
   const cyRef        = useRef(null)
 
@@ -141,11 +144,29 @@ export default function Graph({ elements, onNodeClick }) {
   return (
     <div className="graph-wrapper">
       <div ref={containerRef} className="graph-canvas" />
+
       {elements.length === 0 && (
-        <div className="graph-empty">
-          <div className="graph-empty-icon">⬡</div>
-          <p>Search for a company or person<br />to explore its ownership graph</p>
+        <div className="graph-welcome">
+          <div className="graph-welcome__logo">Pamten</div>
+          <p className="graph-welcome__tagline">Map the world's corporate ownership</p>
+          <div className="graph-welcome__chips">
+            {EXAMPLE_QUERIES.map(name => (
+              <button
+                key={name}
+                className="graph-welcome__chip"
+                onClick={() => onExampleClick?.(name)}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
         </div>
+      )}
+
+      {onClear && (
+        <button className="graph-clear-btn" onClick={onClear} title="Clear graph">
+          <FiX /> Clear
+        </button>
       )}
     </div>
   )
