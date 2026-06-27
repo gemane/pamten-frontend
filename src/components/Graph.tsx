@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { FiX } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
-import dagre from 'cytoscape-dagre'
 import type { GraphElement, NodeData } from '../types'
-
-cytoscape.use(dagre)
 
 const STYLE: cytoscape.StylesheetStyle[] = [
   // ── Nodes ──────────────────────────────────────────────
@@ -39,6 +36,11 @@ const STYLE: cytoscape.StylesheetStyle[] = [
   {
     selector: 'node[nodeType = "person"]',
     style: { 'background-color': '#27AE60', shape: 'ellipse' },
+  },
+  {
+    // Scale padding (= visual size) for owner nodes by their importance
+    selector: 'node[importance > 0]',
+    style: { padding: 'mapData(importance, 0, 60, 14, 34)' },
   },
   {
     selector: 'node:selected',
@@ -86,16 +88,71 @@ const STYLE: cytoscape.StylesheetStyle[] = [
   },
 ]
 
-const LAYOUT = {
-  name: 'dagre',
-  rankDir: 'TB',        // owners (sources) on top, subsidiaries (targets) on bottom
-  animate: true,
-  animationDuration: 600,
-  fit: true,
-  padding: 60,
-  nodeSep: 60,          // horizontal gap between sibling nodes
-  rankSep: 120,         // vertical gap between ownership levels
-  ranker: 'network-simplex',
+// Arc layout constants
+const ARC_SPAN         = (2 * Math.PI) / 3  // 120° arcs
+const OWNER_ARC_CENTER = -Math.PI / 2        // top (negative y = screen up)
+const SUB_ARC_CENTER   =  Math.PI / 2        // bottom
+const OWNER_R_MIN      = 130
+const OWNER_R_MAX      = 280
+const SUB_R            = 420
+
+// Pure function — works on the React elements array, no Cytoscape required.
+// Returns a map of nodeId → {x, y} to use when calling cy.add().
+function computeArcPositions(
+  elements: GraphElement[],
+  centerId: string | null,
+): Map<string, { x: number; y: number }> {
+  const pos = new Map<string, { x: number; y: number }>()
+  if (!centerId) return pos
+
+  // Build edge adjacency from element data
+  const incomersOf  = new Map<string, string[]>()
+  const outgoersOf  = new Map<string, string[]>()
+  const nodeImportance = new Map<string, number>()
+
+  for (const el of elements) {
+    const d = el.data as Record<string, unknown>
+    if (d.source && d.target) {
+      const src = d.source as string
+      const tgt = d.target as string
+      if (!outgoersOf.has(src)) outgoersOf.set(src, [])
+      outgoersOf.get(src)!.push(tgt)
+      if (!incomersOf.has(tgt)) incomersOf.set(tgt, [])
+      incomersOf.get(tgt)!.push(src)
+    } else if (d.id) {
+      const imp = (d as { importance?: number }).importance
+      if (imp != null) nodeImportance.set(d.id as string, imp)
+    }
+  }
+
+  pos.set(centerId, { x: 0, y: 0 })
+
+  const topIds    = (incomersOf.get(centerId) ?? []).filter(id => id !== centerId)
+  const topSet    = new Set(topIds)
+  const bottomIds = (outgoersOf.get(centerId) ?? []).filter(id => !topSet.has(id) && id !== centerId)
+
+  const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
+  const maxImp      = Math.max(...importances, 1)
+
+  function fillArc(ids: string[], arcCenter: number, getR: (id: string) => number) {
+    const n = ids.length
+    if (n === 0) return
+    const start = arcCenter - ARC_SPAN / 2
+    const end   = arcCenter + ARC_SPAN / 2
+    ids.forEach((id, i) => {
+      const θ = start + (end - start) / (n + 1) * (i + 1)
+      const r = getR(id)
+      pos.set(id, { x: r * Math.cos(θ), y: r * Math.sin(θ) })
+    })
+  }
+
+  fillArc(topIds, OWNER_ARC_CENTER, (id) => {
+    const imp = nodeImportance.get(id) ?? 0
+    return OWNER_R_MAX - Math.sqrt(imp / maxImp) * (OWNER_R_MAX - OWNER_R_MIN)
+  })
+  fillArc(bottomIds, SUB_ARC_CENTER, () => SUB_R)
+
+  return pos
 }
 
 const ALL_EXAMPLE_QUERIES = [
@@ -123,6 +180,7 @@ const EXAMPLE_QUERIES = pickRandom(ALL_EXAMPLE_QUERIES, 3)
 
 interface GraphProps {
   elements: GraphElement[]
+  centerId?: string | null
   onNodeClick: (data: NodeData) => void
   onExampleClick?: (query: string) => void
   onClear?: (() => void) | null
@@ -131,7 +189,7 @@ interface GraphProps {
   expandingId?: string | null
 }
 
-export default function Graph({ elements, onNodeClick, onExampleClick, onClear, onExpand, onToast }: GraphProps) {
+export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onExpand, onToast }: GraphProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const cyRef        = useRef<cytoscape.Core | null>(null)
   const [tooltip, setTooltip] = useState<{ x: number; y: number } | null>(null)
@@ -197,8 +255,30 @@ export default function Graph({ elements, onNodeClick, onExampleClick, onClear, 
       cy.add(toAdd as cytoscape.ElementDefinition[])
     }
 
-    cy.layout(LAYOUT).run()
-  }, [elements])
+    // Step 1: run concentric layout — this reliably fits the viewport (proven to work).
+    // Step 2: on layoutstop, instantly move nodes to arc positions while viewport stays correct.
+    const positions = computeArcPositions(elements, centerId ?? null)
+    const layout = cy.layout({
+      name: 'concentric',
+      animate: false,
+      fit: true,
+      padding: 80,
+      concentric: (node: cytoscape.NodeSingular) =>
+        (centerId && node.id() === centerId) ? 10 : 1,
+      levelWidth: () => 1,
+    })
+    layout.on('layoutstop', () => {
+      // Viewport is now correctly set by concentric. Move nodes to arc positions.
+      if (positions.size > 0) {
+        cy.nodes().forEach(node => {
+          const pos = positions.get(node.id())
+          if (pos) node.position(pos)
+        })
+        cy.fit(undefined, 80)
+      }
+    })
+    layout.run()
+  }, [elements, centerId])
 
   return (
     <div className="graph-wrapper">

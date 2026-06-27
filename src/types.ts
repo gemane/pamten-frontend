@@ -144,6 +144,7 @@ export interface NodeData {
   nodeType: NodeType
   entitySubtype?: EntityType | null
   raw: Entity | Person
+  importance?: number   // voting_power_pct or stake_percent — drives node size and arc radius
 }
 
 export interface EdgeData {

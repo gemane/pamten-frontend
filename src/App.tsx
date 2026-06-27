@@ -68,12 +68,14 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
   for (const own of owners) {
     const owner = own.owner
     if (!owner) continue
+    const importance = own.relationship?.voting_power_pct ?? own.relationship?.stake_percent ?? 0
     addNode({
       id:            owner.id,
       label:         ('name' in owner ? owner.name : owner.full_name) || '?',
       nodeType:      'first_name' in owner ? 'person' : 'entity',
       entitySubtype: 'type' in owner ? owner.type : null,
       raw:           owner,
+      importance:    importance > 0 ? importance : undefined,
     })
     const stake = own.relationship?.stake_percent
     const vote  = own.relationship?.voting_power_pct
@@ -190,6 +192,7 @@ function AppInner() {
   const [activeTab,       setActiveTab]       = useState<string>('graph')
 
   const [elements,        setElements]        = useState<GraphElement[]>([])
+  const [centerId,        setCenterId]        = useState<string | null>(null)
   const [selectedNode,    setSelectedNode]    = useState<NodeData | null>(null)
   const [loading,         setLoading]         = useState<boolean>(false)
   const [expandingId,     setExpandingId]     = useState<string | null>(null)
@@ -215,6 +218,7 @@ function AppInner() {
     if (result.type === 'Person') {
       setLoading(true)
       loadedIds.current = new Set()
+      setCenterId(result.node.id)
       try {
         const [personRes, ownersRes] = await Promise.all([
           getPerson(result.node.id),
@@ -234,6 +238,7 @@ function AppInner() {
 
     setLoading(true)
     loadedIds.current = new Set()
+    setCenterId(result.node.id)
     try {
       const els = await loadEntity(result.node.id)
       setElements(els)
@@ -258,6 +263,7 @@ function AppInner() {
 
   const handleClearGraph = useCallback(() => {
     setElements([])
+    setCenterId(null)
     setSelectedNode(null)
     setToast(null)
     loadedIds.current = new Set()
@@ -275,6 +281,7 @@ function AppInner() {
       const { data: results } = await search(query)
       const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('not found')
+      setCenterId(entity.node.id)
       const els = await loadEntity(entity.node.id)
       setElements(els)
       setSelectedNode(null)
@@ -302,6 +309,7 @@ function AppInner() {
     setToast(null)
     setLoading(true)
     loadedIds.current = new Set()
+    setCenterId(entityId)
     try {
       const els = await loadEntity(entityId)
       setElements(els)
@@ -321,6 +329,7 @@ function AppInner() {
       const { data: results } = await search(queryStr)
       const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('Entity not found')
+      setCenterId(entity.node.id)
       const els = await loadEntity(entity.node.id)
       setElements(els)
       showToast(`Loaded ${queryStr} into graph.`, 'success')
@@ -432,6 +441,7 @@ function AppInner() {
             />
           : <Graph
               elements={elements}
+              centerId={centerId}
               onNodeClick={handleNodeClick}
               onExampleClick={handleExampleClick}
               onClear={elements.length > 0 ? handleClearGraph : null}
