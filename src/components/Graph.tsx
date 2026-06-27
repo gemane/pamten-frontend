@@ -87,11 +87,14 @@ const STYLE: cytoscape.StylesheetStyle[] = [
 const LAYOUT = {
   name: 'cola',
   animate: true,
-  maxSimulationTime: 2000,
-  randomize: false,
-  nodeSpacing: 50,
+  maxSimulationTime: 4000,
+  randomize: true,
+  nodeSpacing: 80,
   fit: true,
-  padding: 60,
+  padding: 80,
+  // longer edges push satellite nodes farther from the hub
+  edgeLength: (edge: { data: (k: string) => string }) =>
+    edge.data('edgeType') === 'owns' ? 260 : 200,
 }
 
 const ALL_EXAMPLE_QUERIES = [
