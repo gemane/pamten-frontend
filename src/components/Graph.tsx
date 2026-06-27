@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { FiX } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
-import cola from 'cytoscape-cola'
+import dagre from 'cytoscape-dagre'
 import type { GraphElement, NodeData } from '../types'
 
-cytoscape.use(cola)
+cytoscape.use(dagre)
 
 const STYLE: cytoscape.StylesheetStyle[] = [
   // ── Nodes ──────────────────────────────────────────────
@@ -87,16 +87,15 @@ const STYLE: cytoscape.StylesheetStyle[] = [
 ]
 
 const LAYOUT = {
-  name: 'cola',
+  name: 'dagre',
+  rankDir: 'TB',        // owners (sources) on top, subsidiaries (targets) on bottom
   animate: true,
-  maxSimulationTime: 4000,
-  randomize: true,
-  nodeSpacing: 80,
+  animationDuration: 600,
   fit: true,
-  padding: 80,
-  // longer edges push satellite nodes farther from the hub
-  edgeLength: (edge: { data: (k: string) => string }) =>
-    edge.data('edgeType') === 'owns' ? 260 : 200,
+  padding: 60,
+  nodeSep: 60,          // horizontal gap between sibling nodes
+  rankSep: 120,         // vertical gap between ownership levels
+  ranker: 'network-simplex',
 }
 
 const ALL_EXAMPLE_QUERIES = [
