@@ -1,10 +1,21 @@
 import { useEffect } from 'react'
 import { FiX, FiAlertCircle, FiCheckCircle, FiInfo } from 'react-icons/fi'
+import type { IconType } from 'react-icons'
 
-const ICONS  = { error: FiAlertCircle, success: FiCheckCircle, info: FiInfo }
-const COLORS = { error: '#e74c3c',     success: '#2ECC71',      info: '#4A90D9' }
+interface ToastState {
+  message: string
+  type: string
+}
 
-export default function Toast({ toast, onClose }) {
+interface ToastProps {
+  toast: ToastState | null
+  onClose: () => void
+}
+
+const ICONS: Record<string, IconType>  = { error: FiAlertCircle, success: FiCheckCircle, info: FiInfo }
+const COLORS: Record<string, string> = { error: '#e74c3c',     success: '#2ECC71',      info: '#4A90D9' }
+
+export default function Toast({ toast, onClose }: ToastProps) {
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(onClose, 4000)

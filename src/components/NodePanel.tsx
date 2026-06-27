@@ -3,8 +3,21 @@ import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiZoomIn, FiList, F
 import { getFullProfile } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
+import type { NodeData, FullProfile, Person, Entity } from '../types'
 
-function MetaRow({ icon: Icon, label, value }) {
+interface NodePanelProps {
+  node: NodeData | null
+  onExpand: (id: string) => void
+  expandingId: string | null
+}
+
+interface MetaRowProps {
+  icon: React.ElementType
+  label: string
+  value?: string | number | null
+}
+
+function MetaRow({ icon: Icon, label, value }: MetaRowProps) {
   if (!value) return null
   return (
     <div className="meta-row">
@@ -15,7 +28,7 @@ function MetaRow({ icon: Icon, label, value }) {
   )
 }
 
-function Section({ title, children }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="panel-section">
       <h4 className="panel-section__title">{title}</h4>
@@ -24,7 +37,7 @@ function Section({ title, children }) {
   )
 }
 
-function PersonView({ raw }) {
+function PersonView({ raw }: { raw: Person }) {
   return (
     <div className="panel-body">
       <span className="node-type-badge node-type-badge--person">Person</span>
@@ -42,10 +55,16 @@ function PersonView({ raw }) {
   )
 }
 
-function EntityOverview({ profile, onExpand, expandingId }) {
+interface EntityOverviewProps {
+  profile: FullProfile
+  onExpand: (id: string) => void
+  expandingId: string | null
+}
+
+function EntityOverview({ profile, onExpand, expandingId }: EntityOverviewProps) {
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
 
-  const fmt = (n) =>
+  const fmt = (n: number) =>
     n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${n}`
 
   return (
@@ -69,7 +88,7 @@ function EntityOverview({ profile, onExpand, expandingId }) {
         <Section title="Owned by">
           {owners.map((o, i) => (
             <div key={i} className="rel-item">
-              <span className="rel-item__name">{o.owner?.name || o.owner?.full_name || '—'}</span>
+              <span className="rel-item__name">{o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}</span>
               <OwnershipBadge type={o.relationship?.ownership_type} percent={o.relationship?.stake_percent} />
             </div>
           ))}
@@ -111,7 +130,7 @@ function EntityOverview({ profile, onExpand, expandingId }) {
   )
 }
 
-function PanelTabs({ active, onChange }) {
+function PanelTabs({ active, onChange }: { active: string; onChange: (tab: string) => void }) {
   return (
     <div className="panel-tabs">
       <button
@@ -130,10 +149,10 @@ function PanelTabs({ active, onChange }) {
   )
 }
 
-export default function NodePanel({ node, onExpand, expandingId }) {
-  const [profile,     setProfile]     = useState(null)
-  const [loading,     setLoading]     = useState(false)
-  const [activeView,  setActiveView]  = useState('overview')
+export default function NodePanel({ node, onExpand, expandingId }: NodePanelProps) {
+  const [profile,     setProfile]     = useState<FullProfile | null>(null)
+  const [loading,     setLoading]     = useState<boolean>(false)
+  const [activeView,  setActiveView]  = useState<string>('overview')
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {
@@ -158,7 +177,7 @@ export default function NodePanel({ node, onExpand, expandingId }) {
     )
   }
 
-  if (node.nodeType === 'person') return <PersonView raw={node.raw || {}} />
+  if (node.nodeType === 'person') return <PersonView raw={node.raw as Person} />
 
   if (loading) {
     return (

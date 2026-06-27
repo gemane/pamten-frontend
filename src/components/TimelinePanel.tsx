@@ -3,18 +3,35 @@ import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox } from 'react
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 
-const KIND_META = {
+interface TimelineEvent {
+  kind?: string
+  since?: string | null
+  until?: string | null
+  active?: boolean
+  role?: string
+  stake_percent?: number | null
+  ownership_type?: string | null
+  party?: { name?: string; full_name?: string; id?: string } | null
+}
+
+interface KindMeta {
+  label: string
+  color: string
+  Icon: React.ElementType
+}
+
+const KIND_META: Record<string, KindMeta> = {
   ownership_in:  { label: 'Acquired by',  color: '#8E44AD', Icon: FiArrowDownRight },
   ownership_out: { label: 'Acquired',      color: '#4A90D9', Icon: FiArrowUpLeft   },
   role:          { label: 'Executive',     color: '#27AE60', Icon: FiUser          },
 }
 
-function partyName(party) {
+function partyName(party: TimelineEvent['party']): string {
   return party?.name || party?.full_name || party?.id || '?'
 }
 
-function groupByYear(events) {
-  const groups = {}
+function groupByYear(events: TimelineEvent[]): [string, TimelineEvent[]][] {
+  const groups: Record<string, TimelineEvent[]> = {}
   for (const ev of events) {
     const year = ev.since ? ev.since.slice(0, 4) : null
     const key  = year || '__undated'
@@ -29,8 +46,8 @@ function groupByYear(events) {
   })
 }
 
-function EventRow({ ev }) {
-  const meta  = KIND_META[ev.kind] || KIND_META.role
+function EventRow({ ev }: { ev: TimelineEvent }) {
+  const meta  = KIND_META[ev.kind ?? ''] || KIND_META.role
   const name  = partyName(ev.party)
   const ended = ev.until ? ev.until.slice(0, 4) : null
 
@@ -58,17 +75,21 @@ function EventRow({ ev }) {
   )
 }
 
-export default function TimelinePanel({ entityId }) {
-  const [events,  setEvents]  = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState(null)
+interface TimelinePanelProps {
+  entityId: string
+}
+
+export default function TimelinePanel({ entityId }: TimelinePanelProps) {
+  const [events,  setEvents]  = useState<TimelineEvent[] | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error,   setError]   = useState<string | null>(null)
 
   useEffect(() => {
     if (!entityId) return
     setLoading(true)
     setError(null)
     getHistory(entityId)
-      .then(({ data }) => setEvents(data))
+      .then(({ data }) => setEvents(data as unknown as TimelineEvent[]))
       .catch(() => setError('Could not load timeline.'))
       .finally(() => setLoading(false))
   }, [entityId])

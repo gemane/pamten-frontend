@@ -4,12 +4,24 @@ import {
   getScraperStatus, getScraperSources, toggleScraperSource,
   runScraper, runScraperSecEdgar, runScraperAll,
 } from '../services/api'
+import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser } from '../types'
 
-const TYPE_COLOR   = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
-const SOURCE_LABEL = { wikidata: 'Wikidata', sec_edgar: 'SEC EDGAR', open_corporates: 'OpenCorporates' }
+interface ScraperPanelProps {
+  onLoadIntoGraph: (query: string) => void
+  user: AuthUser | null
+}
 
-function SourceToggle({ source, onToggle, disabled }) {
-  const [busy, setBusy] = useState(false)
+const TYPE_COLOR: Record<string, string>   = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
+const SOURCE_LABEL: Record<string, string> = { wikidata: 'Wikidata', sec_edgar: 'SEC EDGAR', open_corporates: 'OpenCorporates' }
+
+interface SourceToggleProps {
+  source: ScraperSource
+  onToggle: (name: string) => Promise<void>
+  disabled: boolean
+}
+
+function SourceToggle({ source, onToggle, disabled }: SourceToggleProps) {
+  const [busy, setBusy] = useState<boolean>(false)
 
   const handle = async () => {
     if (disabled || busy) return
@@ -36,8 +48,12 @@ function SourceToggle({ source, onToggle, disabled }) {
   )
 }
 
-function ResultList({ result }) {
-  const byType = result.scraped.reduce((acc, e) => {
+interface ResultData extends ScrapeResult {
+  _source?: string
+}
+
+function ResultList({ result }: { result: ResultData }) {
+  const byType = result.scraped.reduce<Record<string, number>>((acc, e) => {
     const t = e.type || 'company'; acc[t] = (acc[t] || 0) + 1; return acc
   }, {})
   return (
@@ -56,9 +72,9 @@ function ResultList({ result }) {
       </div>
       <ul className="scraper-result__list">
         {result.scraped.map((e, i) => (
-          <li key={`${e.qid || e.name}-${i}`} className="scraper-result__item">
+          <li key={`${'qid' in e ? (e as { qid?: string }).qid || e.name : e.name}-${i}`} className="scraper-result__item">
             <span className="scraper-result__dot" style={{ background: TYPE_COLOR[e.type] || '#8892a4' }} />
-            <span className="scraper-result__name">{e.name || e.qid}</span>
+            <span className="scraper-result__name">{e.name || ('qid' in e ? (e as { qid?: string }).qid : '')}</span>
           </li>
         ))}
       </ul>
@@ -66,7 +82,17 @@ function ResultList({ result }) {
   )
 }
 
-function AllResultList({ result }) {
+interface AllResultEntry {
+  status: string
+  total?: number
+}
+
+interface AllResultData {
+  results?: Record<string, AllResultEntry>
+  _source?: string
+}
+
+function AllResultList({ result }: { result: AllResultData }) {
   const entries = Object.entries(result.results || {})
   const totalNodes = entries.reduce((sum, [, r]) => sum + (r.total || 0), 0)
 
@@ -93,24 +119,24 @@ function AllResultList({ result }) {
   )
 }
 
-export default function ScraperPanel({ onLoadIntoGraph, user }) {
+export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProps) {
   const isAdmin = user?.role === 'admin'
 
-  const [masterStatus,    setMasterStatus]    = useState(null)
-  const [sources,         setSources]         = useState([])
-  const [query,           setQuery]           = useState('')
-  const [depth,           setDepth]           = useState(2)
-  const [selectedSource,  setSelectedSource]  = useState('wikidata')
-  const [running,         setRunning]         = useState(false)
-  const [result,          setResult]          = useState(null)
-  const [error,           setError]           = useState(null)
+  const [masterStatus,    setMasterStatus]    = useState<ScraperStatus | null>(null)
+  const [sources,         setSources]         = useState<ScraperSource[]>([])
+  const [query,           setQuery]           = useState<string>('')
+  const [depth,           setDepth]           = useState<number>(2)
+  const [selectedSource,  setSelectedSource]  = useState<string>('wikidata')
+  const [running,         setRunning]         = useState<boolean>(false)
+  const [result,          setResult]          = useState<(ResultData & AllResultData) | null>(null)
+  const [error,           setError]           = useState<string | null>(null)
 
   useEffect(() => {
-    getScraperStatus().then(({ data }) => setMasterStatus(data)).catch(() => setMasterStatus({ enabled: false }))
+    getScraperStatus().then(({ data }) => setMasterStatus(data)).catch(() => setMasterStatus({ enabled: false, sec_edgar_enabled: false, open_corporates_enabled: false }))
     getScraperSources().then(({ data }) => setSources(data)).catch(() => setSources([]))
   }, [])
 
-  const handleToggleSource = async (name) => {
+  const handleToggleSource = async (name: string) => {
     const { data } = await toggleScraperSource(name)
     setSources(prev => prev.map(s => s.name === name ? { ...s, enabled: data.enabled } : s))
   }
@@ -132,7 +158,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }) {
     if (!query.trim()) return
     setRunning(true); setResult(null); setError(null)
     try {
-      let data
+      let data: unknown
       if (selectedSource === 'wikidata') {
         ;({ data } = await runScraper(query.trim(), depth))
       } else if (selectedSource === 'sec_edgar') {
@@ -140,9 +166,10 @@ export default function ScraperPanel({ onLoadIntoGraph, user }) {
       } else {
         ;({ data } = await runScraperAll(query.trim(), depth))
       }
-      setResult({ ...data, _source: selectedSource })
-    } catch (e) {
-      setError(e.response?.data?.detail || 'Scrape failed.')
+      setResult({ ...(data as ResultData & AllResultData), _source: selectedSource })
+    } catch (e: unknown) {
+      const axiosErr = e as { response?: { data?: { detail?: string } } }
+      setError(axiosErr.response?.data?.detail || 'Scrape failed.')
     } finally {
       setRunning(false)
     }

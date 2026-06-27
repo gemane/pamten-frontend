@@ -1,26 +1,32 @@
 import { useState, useEffect, useRef } from 'react'
 import { FiSearch, FiX } from 'react-icons/fi'
 import { search } from '../services/api'
+import type { SearchResult } from '../types'
 
-export default function SearchBar({ onSelect }) {
-  const [query, setQuery]     = useState('')
-  const [results, setResults] = useState([])
-  const [open, setOpen]       = useState(false)
-  const [loading, setLoading] = useState(false)
-  const timer    = useRef(null)
-  const wrapRef  = useRef(null)
-  const inputRef = useRef(null)
+interface SearchBarProps {
+  onSelect: (result: SearchResult) => void
+  placeholder?: string
+}
+
+export default function SearchBar({ onSelect }: SearchBarProps) {
+  const [query, setQuery]     = useState<string>('')
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [open, setOpen]       = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const timer    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wrapRef  = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const close = (e) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
+    const close = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [])
 
   useEffect(() => {
-    const onKey = (e) => {
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setOpen(false)
         inputRef.current?.blur()
@@ -36,7 +42,7 @@ export default function SearchBar({ onSelect }) {
       setOpen(false)
       return
     }
-    clearTimeout(timer.current)
+    if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(async () => {
       setLoading(true)
       try {
@@ -49,11 +55,14 @@ export default function SearchBar({ onSelect }) {
         setLoading(false)
       }
     }, 300)
-    return () => clearTimeout(timer.current)
+    return () => {
+      if (timer.current) clearTimeout(timer.current)
+    }
   }, [query])
 
-  const handleSelect = (result) => {
-    setQuery(result.node.name || result.node.full_name || '')
+  const handleSelect = (result: SearchResult) => {
+    const nodeName = 'name' in result.node ? result.node.name : ('full_name' in result.node ? result.node.full_name : '')
+    setQuery(nodeName || '')
     setResults([])
     setOpen(false)
     inputRef.current?.blur()
@@ -67,7 +76,7 @@ export default function SearchBar({ onSelect }) {
     inputRef.current?.focus()
   }
 
-  const badge = (type) => (
+  const badge = (type: string) => (
     <span className={`type-badge type-badge--${type.toLowerCase()}`}>{type}</span>
   )
 
@@ -102,9 +111,9 @@ export default function SearchBar({ onSelect }) {
             >
               {badge(r.type)}
               <span className="search-item__name">
-                {r.node.name || r.node.full_name}
+                {'name' in r.node ? r.node.name : ('full_name' in r.node ? r.node.full_name : '')}
               </span>
-              {r.node.country && (
+              {'country' in r.node && r.node.country && (
                 <span className="search-item__country">{r.node.country}</span>
               )}
             </li>

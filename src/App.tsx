@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { FiSearch, FiDatabase, FiGlobe, FiLogIn, FiLogOut, FiUser, FiX } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi'
 import SearchBar    from './components/SearchBar'
 import Graph        from './components/Graph'
 import NodePanel    from './components/NodePanel'
@@ -10,21 +10,30 @@ import AuthModal    from './components/AuthModal'
 import Toast        from './components/Toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { getFullProfile, getPerson, getOwners, search, getEntitiesByCountry } from './services/api'
+import type {
+  GraphElement,
+  NodeData,
+  FullProfile,
+  SearchResult,
+  CountryEntityGroup,
+  Entity,
+  Person,
+} from './types'
 
-function buildElements(profile, loadedIds) {
-  const els = []
+function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
+  const els: GraphElement[] = []
 
-  const addNode = (data) => {
+  const addNode = (data: NodeData) => {
     if (!loadedIds.has(data.id)) {
       loadedIds.add(data.id)
       els.push({ data })
     }
   }
 
-  const addEdge = (data) => {
+  const addEdge = (data: GraphElement['data']) => {
     if (!loadedIds.has(data.id)) {
       loadedIds.add(data.id)
-      els.push({ data })
+      els.push({ data } as GraphElement)
     }
   }
 
@@ -61,9 +70,9 @@ function buildElements(profile, loadedIds) {
     if (!owner) continue
     addNode({
       id:            owner.id,
-      label:         owner.name || owner.full_name || '?',
-      nodeType:      owner.first_name ? 'person' : 'entity',
-      entitySubtype: owner.type || null,
+      label:         ('name' in owner ? owner.name : owner.full_name) || '?',
+      nodeType:      'first_name' in owner ? 'person' : 'entity',
+      entitySubtype: 'type' in owner ? owner.type : null,
       raw:           owner,
     })
     addEdge({
@@ -97,11 +106,23 @@ function buildElements(profile, loadedIds) {
   return els
 }
 
-function buildPersonElements(personData, ownerships) {
-  const person = personData.person || personData
+interface PersonData {
+  person?: Person
+  roles?: Array<{ entity: Entity; role?: { role?: string } }>
+  [key: string]: unknown
+}
+
+interface OwnershipItem {
+  entity?: Entity
+  owned_entity?: Entity
+  relationship?: { stake_percent?: number | null; ownership_type?: string | null }
+}
+
+function buildPersonElements(personData: PersonData, ownerships: OwnershipItem[]): GraphElement[] {
+  const person = personData.person || (personData as unknown as Person)
   const roles  = personData.roles  || []
-  const els    = []
-  const seen   = new Set()
+  const els: GraphElement[]    = []
+  const seen   = new Set<string>()
 
   seen.add(person.id)
   els.push({ data: { id: person.id, label: person.full_name, nodeType: 'person', raw: person } })
@@ -142,31 +163,36 @@ function buildPersonElements(personData, ownerships) {
   return els
 }
 
+interface ToastState {
+  message: string
+  type: string
+}
+
 function AppInner() {
   const { user, logout } = useAuth()
-  const [showAuth, setShowAuth] = useState(false)
-  const [activeTab,       setActiveTab]       = useState('graph')
+  const [showAuth, setShowAuth] = useState<boolean>(false)
+  const [activeTab,       setActiveTab]       = useState<string>('graph')
 
-  const [elements,        setElements]        = useState([])
-  const [selectedNode,    setSelectedNode]    = useState(null)
-  const [loading,         setLoading]         = useState(false)
-  const [expandingId,     setExpandingId]     = useState(null)
-  const [toast,           setToast]           = useState(null)
-  const [countryData,     setCountryData]     = useState([])
-  const [countryLoading,  setCountryLoading]  = useState(false)
-  const [selectedCountry, setSelectedCountry] = useState(null)
-  const loadedIds = useRef(new Set())
+  const [elements,        setElements]        = useState<GraphElement[]>([])
+  const [selectedNode,    setSelectedNode]    = useState<NodeData | null>(null)
+  const [loading,         setLoading]         = useState<boolean>(false)
+  const [expandingId,     setExpandingId]     = useState<string | null>(null)
+  const [toast,           setToast]           = useState<ToastState | null>(null)
+  const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
+  const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+  const loadedIds = useRef<Set<string>>(new Set())
 
-  const showToast = useCallback((message, type = 'info') => {
+  const showToast = useCallback((message: string, type = 'info') => {
     setToast({ message, type })
   }, [])
 
-  const loadEntity = useCallback(async (entityId) => {
+  const loadEntity = useCallback(async (entityId: string): Promise<GraphElement[]> => {
     const { data: profile } = await getFullProfile(entityId)
     return buildElements(profile, loadedIds.current)
   }, [])
 
-  const handleSearchSelect = useCallback(async (result) => {
+  const handleSearchSelect = useCallback(async (result: SearchResult) => {
     setToast(null)
     setSelectedNode(null)
 
@@ -178,12 +204,12 @@ function AppInner() {
           getPerson(result.node.id),
           getOwners(result.node.id).catch(() => ({ data: [] })),
         ])
-        const els = buildPersonElements(personRes.data, ownersRes.data)
+        const els = buildPersonElements(personRes.data as PersonData, ownersRes.data as OwnershipItem[])
         setElements(els)
-        setSelectedNode({ id: result.node.id, nodeType: 'person', raw: result.node })
+        setSelectedNode({ id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node })
       } catch {
         showToast('Could not load person graph.', 'error')
-        setSelectedNode({ id: result.node.id, nodeType: 'person', raw: result.node })
+        setSelectedNode({ id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node })
       } finally {
         setLoading(false)
       }
@@ -202,7 +228,7 @@ function AppInner() {
     }
   }, [loadEntity, showToast])
 
-  const handleExpand = useCallback(async (entityId) => {
+  const handleExpand = useCallback(async (entityId: string) => {
     setExpandingId(entityId)
     try {
       const newEls = await loadEntity(entityId)
@@ -221,17 +247,17 @@ function AppInner() {
     loadedIds.current = new Set()
   }, [])
 
-  const handleNodeClick = useCallback((nodeData) => {
+  const handleNodeClick = useCallback((nodeData: NodeData) => {
     setSelectedNode(nodeData)
   }, [])
 
-  const handleExampleClick = useCallback(async (query) => {
+  const handleExampleClick = useCallback(async (query: string) => {
     setToast(null)
     setLoading(true)
     loadedIds.current = new Set()
     try {
       const { data: results } = await search(query)
-      const entity = results.find(r => r.type === 'Entity')
+      const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('not found')
       const els = await loadEntity(entity.node.id)
       setElements(els)
@@ -243,7 +269,7 @@ function AppInner() {
     }
   }, [loadEntity, showToast])
 
-  const handleTabChange = useCallback((tab) => {
+  const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab)
     if (tab === 'map' && countryData.length === 0) {
       setCountryLoading(true)
@@ -254,7 +280,7 @@ function AppInner() {
     }
   }, [countryData.length])
 
-  const handleEntityFromMap = useCallback(async (entityId) => {
+  const handleEntityFromMap = useCallback(async (entityId: string) => {
     setActiveTab('graph')
     setSelectedCountry(null)
     setToast(null)
@@ -270,14 +296,14 @@ function AppInner() {
     }
   }, [loadEntity, showToast])
 
-  const handleLoadIntoGraph = useCallback(async (queryStr) => {
+  const handleLoadIntoGraph = useCallback(async (queryStr: string) => {
     setActiveTab('graph')
     setToast(null)
     setLoading(true)
     loadedIds.current = new Set()
     try {
       const { data: results } = await search(queryStr)
-      const entity = results.find(r => r.type === 'Entity')
+      const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('Entity not found')
       const els = await loadEntity(entity.node.id)
       setElements(els)

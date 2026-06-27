@@ -1,6 +1,6 @@
 // ISO 3166-1 alpha-2 → numeric mapping
 // The world-atlas TopoJSON uses numeric IDs; our DB stores alpha-2 codes.
-export const ALPHA2_TO_NUMERIC = {
+export const ALPHA2_TO_NUMERIC: Record<string, number> = {
   AF:4,AX:8,AL:8,DZ:12,AS:16,AD:20,AO:24,AI:660,AQ:10,AG:28,AR:32,AM:51,
   AW:533,AU:36,AT:40,AZ:31,BS:44,BH:48,BD:50,BB:52,BY:112,BE:56,BZ:84,
   BJ:204,BM:60,BT:64,BO:68,BQ:535,BA:70,BW:72,BV:74,BR:76,IO:86,BN:96,
@@ -29,12 +29,12 @@ export const ALPHA2_TO_NUMERIC = {
 }
 
 // Reverse map for tooltip labels
-export const NUMERIC_TO_ALPHA2 = Object.fromEntries(
+export const NUMERIC_TO_ALPHA2: Record<number, string> = Object.fromEntries(
   Object.entries(ALPHA2_TO_NUMERIC).map(([a2, num]) => [num, a2])
 )
 
 // Human-readable country names for common codes
-export const COUNTRY_NAMES = {
+export const COUNTRY_NAMES: Record<string, string> = {
   US:'United States', GB:'United Kingdom', DE:'Germany', FR:'France',
   JP:'Japan', CN:'China', IN:'India', BR:'Brazil', CA:'Canada',
   AU:'Australia', KR:'South Korea', MX:'Mexico', ES:'Spain', IT:'Italy',
@@ -48,5 +48,5 @@ export const COUNTRY_NAMES = {
   LI:'Liechtenstein', IS:'Iceland', NZ:'New Zealand',
 }
 
-export const countryName = (alpha2) =>
+export const countryName = (alpha2: string): string =>
   COUNTRY_NAMES[alpha2] || alpha2

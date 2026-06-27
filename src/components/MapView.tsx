@@ -3,9 +3,22 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 import worldData from 'world-atlas/countries-110m.json'
 import { ALPHA2_TO_NUMERIC, countryName } from '../utils/isoCountries'
 import { FiRotateCcw } from 'react-icons/fi'
+import type { CountryEntityGroup } from '../types'
 
-function buildNumericMap(countryData) {
-  const map = new Map()
+interface TooltipState {
+  x: number
+  y: number
+  text: string
+}
+
+interface MapViewProps {
+  countryData?: CountryEntityGroup[]
+  selectedCountry?: string | null
+  onCountryClick: (country: string) => void
+}
+
+function buildNumericMap(countryData: CountryEntityGroup[]): Map<number, CountryEntityGroup> {
+  const map = new Map<number, CountryEntityGroup>()
   for (const d of countryData) {
     const num = ALPHA2_TO_NUMERIC[d.country]
     if (num) map.set(num, d)
@@ -15,7 +28,7 @@ function buildNumericMap(countryData) {
 
 const MAX_COUNT = 20
 
-function countryFill(data, isSelected, isHovered) {
+function countryFill(data: CountryEntityGroup | undefined, isSelected: boolean, isHovered: boolean): string {
   if (!data) return isHovered ? '#252d45' : '#1c2540'
   const t = Math.min(data.count / MAX_COUNT, 1)
   if (isSelected) return '#4A90D9'
@@ -26,14 +39,14 @@ function countryFill(data, isSelected, isHovered) {
   return `rgb(${r},${g},${b})`
 }
 
-export default function MapView({ countryData = [], selectedCountry, onCountryClick }) {
-  const [hoveredNum, setHoveredNum] = useState(null)
-  const [tooltip,    setTooltip]    = useState(null)
-  const [resetKey,   setResetKey]   = useState(0)
+export default function MapView({ countryData = [], selectedCountry, onCountryClick }: MapViewProps) {
+  const [hoveredNum, setHoveredNum] = useState<number | null>(null)
+  const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
+  const [resetKey,   setResetKey]   = useState<number>(0)
 
   const numericMap = useMemo(() => buildNumericMap(countryData), [countryData])
 
-  const handleMouseMove = (evt) => {
+  const handleMouseMove = (evt: React.MouseEvent<HTMLDivElement>) => {
     const rect = evt.currentTarget.getBoundingClientRect()
     setTooltip(t => t ? { ...t, x: evt.clientX - rect.left, y: evt.clientY - rect.top } : t)
   }
@@ -58,11 +71,11 @@ export default function MapView({ countryData = [], selectedCountry, onCountryCl
       >
         <ZoomableGroup key={resetKey} minZoom={1} maxZoom={12}>
           <Geographies geography={worldData}>
-            {({ geographies }) =>
+            {({ geographies }: { geographies: Array<{ id: string; rsmKey: string }> }) =>
               geographies.map((geo) => {
                 const numId      = parseInt(geo.id)
                 const data       = numericMap.get(numId)
-                const isSelected = data && data.country === selectedCountry
+                const isSelected = data != null && data.country === selectedCountry
                 const isHovered  = numId === hoveredNum
                 const fill       = countryFill(data, isSelected, isHovered)
 

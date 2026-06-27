@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { FiX } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import cola from 'cytoscape-cola'
+import type { GraphElement, NodeData } from '../types'
 
 cytoscape.use(cola)
 
-const STYLE = [
+const STYLE: cytoscape.StylesheetStyle[] = [
   // ── Nodes ──────────────────────────────────────────────
   {
     selector: 'node',
@@ -15,7 +16,7 @@ const STYLE = [
       'text-valign': 'center',
       'text-halign': 'center',
       'font-size': '12px',
-      'font-weight': '600',
+      'font-weight': 600,
       'text-wrap': 'wrap',
       'text-max-width': '120px',
       'width': 'label',
@@ -109,17 +110,27 @@ const ALL_EXAMPLE_QUERIES = [
   'Anheuser-Busch InBev',
 ]
 
-function pickRandom(arr, n) {
+function pickRandom(arr: string[], n: number): string[] {
   const shuffled = [...arr].sort(() => Math.random() - 0.5)
   return shuffled.slice(0, n)
 }
 
 const EXAMPLE_QUERIES = pickRandom(ALL_EXAMPLE_QUERIES, 3)
 
-export default function Graph({ elements, onNodeClick, onExampleClick, onClear, onExpand, onToast }) {
-  const containerRef = useRef(null)
-  const cyRef        = useRef(null)
-  const [tooltip, setTooltip] = useState(null)
+interface GraphProps {
+  elements: GraphElement[]
+  onNodeClick: (data: NodeData) => void
+  onExampleClick?: (query: string) => void
+  onClear?: (() => void) | null
+  onExpand?: (id: string) => void
+  onToast?: (message: string, variant?: string) => void
+  expandingId?: string | null
+}
+
+export default function Graph({ elements, onNodeClick, onExampleClick, onClear, onExpand, onToast }: GraphProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const cyRef        = useRef<cytoscape.Core | null>(null)
+  const [tooltip, setTooltip] = useState<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     cyRef.current = cytoscape({
@@ -133,11 +144,13 @@ export default function Graph({ elements, onNodeClick, onExampleClick, onClear, 
     })
 
     cyRef.current.on('tap', 'node', (evt) => {
-      onNodeClick(evt.target.data())
+      // TODO: cytoscape EventObject has no typed .data() for custom node data
+      onNodeClick(evt.target.data() as NodeData)
     })
 
     cyRef.current.on('dblclick', 'node', (evt) => {
-      const nodeData = evt.target.data()
+      // TODO: cytoscape EventObject has no typed .data() for custom node data
+      const nodeData = evt.target.data() as NodeData
       if (nodeData.nodeType === 'entity') {
         onExpand?.(nodeData.id)
       } else {
@@ -146,7 +159,9 @@ export default function Graph({ elements, onNodeClick, onExampleClick, onClear, 
     })
 
     cyRef.current.on('mouseover', 'node[nodeType = "entity"]', (evt) => {
-      const { clientX, clientY } = evt.originalEvent
+      // TODO: cytoscape EventObject has no typed .originalEvent
+      const originalEvent = (evt as cytoscape.EventObject & { originalEvent: MouseEvent }).originalEvent
+      const { clientX, clientY } = originalEvent
       setTooltip({ x: clientX, y: clientY })
     })
 
@@ -171,11 +186,11 @@ export default function Graph({ elements, onNodeClick, onExampleClick, onClear, 
 
     if (isReset) {
       cy.elements().remove()
-      cy.add(elements)
+      cy.add(elements as cytoscape.ElementDefinition[])
     } else {
       const toAdd = elements.filter(el => !existingIds.has(el.data.id))
       if (toAdd.length === 0) return
-      cy.add(toAdd)
+      cy.add(toAdd as cytoscape.ElementDefinition[])
     }
 
     cy.layout(LAYOUT).run()

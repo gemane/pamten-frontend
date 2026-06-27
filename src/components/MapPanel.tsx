@@ -1,9 +1,15 @@
 import { FiArrowLeft, FiMapPin, FiLoader } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
+import type { CountryEntityGroup, Entity } from '../types'
 
-const TYPE_COLOR = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
+const TYPE_COLOR: Record<string, string> = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
 
-function EntityItem({ entity, onLoad }) {
+interface EntityItemProps {
+  entity: Entity
+  onLoad: (id: string) => void
+}
+
+function EntityItem({ entity, onLoad }: EntityItemProps) {
   return (
     <button className="map-entity-item" onClick={() => onLoad(entity.id)}>
       <span
@@ -16,7 +22,15 @@ function EntityItem({ entity, onLoad }) {
   )
 }
 
-export default function MapPanel({ countryData, selectedCountry, onSelectCountry, onLoadEntity, loading }) {
+interface MapPanelProps {
+  countryData: CountryEntityGroup[]
+  selectedCountry: string | null
+  onSelectCountry: (country: string | null) => void
+  onLoadEntity: (id: string) => void
+  loading: boolean
+}
+
+export default function MapPanel({ countryData, selectedCountry, onSelectCountry, onLoadEntity, loading }: MapPanelProps) {
   const selected = countryData.find(d => d.country === selectedCountry)
 
   if (loading) {

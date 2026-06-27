@@ -2,15 +2,19 @@ import { useState } from 'react'
 import { FiX, FiLogIn, FiUserPlus, FiAlertCircle, FiLoader } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 
-export default function AuthModal({ onClose }) {
-  const { login, register } = useAuth()
-  const [mode,     setMode]     = useState('login')   // 'login' | 'register'
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [error,    setError]    = useState(null)
-  const [loading,  setLoading]  = useState(false)
+interface AuthModalProps {
+  onClose: () => void
+}
 
-  const handleSubmit = async (e) => {
+export default function AuthModal({ onClose }: AuthModalProps) {
+  const { login, register } = useAuth()
+  const [mode,     setMode]     = useState<'login' | 'register'>('login')
+  const [email,    setEmail]    = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [error,    setError]    = useState<string | null>(null)
+  const [loading,  setLoading]  = useState<boolean>(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
@@ -21,8 +25,9 @@ export default function AuthModal({ onClose }) {
         await register(email, password)
       }
       onClose()
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Something went wrong.')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } }
+      setError(axiosErr.response?.data?.detail || 'Something went wrong.')
     } finally {
       setLoading(false)
     }
