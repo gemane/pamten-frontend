@@ -11,7 +11,7 @@ React + Vite frontend for the Pamten ownership mapping platform. Visualises corp
 
 | Layer | Library |
 |---|---|
-| Framework | React 18 (plain JSX, no TypeScript) |
+| Framework | React 18 + TypeScript (strict mode) |
 | Build | Vite 5 |
 | Graph | Cytoscape.js + cytoscape-cola |
 | Map | react-simple-maps + world-atlas |
@@ -41,25 +41,28 @@ VITE_API_URL=http://localhost:8000
 
 ```
 src/
-├── App.jsx                  # Root component, layout, tab routing
+├── App.tsx                  # Root component, layout, tab routing
+├── types.ts                 # Shared TypeScript types (single source of truth)
 ├── index.css                # All styles (dark theme)
-├── main.jsx                 # React entry point
+├── main.tsx                 # React entry point
+├── vite-env.d.ts            # Module declarations (cytoscape-cola, react-simple-maps)
 ├── components/
-│   ├── Graph.jsx            # Cytoscape.js ownership graph
-│   ├── NodePanel.jsx        # Entity / person detail panel (Overview + Timeline tabs)
-│   ├── TimelinePanel.jsx    # Historical ownership + role timeline
-│   ├── SearchBar.jsx        # Debounced entity / person search
-│   ├── OwnershipBadge.jsx   # Ownership type + stake % pill
-│   ├── MapView.jsx          # SVG world map (right panel)
-│   ├── MapPanel.jsx         # Country list + entity drilldown (left panel)
-│   ├── ScraperPanel.jsx     # Wikidata scraper UI with per-source toggles
-│   └── AuthModal.jsx        # Login / register modal
+│   ├── Graph.tsx            # Cytoscape.js ownership graph + welcome screen
+│   ├── NodePanel.tsx        # Entity / person detail panel (Overview + Timeline tabs)
+│   ├── TimelinePanel.tsx    # Historical ownership + role timeline
+│   ├── SearchBar.tsx        # Debounced entity / person search
+│   ├── OwnershipBadge.tsx   # Ownership type + stake % pill
+│   ├── MapView.tsx          # SVG world map (right panel)
+│   ├── MapPanel.tsx         # Country list + entity drilldown (left panel)
+│   ├── ScraperPanel.tsx     # Multi-source scraper UI with per-source toggles
+│   ├── Toast.tsx            # Transient notification banner
+│   └── AuthModal.tsx        # Login / register modal
 ├── context/
-│   └── AuthContext.jsx      # JWT auth state, login/register/logout
+│   └── AuthContext.tsx      # JWT auth state, login/register/logout
 ├── services/
-│   └── api.js               # Axios client + all API calls
+│   └── api.ts               # Axios client + all API calls
 └── utils/
-    └── isoCountries.js      # ISO 3166-1 alpha-2 ↔ numeric mapping for map
+    └── isoCountries.ts      # ISO 3166-1 alpha-2 ↔ numeric mapping for map
 ```
 
 ---
@@ -68,13 +71,20 @@ src/
 
 ### Graph view
 - Search for any company, brand, holding, or person
-- Ownership graph rendered with Cytoscape.js cola layout
+- Start screen shows 3 randomly chosen example companies as quick-launch chips
+- Clicking the **Pamten** logo in the top-left clears the graph and returns to the start screen
+- Ownership graph rendered with Cytoscape.js cola layout (randomised, wide spacing)
 - Node colours: company `#4A90D9`, brand `#E67E22`, holding `#8E44AD`, person `#27AE60`
 - Edge colours by ownership type: full/majority `#2ECC71`, minority `#F39C12`, controlling `#E74C3C`
-- Click a node to open the detail panel; click **Expand into graph** to load its connections
+- Click a node to open the detail panel; double-click to expand its connections directly
+- **Expand into graph** button in the panel loads an entity's full ownership graph
+
+### Node detail panel
+- **Entity panel**: shows company logo (fetched from Wikidata via P154/P18 → Wikimedia Commons), ownership badges, subsidiaries, executives, and a link to Wikipedia
+- **Person panel**: shows person photo (fetched from Wikipedia REST API, falls back to name search), nationality, and Wikipedia link
+- **Overview / Timeline tabs** for entities
 
 ### Timeline view
-- Tabbed inside the node detail panel (Overview / Timeline)
 - Shows ownership changes, subsidiaries acquired, and executive roles grouped by year
 - Undated relationships appear under "No date recorded"
 
@@ -85,11 +95,12 @@ src/
 - Click a country → left panel shows its entity list; click an entity to load it into the graph
 
 ### Scraper panel (admin only)
-- Triggers a Wikidata SPARQL scrape for a company name
+- Triggers scrapes across all enabled data sources simultaneously via `/scraper/run-all`
+- Sources: **Wikidata** (SPARQL), **SEC EDGAR** (SC 13D/13G ownership filings + Form 3/4 executives), **OpenCorporates** (requires API key)
 - Depth selector 1–3 (levels of subsidiaries to follow)
-- Per-source toggle switches — each scraper source (currently Wikidata) can be enabled/disabled independently
-- Master on/off is controlled by `SCRAPER_ENABLED` on the backend (Render env var)
-- After a scrape, **Load into graph →** button jumps straight to the graph view
+- Per-source toggle switches — each source can be enabled/disabled independently by admins
+- Master switches are controlled by env vars on the backend (`SCRAPER_ENABLED`, `SCRAPER_SEC_EDGAR_ENABLED`)
+- After a scrape, **Load into graph →** button jumps straight to the graph view with results
 
 ### Authentication
 - JWT-based, 7-day tokens stored in `localStorage`
