@@ -54,8 +54,6 @@ const STYLE: cytoscape.StylesheetStyle[] = [
       width: 2,
       'target-arrow-shape': 'triangle',
       'curve-style': 'bezier',
-      'source-label': 'data(label)',
-      'source-text-offset': 60,
       'font-size': '10px',
       'text-wrap': 'wrap',
       'text-max-width': '120px',
@@ -66,6 +64,16 @@ const STYLE: cytoscape.StylesheetStyle[] = [
       'line-color': '#3a3a5c',
       'target-arrow-color': '#3a3a5c',
     },
+  },
+  {
+    // Owner / role edges: source is the outer node → label near source
+    selector: 'edge[edgeDir = "in"]',
+    style: { 'source-label': 'data(label)', 'source-text-offset': 60 },
+  },
+  {
+    // Subsidiary edges: target is the outer node → label near target
+    selector: 'edge[edgeDir = "out"]',
+    style: { 'target-label': 'data(label)', 'target-text-offset': 60 },
   },
   {
     selector: 'edge[ownershipType = "full"], edge[ownershipType = "majority"]',

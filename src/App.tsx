@@ -61,6 +61,7 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
       target:        sub.entity.id,
       label:         sub.relationship?.stake_percent != null ? `${sub.relationship.stake_percent}%` : '',
       edgeType:      'owns',
+      edgeDir:       'out',
       ownershipType: sub.relationship?.ownership_type || '',
     })
   }
@@ -90,6 +91,7 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
       target:         entity.id,
       label:          edgeLabel,
       edgeType:       'owns',
+      edgeDir:        'in',
       ownershipType:  own.relationship?.ownership_type || '',
       votingPowerPct: vote ?? null,
     })
@@ -110,6 +112,7 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
       target:   entity.id,
       label:    exec.role?.role || '',
       edgeType: 'role',
+      edgeDir:  'in',
     })
   }
 
