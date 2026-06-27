@@ -324,7 +324,11 @@ function AppInner() {
       <div className="left-panel">
         <div className="left-panel__header">
           <div className="left-panel__header-row">
-            <div className="logo-group">
+            <div
+              className="logo-group logo-group--clickable"
+              onClick={handleClearGraph}
+              title="Return to home"
+            >
               <span className="logo">Pamten</span>
               <span className="logo-sub">Ownership Graph</span>
             </div>
