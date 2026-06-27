@@ -79,10 +79,10 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
     })
     const stake = own.relationship?.stake_percent
     const vote  = own.relationship?.voting_power_pct
-    const edgeLabel = stake != null && vote != null
-      ? `${stake}% stake\n${vote}% vote`
+    // Show vote% when available (rendered yellow on graph); fall back to stake%.
+    // Cytoscape can't colour part of a label, so we don't combine them.
+    const edgeLabel = vote != null ? `${vote}%`
       : stake != null ? `${stake}%`
-      : vote  != null ? `${vote}% vote`
       : ''
     addEdge({
       id:             `${owner.id}__owns__${entity.id}`,

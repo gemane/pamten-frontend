@@ -86,6 +86,10 @@ const STYLE: cytoscape.StylesheetStyle[] = [
       'target-arrow-color': '#6c7ae0',
     },
   },
+  {
+    selector: 'edge[votingPowerPct > 0]',
+    style: { color: '#f6c90e' },
+  },
 ]
 
 // Semi-ellipse layout constants.
