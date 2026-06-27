@@ -93,7 +93,28 @@ const LAYOUT = {
   padding: 60,
 }
 
-const EXAMPLE_QUERIES = ['Anheuser-Busch InBev', 'Samsung', 'Volkswagen']
+const ALL_EXAMPLE_QUERIES = [
+  'Amazon',
+  'Apple',
+  'Samsung',
+  'Volkswagen',
+  'Nestlé',
+  'BlackRock',
+  'Berkshire Hathaway',
+  'SoftBank',
+  'JPMorgan',
+  'Alibaba',
+  'Tencent',
+  'Saudi Aramco',
+  'Anheuser-Busch InBev',
+]
+
+function pickRandom(arr, n) {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, n)
+}
+
+const EXAMPLE_QUERIES = pickRandom(ALL_EXAMPLE_QUERIES, 3)
 
 export default function Graph({ elements, onNodeClick, onExampleClick, onClear, onExpand, onToast }) {
   const containerRef = useRef(null)
