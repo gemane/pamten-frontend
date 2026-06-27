@@ -29,18 +29,34 @@ function useWikidataImage(wikidataId: string | undefined): string | null {
   return src
 }
 
-function useWikipediaImage(wikipediaUrl: string | undefined): string | null {
+function usePersonImage(fullName: string | undefined, wikipediaUrl?: string): string | null {
   const [src, setSrc] = useState<string | null>(null)
   useEffect(() => {
-    if (!wikipediaUrl) { setSrc(null); return }
     setSrc(null)
-    const match = wikipediaUrl.match(/\/wiki\/([^#?]+)/)
-    if (!match) return
-    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${match[1]}`)
-      .then(r => r.json())
-      .then(data => { if (data?.thumbnail?.source) setSrc(data.thumbnail.source) })
-      .catch(() => {})
-  }, [wikipediaUrl])
+    if (!fullName && !wikipediaUrl) return
+
+    const tryTitle = (title: string) =>
+      fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`)
+        .then(r => { if (!r.ok) throw new Error('not found'); return r.json() })
+        .then((data): string | null => data?.thumbnail?.source ?? null)
+        .catch((): null => null)
+
+    ;(async () => {
+      // 1. If we have a direct Wikipedia URL, use it
+      if (wikipediaUrl) {
+        const m = wikipediaUrl.match(/\/wiki\/([^#?]+)/)
+        if (m) {
+          const img = await tryTitle(m[1])
+          if (img) { setSrc(img); return }
+        }
+      }
+      // 2. Fall back to person's full name as the page title
+      if (fullName) {
+        const img = await tryTitle(fullName.replace(/\s+/g, '_'))
+        if (img) setSrc(img)
+      }
+    })()
+  }, [fullName, wikipediaUrl])
   return src
 }
 
@@ -77,7 +93,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function PersonView({ raw }: { raw: Person }) {
-  const imgSrc = useWikipediaImage(raw.wikipedia_url)
+  const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
   return (
     <div className="panel-body">
       {imgSrc && (
