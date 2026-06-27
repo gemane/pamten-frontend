@@ -5,6 +5,45 @@ import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import type { NodeData, FullProfile, Person, Entity } from '../types'
 
+function useWikidataImage(wikidataId: string | undefined): string | null {
+  const [src, setSrc] = useState<string | null>(null)
+  useEffect(() => {
+    if (!wikidataId) { setSrc(null); return }
+    setSrc(null)
+    fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wikidataId}&props=claims&format=json&origin=*`)
+      .then(r => r.json())
+      .then(data => {
+        const claims = data?.entities?.[wikidataId]?.claims
+        if (!claims) return
+        for (const prop of ['P154', 'P18']) {
+          const val = claims?.[prop]?.[0]?.mainsnak?.datavalue?.value
+          if (val) {
+            const filename = (val as string).replace(/ /g, '_')
+            setSrc(`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=200`)
+            return
+          }
+        }
+      })
+      .catch(() => {})
+  }, [wikidataId])
+  return src
+}
+
+function useWikipediaImage(wikipediaUrl: string | undefined): string | null {
+  const [src, setSrc] = useState<string | null>(null)
+  useEffect(() => {
+    if (!wikipediaUrl) { setSrc(null); return }
+    setSrc(null)
+    const match = wikipediaUrl.match(/\/wiki\/([^#?]+)/)
+    if (!match) return
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${match[1]}`)
+      .then(r => r.json())
+      .then(data => { if (data?.thumbnail?.source) setSrc(data.thumbnail.source) })
+      .catch(() => {})
+  }, [wikipediaUrl])
+  return src
+}
+
 interface NodePanelProps {
   node: NodeData | null
   onExpand: (id: string) => void
@@ -38,8 +77,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function PersonView({ raw }: { raw: Person }) {
+  const imgSrc = useWikipediaImage(raw.wikipedia_url)
   return (
     <div className="panel-body">
+      {imgSrc && (
+        <img className="panel-avatar" src={imgSrc} alt={raw.full_name} />
+      )}
       <span className="node-type-badge node-type-badge--person">Person</span>
       <h2 className="panel-name">{raw.full_name}</h2>
       {raw.description && <p className="panel-desc">{raw.description}</p>}
@@ -63,12 +106,16 @@ interface EntityOverviewProps {
 
 function EntityOverview({ profile, onExpand, expandingId }: EntityOverviewProps) {
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
+  const imgSrc = useWikidataImage(entity.wikidata_id)
 
   const fmt = (n: number) =>
     n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${n}`
 
   return (
     <div className="panel-body">
+      {imgSrc && (
+        <img className="panel-logo" src={imgSrc} alt={entity.name} />
+      )}
       <span className={`node-type-badge node-type-badge--${entity.type || 'company'}`}>
         {entity.type || 'company'}
       </span>
