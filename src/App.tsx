@@ -78,9 +78,9 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
     const stake = own.relationship?.stake_percent
     const vote  = own.relationship?.voting_power_pct
     const edgeLabel = stake != null && vote != null
-      ? `${stake}%\n⚡ ${vote}%`
+      ? `${stake}% stake\n${vote}% vote`
       : stake != null ? `${stake}%`
-      : vote  != null ? `⚡ ${vote}%`
+      : vote  != null ? `${vote}% vote`
       : ''
     addEdge({
       id:             `${owner.id}__owns__${entity.id}`,
@@ -148,9 +148,9 @@ function buildPersonElements(personData: PersonData, ownerships: OwnershipItem[]
       const stake = item.relationship?.stake_percent
       const vote  = (item.relationship as { voting_power_pct?: number | null })?.voting_power_pct
       const edgeLabel = stake != null && vote != null
-        ? `${stake}%\n⚡ ${vote}%`
+        ? `${stake}% stake\n${vote}% vote`
         : stake != null ? `${stake}%`
-        : vote  != null ? `⚡ ${vote}%`
+        : vote  != null ? `${vote}% vote`
         : ''
       els.push({ data: {
         id: edgeId, source: person.id, target: entity.id, edgeType: 'owns',
