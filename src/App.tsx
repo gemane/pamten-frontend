@@ -242,6 +242,13 @@ function AppInner() {
     try {
       const els = await loadEntity(result.node.id)
       setElements(els)
+      setSelectedNode({
+        id:            result.node.id,
+        label:         ('name' in result.node ? result.node.name : result.node.full_name) || '',
+        nodeType:      'entity',
+        entitySubtype: ('type' in result.node ? result.node.type : null),
+        raw:           result.node,
+      })
     } catch {
       showToast('Could not load entity. Please try again.', 'error')
     } finally {
@@ -284,7 +291,13 @@ function AppInner() {
       setCenterId(entity.node.id)
       const els = await loadEntity(entity.node.id)
       setElements(els)
-      setSelectedNode(null)
+      setSelectedNode({
+        id:            entity.node.id,
+        label:         ('name' in entity.node ? entity.node.name : entity.node.full_name) || '',
+        nodeType:      'entity',
+        entitySubtype: ('type' in entity.node ? entity.node.type : null),
+        raw:           entity.node,
+      })
     } catch {
       showToast(`No results found for "${query}".`, 'info')
     } finally {
@@ -313,6 +326,8 @@ function AppInner() {
     try {
       const els = await loadEntity(entityId)
       setElements(els)
+      const center = els.find(el => (el.data as NodeData).id === entityId && !(el.data as Record<string, unknown>).source)
+      if (center) setSelectedNode(center.data as NodeData)
     } catch {
       showToast('Could not load entity into graph.', 'error')
     } finally {
