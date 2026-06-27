@@ -75,13 +75,21 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
       entitySubtype: 'type' in owner ? owner.type : null,
       raw:           owner,
     })
+    const stake = own.relationship?.stake_percent
+    const vote  = own.relationship?.voting_power_pct
+    const edgeLabel = stake != null && vote != null
+      ? `${stake}%\n⚡ ${vote}%`
+      : stake != null ? `${stake}%`
+      : vote  != null ? `⚡ ${vote}%`
+      : ''
     addEdge({
-      id:            `${owner.id}__owns__${entity.id}`,
-      source:        owner.id,
-      target:        entity.id,
-      label:         own.relationship?.stake_percent != null ? `${own.relationship.stake_percent}%` : '',
-      edgeType:      'owns',
-      ownershipType: own.relationship?.ownership_type || '',
+      id:             `${owner.id}__owns__${entity.id}`,
+      source:         owner.id,
+      target:         entity.id,
+      label:          edgeLabel,
+      edgeType:       'owns',
+      ownershipType:  own.relationship?.ownership_type || '',
+      votingPowerPct: vote ?? null,
     })
   }
 
@@ -137,10 +145,18 @@ function buildPersonElements(personData: PersonData, ownerships: OwnershipItem[]
     const edgeId = `${person.id}__owns__${entity.id}`
     if (!seen.has(edgeId)) {
       seen.add(edgeId)
+      const stake = item.relationship?.stake_percent
+      const vote  = (item.relationship as { voting_power_pct?: number | null })?.voting_power_pct
+      const edgeLabel = stake != null && vote != null
+        ? `${stake}%\n⚡ ${vote}%`
+        : stake != null ? `${stake}%`
+        : vote  != null ? `⚡ ${vote}%`
+        : ''
       els.push({ data: {
         id: edgeId, source: person.id, target: entity.id, edgeType: 'owns',
-        label: item.relationship?.stake_percent != null ? `${item.relationship.stake_percent}%` : '',
-        ownershipType: item.relationship?.ownership_type || '',
+        label: edgeLabel,
+        ownershipType:  item.relationship?.ownership_type || '',
+        votingPowerPct: vote ?? null,
       } })
     }
   }

@@ -78,6 +78,7 @@ export interface Source {
 // Relationship types
 export interface OwnsRelationship {
   stake_percent?: number | null
+  voting_power_pct?: number | null
   ownership_type?: OwnershipType | null
   since?: string | null
   until?: string | null
@@ -152,6 +153,7 @@ export interface EdgeData {
   label: string
   edgeType: 'owns' | 'role'
   ownershipType?: OwnershipType | string | null
+  votingPowerPct?: number | null
 }
 
 export type GraphElement =

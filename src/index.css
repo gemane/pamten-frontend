@@ -629,6 +629,17 @@ body {
   white-space: nowrap;
 }
 
+.voting-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  color: #f6c90e;
+  background: rgba(246,201,14,0.12);
+  border: 1px solid rgba(246,201,14,0.35);
+  white-space: nowrap;
+}
+
 .role-badge {
   font-size: 11px;
   color: #6c7ae0;

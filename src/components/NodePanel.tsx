@@ -152,7 +152,11 @@ function EntityOverview({ profile, onExpand, expandingId }: EntityOverviewProps)
           {owners.map((o, i) => (
             <div key={i} className="rel-item">
               <span className="rel-item__name">{o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}</span>
-              <OwnershipBadge type={o.relationship?.ownership_type} percent={o.relationship?.stake_percent} />
+              <OwnershipBadge
+                type={o.relationship?.ownership_type}
+                percent={o.relationship?.stake_percent}
+                votingPct={o.relationship?.voting_power_pct}
+              />
             </div>
           ))}
         </Section>

@@ -54,6 +54,8 @@ const STYLE: cytoscape.StylesheetStyle[] = [
       'curve-style': 'bezier',
       label: 'data(label)',
       'font-size': '10px',
+      'text-wrap': 'wrap',
+      'text-max-width': '120px',
       color: '#8892a4',
       'text-background-color': '#1a1a2e',
       'text-background-opacity': 1,
