@@ -88,13 +88,18 @@ const STYLE: cytoscape.StylesheetStyle[] = [
   },
 ]
 
-// Arc layout constants
-const ARC_SPAN         = (2 * Math.PI) / 3  // 120° arcs
-const OWNER_ARC_CENTER = -Math.PI / 2        // top (negative y = screen up)
-const SUB_ARC_CENTER   =  Math.PI / 2        // bottom
-const OWNER_R_MIN      = 130
-const OWNER_R_MAX      = 280
-const SUB_R            = 420
+// Semi-ellipse layout constants.
+// Nodes sit on x = a·cos(t), y = ±b·sin(t) for t ∈ [T_START, T_END].
+// a scales with node count so nodes never overlap; b is fixed.
+// At t = π/2 the node is directly above/below Google; at t = T_START/T_END
+// nodes are wide to the sides with a smaller vertical offset — flat ellipse shape.
+const T_START      = Math.PI / 6   // 30° — side nodes are 0.5·b above/below Google
+const T_END        = Math.PI * 5/6 // 150°
+const T_RANGE      = T_END - T_START
+const MIN_NODE_GAP = 72             // min arc-length (px) at the densest point (bottom)
+const SUB_B        = 280            // fixed vertical semi-axis for subsidiaries
+const OWNER_B_MIN  = 120            // vertical distance for most-important owner
+const OWNER_B_MAX  = 300            // vertical distance for least-important owner
 
 // Pure function — works on the React elements array, no Cytoscape required.
 // Returns a map of nodeId → {x, y} to use when calling cy.add().
@@ -134,23 +139,30 @@ function computeArcPositions(
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)
 
-  function fillArc(ids: string[], arcCenter: number, getR: (id: string) => number) {
-    const n = ids.length
-    if (n === 0) return
-    const start = arcCenter - ARC_SPAN / 2
-    const end   = arcCenter + ARC_SPAN / 2
-    ids.forEach((id, i) => {
-      const θ = start + (end - start) / (n + 1) * (i + 1)
-      const r = getR(id)
-      pos.set(id, { x: r * Math.cos(θ), y: r * Math.sin(θ) })
+  // Semi-ellipse for subsidiaries (below Google).
+  // a scales so nodes get MIN_NODE_GAP spacing at the densest point (t ≈ π/2, bottom).
+  // At the bottom the tangent is nearly horizontal so arc-length ≈ a·Δt.
+  if (bottomIds.length > 0) {
+    const n    = bottomIds.length
+    const a    = Math.max(350, MIN_NODE_GAP * (n + 1) / T_RANGE)
+    bottomIds.forEach((id, i) => {
+      const t  = T_START + T_RANGE / (n + 1) * (i + 1)
+      pos.set(id, { x: a * Math.cos(t), y: SUB_B * Math.sin(t) })
     })
   }
 
-  fillArc(topIds, OWNER_ARC_CENTER, (id) => {
-    const imp = nodeImportance.get(id) ?? 0
-    return OWNER_R_MAX - Math.sqrt(imp / maxImp) * (OWNER_R_MAX - OWNER_R_MIN)
-  })
-  fillArc(bottomIds, SUB_ARC_CENTER, () => SUB_R)
+  // Semi-ellipse for owners (above Google).
+  // b varies per node by importance: more important → smaller b → closer to Google.
+  if (topIds.length > 0) {
+    const n    = topIds.length
+    const a    = Math.max(300, MIN_NODE_GAP * (n + 1) / T_RANGE)
+    topIds.forEach((id, i) => {
+      const t   = T_START + T_RANGE / (n + 1) * (i + 1)
+      const imp = nodeImportance.get(id) ?? 0
+      const b   = OWNER_B_MAX - Math.sqrt(imp / maxImp) * (OWNER_B_MAX - OWNER_B_MIN)
+      pos.set(id, { x: a * Math.cos(t), y: -b * Math.sin(t) })
+    })
+  }
 
   return pos
 }
@@ -268,11 +280,10 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       levelWidth: () => 1,
     })
     layout.on('layoutstop', () => {
-      // Viewport is now correctly set by concentric. Move nodes to arc positions.
       if (positions.size > 0) {
         cy.nodes().forEach(node => {
-          const pos = positions.get(node.id())
-          if (pos) node.position(pos)
+          const p = positions.get(node.id())
+          if (p) node.position(p)
         })
         cy.fit(undefined, 80)
       }
