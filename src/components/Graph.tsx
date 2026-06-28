@@ -194,6 +194,7 @@ const ALL_EXAMPLE_QUERIES = [
   'Tencent',
   'Saudi Aramco',
   'Anheuser-Busch InBev',
+  'Heineken',
 ]
 
 function pickRandom(arr: string[], n: number): string[] {
