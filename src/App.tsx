@@ -3,6 +3,7 @@ import { FiSearch, FiDatabase, FiGlobe, FiLogIn, FiLogOut, FiUser } from 'react-
 import SearchBar    from './components/SearchBar'
 import Breadcrumb   from './components/Breadcrumb'
 import Graph        from './components/Graph'
+import GraphLegend  from './components/GraphLegend'
 import NodePanel    from './components/NodePanel'
 import ScraperPanel from './components/ScraperPanel'
 import MapView      from './components/MapView'
@@ -82,22 +83,28 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
     })
     const stake = own.relationship?.stake_percent
     const vote  = own.relationship?.voting_power_pct
-    // Show vote% when available (rendered yellow on graph); fall back to stake%.
-    // Cytoscape can't colour part of a label, so we don't combine them.
-    const edgeLabel = vote != null ? `${vote}%`
-      : stake != null ? `${stake}%`
-      : ''
     addEdge({
       id:             `${owner.id}__owns__${entity.id}`,
       source:         owner.id,
       target:         entity.id,
-      label:          edgeLabel,
+      label:          stake != null ? `${stake}%` : '',
       edgeType:       'owns',
       edgeDir:        'in',
       ownershipType:  own.relationship?.ownership_type || '',
       votingPowerPct: vote ?? null,
       stakePct:       stake ?? null,
     })
+    if (vote != null && vote !== stake) {
+      addEdge({
+        id:             `${owner.id}__votes__${entity.id}`,
+        source:         owner.id,
+        target:         entity.id,
+        label:          `${vote}%`,
+        edgeType:       'votes',
+        edgeDir:        'in',
+        votingPowerPct: vote,
+      })
+    }
   }
 
   for (const exec of executives) {
@@ -155,18 +162,24 @@ function buildPersonElements(personData: PersonData, ownerships: OwnershipItem[]
       seen.add(edgeId)
       const stake = item.relationship?.stake_percent
       const vote  = (item.relationship as { voting_power_pct?: number | null })?.voting_power_pct
-      const edgeLabel = stake != null && vote != null
-        ? `${stake}% stake\n${vote}% vote`
-        : stake != null ? `${stake}%`
-        : vote  != null ? `${vote}% vote`
-        : ''
       els.push({ data: {
         id: edgeId, source: person.id, target: entity.id, edgeType: 'owns',
-        label: edgeLabel,
+        label:          stake != null ? `${stake}%` : '',
         ownershipType:  item.relationship?.ownership_type || '',
         votingPowerPct: vote ?? null,
         stakePct:       stake ?? null,
       } })
+      if (vote != null && vote !== stake) {
+        const votesId = `${person.id}__votes__${entity.id}`
+        if (!seen.has(votesId)) {
+          seen.add(votesId)
+          els.push({ data: {
+            id: votesId, source: person.id, target: entity.id,
+            label: `${vote}%`, edgeType: 'votes', edgeDir: 'in',
+            votingPowerPct: vote,
+          } })
+        }
+      }
     }
   }
 
@@ -511,6 +524,7 @@ function AppInner() {
       </div>
 
       <div className="right-panel">
+        {activeTab === 'graph' && elements.length > 0 && <GraphLegend />}
         {activeTab === 'map'
           ? <MapView
               countryData={countryData}

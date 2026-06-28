@@ -152,7 +152,7 @@ export interface EdgeData {
   source: string
   target: string
   label: string
-  edgeType: 'owns' | 'role'
+  edgeType: 'owns' | 'role' | 'votes'
   edgeDir?: 'in' | 'out'
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null

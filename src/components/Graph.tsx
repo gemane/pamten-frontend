@@ -95,6 +95,16 @@ const STYLE: cytoscape.StylesheetStyle[] = [
       'target-arrow-color': '#6c7ae0',
     },
   },
+  {
+    selector: 'edge[edgeType = "votes"]',
+    style: {
+      'line-color': '#9B59B6',
+      'target-arrow-color': '#9B59B6',
+      'line-style': 'dashed',
+      width: 'mapData(votingPowerPct, 0, 100, 2, 7)' as unknown as number,
+      color: '#c39bd3',
+    },
+  },
   // Edge width by ownership type — used when stake% is not in the data
   { selector: 'edge[ownershipType = "minority"]',    style: { width: 2.5 } },
   { selector: 'edge[ownershipType = "controlling"]', style: { width: 4 } },
@@ -104,10 +114,6 @@ const STYLE: cytoscape.StylesheetStyle[] = [
   {
     selector: 'edge[stakePct > 0]',
     style: { width: 'mapData(stakePct, 0, 100, 2, 7)' as unknown as number },
-  },
-  {
-    selector: 'edge[votingPowerPct > 0]',
-    style: { color: '#f6c90e' },
   },
 ]
 
