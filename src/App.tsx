@@ -197,6 +197,7 @@ function AppInner() {
   const [elements,        setElements]        = useState<GraphElement[]>([])
   const [centerId,        setCenterId]        = useState<string | null>(null)
   const [selectedNode,    setSelectedNode]    = useState<NodeData | null>(null)
+  const [searchLabel,     setSearchLabel]     = useState<string | undefined>(undefined)
   const [loading,         setLoading]         = useState<boolean>(false)
   const [expandingId,     setExpandingId]     = useState<string | null>(null)
   const [toast,           setToast]           = useState<ToastState | null>(null)
@@ -221,13 +222,13 @@ function AppInner() {
     if (result.type === 'Person') {
       setLoading(true)
       loadedIds.current = new Set()
-      setCenterId(result.node.id)
       try {
         const [personRes, ownersRes] = await Promise.all([
           getPerson(result.node.id),
           getOwners(result.node.id).catch(() => ({ data: [] })),
         ])
         const els = buildPersonElements(personRes.data as PersonData, ownersRes.data as OwnershipItem[])
+        setCenterId(result.node.id)
         setElements(els)
         setSelectedNode({ id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node })
       } catch {
@@ -241,9 +242,9 @@ function AppInner() {
 
     setLoading(true)
     loadedIds.current = new Set()
-    setCenterId(result.node.id)
     try {
       const els = await loadEntity(result.node.id)
+      setCenterId(result.node.id)
       setElements(els)
       setSelectedNode({
         id:            result.node.id,
@@ -254,6 +255,35 @@ function AppInner() {
       })
     } catch {
       showToast('Could not load entity. Please try again.', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [loadEntity, showToast])
+
+  const handleNavigateTo = useCallback(async (nodeData: NodeData) => {
+    setToast(null)
+    setSelectedNode(null)
+    setSearchLabel(nodeData.label)
+    setLoading(true)
+    loadedIds.current = new Set()
+    try {
+      if (nodeData.nodeType === 'person') {
+        const [personRes, ownersRes] = await Promise.all([
+          getPerson(nodeData.id),
+          getOwners(nodeData.id).catch(() => ({ data: [] })),
+        ])
+        const els = buildPersonElements(personRes.data as PersonData, ownersRes.data as OwnershipItem[])
+        setCenterId(nodeData.id)
+        setElements(els)
+        setSelectedNode(nodeData)
+      } else {
+        const els = await loadEntity(nodeData.id)
+        setCenterId(nodeData.id)
+        setElements(els)
+        setSelectedNode(nodeData)
+      }
+    } catch {
+      showToast('Could not load node.', 'error')
     } finally {
       setLoading(false)
     }
@@ -275,6 +305,7 @@ function AppInner() {
     setElements([])
     setCenterId(null)
     setSelectedNode(null)
+    setSearchLabel(undefined)
     setToast(null)
     loadedIds.current = new Set()
   }, [])
@@ -291,8 +322,8 @@ function AppInner() {
       const { data: results } = await search(query)
       const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('not found')
-      setCenterId(entity.node.id)
       const els = await loadEntity(entity.node.id)
+      setCenterId(entity.node.id)
       setElements(els)
       setSelectedNode({
         id:            entity.node.id,
@@ -325,9 +356,9 @@ function AppInner() {
     setToast(null)
     setLoading(true)
     loadedIds.current = new Set()
-    setCenterId(entityId)
     try {
       const els = await loadEntity(entityId)
+      setCenterId(entityId)
       setElements(els)
       const center = els.find(el => (el.data as NodeData).id === entityId && !(el.data as Record<string, unknown>).source)
       if (center) setSelectedNode(center.data as NodeData)
@@ -347,8 +378,8 @@ function AppInner() {
       const { data: results } = await search(queryStr)
       const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('Entity not found')
-      setCenterId(entity.node.id)
       const els = await loadEntity(entity.node.id)
+      setCenterId(entity.node.id)
       setElements(els)
       showToast(`Loaded ${queryStr} into graph.`, 'success')
     } catch {
@@ -424,9 +455,9 @@ function AppInner() {
 
         {activeTab === 'graph' && (
           <>
-            <SearchBar onSelect={handleSearchSelect} />
+            <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
             <div className="left-panel__detail">
-              <NodePanel node={selectedNode} onExpand={handleExpand} expandingId={expandingId} />
+              <NodePanel node={selectedNode} onExpand={handleExpand} expandingId={expandingId} onNavigateTo={handleNavigateTo} centerId={centerId} />
             </div>
           </>
         )}
@@ -463,7 +494,7 @@ function AppInner() {
               onNodeClick={handleNodeClick}
               onExampleClick={handleExampleClick}
               onClear={elements.length > 0 ? handleClearGraph : null}
-              onExpand={handleExpand}
+              onNavigateTo={handleNavigateTo}
               onToast={showToast}
             />
         }

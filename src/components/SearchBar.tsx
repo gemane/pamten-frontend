@@ -5,17 +5,19 @@ import type { SearchResult } from '../types'
 
 interface SearchBarProps {
   onSelect: (result: SearchResult) => void
+  selectedLabel?: string   // set by parent when navigating programmatically
   placeholder?: string
 }
 
-export default function SearchBar({ onSelect }: SearchBarProps) {
+export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
   const [query, setQuery]     = useState<string>('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [open, setOpen]       = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
-  const timer    = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const wrapRef  = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const timer      = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wrapRef    = useRef<HTMLDivElement>(null)
+  const inputRef   = useRef<HTMLInputElement>(null)
+  const skipSearch = useRef<boolean>(false)
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -37,6 +39,15 @@ export default function SearchBar({ onSelect }: SearchBarProps) {
   }, [])
 
   useEffect(() => {
+    if (selectedLabel == null) return
+    skipSearch.current = true
+    setQuery(selectedLabel)
+    setResults([])
+    setOpen(false)
+  }, [selectedLabel])
+
+  useEffect(() => {
+    if (skipSearch.current) { skipSearch.current = false; return }
     if (query.trim().length < 2) {
       setResults([])
       setOpen(false)

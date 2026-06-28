@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { FiX } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import type { GraphElement, NodeData } from '../types'
@@ -210,15 +210,15 @@ interface GraphProps {
   onNodeClick: (data: NodeData) => void
   onExampleClick?: (query: string) => void
   onClear?: (() => void) | null
-  onExpand?: (id: string) => void
+  onNavigateTo?: (nodeData: NodeData) => void
   onToast?: (message: string, variant?: string) => void
   expandingId?: string | null
 }
 
-export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onExpand, onToast }: GraphProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const cyRef        = useRef<cytoscape.Core | null>(null)
-  const [tooltip, setTooltip] = useState<{ x: number; y: number } | null>(null)
+export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onNavigateTo, onToast }: GraphProps) {
+  const containerRef    = useRef<HTMLDivElement>(null)
+  const cyRef           = useRef<cytoscape.Core | null>(null)
+  const prevCenterIdRef = useRef<string | null | undefined>(null)
 
   useEffect(() => {
     cyRef.current = cytoscape({
@@ -239,23 +239,9 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
     cyRef.current.on('dblclick', 'node', (evt) => {
       // TODO: cytoscape EventObject has no typed .data() for custom node data
       const nodeData = evt.target.data() as NodeData
-      if (nodeData.nodeType === 'entity') {
-        onExpand?.(nodeData.id)
-      } else {
-        onToast?.('Person nodes cannot be expanded', 'info')
-      }
+      onNavigateTo?.(nodeData)
     })
 
-    cyRef.current.on('mouseover', 'node[nodeType = "entity"]', (evt) => {
-      // TODO: cytoscape EventObject has no typed .originalEvent
-      const originalEvent = (evt as cytoscape.EventObject & { originalEvent: MouseEvent }).originalEvent
-      const { clientX, clientY } = originalEvent
-      setTooltip({ x: clientX, y: clientY })
-    })
-
-    cyRef.current.on('mouseout', 'node[nodeType = "entity"]', () => {
-      setTooltip(null)
-    })
 
     return () => cyRef.current?.destroy()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -269,8 +255,10 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       return
     }
 
+    const centerChanged = centerId !== prevCenterIdRef.current
+    prevCenterIdRef.current = centerId
     const existingIds = new Set(cy.elements().map(el => el.id()))
-    const isReset     = !elements.some(el => existingIds.has(el.data.id))
+    const isReset     = centerChanged || !elements.some(el => existingIds.has(el.data.id))
 
     if (isReset) {
       cy.elements().remove()
@@ -333,14 +321,7 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
         </button>
       )}
 
-      {tooltip && (
-        <div
-          className="graph-node-tooltip"
-          style={{ left: tooltip.x + 12, top: tooltip.y - 36 }}
-        >
-          Double-click to expand
-        </div>
-      )}
+
     </div>
   )
 }

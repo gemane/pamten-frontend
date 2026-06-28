@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiZoomIn, FiList, FiClock, FiLoader } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiNavigation, FiList, FiClock, FiLoader } from 'react-icons/fi'
 import { getFullProfile } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
@@ -64,6 +64,8 @@ interface NodePanelProps {
   node: NodeData | null
   onExpand: (id: string) => void
   expandingId: string | null
+  onNavigateTo?: (nodeData: NodeData) => void
+  centerId?: string | null
 }
 
 interface MetaRowProps {
@@ -92,7 +94,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function PersonView({ raw }: { raw: Person }) {
+function PersonView({ raw, onNavigateTo, isCenter }: { raw: Person; onNavigateTo?: (nodeData: NodeData) => void; isCenter?: boolean }) {
   const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
   return (
     <div className="panel-body">
@@ -110,6 +112,14 @@ function PersonView({ raw }: { raw: Person }) {
           <FiExternalLink /> Wikipedia
         </a>
       )}
+      {!isCenter && onNavigateTo && (
+        <button
+          className="expand-btn"
+          onClick={() => onNavigateTo({ id: raw.id, label: raw.full_name, nodeType: 'person', raw })}
+        >
+          <FiNavigation /> Open as center
+        </button>
+      )}
     </div>
   )
 }
@@ -118,9 +128,11 @@ interface EntityOverviewProps {
   profile: FullProfile
   onExpand: (id: string) => void
   expandingId: string | null
+  onNavigateTo?: (nodeData: NodeData) => void
+  isCenter?: boolean
 }
 
-function EntityOverview({ profile, onExpand, expandingId }: EntityOverviewProps) {
+function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter }: EntityOverviewProps) {
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
@@ -184,15 +196,14 @@ function EntityOverview({ profile, onExpand, expandingId }: EntityOverviewProps)
         </Section>
       )}
 
-      <button
-        className="expand-btn"
-        onClick={() => onExpand(entity.id)}
-        disabled={!!expandingId}
-      >
-        {expandingId === entity.id
-          ? <><FiLoader className="spin" /> Expanding…</>
-          : <><FiZoomIn /> Expand into graph</>}
-      </button>
+      {!isCenter && onNavigateTo && (
+        <button
+          className="expand-btn"
+          onClick={() => onNavigateTo({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: profile.entity })}
+        >
+          <FiNavigation /> Open as center
+        </button>
+      )}
     </div>
   )
 }
@@ -216,7 +227,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExpand, expandingId }: NodePanelProps) {
+export default function NodePanel({ node, onExpand, expandingId, onNavigateTo, centerId }: NodePanelProps) {
   const [profile,     setProfile]     = useState<FullProfile | null>(null)
   const [loading,     setLoading]     = useState<boolean>(false)
   const [activeView,  setActiveView]  = useState<string>('overview')
@@ -244,7 +255,7 @@ export default function NodePanel({ node, onExpand, expandingId }: NodePanelProp
     )
   }
 
-  if (node.nodeType === 'person') return <PersonView raw={node.raw as Person} />
+  if (node.nodeType === 'person') return <PersonView raw={node.raw as Person} onNavigateTo={onNavigateTo} isCenter={node.id === centerId} />
 
   if (loading) {
     return (
@@ -260,7 +271,7 @@ export default function NodePanel({ node, onExpand, expandingId }: NodePanelProp
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} onExpand={onExpand} expandingId={expandingId} />
+        ? <EntityOverview profile={profile} onExpand={onExpand} expandingId={expandingId} onNavigateTo={onNavigateTo} isCenter={node.id === centerId} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )
