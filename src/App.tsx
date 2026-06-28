@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { FiSearch, FiDatabase, FiGlobe, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi'
 import SearchBar    from './components/SearchBar'
+import Breadcrumb   from './components/Breadcrumb'
 import Graph        from './components/Graph'
 import NodePanel    from './components/NodePanel'
 import ScraperPanel from './components/ScraperPanel'
@@ -198,6 +199,7 @@ function AppInner() {
   const [centerId,        setCenterId]        = useState<string | null>(null)
   const [selectedNode,    setSelectedNode]    = useState<NodeData | null>(null)
   const [searchLabel,     setSearchLabel]     = useState<string | undefined>(undefined)
+  const [navHistory,      setNavHistory]      = useState<NodeData[]>([])
   const [loading,         setLoading]         = useState<boolean>(false)
   const [expandingId,     setExpandingId]     = useState<string | null>(null)
   const [toast,           setToast]           = useState<ToastState | null>(null)
@@ -228,9 +230,11 @@ function AppInner() {
           getOwners(result.node.id).catch(() => ({ data: [] })),
         ])
         const els = buildPersonElements(personRes.data as PersonData, ownersRes.data as OwnershipItem[])
+        const newNode: NodeData = { id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node }
         setCenterId(result.node.id)
         setElements(els)
-        setSelectedNode({ id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node })
+        setSelectedNode(newNode)
+        setNavHistory([newNode])
       } catch {
         showToast('Could not load person graph.', 'error')
         setSelectedNode({ id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node })
@@ -244,15 +248,17 @@ function AppInner() {
     loadedIds.current = new Set()
     try {
       const els = await loadEntity(result.node.id)
-      setCenterId(result.node.id)
-      setElements(els)
-      setSelectedNode({
+      const newNode: NodeData = {
         id:            result.node.id,
         label:         ('name' in result.node ? result.node.name : result.node.full_name) || '',
         nodeType:      'entity',
         entitySubtype: ('type' in result.node ? result.node.type : null),
         raw:           result.node,
-      })
+      }
+      setCenterId(result.node.id)
+      setElements(els)
+      setSelectedNode(newNode)
+      setNavHistory([newNode])
     } catch {
       showToast('Could not load entity. Please try again.', 'error')
     } finally {
@@ -276,11 +282,13 @@ function AppInner() {
         setCenterId(nodeData.id)
         setElements(els)
         setSelectedNode(nodeData)
+        setNavHistory(prev => [...prev, nodeData])
       } else {
         const els = await loadEntity(nodeData.id)
         setCenterId(nodeData.id)
         setElements(els)
         setSelectedNode(nodeData)
+        setNavHistory(prev => [...prev, nodeData])
       }
     } catch {
       showToast('Could not load node.', 'error')
@@ -306,6 +314,7 @@ function AppInner() {
     setCenterId(null)
     setSelectedNode(null)
     setSearchLabel(undefined)
+    setNavHistory([])
     setToast(null)
     loadedIds.current = new Set()
   }, [])
@@ -313,6 +322,12 @@ function AppInner() {
   const handleNodeClick = useCallback((nodeData: NodeData) => {
     setSelectedNode(nodeData)
   }, [])
+
+  const handleBreadcrumbNav = useCallback((nodeData: NodeData, index: number) => {
+    // Truncate trail before the target; handleNavigateTo will append it back
+    setNavHistory(prev => prev.slice(0, index))
+    handleNavigateTo(nodeData)
+  }, [handleNavigateTo])
 
   const handleExampleClick = useCallback(async (query: string) => {
     setToast(null)
@@ -323,15 +338,17 @@ function AppInner() {
       const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('not found')
       const els = await loadEntity(entity.node.id)
-      setCenterId(entity.node.id)
-      setElements(els)
-      setSelectedNode({
+      const newNode: NodeData = {
         id:            entity.node.id,
         label:         ('name' in entity.node ? entity.node.name : entity.node.full_name) || '',
         nodeType:      'entity',
         entitySubtype: ('type' in entity.node ? entity.node.type : null),
         raw:           entity.node,
-      })
+      }
+      setCenterId(entity.node.id)
+      setElements(els)
+      setSelectedNode(newNode)
+      setNavHistory([newNode])
     } catch {
       showToast(`No results found for "${query}".`, 'info')
     } finally {
@@ -361,7 +378,10 @@ function AppInner() {
       setCenterId(entityId)
       setElements(els)
       const center = els.find(el => (el.data as NodeData).id === entityId && !(el.data as Record<string, unknown>).source)
-      if (center) setSelectedNode(center.data as NodeData)
+      if (center) {
+        setSelectedNode(center.data as NodeData)
+        setNavHistory([center.data as NodeData])
+      }
     } catch {
       showToast('Could not load entity into graph.', 'error')
     } finally {
@@ -456,6 +476,7 @@ function AppInner() {
         {activeTab === 'graph' && (
           <>
             <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
+            <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
             <div className="left-panel__detail">
               <NodePanel node={selectedNode} onExpand={handleExpand} expandingId={expandingId} onNavigateTo={handleNavigateTo} centerId={centerId} />
             </div>
