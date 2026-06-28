@@ -64,6 +64,7 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
       edgeType:      'owns',
       edgeDir:       'out',
       ownershipType: sub.relationship?.ownership_type || '',
+      stakePct:      sub.relationship?.stake_percent ?? null,
     })
   }
 
@@ -95,6 +96,7 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
       edgeDir:        'in',
       ownershipType:  own.relationship?.ownership_type || '',
       votingPowerPct: vote ?? null,
+      stakePct:       stake ?? null,
     })
   }
 
@@ -163,6 +165,7 @@ function buildPersonElements(personData: PersonData, ownerships: OwnershipItem[]
         label: edgeLabel,
         ownershipType:  item.relationship?.ownership_type || '',
         votingPowerPct: vote ?? null,
+        stakePct:       stake ?? null,
       } })
     }
   }

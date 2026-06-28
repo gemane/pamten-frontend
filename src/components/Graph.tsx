@@ -23,19 +23,19 @@ const STYLE: cytoscape.StylesheetStyle[] = [
   },
   {
     selector: 'node[nodeType = "entity"]',
-    style: { 'background-color': '#4A90D9', shape: 'roundrectangle' },
+    style: { 'background-color': '#4A90D9', shape: 'roundrectangle', 'border-width': 2, 'border-color': '#2d6aa8' },
   },
   {
     selector: 'node[entitySubtype = "brand"]',
-    style: { 'background-color': '#E67E22' },
+    style: { 'background-color': '#E67E22', 'border-color': '#b05a0d' },
   },
   {
     selector: 'node[entitySubtype = "holding"]',
-    style: { 'background-color': '#8E44AD' },
+    style: { 'background-color': '#8E44AD', 'border-color': '#622d7a' },
   },
   {
     selector: 'node[nodeType = "person"]',
-    style: { 'background-color': '#27AE60', shape: 'ellipse' },
+    style: { 'background-color': '#27AE60', shape: 'ellipse', 'border-width': 2, 'border-color': '#1a7a42' },
   },
   {
     // Scale padding (= visual size) for owner nodes by their importance
@@ -94,6 +94,16 @@ const STYLE: cytoscape.StylesheetStyle[] = [
       'line-color': '#6c7ae0',
       'target-arrow-color': '#6c7ae0',
     },
+  },
+  // Edge width by ownership type — used when stake% is not in the data
+  { selector: 'edge[ownershipType = "minority"]',    style: { width: 2.5 } },
+  { selector: 'edge[ownershipType = "controlling"]', style: { width: 4 } },
+  { selector: 'edge[ownershipType = "majority"]',    style: { width: 5 } },
+  { selector: 'edge[ownershipType = "full"]',        style: { width: 7 } },
+  // Precise override when stake% is known
+  {
+    selector: 'edge[stakePct > 0]',
+    style: { width: 'mapData(stakePct, 0, 100, 2, 7)' as unknown as number },
   },
   {
     selector: 'edge[votingPowerPct > 0]',

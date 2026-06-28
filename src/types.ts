@@ -153,8 +153,10 @@ export interface EdgeData {
   target: string
   label: string
   edgeType: 'owns' | 'role'
+  edgeDir?: 'in' | 'out'
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null
+  stakePct?: number | null
 }
 
 export type GraphElement =
