@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiNavigation, FiList, FiClock, FiLoader } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiNavigation, FiList, FiClock, FiLoader, FiPlusCircle } from 'react-icons/fi'
 import { getFullProfile } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
@@ -196,14 +196,28 @@ function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter
         </Section>
       )}
 
-      {!isCenter && onNavigateTo && (
-        <button
-          className="expand-btn"
-          onClick={() => onNavigateTo({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: profile.entity })}
-        >
-          <FiNavigation /> Open as center
-        </button>
-      )}
+      <div className="panel-actions">
+        {!isCenter && (
+          <button
+            className="expand-btn"
+            disabled={expandingId === entity.id}
+            onClick={() => onExpand(entity.id)}
+          >
+            {expandingId === entity.id
+              ? <FiLoader className="spin" />
+              : <FiPlusCircle />}
+            {' '}Expand graph
+          </button>
+        )}
+        {!isCenter && onNavigateTo && (
+          <button
+            className="expand-btn"
+            onClick={() => onNavigateTo({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: profile.entity })}
+          >
+            <FiNavigation /> Open as center
+          </button>
+        )}
+      </div>
     </div>
   )
 }

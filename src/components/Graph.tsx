@@ -123,6 +123,7 @@ const MIN_NODE_GAP = 72             // min arc-length (px) at the densest point 
 const SUB_B        = 280            // fixed vertical semi-axis for subsidiaries
 const OWNER_B_MIN  = 120            // vertical distance for most-important owner
 const OWNER_B_MAX  = 300            // vertical distance for least-important owner
+const LEVEL_GAP    = 220            // vertical px between hop levels beyond the 1st
 
 // Pure function — works on the React elements array, no Cytoscape required.
 // Returns a map of nodeId → {x, y} to use when calling cy.add().
@@ -184,6 +185,35 @@ function computeArcPositions(
       const imp = nodeImportance.get(id) ?? 0
       const b   = OWNER_B_MAX - Math.sqrt(imp / maxImp) * (OWNER_B_MAX - OWNER_B_MIN)
       pos.set(id, { x: a * Math.cos(t), y: -b * Math.sin(t) })
+    })
+  }
+
+  // BFS: position any nodes beyond the 1st hop (expanded graph).
+  // For every queued node, owners go ABOVE it and subsidiaries go BELOW it,
+  // regardless of which direction the node was reached from.
+  const positioned = new Set<string>(pos.keys())
+  const queue: string[] = [...topIds, ...bottomIds]
+  let qi = 0
+  while (qi < queue.length) {
+    const id = queue[qi++]
+    const parentPos = pos.get(id)!
+
+    const newOwners = (incomersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
+    const nOwners = newOwners.length
+    newOwners.forEach((nid, i) => {
+      const xOff = nOwners > 1 ? (i - (nOwners - 1) / 2) * MIN_NODE_GAP : 0
+      pos.set(nid, { x: parentPos.x + xOff, y: parentPos.y - LEVEL_GAP })
+      positioned.add(nid)
+      queue.push(nid)
+    })
+
+    const newSubs = (outgoersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
+    const nSubs = newSubs.length
+    newSubs.forEach((nid, i) => {
+      const xOff = nSubs > 1 ? (i - (nSubs - 1) / 2) * MIN_NODE_GAP : 0
+      pos.set(nid, { x: parentPos.x + xOff, y: parentPos.y + LEVEL_GAP })
+      positioned.add(nid)
+      queue.push(nid)
     })
   }
 

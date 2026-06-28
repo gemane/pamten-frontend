@@ -304,7 +304,12 @@ function AppInner() {
     setExpandingId(entityId)
     try {
       const newEls = await loadEntity(entityId)
-      if (newEls.length > 0) setElements(prev => [...prev, ...newEls])
+      const newNodes = newEls.filter(el => !(el.data as Record<string, unknown>).source)
+      if (newNodes.length > 0) {
+        setElements(prev => [...prev, ...newEls])
+      } else {
+        showToast('No new connections found.', 'info')
+      }
     } catch {
       showToast('Could not expand node.', 'error')
     } finally {

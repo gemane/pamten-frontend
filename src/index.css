@@ -718,25 +718,31 @@ body {
 
 .panel-link:hover { text-decoration: underline; }
 
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
 .expand-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  width: 100%;
-  margin-top: 20px;
+  flex: 1;
   padding: 10px;
   background: #4A90D9;
   color: #fff;
   border: none;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.expand-btn:hover { background: #357abd; }
+.expand-btn:hover:not(:disabled) { background: #357abd; }
+.expand-btn:disabled { opacity: 0.6; cursor: default; }
 
 /* ── Panel tabs (Overview / Timeline) ─────────────────── */
 .panel-tabs {
