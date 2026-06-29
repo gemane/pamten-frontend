@@ -189,6 +189,8 @@ export interface ScraperStatus {
   enabled: boolean
   sec_edgar_enabled: boolean
   open_corporates_enabled: boolean
+  bods_gleif_enabled?: boolean
+  bods_uk_psc_enabled?: boolean
 }
 
 export interface ScrapeResult {
@@ -197,6 +199,16 @@ export interface ScrapeResult {
   company?: string
   total: number
   scraped: Array<{ name: string; type: string }>
+}
+
+export interface BodsImportResult {
+  status: string
+  source: string
+  entities: number
+  persons: number
+  relationships: number
+  skipped: number
+  errors: number
 }
 
 // Country map types

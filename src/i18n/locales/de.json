@@ -112,6 +112,24 @@
     "statusDisabled": "deaktiviert",
     "statusError": "Fehler",
     "loadIntoGraph": "In Graph laden →",
-    "failed": "Scraping fehlgeschlagen."
+    "failed": "Scraping fehlgeschlagen.",
+    "bods": {
+      "title": "BODS Massenimport",
+      "subtitle": "Große Eigentümerdatensätze unter CC0 importieren",
+      "warning": "Große Downloads — GLEIF ≈ 1,1 GB · UK PSC ≈ 3,3 GB. Lokalen Dateipfad angeben, um den Download bei Wiederholungen zu überspringen.",
+      "gleifDesc": "Globale Rechtspersonen-Kennungen — weltweite Unternehmenseigentümerschaft",
+      "ukPscDesc": "Personen mit erheblichem Einfluss — in Großbritannien registrierte Unternehmen",
+      "limit": "Limit",
+      "limitHint": "Einträge (leer = gesamter Datensatz)",
+      "jurisdiction": "Länderfilter",
+      "jurisdictionHint": "ISO alpha-2 z. B. DE",
+      "localFile": "Lokale Datei",
+      "localFileHint": "/data/gleif.zip",
+      "run": "Importieren",
+      "running": "Importiert…",
+      "result": "{{entities}} Unternehmen · {{persons}} Personen · {{relationships}} Kanten",
+      "skipped": "{{count}} übersprungen",
+      "errors": "{{count}} Fehler"
+    }
   }
 }

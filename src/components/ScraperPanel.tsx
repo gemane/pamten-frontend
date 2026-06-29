@@ -1,19 +1,29 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader } from 'react-icons/fi'
+import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiAlertTriangle } from 'react-icons/fi'
 import {
   getScraperStatus, getScraperSources, toggleScraperSource,
   runScraper, runScraperSecEdgar, runScraperAll,
+  runBodsGleif, runBodsUkPsc,
 } from '../services/api'
-import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser } from '../types'
+import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser, BodsImportResult } from '../types'
 
 interface ScraperPanelProps {
   onLoadIntoGraph: (query: string) => void
   user: AuthUser | null
 }
 
-const TYPE_COLOR: Record<string, string>   = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
-const SOURCE_LABEL: Record<string, string> = { wikidata: 'Wikidata', sec_edgar: 'SEC EDGAR', open_corporates: 'OpenCorporates' }
+const TYPE_COLOR: Record<string, string> = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
+
+const SOURCE_LABEL: Record<string, string> = {
+  wikidata:       'Wikidata',
+  sec_edgar:      'SEC EDGAR',
+  open_corporates:'OpenCorporates',
+  bods_gleif:     'GLEIF',
+  bods_uk_psc:    'UK PSC',
+}
+
+// ── Source toggle ─────────────────────────────────────────────────────────────
 
 interface SourceToggleProps {
   source: ScraperSource
@@ -50,6 +60,8 @@ function SourceToggle({ source, onToggle, disabled }: SourceToggleProps) {
   )
 }
 
+// ── Query-scraper result components ───────────────────────────────────────────
+
 interface ResultData extends ScrapeResult {
   _source?: string
 }
@@ -85,21 +97,13 @@ function ResultList({ result }: { result: ResultData }) {
   )
 }
 
-interface AllResultEntry {
-  status: string
-  total?: number
-}
-
-interface AllResultData {
-  results?: Record<string, AllResultEntry>
-  _source?: string
-}
+interface AllResultEntry { status: string; total?: number }
+interface AllResultData  { results?: Record<string, AllResultEntry>; _source?: string }
 
 function AllResultList({ result }: { result: AllResultData }) {
   const { t } = useTranslation()
   const entries    = Object.entries(result.results || {})
   const totalNodes = entries.reduce((sum, [, r]) => sum + (r.total || 0), 0)
-
   return (
     <div className="scraper-result">
       <div className="scraper-result__summary">
@@ -123,21 +127,166 @@ function AllResultList({ result }: { result: AllResultData }) {
   )
 }
 
+// ── BODS import card ──────────────────────────────────────────────────────────
+
+interface BodsImportCardProps {
+  sourceKey:        'bods_gleif' | 'bods_uk_psc'
+  title:            string
+  descKey:          string
+  enabled:          boolean
+  showJurisdiction: boolean
+  onRun: (params: {
+    limit?: number
+    filter_jurisdiction?: string
+    local_file?: string
+  }) => Promise<BodsImportResult>
+}
+
+function BodsImportCard({
+  sourceKey, title, descKey, enabled, showJurisdiction, onRun,
+}: BodsImportCardProps) {
+  const { t } = useTranslation()
+
+  const [limit,        setLimit]        = useState<string>('')
+  const [jurisdiction, setJurisdiction] = useState<string>('')
+  const [localFile,    setLocalFile]    = useState<string>('')
+  const [running,      setRunning]      = useState<boolean>(false)
+  const [result,       setResult]       = useState<BodsImportResult | null>(null)
+  const [error,        setError]        = useState<string | null>(null)
+
+  const handleRun = async () => {
+    setRunning(true); setResult(null); setError(null)
+    try {
+      const params: { limit?: number; filter_jurisdiction?: string; local_file?: string } = {}
+      if (limit.trim())        params.limit               = parseInt(limit, 10)
+      if (jurisdiction.trim()) params.filter_jurisdiction = jurisdiction.trim().toUpperCase()
+      if (localFile.trim())    params.local_file          = localFile.trim()
+      const res = await onRun(params)
+      setResult(res)
+    } catch (e: unknown) {
+      const axiosErr = e as { response?: { data?: { detail?: string } } }
+      setError(axiosErr.response?.data?.detail || t('scraper.failed'))
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  return (
+    <div className={`scraper-bods-card ${!enabled ? 'scraper-bods-card--disabled' : ''}`}>
+      <div className="scraper-bods-card__header">
+        <span className="scraper-bods-card__name">{title}</span>
+        <span className={`scraper-bods-card__badge ${enabled ? 'scraper-bods-card__badge--on' : 'scraper-bods-card__badge--off'}`}>
+          {enabled ? t('scraper.masterOn') : t('scraper.masterOff')}
+        </span>
+      </div>
+      <p className="scraper-bods-card__desc">{t(descKey)}</p>
+
+      <div className="scraper-bods-card__params">
+        <div className="scraper-bods-card__field">
+          <label className="scraper-bods-card__label">{t('scraper.bods.limit')}</label>
+          <input
+            className="scraper-bods-card__input"
+            type="number"
+            min={1}
+            placeholder={t('scraper.bods.limitHint')}
+            value={limit}
+            onChange={e => setLimit(e.target.value)}
+            disabled={running || !enabled}
+          />
+        </div>
+
+        {showJurisdiction && (
+          <div className="scraper-bods-card__field">
+            <label className="scraper-bods-card__label">{t('scraper.bods.jurisdiction')}</label>
+            <input
+              className="scraper-bods-card__input scraper-bods-card__input--short"
+              type="text"
+              maxLength={2}
+              placeholder={t('scraper.bods.jurisdictionHint')}
+              value={jurisdiction}
+              onChange={e => setJurisdiction(e.target.value)}
+              disabled={running || !enabled}
+            />
+          </div>
+        )}
+
+        <div className="scraper-bods-card__field scraper-bods-card__field--wide">
+          <label className="scraper-bods-card__label">{t('scraper.bods.localFile')}</label>
+          <input
+            className="scraper-bods-card__input"
+            type="text"
+            placeholder={t('scraper.bods.localFileHint')}
+            value={localFile}
+            onChange={e => setLocalFile(e.target.value)}
+            disabled={running || !enabled}
+          />
+        </div>
+      </div>
+
+      <button
+        className="scraper-bods-card__run"
+        onClick={handleRun}
+        disabled={running || !enabled}
+      >
+        {running
+          ? <><FiLoader className="spin" /> {t('scraper.bods.running')}</>
+          : <><FiPlay /> {t('scraper.bods.run')}</>}
+      </button>
+
+      {error && (
+        <div className="scraper-error scraper-bods-card__error">
+          <FiAlertCircle /> {error}
+        </div>
+      )}
+
+      {result && (
+        <div className="scraper-bods-card__result">
+          <FiCheckCircle className="scraper-bods-card__result-icon" />
+          <div>
+            <div className="scraper-bods-card__result-line">
+              {t('scraper.bods.result', {
+                entities:      result.entities,
+                persons:       result.persons,
+                relationships: result.relationships,
+              })}
+            </div>
+            {(result.skipped > 0 || result.errors > 0) && (
+              <div className="scraper-bods-card__result-meta">
+                {result.skipped > 0 && (
+                  <span>{t('scraper.bods.skipped', { count: result.skipped })}</span>
+                )}
+                {result.errors > 0 && (
+                  <span className="scraper-bods-card__result-errors">
+                    {t('scraper.bods.errors', { count: result.errors })}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Main panel ────────────────────────────────────────────────────────────────
+
 export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProps) {
   const { t } = useTranslation()
   const isAdmin = user?.role === 'admin'
 
-  const [masterStatus,    setMasterStatus]    = useState<ScraperStatus | null>(null)
-  const [sources,         setSources]         = useState<ScraperSource[]>([])
-  const [query,           setQuery]           = useState<string>('')
-  const [depth,           setDepth]           = useState<number>(2)
-  const [selectedSource,  setSelectedSource]  = useState<string>('wikidata')
-  const [running,         setRunning]         = useState<boolean>(false)
-  const [result,          setResult]          = useState<(ResultData & AllResultData) | null>(null)
-  const [error,           setError]           = useState<string | null>(null)
+  const [masterStatus,   setMasterStatus]   = useState<ScraperStatus | null>(null)
+  const [sources,        setSources]        = useState<ScraperSource[]>([])
+  const [query,          setQuery]          = useState<string>('')
+  const [depth,          setDepth]          = useState<number>(2)
+  const [selectedSource, setSelectedSource] = useState<string>('wikidata')
+  const [running,        setRunning]        = useState<boolean>(false)
+  const [result,         setResult]         = useState<(ResultData & AllResultData) | null>(null)
+  const [error,          setError]          = useState<string | null>(null)
 
   useEffect(() => {
-    getScraperStatus().then(({ data }) => setMasterStatus(data)).catch(() => setMasterStatus({ enabled: false, sec_edgar_enabled: false, open_corporates_enabled: false }))
+    getScraperStatus().then(({ data }) => setMasterStatus(data))
+      .catch(() => setMasterStatus({ enabled: false, sec_edgar_enabled: false, open_corporates_enabled: false }))
     getScraperSources().then(({ data }) => setSources(data)).catch(() => setSources([]))
   }, [])
 
@@ -146,18 +295,23 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
     setSources(prev => prev.map(s => s.name === name ? { ...s, enabled: data.enabled } : s))
   }
 
-  const masterOn        = masterStatus?.enabled
-  const wikidataSource  = sources.find(s => s.name === 'wikidata')
-  const secEdgarSource  = sources.find(s => s.name === 'sec_edgar')
-  const wikidataOn      = wikidataSource?.enabled !== false
-  const secEdgarOn      = secEdgarSource?.enabled !== false && masterStatus?.sec_edgar_enabled !== false
+  const masterOn       = masterStatus?.enabled
+  const wikidataSource = sources.find(s => s.name === 'wikidata')
+  const secEdgarSource = sources.find(s => s.name === 'sec_edgar')
+  const wikidataOn     = wikidataSource?.enabled !== false
+  const secEdgarOn     = secEdgarSource?.enabled !== false && masterStatus?.sec_edgar_enabled !== false
 
-  const canRunWikidata  = isAdmin && masterOn && wikidataOn
-  const canRunSecEdgar  = isAdmin && masterOn && secEdgarOn
-  const canRunAll       = isAdmin && masterOn
+  const canRunWikidata = isAdmin && masterOn && wikidataOn
+  const canRunSecEdgar = isAdmin && masterOn && secEdgarOn
+  const canRunAll      = isAdmin && masterOn
   const canRun = selectedSource === 'wikidata'  ? canRunWikidata
                : selectedSource === 'sec_edgar' ? canRunSecEdgar
                : canRunAll
+
+  const gleifSource  = sources.find(s => s.name === 'bods_gleif')
+  const ukPscSource  = sources.find(s => s.name === 'bods_uk_psc')
+  const gleifEnabled = !!masterOn && !!masterStatus?.bods_gleif_enabled && gleifSource?.enabled !== false
+  const ukPscEnabled = !!masterOn && !!masterStatus?.bods_uk_psc_enabled && ukPscSource?.enabled !== false
 
   const handleRun = async () => {
     if (!query.trim()) return
@@ -248,7 +402,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         </div>
       )}
 
-      {/* Run form */}
+      {/* Query run form */}
       <div className="scraper-form">
         <input
           className="scraper-input"
@@ -293,6 +447,41 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
             {t('scraper.loadIntoGraph')}
           </button>
         </>
+      )}
+
+      {/* ── BODS bulk import ─────────────────────────────────────────────────── */}
+      {isAdmin && (
+        <div className="scraper-bods">
+          <div className="scraper-bods__divider" />
+
+          <div className="scraper-bods__header">
+            <h4 className="scraper-bods__title">{t('scraper.bods.title')}</h4>
+            <p className="scraper-bods__subtitle">{t('scraper.bods.subtitle')}</p>
+          </div>
+
+          <div className="scraper-bods__warning">
+            <FiAlertTriangle className="scraper-bods__warning-icon" />
+            {t('scraper.bods.warning')}
+          </div>
+
+          <BodsImportCard
+            sourceKey="bods_gleif"
+            title="GLEIF"
+            descKey="scraper.bods.gleifDesc"
+            enabled={gleifEnabled}
+            showJurisdiction
+            onRun={params => runBodsGleif(params).then(r => r.data)}
+          />
+
+          <BodsImportCard
+            sourceKey="bods_uk_psc"
+            title="UK PSC"
+            descKey="scraper.bods.ukPscDesc"
+            enabled={ukPscEnabled}
+            showJurisdiction={false}
+            onRun={params => runBodsUkPsc(params).then(r => r.data)}
+          />
+        </div>
       )}
     </div>
   )

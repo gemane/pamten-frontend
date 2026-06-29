@@ -112,6 +112,24 @@
     "statusDisabled": "disabled",
     "statusError": "error",
     "loadIntoGraph": "Load into graph →",
-    "failed": "Scrape failed."
+    "failed": "Scrape failed.",
+    "bods": {
+      "title": "BODS Bulk Import",
+      "subtitle": "Import large ownership datasets published under CC0",
+      "warning": "Large downloads — GLEIF ≈ 1.1 GB · UK PSC ≈ 3.3 GB. Provide a local file path to skip the download on retries.",
+      "gleifDesc": "Global legal entity identifiers — corporate ownership worldwide",
+      "ukPscDesc": "People with significant control — UK-registered companies",
+      "limit": "Limit",
+      "limitHint": "rows (blank = full dataset)",
+      "jurisdiction": "Country filter",
+      "jurisdictionHint": "ISO alpha-2 e.g. DE",
+      "localFile": "Local file",
+      "localFileHint": "/data/gleif.zip",
+      "run": "Import",
+      "running": "Importing…",
+      "result": "{{entities}} entities · {{persons}} persons · {{relationships}} edges",
+      "skipped": "{{count}} skipped",
+      "errors": "{{count}} errors"
+    }
   }
 }
