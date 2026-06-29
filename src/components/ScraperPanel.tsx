@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiAlertTriangle } from 'react-icons/fi'
 import {
   getScraperStatus, getScraperSources, toggleScraperSource,
-  runScraper, runScraperSecEdgar, runScraperAll,
+  runScraper, runScraperSecEdgar, runScraperOpenCorporates, runScraperAll,
   runBodsGleif, runBodsUkPsc,
 } from '../services/api'
 import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser, BodsImportResult } from '../types'
@@ -295,17 +295,21 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
     setSources(prev => prev.map(s => s.name === name ? { ...s, enabled: data.enabled } : s))
   }
 
-  const masterOn       = masterStatus?.enabled
-  const wikidataSource = sources.find(s => s.name === 'wikidata')
-  const secEdgarSource = sources.find(s => s.name === 'sec_edgar')
-  const wikidataOn     = wikidataSource?.enabled !== false
-  const secEdgarOn     = secEdgarSource?.enabled !== false && masterStatus?.sec_edgar_enabled !== false
+  const masterOn              = masterStatus?.enabled
+  const wikidataSource        = sources.find(s => s.name === 'wikidata')
+  const secEdgarSource        = sources.find(s => s.name === 'sec_edgar')
+  const openCorporatesSource  = sources.find(s => s.name === 'open_corporates')
+  const wikidataOn            = wikidataSource?.enabled !== false
+  const secEdgarOn            = secEdgarSource?.enabled !== false && masterStatus?.sec_edgar_enabled !== false
+  const openCorporatesOn      = openCorporatesSource?.enabled !== false && masterStatus?.open_corporates_enabled !== false
 
-  const canRunWikidata = isAdmin && masterOn && wikidataOn
-  const canRunSecEdgar = isAdmin && masterOn && secEdgarOn
-  const canRunAll      = isAdmin && masterOn
-  const canRun = selectedSource === 'wikidata'  ? canRunWikidata
-               : selectedSource === 'sec_edgar' ? canRunSecEdgar
+  const canRunWikidata        = isAdmin && masterOn && wikidataOn
+  const canRunSecEdgar        = isAdmin && masterOn && secEdgarOn
+  const canRunOpenCorporates  = isAdmin && masterOn && openCorporatesOn
+  const canRunAll             = isAdmin && masterOn
+  const canRun = selectedSource === 'wikidata'          ? canRunWikidata
+               : selectedSource === 'sec_edgar'         ? canRunSecEdgar
+               : selectedSource === 'open_corporates'   ? canRunOpenCorporates
                : canRunAll
 
   const gleifSource  = sources.find(s => s.name === 'bods_gleif')
@@ -322,6 +326,8 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         ;({ data } = await runScraper(query.trim(), depth))
       } else if (selectedSource === 'sec_edgar') {
         ;({ data } = await runScraperSecEdgar(query.trim()))
+      } else if (selectedSource === 'open_corporates') {
+        ;({ data } = await runScraperOpenCorporates(query.trim()))
       } else {
         ;({ data } = await runScraperAll(query.trim(), depth))
       }
@@ -335,8 +341,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
   }
 
   const runningLabel = running
-    ? selectedSource === 'wikidata'  ? t('scraper.runningWikidata')
-    : selectedSource === 'sec_edgar' ? t('scraper.runningSecEdgar')
+    ? selectedSource === 'wikidata'        ? t('scraper.runningWikidata')
+    : selectedSource === 'sec_edgar'       ? t('scraper.runningSecEdgar')
+    : selectedSource === 'open_corporates' ? t('scraper.runningOpenCorporates')
     : t('scraper.runningAll')
     : null
 
@@ -370,9 +377,10 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
           <div className="scraper-sources__label">{t('scraper.runSource')}</div>
           <div className="scraper-source-btns">
             {[
-              { key: 'wikidata',  label: 'Wikidata' },
-              { key: 'sec_edgar', label: 'SEC EDGAR' },
-              { key: 'all',       label: t('scraper.allSources') },
+              { key: 'wikidata',         label: 'Wikidata' },
+              { key: 'sec_edgar',        label: 'SEC EDGAR' },
+              { key: 'open_corporates',  label: 'OpenCorporates' },
+              { key: 'all',              label: t('scraper.allSources') },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -414,7 +422,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
           disabled={running || !canRun}
         />
 
-        {selectedSource !== 'sec_edgar' && (
+        {selectedSource !== 'sec_edgar' && selectedSource !== 'open_corporates' && (
           <div className="scraper-depth">
             <label className="scraper-depth__label">{t('scraper.depth')}</label>
             <div className="scraper-depth__options">

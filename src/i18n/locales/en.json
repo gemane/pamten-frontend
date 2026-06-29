@@ -106,6 +106,7 @@
     "run": "Run scraper",
     "runningWikidata": "Scraping Wikidata…",
     "runningSecEdgar": "Scraping SEC EDGAR…",
+    "runningOpenCorporates": "Scraping OpenCorporates…",
     "runningAll": "Scraping all sources…",
     "scraped": "Scraped <1>{{count}}</1> nodes",
     "allTotal": "All sources — <1>{{count}}</1> nodes total",

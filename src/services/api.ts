@@ -66,6 +66,9 @@ export const runScraper = (query: string, depth = 2): Promise<AxiosResponse<Scra
 export const runScraperSecEdgar = (company: string): Promise<AxiosResponse<ScrapeResult>> =>
   client.post('/scraper/sec-edgar/run', null, { params: { company } })
 
+export const runScraperOpenCorporates = (company: string): Promise<AxiosResponse<ScrapeResult>> =>
+  client.post('/scraper/open-corporates/run', null, { params: { company } })
+
 export const runScraperAll = (company: string, depth = 2): Promise<AxiosResponse<unknown>> =>
   client.post('/scraper/run-all', null, { params: { company, depth } })
 

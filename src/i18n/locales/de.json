@@ -106,6 +106,7 @@
     "run": "Scraper starten",
     "runningWikidata": "Wikidata wird abgerufen…",
     "runningSecEdgar": "SEC EDGAR wird abgerufen…",
+    "runningOpenCorporates": "OpenCorporates wird abgerufen…",
     "runningAll": "Alle Quellen werden abgerufen…",
     "scraped": "<1>{{count}}</1> Knoten abgerufen",
     "allTotal": "Alle Quellen — <1>{{count}}</1> Knoten gesamt",
