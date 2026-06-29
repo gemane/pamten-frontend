@@ -1643,6 +1643,51 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Graph export button ────────────────────────────────── */
+.graph-export {
+  position: absolute;
+  top: 12px;
+  right: 80px;
+  z-index: 10;
+}
+.graph-export__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(26, 26, 46, 0.92);
+  border: 1px solid #2d2d50;
+  border-radius: 8px;
+  color: #8892a4;
+  font-size: 13px;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.graph-export__btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+.graph-export__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #1a1a2e;
+  border: 1px solid #2d2d50;
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 130px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.graph-export__menu button {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #c0c8d8;
+  font-size: 13px;
+  cursor: pointer;
+}
+.graph-export__menu button:hover { background: #252545; color: #fff; }
+
 /* ── Graph threshold slider ────────────────────────────── */
 .graph-threshold {
   position: absolute;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiX } from 'react-icons/fi'
+import { FiX, FiDownload } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import type { GraphElement, NodeData } from '../types'
 
@@ -403,6 +403,75 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
     })
   }, [threshold, elements, centerId])
 
+  const [exportOpen, setExportOpen] = useState(false)
+
+  const centerLabel = elements.find(el => 'id' in el.data && el.data.id === centerId)
+    ?.data.label ?? 'graph'
+
+  const handleExportPng = () => {
+    const cy = cyRef.current
+    if (!cy) return
+    const uri = cy.png({ output: 'base64uri', bg: '#1a1a2e', full: true, scale: 2 })
+    const a = document.createElement('a')
+    a.href = uri
+    a.download = `${centerLabel}.png`
+    a.click()
+    setExportOpen(false)
+  }
+
+  const handleExportCsv = () => {
+    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+    // Build id → name lookup from node elements
+    const nameOf = new Map<string, string>()
+    for (const el of elements) {
+      const d = el.data as Record<string, unknown>
+      if (!('source' in d) && d.id && d.label) nameOf.set(d.id as string, d.label as string)
+    }
+
+    const edgeTypeLabel: Record<string, string> = {
+      owns:  'Ownership',
+      votes: 'Voting power',
+      role:  'Role',
+    }
+
+    const nodeRows = ['Name,Type,Sub-type,Country,Founded,Revenue (USD)']
+    const edgeRows = ['From,To,Relationship,Ownership type,Stake %,Voting power %']
+
+    for (const el of elements) {
+      const d = el.data as Record<string, unknown>
+      if ('source' in d) {
+        const from     = nameOf.get(d.source as string) ?? (d.source as string)
+        const to       = nameOf.get(d.target as string) ?? (d.target as string)
+        const rel      = edgeTypeLabel[d.edgeType as string] ?? cap(String(d.edgeType ?? ''))
+        const otype    = d.ownershipType ? cap(String(d.ownershipType)) : ''
+        const stake    = d.stakePct != null ? `${d.stakePct}%` : ''
+        const vote     = d.votingPowerPct != null ? `${d.votingPowerPct}%` : ''
+        edgeRows.push([from, to, rel, otype, stake, vote].map(escape).join(','))
+      } else {
+        const raw      = (d.raw ?? {}) as Record<string, unknown>
+        const type     = d.nodeType === 'person' ? 'Person' : cap(String(d.entitySubtype ?? d.nodeType ?? ''))
+        const subtype  = d.nodeType === 'person' ? '' : ''
+        const revenue  = raw.revenue != null
+          ? `$${((raw.revenue as number) / 1e9).toFixed(1)}B`
+          : ''
+        nodeRows.push([d.label, type, subtype, raw.country ?? '', raw.founded ?? '', revenue].map(escape).join(','))
+      }
+    }
+
+    const blob = new Blob(
+      [nodeRows.join('\n'), '\n\n', edgeRows.join('\n')],
+      { type: 'text/csv' },
+    )
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `${centerLabel}.csv`
+    a.click()
+    URL.revokeObjectURL(a.href)
+    setExportOpen(false)
+  }
+
   return (
     <div className="graph-wrapper">
       <div ref={containerRef} className="graph-canvas" onMouseLeave={() => setTooltip(null)} />
@@ -429,6 +498,20 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
         <button className="graph-clear-btn" onClick={onClear} title="Clear graph">
           <FiX /> Clear
         </button>
+      )}
+
+      {elements.length > 0 && (
+        <div className="graph-export">
+          <button className="graph-export__btn" onClick={() => setExportOpen(v => !v)} title="Export">
+            <FiDownload /> Export
+          </button>
+          {exportOpen && (
+            <div className="graph-export__menu">
+              <button onClick={handleExportPng}>PNG image</button>
+              <button onClick={handleExportCsv}>CSV data</button>
+            </div>
+          )}
+        </div>
       )}
 
       {elements.length > 0 && (
