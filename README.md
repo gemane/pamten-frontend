@@ -121,3 +121,14 @@ src/
 ## Deployment
 
 The app is deployed on Render as a static site built from this repo. Render runs `npm run build` and serves `dist/`. Any push to `main` triggers a redeploy.
+
+---
+
+## Licence
+
+Source code: [MIT Licence](LICENSE)
+
+The database content served by the Pamten API is licensed
+under [ODbL v1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+
+Built with assistance from Claude by Anthropic and Claude Code CLI.
