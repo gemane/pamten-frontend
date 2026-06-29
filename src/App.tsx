@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from './i18n'
 import { FiSearch, FiDatabase, FiGlobe, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi'
 import SearchBar    from './components/SearchBar'
 import Breadcrumb   from './components/Breadcrumb'
@@ -207,8 +209,36 @@ interface ToastState {
   type: string
 }
 
+const LANGS = [
+  { code: 'en', label: 'EN' },
+  { code: 'de', label: 'DE' },
+  { code: 'es', label: 'ES' },
+]
+
+function LangSwitcher() {
+  const { i18n: i } = useTranslation()
+  const change = (code: string) => {
+    i.changeLanguage(code)
+    localStorage.setItem('lang', code)
+  }
+  return (
+    <div className="lang-switcher">
+      {LANGS.map(l => (
+        <button
+          key={l.code}
+          className={`lang-btn ${i.language === l.code ? 'lang-btn--active' : ''}`}
+          onClick={() => change(l.code)}
+        >
+          {l.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function AppInner() {
   const { user, logout } = useAuth()
+  const { t } = useTranslation()
   const [showAuth, setShowAuth] = useState<boolean>(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
 
@@ -474,6 +504,8 @@ function AppInner() {
             </button>
             </div>
 
+            <LangSwitcher />
+
             {user ? (
               <div className="user-badge">
                 <FiUser />
@@ -483,13 +515,13 @@ function AppInner() {
                 <span className={`user-badge__role user-badge__role--${user.role}`}>
                   {user.role}
                 </span>
-                <button className="user-badge__logout" onClick={logout} title="Sign out">
+                <button className="user-badge__logout" onClick={logout} title={t('nav.logout')}>
                   <FiLogOut />
                 </button>
               </div>
             ) : (
               <button className="login-btn" onClick={() => setShowAuth(true)}>
-                <FiLogIn /> Sign in
+                <FiLogIn /> {t('nav.login')}
               </button>
             )}
           </div>

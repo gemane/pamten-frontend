@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiX, FiDownload } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import type { GraphElement, NodeData } from '../types'
@@ -268,6 +269,7 @@ interface GraphProps {
 }
 
 export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onNavigateTo, onToast }: GraphProps) {
+  const { t } = useTranslation()
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
@@ -301,9 +303,9 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       const me  = evt.originalEvent as MouseEvent
       const lines: string[] = [d.label]
       if (d.entitySubtype)    lines.push(d.entitySubtype.charAt(0).toUpperCase() + d.entitySubtype.slice(1))
-      if (d.raw?.country)     lines.push(`Country: ${d.raw.country}`)
-      if (d.raw?.founded)     lines.push(`Founded: ${d.raw.founded}`)
-      if (d.raw?.revenue)     lines.push(`Revenue: $${(d.raw.revenue / 1e9).toFixed(1)}B`)
+      if (d.raw?.country)     lines.push(`${t('panel.country')}: ${d.raw.country}`)
+      if (d.raw?.founded)     lines.push(`${t('panel.founded')}: ${d.raw.founded}`)
+      if (d.raw?.revenue)     lines.push(`${t('panel.revenue')}: $${(d.raw.revenue / 1e9).toFixed(1)}B`)
       if (d.raw?.description) lines.push(d.raw.description.slice(0, 80) + (d.raw.description.length > 80 ? '…' : ''))
       setTooltip({ x: me.clientX, y: me.clientY, lines })
     })
@@ -313,11 +315,11 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       const me  = evt.originalEvent as MouseEvent
       const lines: string[] = []
       if (d.edgeType === 'role') {
-        lines.push(`Role: ${d.label}`)
+        lines.push(`${t('tooltip.role')}: ${d.label}`)
       } else {
-        if (d.ownershipType) lines.push(`Type: ${d.ownershipType}`)
-        if (d.stakePct != null) lines.push(`Stake: ${d.stakePct}%`)
-        if (d.votingPowerPct != null) lines.push(`Voting power: ${d.votingPowerPct}%`)
+        if (d.ownershipType)     lines.push(`${t('tooltip.type')}: ${d.ownershipType}`)
+        if (d.stakePct != null)  lines.push(`${t('tooltip.stake')}: ${d.stakePct}%`)
+        if (d.votingPowerPct != null) lines.push(`${t('tooltip.votingPower')}: ${d.votingPowerPct}%`)
       }
       if (lines.length > 0) setTooltip({ x: me.clientX, y: me.clientY, lines })
     })
@@ -431,13 +433,13 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
     }
 
     const edgeTypeLabel: Record<string, string> = {
-      owns:  'Ownership',
-      votes: 'Voting power',
-      role:  'Role',
+      owns:  t('csv.relOwnership'),
+      votes: t('csv.relVoting'),
+      role:  t('csv.relRole'),
     }
 
-    const nodeRows = ['Name,Type,Sub-type,Country,Founded,Revenue (USD)']
-    const edgeRows = ['From,To,Relationship,Ownership type,Stake %,Voting power %']
+    const nodeRows = [[t('csv.name'), t('csv.type'), t('csv.subtype'), t('csv.country'), t('csv.founded'), t('csv.revenue')].join(',')]
+    const edgeRows = [[t('csv.from'), t('csv.to'), t('csv.relationship'), t('csv.ownershipType'), t('csv.stakePct'), t('csv.votingPct')].join(',')]
 
     for (const el of elements) {
       const d = el.data as Record<string, unknown>
@@ -445,13 +447,17 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
         const from     = nameOf.get(d.source as string) ?? (d.source as string)
         const to       = nameOf.get(d.target as string) ?? (d.target as string)
         const rel      = edgeTypeLabel[d.edgeType as string] ?? cap(String(d.edgeType ?? ''))
-        const otype    = d.ownershipType ? cap(String(d.ownershipType)) : ''
+        const otype    = d.ownershipType
+          ? (t(`ownershipType.${d.ownershipType}`, { defaultValue: '' }) || cap(String(d.ownershipType)))
+          : ''
         const stake    = d.stakePct != null ? `${d.stakePct}%` : ''
         const vote     = d.votingPowerPct != null ? `${d.votingPowerPct}%` : ''
         edgeRows.push([from, to, rel, otype, stake, vote].map(escape).join(','))
       } else {
         const raw      = (d.raw ?? {}) as Record<string, unknown>
-        const type     = d.nodeType === 'person' ? 'Person' : cap(String(d.entitySubtype ?? d.nodeType ?? ''))
+        const type     = d.nodeType === 'person'
+          ? t('legend.person')
+          : (t(`legend.${d.entitySubtype ?? d.nodeType ?? ''}`, { defaultValue: '' }) || cap(String(d.entitySubtype ?? d.nodeType ?? '')))
         const subtype  = d.nodeType === 'person' ? '' : ''
         const revenue  = raw.revenue != null
           ? `$${((raw.revenue as number) / 1e9).toFixed(1)}B`
@@ -479,7 +485,7 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       {elements.length === 0 && (
         <div className="graph-welcome">
           <div className="graph-welcome__logo">Pamten</div>
-          <p className="graph-welcome__tagline">Map the world's corporate ownership</p>
+          <p className="graph-welcome__tagline">{t('graph.tagline')}</p>
           <div className="graph-welcome__chips">
             {EXAMPLE_QUERIES.map(name => (
               <button
@@ -495,20 +501,20 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       )}
 
       {onClear && (
-        <button className="graph-clear-btn" onClick={onClear} title="Clear graph">
-          <FiX /> Clear
+        <button className="graph-clear-btn" onClick={onClear} title={t('graph.clear')}>
+          <FiX /> {t('graph.clear')}
         </button>
       )}
 
       {elements.length > 0 && (
         <div className="graph-export">
-          <button className="graph-export__btn" onClick={() => setExportOpen(v => !v)} title="Export">
-            <FiDownload /> Export
+          <button className="graph-export__btn" onClick={() => setExportOpen(v => !v)} title={t('graph.export')}>
+            <FiDownload /> {t('graph.export')}
           </button>
           {exportOpen && (
             <div className="graph-export__menu">
-              <button onClick={handleExportPng}>PNG image</button>
-              <button onClick={handleExportCsv}>CSV data</button>
+              <button onClick={handleExportPng}>{t('graph.exportPng')}</button>
+              <button onClick={handleExportCsv}>{t('graph.exportCsv')}</button>
             </div>
           )}
         </div>
@@ -516,7 +522,7 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
 
       {elements.length > 0 && (
         <div className="graph-threshold">
-          <span className="graph-threshold__label">Min stake: {threshold}%</span>
+          <span className="graph-threshold__label">{t('graph.minStake', { value: threshold })}</span>
           <input
             className="graph-threshold__slider"
             type="range" min={0} max={25} step={1} value={threshold}

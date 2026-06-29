@@ -1643,6 +1643,25 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Language switcher ──────────────────────────────────── */
+.lang-switcher {
+  display: flex;
+  gap: 2px;
+}
+.lang-btn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: #8892a4;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 7px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+.lang-btn:hover { color: #fff; }
+.lang-btn--active { color: #fff; border-color: #4A90D9; background: rgba(74,144,217,0.15); }
+
 /* ── Graph export button ────────────────────────────────── */
 .graph-export {
   position: absolute;

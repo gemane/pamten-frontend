@@ -1,0 +1,117 @@
+{
+  "nav": {
+    "graph": "Grafo",
+    "map": "Mapa",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión"
+  },
+  "search": {
+    "placeholder": "Buscar empresas, marcas, personas…"
+  },
+  "graph": {
+    "tagline": "Mapea la propiedad corporativa mundial",
+    "clear": "Limpiar",
+    "export": "Exportar",
+    "exportPng": "Imagen PNG",
+    "exportCsv": "Datos CSV",
+    "minStake": "Mín. participación: {{value}}%",
+    "expandGraph": "Ampliar grafo",
+    "openAsCenter": "Abrir como centro"
+  },
+  "legend": {
+    "nodes": "Nodos",
+    "company": "Empresa",
+    "brand": "Marca",
+    "holding": "Holding",
+    "person": "Persona",
+    "ownership": "Propiedad (participación económica)",
+    "fullMajority": "Total / Mayoría",
+    "minority": "Minoría",
+    "controlling": "Control",
+    "votingPower": "Poder de voto",
+    "role": "Rol",
+    "edgeWidth": "Grosor de arista",
+    "lowPct": "% bajo",
+    "highPct": "% alto"
+  },
+  "panel": {
+    "empty": "Haz clic en cualquier nodo del grafo\npara ver sus detalles aquí",
+    "overview": "Resumen",
+    "timeline": "Cronología",
+    "nationality": "Nacionalidad",
+    "country": "País",
+    "founded": "Fundada",
+    "revenue": "Ingresos",
+    "hq": "Sede",
+    "ownedBy": "Propietarios",
+    "subsidiaries": "Filiales",
+    "executives": "Directivos",
+    "wikipedia": "Wikipedia"
+  },
+  "csv": {
+    "name": "Nombre",
+    "type": "Tipo",
+    "subtype": "Subtipo",
+    "country": "País",
+    "founded": "Fundada",
+    "revenue": "Ingresos (USD)",
+    "from": "De",
+    "to": "A",
+    "relationship": "Relación",
+    "ownershipType": "Tipo de propiedad",
+    "stakePct": "Participación %",
+    "votingPct": "Poder de voto %",
+    "relOwnership": "Propiedad",
+    "relVoting": "Poder de voto",
+    "relRole": "Rol"
+  },
+  "ownershipType": {
+    "full": "Total",
+    "majority": "Mayoría",
+    "minority": "Minoría",
+    "controlling": "Control",
+    "owned": "Participación"
+  },
+  "tooltip": {
+    "type": "Tipo",
+    "stake": "Participación",
+    "votingPower": "Poder de voto",
+    "role": "Rol"
+  },
+  "timeline": {
+    "acquiredBy": "Adquirido por",
+    "acquired": "Adquirido",
+    "executive": "Directivo",
+    "active": "Activo",
+    "until": "hasta {{year}}",
+    "noDate": "Sin fecha registrada",
+    "loading": "Cargando cronología…",
+    "error": "No se pudo cargar la cronología.",
+    "empty": "Aún no hay datos históricos.",
+    "emptyHint": "Las fechas se registran cuando las relaciones se crean manualmente o mediante el scraper."
+  },
+  "scraper": {
+    "title": "Scraper",
+    "masterOn": "Master activo",
+    "masterOff": "Master inactivo",
+    "description": "Importar datos de propiedad corporativa de fuentes externas al grafo.",
+    "signInRequired": "Inicia sesión como administrador para usar el scraper.",
+    "adminRequired": "Solo los administradores pueden usar el scraper. Tu rol es {{role}}.",
+    "enableRequired": "Establece SCRAPER_ENABLED=true en Render para activarlo.",
+    "runSource": "Ejecutar fuente",
+    "allSources": "Todas las fuentes",
+    "sourceToggles": "Activar fuentes",
+    "placeholder": "Nombre de empresa (ej. Tesla)",
+    "depth": "Profundidad",
+    "run": "Ejecutar scraper",
+    "runningWikidata": "Consultando Wikidata…",
+    "runningSecEdgar": "Consultando SEC EDGAR…",
+    "runningAll": "Consultando todas las fuentes…",
+    "scraped": "<1>{{count}}</1> nodos extraídos",
+    "allTotal": "Todas las fuentes — <1>{{count}}</1> nodos en total",
+    "statusDisabled": "desactivado",
+    "statusError": "error",
+    "loadIntoGraph": "Cargar en grafo →",
+    "failed": "Error en el scraping."
+  }
+}

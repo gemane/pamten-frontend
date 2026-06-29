@@ -1,0 +1,117 @@
+{
+  "nav": {
+    "graph": "Graph",
+    "map": "Map",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "search": {
+    "placeholder": "Search companies, brands, people…"
+  },
+  "graph": {
+    "tagline": "Map the world's corporate ownership",
+    "clear": "Clear",
+    "export": "Export",
+    "exportPng": "PNG image",
+    "exportCsv": "CSV data",
+    "minStake": "Min stake: {{value}}%",
+    "expandGraph": "Expand graph",
+    "openAsCenter": "Open as center"
+  },
+  "legend": {
+    "nodes": "Nodes",
+    "company": "Company",
+    "brand": "Brand",
+    "holding": "Holding",
+    "person": "Person",
+    "ownership": "Ownership (economic stake)",
+    "fullMajority": "Full / Majority",
+    "minority": "Minority",
+    "controlling": "Controlling",
+    "votingPower": "Voting power",
+    "role": "Role",
+    "edgeWidth": "Edge width",
+    "lowPct": "Low %",
+    "highPct": "High %"
+  },
+  "panel": {
+    "empty": "Click any node in the graph\nto see its details here",
+    "overview": "Overview",
+    "timeline": "Timeline",
+    "nationality": "Nationality",
+    "country": "Country",
+    "founded": "Founded",
+    "revenue": "Revenue",
+    "hq": "HQ",
+    "ownedBy": "Owned by",
+    "subsidiaries": "Subsidiaries",
+    "executives": "Executives",
+    "wikipedia": "Wikipedia"
+  },
+  "csv": {
+    "name": "Name",
+    "type": "Type",
+    "subtype": "Sub-type",
+    "country": "Country",
+    "founded": "Founded",
+    "revenue": "Revenue (USD)",
+    "from": "From",
+    "to": "To",
+    "relationship": "Relationship",
+    "ownershipType": "Ownership type",
+    "stakePct": "Stake %",
+    "votingPct": "Voting power %",
+    "relOwnership": "Ownership",
+    "relVoting": "Voting power",
+    "relRole": "Role"
+  },
+  "ownershipType": {
+    "full": "Full",
+    "majority": "Majority",
+    "minority": "Minority",
+    "controlling": "Controlling",
+    "owned": "Owned"
+  },
+  "tooltip": {
+    "type": "Type",
+    "stake": "Stake",
+    "votingPower": "Voting power",
+    "role": "Role"
+  },
+  "timeline": {
+    "acquiredBy": "Acquired by",
+    "acquired": "Acquired",
+    "executive": "Executive",
+    "active": "Active",
+    "until": "until {{year}}",
+    "noDate": "No date recorded",
+    "loading": "Loading timeline…",
+    "error": "Could not load timeline.",
+    "empty": "No historical data yet.",
+    "emptyHint": "Dates are recorded when relationships are created manually or via the scraper."
+  },
+  "scraper": {
+    "title": "Scraper",
+    "masterOn": "Master on",
+    "masterOff": "Master off",
+    "description": "Import corporate ownership data from external sources into the graph.",
+    "signInRequired": "Sign in as admin to use the scraper.",
+    "adminRequired": "Only admins can run the scraper. Your role is {{role}}.",
+    "enableRequired": "Set SCRAPER_ENABLED=true in Render to activate.",
+    "runSource": "Run source",
+    "allSources": "All sources",
+    "sourceToggles": "Source toggles",
+    "placeholder": "Company name (e.g. Tesla)",
+    "depth": "Depth",
+    "run": "Run scraper",
+    "runningWikidata": "Scraping Wikidata…",
+    "runningSecEdgar": "Scraping SEC EDGAR…",
+    "runningAll": "Scraping all sources…",
+    "scraped": "Scraped <1>{{count}}</1> nodes",
+    "allTotal": "All sources — <1>{{count}}</1> nodes total",
+    "statusDisabled": "disabled",
+    "statusError": "error",
+    "loadIntoGraph": "Load into graph →",
+    "failed": "Scrape failed."
+  }
+}

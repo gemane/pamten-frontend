@@ -1,0 +1,117 @@
+{
+  "nav": {
+    "graph": "Graph",
+    "map": "Karte",
+    "login": "Anmelden",
+    "logout": "Abmelden"
+  },
+  "search": {
+    "placeholder": "Unternehmen, Marken, Personen suchen…"
+  },
+  "graph": {
+    "tagline": "Die globale Unternehmensstruktur kartieren",
+    "clear": "Löschen",
+    "export": "Exportieren",
+    "exportPng": "PNG-Bild",
+    "exportCsv": "CSV-Daten",
+    "minStake": "Min. Anteil: {{value}}%",
+    "expandGraph": "Graph erweitern",
+    "openAsCenter": "Als Zentrum öffnen"
+  },
+  "legend": {
+    "nodes": "Knoten",
+    "company": "Unternehmen",
+    "brand": "Marke",
+    "holding": "Holding",
+    "person": "Person",
+    "ownership": "Eigentümerschaft (wirtschaftlicher Anteil)",
+    "fullMajority": "Vollständig / Mehrheit",
+    "minority": "Minderheit",
+    "controlling": "Kontrollierend",
+    "votingPower": "Stimmrecht",
+    "role": "Rolle",
+    "edgeWidth": "Kantenbreite",
+    "lowPct": "Niedriger %",
+    "highPct": "Hoher %"
+  },
+  "panel": {
+    "empty": "Klicken Sie auf einen Knoten im Graph,\num die Details hier zu sehen",
+    "overview": "Übersicht",
+    "timeline": "Zeitverlauf",
+    "nationality": "Nationalität",
+    "country": "Land",
+    "founded": "Gegründet",
+    "revenue": "Umsatz",
+    "hq": "Hauptsitz",
+    "ownedBy": "Gehört zu",
+    "subsidiaries": "Tochtergesellschaften",
+    "executives": "Führungskräfte",
+    "wikipedia": "Wikipedia"
+  },
+  "csv": {
+    "name": "Name",
+    "type": "Typ",
+    "subtype": "Untertyp",
+    "country": "Land",
+    "founded": "Gegründet",
+    "revenue": "Umsatz (USD)",
+    "from": "Von",
+    "to": "Nach",
+    "relationship": "Beziehung",
+    "ownershipType": "Eigentumsart",
+    "stakePct": "Anteil %",
+    "votingPct": "Stimmrecht %",
+    "relOwnership": "Eigentümerschaft",
+    "relVoting": "Stimmrecht",
+    "relRole": "Rolle"
+  },
+  "ownershipType": {
+    "full": "Vollständig",
+    "majority": "Mehrheit",
+    "minority": "Minderheit",
+    "controlling": "Kontrollierend",
+    "owned": "Beteiligung"
+  },
+  "tooltip": {
+    "type": "Typ",
+    "stake": "Anteil",
+    "votingPower": "Stimmrecht",
+    "role": "Rolle"
+  },
+  "timeline": {
+    "acquiredBy": "Erworben von",
+    "acquired": "Erworben",
+    "executive": "Führungskraft",
+    "active": "Aktiv",
+    "until": "bis {{year}}",
+    "noDate": "Kein Datum erfasst",
+    "loading": "Zeitverlauf wird geladen…",
+    "error": "Zeitverlauf konnte nicht geladen werden.",
+    "empty": "Noch keine historischen Daten.",
+    "emptyHint": "Daten werden erfasst, wenn Beziehungen manuell oder über den Scraper angelegt werden."
+  },
+  "scraper": {
+    "title": "Scraper",
+    "masterOn": "Master aktiv",
+    "masterOff": "Master inaktiv",
+    "description": "Unternehmensdaten aus externen Quellen in den Graph importieren.",
+    "signInRequired": "Als Admin anmelden, um den Scraper zu verwenden.",
+    "adminRequired": "Nur Admins können den Scraper nutzen. Ihre Rolle ist {{role}}.",
+    "enableRequired": "Setzen Sie SCRAPER_ENABLED=true in Render, um den Scraper zu aktivieren.",
+    "runSource": "Quelle ausführen",
+    "allSources": "Alle Quellen",
+    "sourceToggles": "Quellen-Schalter",
+    "placeholder": "Unternehmensname (z. B. Tesla)",
+    "depth": "Tiefe",
+    "run": "Scraper starten",
+    "runningWikidata": "Wikidata wird abgerufen…",
+    "runningSecEdgar": "SEC EDGAR wird abgerufen…",
+    "runningAll": "Alle Quellen werden abgerufen…",
+    "scraped": "<1>{{count}}</1> Knoten abgerufen",
+    "allTotal": "Alle Quellen — <1>{{count}}</1> Knoten gesamt",
+    "statusDisabled": "deaktiviert",
+    "statusError": "Fehler",
+    "loadIntoGraph": "In Graph laden →",
+    "failed": "Scraping fehlgeschlagen."
+  }
+}

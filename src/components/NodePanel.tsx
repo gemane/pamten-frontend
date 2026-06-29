@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiNavigation, FiList, FiClock, FiLoader, FiPlusCircle } from 'react-icons/fi'
 import { getFullProfile } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
@@ -95,21 +96,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function PersonView({ raw, onNavigateTo, isCenter }: { raw: Person; onNavigateTo?: (nodeData: NodeData) => void; isCenter?: boolean }) {
+  const { t } = useTranslation()
   const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
   return (
     <div className="panel-body">
       {imgSrc && (
         <img className="panel-avatar" src={imgSrc} alt={raw.full_name} />
       )}
-      <span className="node-type-badge node-type-badge--person">Person</span>
+      <span className="node-type-badge node-type-badge--person">{t('legend.person')}</span>
       <h2 className="panel-name">{raw.full_name}</h2>
       {raw.description && <p className="panel-desc">{raw.description}</p>}
       <div className="panel-meta">
-        <MetaRow icon={FiMapPin} label="Nationality" value={raw.nationality} />
+        <MetaRow icon={FiMapPin} label={t('panel.nationality')} value={raw.nationality} />
       </div>
       {raw.wikipedia_url && (
         <a className="panel-link" href={raw.wikipedia_url} target="_blank" rel="noreferrer">
-          <FiExternalLink /> Wikipedia
+          <FiExternalLink /> {t('panel.wikipedia')}
         </a>
       )}
       {!isCenter && onNavigateTo && (
@@ -117,7 +119,7 @@ function PersonView({ raw, onNavigateTo, isCenter }: { raw: Person; onNavigateTo
           className="expand-btn"
           onClick={() => onNavigateTo({ id: raw.id, label: raw.full_name, nodeType: 'person', raw })}
         >
-          <FiNavigation /> Open as center
+          <FiNavigation /> {t('graph.openAsCenter')}
         </button>
       )}
     </div>
@@ -133,6 +135,7 @@ interface EntityOverviewProps {
 }
 
 function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter }: EntityOverviewProps) {
+  const { t } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
@@ -145,22 +148,22 @@ function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter
         <img className="panel-logo" src={imgSrc} alt={entity.name} />
       )}
       <span className={`node-type-badge node-type-badge--${entity.type || 'company'}`}>
-        {entity.type || 'company'}
+        {t(`legend.${entity.type || 'company'}`, { defaultValue: entity.type || 'company' })}
       </span>
       <h2 className="panel-name">{entity.name}</h2>
       {entity.description && <p className="panel-desc">{entity.description}</p>}
 
       <div className="panel-meta">
-        <MetaRow icon={FiMapPin}     label="Country"  value={entity.country} />
-        <MetaRow icon={FiCalendar}   label="Founded"  value={entity.founded} />
-        <MetaRow icon={FiDollarSign} label="Revenue"  value={entity.revenue != null ? fmt(entity.revenue) : null} />
+        <MetaRow icon={FiMapPin}     label={t('panel.country')}  value={entity.country} />
+        <MetaRow icon={FiCalendar}   label={t('panel.founded')}  value={entity.founded} />
+        <MetaRow icon={FiDollarSign} label={t('panel.revenue')}  value={entity.revenue != null ? fmt(entity.revenue) : null} />
         {headquarters && (
-          <MetaRow icon={FiMapPin} label="HQ" value={`${headquarters.city}, ${headquarters.country}`} />
+          <MetaRow icon={FiMapPin} label={t('panel.hq')} value={`${headquarters.city}, ${headquarters.country}`} />
         )}
       </div>
 
       {owners.length > 0 && (
-        <Section title="Owned by">
+        <Section title={t('panel.ownedBy')}>
           {owners.map((o, i) => (
             <div key={i} className="rel-item">
               <span className="rel-item__name">{o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}</span>
@@ -175,7 +178,7 @@ function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter
       )}
 
       {subsidiaries.length > 0 && (
-        <Section title="Subsidiaries">
+        <Section title={t('panel.subsidiaries')}>
           {subsidiaries.map((s, i) => (
             <div key={i} className="rel-item">
               <span className="rel-item__name">{s.entity.name}</span>
@@ -186,7 +189,7 @@ function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter
       )}
 
       {executives.length > 0 && (
-        <Section title="Executives">
+        <Section title={t('panel.executives')}>
           {executives.map((e, i) => (
             <div key={i} className="rel-item">
               <span className="rel-item__name">{e.person.full_name}</span>
@@ -206,7 +209,7 @@ function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter
             {expandingId === entity.id
               ? <FiLoader className="spin" />
               : <FiPlusCircle />}
-            {' '}Expand graph
+            {' '}{t('graph.expandGraph')}
           </button>
         )}
         {!isCenter && onNavigateTo && (
@@ -214,7 +217,7 @@ function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter
             className="expand-btn"
             onClick={() => onNavigateTo({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: profile.entity })}
           >
-            <FiNavigation /> Open as center
+            <FiNavigation /> {t('graph.openAsCenter')}
           </button>
         )}
       </div>
@@ -223,25 +226,27 @@ function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter
 }
 
 function PanelTabs({ active, onChange }: { active: string; onChange: (tab: string) => void }) {
+  const { t } = useTranslation()
   return (
     <div className="panel-tabs">
       <button
         className={`panel-tab ${active === 'overview' ? 'panel-tab--active' : ''}`}
         onClick={() => onChange('overview')}
       >
-        <FiList /> Overview
+        <FiList /> {t('panel.overview')}
       </button>
       <button
         className={`panel-tab ${active === 'timeline' ? 'panel-tab--active' : ''}`}
         onClick={() => onChange('timeline')}
       >
-        <FiClock /> Timeline
+        <FiClock /> {t('panel.timeline')}
       </button>
     </div>
   )
 }
 
 export default function NodePanel({ node, onExpand, expandingId, onNavigateTo, centerId }: NodePanelProps) {
+  const { t } = useTranslation()
   const [profile,     setProfile]     = useState<FullProfile | null>(null)
   const [loading,     setLoading]     = useState<boolean>(false)
   const [activeView,  setActiveView]  = useState<string>('overview')
@@ -264,7 +269,7 @@ export default function NodePanel({ node, onExpand, expandingId, onNavigateTo, c
     return (
       <div className="panel-empty">
         <div className="panel-empty-icon">◈</div>
-        <p>Click any node in the graph<br />to see its details here</p>
+        <p>{t('panel.empty').split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}</p>
       </div>
     )
   }

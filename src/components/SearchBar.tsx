@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiSearch, FiX } from 'react-icons/fi'
 import { search } from '../services/api'
 import type { SearchResult } from '../types'
@@ -10,6 +11,7 @@ interface SearchBarProps {
 }
 
 export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
+  const { t } = useTranslation()
   const [query, setQuery]     = useState<string>('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [open, setOpen]       = useState<boolean>(false)
@@ -99,7 +101,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
           ref={inputRef}
           className="search-input"
           type="text"
-          placeholder="Search companies, brands, people…"
+          placeholder={t('search.placeholder')}
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}

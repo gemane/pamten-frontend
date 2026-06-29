@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader } from 'react-icons/fi'
 import {
   getScraperStatus, getScraperSources, toggleScraperSource,
@@ -21,6 +22,7 @@ interface SourceToggleProps {
 }
 
 function SourceToggle({ source, onToggle, disabled }: SourceToggleProps) {
+  const { t } = useTranslation()
   const [busy, setBusy] = useState<boolean>(false)
 
   const handle = async () => {
@@ -40,7 +42,7 @@ function SourceToggle({ source, onToggle, disabled }: SourceToggleProps) {
         className={`source-toggle ${source.enabled ? 'source-toggle--on' : 'source-toggle--off'}`}
         onClick={handle}
         disabled={disabled || busy}
-        title={source.enabled ? 'Disable' : 'Enable'}
+        title={source.enabled ? t('scraper.masterOn') : t('scraper.masterOff')}
       >
         <span className="source-toggle__knob" />
       </button>
@@ -53,14 +55,15 @@ interface ResultData extends ScrapeResult {
 }
 
 function ResultList({ result }: { result: ResultData }) {
+  const { t } = useTranslation()
   const byType = result.scraped.reduce<Record<string, number>>((acc, e) => {
-    const t = e.type || 'company'; acc[t] = (acc[t] || 0) + 1; return acc
+    const tp = e.type || 'company'; acc[tp] = (acc[tp] || 0) + 1; return acc
   }, {})
   return (
     <div className="scraper-result">
       <div className="scraper-result__summary">
         <FiCheckCircle className="scraper-result__icon" />
-        <span>Scraped <strong>{result.total}</strong> nodes</span>
+        <span>{t('scraper.scraped', { count: result.total }).replace('<1>', '').replace('</1>', '')}</span>
       </div>
       <div className="scraper-result__types">
         {Object.entries(byType).map(([type, count]) => (
@@ -93,14 +96,15 @@ interface AllResultData {
 }
 
 function AllResultList({ result }: { result: AllResultData }) {
-  const entries = Object.entries(result.results || {})
+  const { t } = useTranslation()
+  const entries    = Object.entries(result.results || {})
   const totalNodes = entries.reduce((sum, [, r]) => sum + (r.total || 0), 0)
 
   return (
     <div className="scraper-result">
       <div className="scraper-result__summary">
         <FiCheckCircle className="scraper-result__icon" />
-        <span>All sources — <strong>{totalNodes}</strong> nodes total</span>
+        <span>{t('scraper.allTotal', { count: totalNodes }).replace('<1>', '').replace('</1>', '')}</span>
       </div>
       <div className="scraper-all-sources">
         {entries.map(([key, res]) => (
@@ -108,8 +112,8 @@ function AllResultList({ result }: { result: AllResultData }) {
             <span className="scraper-source-result__name">{SOURCE_LABEL[key] || key}</span>
             <span className="scraper-source-result__count">
               {res.status === 'ok'       ? `${res.total} nodes`
-               : res.status === 'disabled' ? 'disabled'
-               : res.status === 'error'    ? 'error'
+               : res.status === 'disabled' ? t('scraper.statusDisabled')
+               : res.status === 'error'    ? t('scraper.statusError')
                : res.status}
             </span>
           </div>
@@ -120,6 +124,7 @@ function AllResultList({ result }: { result: AllResultData }) {
 }
 
 export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProps) {
+  const { t } = useTranslation()
   const isAdmin = user?.role === 'admin'
 
   const [masterStatus,    setMasterStatus]    = useState<ScraperStatus | null>(null)
@@ -169,53 +174,51 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       setResult({ ...(data as ResultData & AllResultData), _source: selectedSource })
     } catch (e: unknown) {
       const axiosErr = e as { response?: { data?: { detail?: string } } }
-      setError(axiosErr.response?.data?.detail || 'Scrape failed.')
+      setError(axiosErr.response?.data?.detail || t('scraper.failed'))
     } finally {
       setRunning(false)
     }
   }
 
   const runningLabel = running
-    ? selectedSource === 'wikidata'  ? 'Scraping Wikidata…'
-    : selectedSource === 'sec_edgar' ? 'Scraping SEC EDGAR…'
-    : 'Scraping all sources…'
+    ? selectedSource === 'wikidata'  ? t('scraper.runningWikidata')
+    : selectedSource === 'sec_edgar' ? t('scraper.runningSecEdgar')
+    : t('scraper.runningAll')
     : null
 
   return (
     <div className="scraper-panel">
       <div className="scraper-panel__header">
-        <h3 className="scraper-panel__title">Scraper</h3>
+        <h3 className="scraper-panel__title">{t('scraper.title')}</h3>
         {masterStatus && (
           <div className={`scraper-status ${masterOn ? 'scraper-status--on' : 'scraper-status--off'}`}>
             <span className="scraper-status__dot" />
-            {masterOn ? 'Master on' : 'Master off'}
+            {masterOn ? t('scraper.masterOn') : t('scraper.masterOff')}
           </div>
         )}
       </div>
 
-      <p className="scraper-panel__desc">
-        Import corporate ownership data from external sources into the graph.
-      </p>
+      <p className="scraper-panel__desc">{t('scraper.description')}</p>
 
       {!user && (
-        <div className="scraper-disabled-msg"><FiAlertCircle /> Sign in as admin to use the scraper.</div>
+        <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.signInRequired')}</div>
       )}
       {user && !isAdmin && (
-        <div className="scraper-disabled-msg"><FiAlertCircle /> Only admins can run the scraper. Your role is <code>{user.role}</code>.</div>
+        <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.adminRequired', { role: user.role })}</div>
       )}
       {isAdmin && !masterOn && masterStatus && (
-        <div className="scraper-disabled-msg"><FiAlertCircle /> Set <code>SCRAPER_ENABLED=true</code> in Render to activate.</div>
+        <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.enableRequired')}</div>
       )}
 
       {/* Source selector */}
       {isAdmin && (
         <div className="scraper-source-selector">
-          <div className="scraper-sources__label">Run source</div>
+          <div className="scraper-sources__label">{t('scraper.runSource')}</div>
           <div className="scraper-source-btns">
             {[
               { key: 'wikidata',  label: 'Wikidata' },
               { key: 'sec_edgar', label: 'SEC EDGAR' },
-              { key: 'all',       label: 'All sources' },
+              { key: 'all',       label: t('scraper.allSources') },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -233,7 +236,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       {/* Per-source toggles */}
       {isAdmin && sources.length > 0 && (
         <div className="scraper-sources">
-          <div className="scraper-sources__label">Source toggles</div>
+          <div className="scraper-sources__label">{t('scraper.sourceToggles')}</div>
           {sources.map(s => (
             <SourceToggle
               key={s.name}
@@ -250,7 +253,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         <input
           className="scraper-input"
           type="text"
-          placeholder="Company name (e.g. Tesla)"
+          placeholder={t('scraper.placeholder')}
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleRun()}
@@ -259,14 +262,13 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
 
         {selectedSource !== 'sec_edgar' && (
           <div className="scraper-depth">
-            <label className="scraper-depth__label">Depth</label>
+            <label className="scraper-depth__label">{t('scraper.depth')}</label>
             <div className="scraper-depth__options">
               {[1, 2, 3].map(d => (
                 <button key={d}
                   className={`depth-btn ${depth === d ? 'depth-btn--active' : ''}`}
                   onClick={() => setDepth(d)}
                   disabled={running}
-                  title={d === 1 ? 'Direct subsidiaries only' : d === 2 ? 'Two levels deep' : 'Three levels deep'}
                 >{d}</button>
               ))}
             </div>
@@ -276,7 +278,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         <button className="scraper-run-btn" onClick={handleRun} disabled={running || !query.trim() || !canRun}>
           {running
             ? <><FiLoader className="spin" /> {runningLabel}</>
-            : <><FiPlay /> Run scraper</>}
+            : <><FiPlay /> {t('scraper.run')}</>}
         </button>
       </div>
 
@@ -288,7 +290,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
             ? <AllResultList result={result} />
             : <ResultList result={result} />}
           <button className="scraper-load-btn" onClick={() => onLoadIntoGraph(result.query || result.company || query)}>
-            Load into graph →
+            {t('scraper.loadIntoGraph')}
           </button>
         </>
       )}
