@@ -103,6 +103,7 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
         edgeType:       'votes',
         edgeDir:        'in',
         votingPowerPct: vote,
+        stakePct:       stake ?? null,
       })
     }
   }

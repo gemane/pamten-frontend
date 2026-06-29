@@ -1643,6 +1643,56 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Graph threshold slider ────────────────────────────── */
+.graph-threshold {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 10;
+  background: rgba(26, 26, 46, 0.92);
+  border: 1px solid #2d2d50;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 150px;
+}
+.graph-threshold__label {
+  font-size: 11px;
+  color: #8892a4;
+  user-select: none;
+}
+.graph-threshold__slider {
+  width: 100%;
+  accent-color: #4A90D9;
+  cursor: pointer;
+}
+
+/* ── Graph tooltip ──────────────────────────────────────── */
+.graph-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: rgba(20, 20, 40, 0.97);
+  border: 1px solid #2d2d50;
+  border-radius: 7px;
+  padding: 8px 12px;
+  pointer-events: none;
+  max-width: 220px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.graph-tooltip__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 4px;
+}
+.graph-tooltip__row {
+  font-size: 11px;
+  color: #8892a4;
+  line-height: 1.6;
+}
+
 /* ── Toast ─────────────────────────────────────────────── */
 .toast {
   position: fixed;

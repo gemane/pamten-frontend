@@ -1,7 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FiX } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import type { GraphElement, NodeData } from '../types'
+
+interface TooltipState {
+  x: number
+  y: number
+  lines: string[]
+}
 
 const STYLE: cytoscape.StylesheetStyle[] = [
   // ── Nodes ──────────────────────────────────────────────
@@ -265,6 +271,8 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
+  const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
+  const [threshold, setThreshold] = useState(0)
 
   useEffect(() => {
     cyRef.current = cytoscape({
@@ -277,19 +285,57 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       maxZoom: 4,
     })
 
-    cyRef.current.on('tap', 'node', (evt) => {
-      // TODO: cytoscape EventObject has no typed .data() for custom node data
+    const cy = cyRef.current
+
+    cy.on('tap', 'node', (evt) => {
       onNodeClick(evt.target.data() as NodeData)
     })
 
-    cyRef.current.on('dblclick', 'node', (evt) => {
-      // TODO: cytoscape EventObject has no typed .data() for custom node data
+    cy.on('dblclick', 'node', (evt) => {
       const nodeData = evt.target.data() as NodeData
       onNavigateTo?.(nodeData)
     })
 
+    cy.on('mouseover', 'node', (evt) => {
+      const d   = evt.target.data()
+      const me  = evt.originalEvent as MouseEvent
+      const lines: string[] = [d.label]
+      if (d.entitySubtype)    lines.push(d.entitySubtype.charAt(0).toUpperCase() + d.entitySubtype.slice(1))
+      if (d.raw?.country)     lines.push(`Country: ${d.raw.country}`)
+      if (d.raw?.founded)     lines.push(`Founded: ${d.raw.founded}`)
+      if (d.raw?.revenue)     lines.push(`Revenue: $${(d.raw.revenue / 1e9).toFixed(1)}B`)
+      if (d.raw?.description) lines.push(d.raw.description.slice(0, 80) + (d.raw.description.length > 80 ? '…' : ''))
+      setTooltip({ x: me.clientX, y: me.clientY, lines })
+    })
 
-    return () => cyRef.current?.destroy()
+    cy.on('mouseover', 'edge', (evt) => {
+      const d   = evt.target.data()
+      const me  = evt.originalEvent as MouseEvent
+      const lines: string[] = []
+      if (d.edgeType === 'role') {
+        lines.push(`Role: ${d.label}`)
+      } else {
+        if (d.ownershipType) lines.push(`Type: ${d.ownershipType}`)
+        if (d.stakePct != null) lines.push(`Stake: ${d.stakePct}%`)
+        if (d.votingPowerPct != null) lines.push(`Voting power: ${d.votingPowerPct}%`)
+      }
+      if (lines.length > 0) setTooltip({ x: me.clientX, y: me.clientY, lines })
+    })
+
+    cy.on('mousemove', (evt) => {
+      const me = evt.originalEvent as MouseEvent
+      if (evt.target === cy) {
+        setTooltip(null)
+      } else {
+        setTooltip(prev => prev ? { ...prev, x: me.clientX, y: me.clientY } : null)
+      }
+    })
+
+    // Mobile: clear tooltip on tap outside a node/edge, or when panning/zooming
+    cy.on('tap', (evt) => { if (evt.target === cy) setTooltip(null) })
+    cy.on('pan zoom', () => setTooltip(null))
+
+    return () => cy.destroy()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -339,9 +385,27 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
     layout.run()
   }, [elements, centerId])
 
+  // Hide edges below the stake% threshold; hide orphaned nodes.
+  useEffect(() => {
+    const cy = cyRef.current
+    if (!cy || elements.length === 0) return
+    cy.edges().forEach(edge => {
+      const stakePct  = edge.data('stakePct')
+      const edgeType  = edge.data('edgeType')
+      if (edgeType === 'role') return
+      const hidden = stakePct != null && stakePct < threshold
+      edge.style('display', hidden ? 'none' : 'element')
+    })
+    cy.nodes().forEach(node => {
+      if (node.id() === centerId) return
+      const visible = node.connectedEdges().some(e => e.style('display') !== 'none')
+      node.style('display', visible ? 'element' : 'none')
+    })
+  }, [threshold, elements, centerId])
+
   return (
     <div className="graph-wrapper">
-      <div ref={containerRef} className="graph-canvas" />
+      <div ref={containerRef} className="graph-canvas" onMouseLeave={() => setTooltip(null)} />
 
       {elements.length === 0 && (
         <div className="graph-welcome">
@@ -367,7 +431,24 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
         </button>
       )}
 
+      {elements.length > 0 && (
+        <div className="graph-threshold">
+          <span className="graph-threshold__label">Min stake: {threshold}%</span>
+          <input
+            className="graph-threshold__slider"
+            type="range" min={0} max={25} step={1} value={threshold}
+            onChange={e => setThreshold(Number(e.target.value))}
+          />
+        </div>
+      )}
 
+      {tooltip && (
+        <div className="graph-tooltip" style={{ left: tooltip.x + 14, top: tooltip.y + 14 }}>
+          {tooltip.lines.map((line, i) => (
+            <div key={i} className={i === 0 ? 'graph-tooltip__title' : 'graph-tooltip__row'}>{line}</div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
