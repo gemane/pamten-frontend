@@ -1514,6 +1514,12 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
+  animation: chip-fade-in 0.4s ease;
+}
+
+@keyframes chip-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .graph-welcome__chip:hover {

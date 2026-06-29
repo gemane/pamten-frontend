@@ -256,7 +256,6 @@ function pickRandom(arr: string[], n: number): string[] {
   return shuffled.slice(0, n)
 }
 
-const EXAMPLE_QUERIES = pickRandom(ALL_EXAMPLE_QUERIES, 3)
 
 interface GraphProps {
   elements: GraphElement[]
@@ -276,6 +275,12 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
   const prevCenterIdRef = useRef<string | null | undefined>(null)
   const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
   const [threshold, setThreshold] = useState(0)
+  const [examples, setExamples]   = useState(() => pickRandom(ALL_EXAMPLE_QUERIES, 3))
+
+  useEffect(() => {
+    const id = setInterval(() => setExamples(pickRandom(ALL_EXAMPLE_QUERIES, 3)), 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     cyRef.current = cytoscape({
@@ -442,7 +447,7 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
           <div className="graph-welcome__logo">Pamten</div>
           <p className="graph-welcome__tagline">{t('graph.tagline')}</p>
           <div className="graph-welcome__chips">
-            {EXAMPLE_QUERIES.map(name => (
+            {examples.map(name => (
               <button
                 key={name}
                 className="graph-welcome__chip"
