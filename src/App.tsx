@@ -12,6 +12,8 @@ import MapView      from './components/MapView'
 import MapPanel     from './components/MapPanel'
 import AuthModal    from './components/AuthModal'
 import Toast        from './components/Toast'
+import ThemeToggle  from './components/ThemeToggle'
+import { useTheme } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { getFullProfile, getPerson, getOwners, search, getEntitiesByCountry } from './services/api'
 import type {
@@ -239,6 +241,7 @@ function LangSwitcher() {
 function AppInner() {
   const { user, logout } = useAuth()
   const { t } = useTranslation()
+  const [theme, toggleTheme] = useTheme()
   const [showAuth, setShowAuth] = useState<boolean>(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
 
@@ -505,6 +508,7 @@ function AppInner() {
             </div>
 
             <LangSwitcher />
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
             {user ? (
               <div className="user-badge">
@@ -563,6 +567,7 @@ function AppInner() {
               countryData={countryData}
               selectedCountry={selectedCountry}
               onCountryClick={setSelectedCountry}
+              theme={theme}
             />
           : <Graph
               elements={elements}
@@ -572,6 +577,7 @@ function AppInner() {
               onClear={elements.length > 0 ? handleClearGraph : null}
               onNavigateTo={handleNavigateTo}
               onToast={showToast}
+              theme={theme}
             />
         }
       </div>

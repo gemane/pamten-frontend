@@ -11,119 +11,124 @@ interface TooltipState {
   lines: string[]
 }
 
-const STYLE: cytoscape.StylesheetStyle[] = [
-  // ── Nodes ──────────────────────────────────────────────
-  {
-    selector: 'node',
-    style: {
-      label: 'data(label)',
-      color: '#fff',
-      'text-valign': 'center',
-      'text-halign': 'center',
-      'font-size': '12px',
-      'font-weight': 600,
-      'text-wrap': 'wrap',
-      'text-max-width': '120px',
-      'width': 'label',
-      'height': 'label',
-      padding: '14px',
+function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
+  const edgeLabelBg = theme === 'dark' ? '#1a1a2e' : '#f0f4f8'
+  const edgeColor   = theme === 'dark' ? '#8892a4' : '#4a5568'
+  const edgeLine    = theme === 'dark' ? '#3a3a5c' : '#9ca3b8'
+  return [
+    // ── Nodes ──────────────────────────────────────────────
+    {
+      selector: 'node',
+      style: {
+        label: 'data(label)',
+        color: '#fff',
+        'text-valign': 'center',
+        'text-halign': 'center',
+        'font-size': '12px',
+        'font-weight': 600,
+        'text-wrap': 'wrap',
+        'text-max-width': '120px',
+        'width': 'label',
+        'height': 'label',
+        padding: '14px',
+      },
     },
-  },
-  {
-    selector: 'node[nodeType = "entity"]',
-    style: { 'background-color': '#4A90D9', shape: 'roundrectangle', 'border-width': 2, 'border-color': '#2d6aa8' },
-  },
-  {
-    selector: 'node[entitySubtype = "brand"]',
-    style: { 'background-color': '#E67E22', 'border-color': '#b05a0d' },
-  },
-  {
-    selector: 'node[entitySubtype = "holding"]',
-    style: { 'background-color': '#8E44AD', 'border-color': '#622d7a' },
-  },
-  {
-    selector: 'node[nodeType = "person"]',
-    style: { 'background-color': '#27AE60', shape: 'ellipse', 'border-width': 2, 'border-color': '#1a7a42' },
-  },
-  {
-    // Scale padding (= visual size) for owner nodes by their importance
-    selector: 'node[importance > 0]',
-    style: { padding: 'mapData(importance, 0, 60, 14, 34)' },
-  },
-  {
-    selector: 'node:selected',
-    style: { 'border-width': 3, 'border-color': '#f1c40f' },
-  },
+    {
+      selector: 'node[nodeType = "entity"]',
+      style: { 'background-color': '#4A90D9', shape: 'roundrectangle', 'border-width': 2, 'border-color': '#2d6aa8' },
+    },
+    {
+      selector: 'node[entitySubtype = "brand"]',
+      style: { 'background-color': '#E67E22', 'border-color': '#b05a0d' },
+    },
+    {
+      selector: 'node[entitySubtype = "holding"]',
+      style: { 'background-color': '#8E44AD', 'border-color': '#622d7a' },
+    },
+    {
+      selector: 'node[nodeType = "person"]',
+      style: { 'background-color': '#27AE60', shape: 'ellipse', 'border-width': 2, 'border-color': '#1a7a42' },
+    },
+    {
+      // Scale padding (= visual size) for owner nodes by their importance
+      selector: 'node[importance > 0]',
+      style: { padding: 'mapData(importance, 0, 60, 14, 34)' },
+    },
+    {
+      selector: 'node:selected',
+      style: { 'border-width': 3, 'border-color': '#f1c40f' },
+    },
 
-  // ── Edges ──────────────────────────────────────────────
-  {
-    selector: 'edge',
-    style: {
-      width: 2,
-      'target-arrow-shape': 'triangle',
-      'curve-style': 'bezier',
-      'font-size': '10px',
-      'text-wrap': 'wrap',
-      'text-max-width': '120px',
-      color: '#8892a4',
-      'text-background-color': '#1a1a2e',
-      'text-background-opacity': 1,
-      'text-background-padding': '3px',
-      'line-color': '#3a3a5c',
-      'target-arrow-color': '#3a3a5c',
+    // ── Edges ──────────────────────────────────────────────
+    {
+      selector: 'edge',
+      style: {
+        width: 2,
+        'target-arrow-shape': 'triangle',
+        'curve-style': 'bezier',
+        'font-size': '10px',
+        'text-wrap': 'wrap',
+        'text-max-width': '120px',
+        color: edgeColor,
+        'text-background-color': edgeLabelBg,
+        'text-background-opacity': 1,
+        'text-background-padding': '3px',
+        'line-color': edgeLine,
+        'target-arrow-color': edgeLine,
+      },
     },
-  },
-  {
-    // Owner / role edges: source is the outer node → label near source
-    selector: 'edge[edgeDir = "in"]',
-    style: { 'source-label': 'data(label)', 'source-text-offset': 60 },
-  },
-  {
-    // Subsidiary edges: target is the outer node → label near target
-    selector: 'edge[edgeDir = "out"]',
-    style: { 'target-label': 'data(label)', 'target-text-offset': 60 },
-  },
-  {
-    selector: 'edge[ownershipType = "full"], edge[ownershipType = "majority"]',
-    style: { 'line-color': '#2ECC71', 'target-arrow-color': '#2ECC71' },
-  },
-  {
-    selector: 'edge[ownershipType = "minority"]',
-    style: { 'line-color': '#F39C12', 'target-arrow-color': '#F39C12' },
-  },
-  {
-    selector: 'edge[ownershipType = "controlling"]',
-    style: { 'line-color': '#E74C3C', 'target-arrow-color': '#E74C3C' },
-  },
-  {
-    selector: 'edge[edgeType = "role"]',
-    style: {
-      'line-style': 'dashed',
-      'line-color': '#6c7ae0',
-      'target-arrow-color': '#6c7ae0',
+    {
+      // Owner / role edges: source is the outer node → label near source
+      selector: 'edge[edgeDir = "in"]',
+      style: { 'source-label': 'data(label)', 'source-text-offset': 60 },
     },
-  },
-  {
-    selector: 'edge[edgeType = "votes"]',
-    style: {
-      'line-color': '#9B59B6',
-      'target-arrow-color': '#9B59B6',
-      'line-style': 'dashed',
-      width: 'mapData(votingPowerPct, 0, 100, 2, 7)' as unknown as number,
-      color: '#c39bd3',
+    {
+      // Subsidiary edges: target is the outer node → label near target
+      selector: 'edge[edgeDir = "out"]',
+      style: { 'target-label': 'data(label)', 'target-text-offset': 60 },
     },
-  },
-  // Edge width by ownership type — used when stake% is not in the data
-  { selector: 'edge[ownershipType = "minority"]',    style: { width: 2.5 } },
-  { selector: 'edge[ownershipType = "controlling"]', style: { width: 4 } },
-  { selector: 'edge[ownershipType = "majority"]',    style: { width: 5 } },
-  { selector: 'edge[ownershipType = "full"]',        style: { width: 7 } },
-  // Precise override when stake% is known
-  {
-    selector: 'edge[stakePct > 0]',
-    style: { width: 'mapData(stakePct, 0, 100, 2, 7)' as unknown as number },
-  },
-]
+    {
+      selector: 'edge[ownershipType = "full"], edge[ownershipType = "majority"]',
+      style: { 'line-color': '#2ECC71', 'target-arrow-color': '#2ECC71' },
+    },
+    {
+      selector: 'edge[ownershipType = "minority"]',
+      style: { 'line-color': '#F39C12', 'target-arrow-color': '#F39C12' },
+    },
+    {
+      selector: 'edge[ownershipType = "controlling"]',
+      style: { 'line-color': '#E74C3C', 'target-arrow-color': '#E74C3C' },
+    },
+    {
+      selector: 'edge[edgeType = "role"]',
+      style: {
+        'line-style': 'dashed',
+        'line-color': '#6c7ae0',
+        'target-arrow-color': '#6c7ae0',
+      },
+    },
+    {
+      selector: 'edge[edgeType = "votes"]',
+      style: {
+        'line-color': '#9B59B6',
+        'target-arrow-color': '#9B59B6',
+        'line-style': 'dashed',
+        width: 'mapData(votingPowerPct, 0, 100, 2, 7)' as unknown as number,
+        color: '#c39bd3',
+      },
+    },
+    // Edge width by ownership type — used when stake% is not in the data
+    { selector: 'edge[ownershipType = "minority"]',    style: { width: 2.5 } },
+    { selector: 'edge[ownershipType = "controlling"]', style: { width: 4 } },
+    { selector: 'edge[ownershipType = "majority"]',    style: { width: 5 } },
+    { selector: 'edge[ownershipType = "full"]',        style: { width: 7 } },
+    // Precise override when stake% is known
+    {
+      selector: 'edge[stakePct > 0]',
+      style: { width: 'mapData(stakePct, 0, 100, 2, 7)' as unknown as number },
+    },
+  ]
+}
 
 // Semi-ellipse layout constants.
 // Nodes sit on x = a·cos(t), y = ±b·sin(t) for t ∈ [T_START, T_END].
@@ -266,9 +271,10 @@ interface GraphProps {
   onNavigateTo?: (nodeData: NodeData) => void
   onToast?: (message: string, variant?: string) => void
   expandingId?: string | null
+  theme: 'dark' | 'light'
 }
 
-export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onNavigateTo, onToast }: GraphProps) {
+export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onNavigateTo, onToast, theme }: GraphProps) {
   const { t } = useTranslation()
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
@@ -285,7 +291,7 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
   useEffect(() => {
     cyRef.current = cytoscape({
       container: containerRef.current,
-      style: STYLE,
+      style: buildStylesheet(theme),
       layout: { name: 'preset' },
       userZoomingEnabled: true,
       userPanningEnabled: true,
@@ -345,6 +351,12 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
 
     return () => cy.destroy()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const cy = cyRef.current
+    if (!cy) return
+    cy.style(buildStylesheet(theme) as cytoscape.StylesheetStyle[])
+  }, [theme])
 
   useEffect(() => {
     const cy = cyRef.current
@@ -419,7 +431,7 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
   const handleExportPng = () => {
     const cy = cyRef.current
     if (!cy) return
-    const uri = cy.png({ output: 'base64uri', bg: '#1a1a2e', full: true, scale: 2 })
+    const uri = cy.png({ output: 'base64uri', bg: theme === 'dark' ? '#1a1a2e' : '#f0f4f8', full: true, scale: 2 })
     const a = document.createElement('a')
     a.href = uri
     a.download = `${centerLabel}.png`

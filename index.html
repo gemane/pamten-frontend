@@ -3,7 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pamten – Ownership Graph</title>
+    <title>Owlgraph – Corporate Ownership Map</title>
+    <script>
+      (function(){
+        var t = localStorage.getItem('owlgraph-theme');
+        if (!t) { try { t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; } catch(e) { t = 'dark'; } }
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

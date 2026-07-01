@@ -15,6 +15,7 @@ interface MapViewProps {
   countryData?: CountryEntityGroup[]
   selectedCountry?: string | null
   onCountryClick: (country: string) => void
+  theme?: 'dark' | 'light'
 }
 
 function buildNumericMap(countryData: CountryEntityGroup[]): Map<number, CountryEntityGroup> {
@@ -28,10 +29,12 @@ function buildNumericMap(countryData: CountryEntityGroup[]): Map<number, Country
 
 const MAX_COUNT = 20
 
-function countryFill(data: CountryEntityGroup | undefined, isSelected: boolean, isHovered: boolean): string {
-  if (!data) return isHovered ? '#252d45' : '#1c2540'
+function countryFill(data: CountryEntityGroup | undefined, isSelected: boolean, isHovered: boolean, theme: 'dark' | 'light'): string {
+  const noData    = theme === 'dark' ? '#1c2540' : '#dde3ec'
+  const noDataHov = theme === 'dark' ? '#252d45' : '#c8d1e0'
+  if (!data) return isHovered ? noDataHov : noData
   const t = Math.min(data.count / MAX_COUNT, 1)
-  if (isSelected) return '#4A90D9'
+  if (isSelected) return theme === 'dark' ? '#4A90D9' : '#2b6cb0'
   if (isHovered)  return '#6aaae3'
   const r = Math.round(30 + t * (74  - 30))
   const g = Math.round(74 + t * (144 - 74))
@@ -39,7 +42,7 @@ function countryFill(data: CountryEntityGroup | undefined, isSelected: boolean, 
   return `rgb(${r},${g},${b})`
 }
 
-export default function MapView({ countryData = [], selectedCountry, onCountryClick }: MapViewProps) {
+export default function MapView({ countryData = [], selectedCountry, onCountryClick, theme = 'dark' }: MapViewProps) {
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
@@ -77,7 +80,8 @@ export default function MapView({ countryData = [], selectedCountry, onCountryCl
                 const data       = numericMap.get(numId)
                 const isSelected = data != null && data.country === selectedCountry
                 const isHovered  = numId === hoveredNum
-                const fill       = countryFill(data, isSelected, isHovered)
+                const fill       = countryFill(data, isSelected, isHovered, theme)
+                const stroke     = theme === 'dark' ? '#111827' : '#b8c4d4'
 
                 return (
                   <Geography
@@ -94,10 +98,10 @@ export default function MapView({ countryData = [], selectedCountry, onCountryCl
                     }}
                     onMouseLeave={() => { setHoveredNum(null); setTooltip(null) }}
                     style={{
-                      default: { fill, stroke: '#111827', strokeWidth: 0.4, outline: 'none' },
-                      hover:   { fill, stroke: '#111827', strokeWidth: 0.4, outline: 'none',
+                      default: { fill, stroke, strokeWidth: 0.4, outline: 'none' },
+                      hover:   { fill, stroke, strokeWidth: 0.4, outline: 'none',
                                  cursor: data ? 'pointer' : 'default' },
-                      pressed: { fill: '#357abd', outline: 'none' },
+                      pressed: { fill: '#2b6cb0', outline: 'none' },
                     }}
                   />
                 )
