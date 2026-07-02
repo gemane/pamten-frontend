@@ -91,6 +91,14 @@
     "empty": "Noch keine historischen Daten.",
     "emptyHint": "Daten werden erfasst, wenn Beziehungen manuell oder über den Scraper angelegt werden."
   },
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Sprache",
+    "theme": "Design",
+    "dark": "Dunkel",
+    "light": "Hell",
+    "account": "Konto"
+  },
   "scraper": {
     "title": "Scraper",
     "masterOn": "Master aktiv",

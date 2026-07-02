@@ -1,18 +1,18 @@
 import { useState, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
-import { FiSearch, FiDatabase, FiGlobe, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi'
-import SearchBar    from './components/SearchBar'
-import Breadcrumb   from './components/Breadcrumb'
-import Graph        from './components/Graph'
-import GraphLegend  from './components/GraphLegend'
-import NodePanel    from './components/NodePanel'
-import ScraperPanel from './components/ScraperPanel'
-import MapView      from './components/MapView'
-import MapPanel     from './components/MapPanel'
-import AuthModal    from './components/AuthModal'
-import Toast        from './components/Toast'
-import ThemeToggle  from './components/ThemeToggle'
+import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
+import SearchBar     from './components/SearchBar'
+import Breadcrumb    from './components/Breadcrumb'
+import Graph         from './components/Graph'
+import GraphLegend   from './components/GraphLegend'
+import NodePanel     from './components/NodePanel'
+import ScraperPanel  from './components/ScraperPanel'
+import SettingsPanel from './components/SettingsPanel'
+import MapView       from './components/MapView'
+import MapPanel      from './components/MapPanel'
+import AuthModal     from './components/AuthModal'
+import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { getFullProfile, getPerson, getOwners, search, getEntitiesByCountry } from './services/api'
@@ -211,32 +211,6 @@ interface ToastState {
   type: string
 }
 
-const LANGS = [
-  { code: 'en', label: 'EN' },
-  { code: 'de', label: 'DE' },
-  { code: 'es', label: 'ES' },
-]
-
-function LangSwitcher() {
-  const { i18n: i } = useTranslation()
-  const change = (code: string) => {
-    i.changeLanguage(code)
-    localStorage.setItem('lang', code)
-  }
-  return (
-    <div className="lang-switcher">
-      {LANGS.map(l => (
-        <button
-          key={l.code}
-          className={`lang-btn ${i.language === l.code ? 'lang-btn--active' : ''}`}
-          onClick={() => change(l.code)}
-        >
-          {l.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 function AppInner() {
   const { user, logout } = useAuth()
@@ -485,48 +459,32 @@ function AppInner() {
               <button
                 className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`}
                 onClick={() => handleTabChange('graph')}
-                title="Search & graph"
+                title={t('nav.graph')}
               >
                 <FiSearch />
               </button>
               <button
                 className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`}
                 onClick={() => handleTabChange('map')}
-                title="Geographic map"
+                title={t('nav.map')}
               >
                 <FiGlobe />
               </button>
               <button
                 className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`}
                 onClick={() => handleTabChange('scraper')}
-                title="Scraper"
+                title={t('scraper.title')}
               >
                 <FiDatabase />
               </button>
-            </div>
-          </div>
-          <div className="header-right">
-            <LangSwitcher />
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
-            {user ? (
-              <div className="user-badge">
-                <FiUser />
-                <span className="user-badge__email">
-                  {user.email.split('@')[0].split('.')[0]}
-                </span>
-                <span className={`user-badge__role user-badge__role--${user.role}`}>
-                  {user.role}
-                </span>
-                <button className="user-badge__logout" onClick={logout} title={t('nav.logout')}>
-                  <FiLogOut />
-                </button>
-              </div>
-            ) : (
-              <button className="login-btn" onClick={() => setShowAuth(true)}>
-                <FiLogIn /> {t('nav.login')}
+              <button
+                className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`}
+                onClick={() => handleTabChange('settings')}
+                title={t('settings.title')}
+              >
+                <FiSettings />
               </button>
-            )}
+            </div>
           </div>
         </div>
 
@@ -555,6 +513,18 @@ function AppInner() {
         {activeTab === 'scraper' && (
           <div className="left-panel__detail">
             <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="left-panel__detail">
+            <SettingsPanel
+              theme={theme}
+              onToggleTheme={toggleTheme}
+              user={user}
+              onLogin={() => setShowAuth(true)}
+              onLogout={logout}
+            />
           </div>
         )}
       </div>

@@ -91,6 +91,14 @@
     "empty": "No historical data yet.",
     "emptyHint": "Dates are recorded when relationships are created manually or via the scraper."
   },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "account": "Account"
+  },
   "scraper": {
     "title": "Scraper",
     "masterOn": "Master on",

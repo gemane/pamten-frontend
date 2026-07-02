@@ -150,13 +150,75 @@ body {
 .modal__submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── User badge + login button ─────────────────────────── */
-.header-right {
+/* ── Settings panel ────────────────────────────────────── */
+.settings-panel {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.settings-section__title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4a5568;
+  margin: 0 0 10px;
+}
+
+.settings-theme-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-width: 0;
-  gap: 8px;
+  gap: 10px;
 }
+
+.settings-theme-label {
+  font-size: 13px;
+  color: #8892a4;
+}
+
+.settings-account {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-account__info {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #8892a4;
+}
+
+.settings-account__email {
+  color: #cbd5e1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #2a3a5a;
+  border-radius: 7px;
+  color: #8892a4;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  width: fit-content;
+}
+
+.settings-logout-btn:hover { border-color: #e87c6e; color: #e87c6e; }
 
 .login-btn {
   display: flex;
@@ -2148,6 +2210,12 @@ body {
 [data-theme="light"] .user-badge { background: #eef2f7; border-color: #d1d9e6; color: #4a5568; }
 [data-theme="light"] .user-badge__email { color: #1a202c; }
 [data-theme="light"] .user-badge__logout { color: #718096; }
+[data-theme="light"] .settings-section__title { color: #718096; }
+[data-theme="light"] .settings-theme-label { color: #4a5568; }
+[data-theme="light"] .settings-account__info { color: #4a5568; }
+[data-theme="light"] .settings-account__email { color: #1a202c; }
+[data-theme="light"] .settings-logout-btn { border-color: #b8c4d4; color: #4a5568; }
+[data-theme="light"] .settings-logout-btn:hover { border-color: #e53e3e; color: #e53e3e; }
 
 [data-theme="light"] .search-box { background: #ffffff; border-color: #b8c4d4; }
 [data-theme="light"] .search-icon { color: #4a5568; }

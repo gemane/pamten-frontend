@@ -91,6 +91,14 @@
     "empty": "Aún no hay datos históricos.",
     "emptyHint": "Las fechas se registran cuando las relaciones se crean manualmente o mediante el scraper."
   },
+  "settings": {
+    "title": "Ajustes",
+    "language": "Idioma",
+    "theme": "Tema",
+    "dark": "Oscuro",
+    "light": "Claro",
+    "account": "Cuenta"
+  },
   "scraper": {
     "title": "Scraper",
     "masterOn": "Master activo",
