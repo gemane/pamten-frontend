@@ -16,7 +16,8 @@
     "exportCsv": "CSV data",
     "minStake": "Min stake: {{value}}%",
     "expandGraph": "Expand graph",
-    "openAsCenter": "Open as center"
+    "openAsCenter": "Open as center",
+    "expandHint": "Double-click to expand"
   },
   "legend": {
     "nodes": "Nodes",

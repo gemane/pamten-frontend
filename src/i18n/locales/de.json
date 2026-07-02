@@ -16,7 +16,8 @@
     "exportCsv": "CSV-Daten",
     "minStake": "Min. Anteil: {{value}}%",
     "expandGraph": "Graph erweitern",
-    "openAsCenter": "Als Zentrum öffnen"
+    "openAsCenter": "Als Zentrum öffnen",
+    "expandHint": "Doppelklick zum Erweitern"
   },
   "legend": {
     "nodes": "Knoten",

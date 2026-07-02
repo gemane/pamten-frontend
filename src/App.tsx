@@ -576,6 +576,8 @@ function AppInner() {
               onExampleClick={handleExampleClick}
               onClear={elements.length > 0 ? handleClearGraph : null}
               onNavigateTo={handleNavigateTo}
+              onExpand={handleExpand}
+              expandingId={expandingId}
               onToast={showToast}
               theme={theme}
             />

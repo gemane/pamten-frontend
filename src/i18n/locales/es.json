@@ -16,7 +16,8 @@
     "exportCsv": "Datos CSV",
     "minStake": "Mín. participación: {{value}}%",
     "expandGraph": "Ampliar grafo",
-    "openAsCenter": "Abrir como centro"
+    "openAsCenter": "Abrir como centro",
+    "expandHint": "Doble clic para expandir"
   },
   "legend": {
     "nodes": "Nodos",

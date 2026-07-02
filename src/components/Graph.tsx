@@ -58,6 +58,10 @@ function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
       selector: 'node:selected',
       style: { 'border-width': 3, 'border-color': '#f1c40f' },
     },
+    {
+      selector: 'node.expanding',
+      style: { 'border-width': 3, 'border-color': '#f1c40f', 'border-style': 'dashed' },
+    },
 
     // ── Edges ──────────────────────────────────────────────
     {
@@ -269,12 +273,13 @@ interface GraphProps {
   onExampleClick?: (query: string) => void
   onClear?: (() => void) | null
   onNavigateTo?: (nodeData: NodeData) => void
+  onExpand?: (id: string) => void
   onToast?: (message: string, variant?: string) => void
   expandingId?: string | null
   theme: 'dark' | 'light'
 }
 
-export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onNavigateTo, onToast, theme }: GraphProps) {
+export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, onToast, expandingId, theme }: GraphProps) {
   const { t } = useTranslation()
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
@@ -307,7 +312,11 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
 
     cy.on('dblclick', 'node', (evt) => {
       const nodeData = evt.target.data() as NodeData
-      onNavigateTo?.(nodeData)
+      if (nodeData.nodeType === 'entity') {
+        onExpand?.(nodeData.id)
+      } else {
+        onNavigateTo?.(nodeData)
+      }
     })
 
     cy.on('mouseover', 'node', (evt) => {
@@ -319,6 +328,7 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       if (d.raw?.founded)     lines.push(`${t('panel.founded')}: ${d.raw.founded}`)
       if (d.raw?.revenue)     lines.push(`${t('panel.revenue')}: $${(d.raw.revenue / 1e9).toFixed(1)}B`)
       if (d.raw?.description) lines.push(d.raw.description.slice(0, 80) + (d.raw.description.length > 80 ? '…' : ''))
+      if (d.nodeType === 'entity' && onExpand) lines.push(t('graph.expandHint'))
       setTooltip({ x: me.clientX, y: me.clientY, lines })
     })
 
@@ -357,6 +367,13 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
     if (!cy) return
     cy.style(buildStylesheet(theme) as cytoscape.StylesheetStyle[])
   }, [theme])
+
+  useEffect(() => {
+    const cy = cyRef.current
+    if (!cy) return
+    cy.nodes().removeClass('expanding')
+    if (expandingId) cy.$id(expandingId).addClass('expanding')
+  }, [expandingId])
 
   useEffect(() => {
     const cy = cyRef.current
