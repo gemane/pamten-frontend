@@ -481,32 +481,31 @@ function AppInner() {
               <span className="logo">Pamten</span>
               <span className="logo-sub">Ownership Graph</span>
             </div>
+            <div className="tab-toggle">
+              <button
+                className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`}
+                onClick={() => handleTabChange('graph')}
+                title="Search & graph"
+              >
+                <FiSearch />
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`}
+                onClick={() => handleTabChange('map')}
+                title="Geographic map"
+              >
+                <FiGlobe />
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`}
+                onClick={() => handleTabChange('scraper')}
+                title="Scraper"
+              >
+                <FiDatabase />
+              </button>
+            </div>
           </div>
           <div className="header-right">
-            <div className="tab-toggle">
-            <button
-              className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`}
-              onClick={() => handleTabChange('graph')}
-              title="Search & graph"
-            >
-              <FiSearch />
-            </button>
-            <button
-              className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`}
-              onClick={() => handleTabChange('map')}
-              title="Geographic map"
-            >
-              <FiGlobe />
-            </button>
-            <button
-              className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`}
-              onClick={() => handleTabChange('scraper')}
-              title="Scraper"
-            >
-              <FiDatabase />
-            </button>
-            </div>
-
             <LangSwitcher />
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
