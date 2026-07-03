@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
-import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiMenu, FiX } from 'react-icons/fi'
 import SearchBar     from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
@@ -248,11 +248,24 @@ interface ToastState {
 }
 
 
+function useMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 640)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isMobile
+}
+
 function AppInner() {
   const { user, logout } = useAuth()
   const { t } = useTranslation()
   const [theme, toggleTheme] = useTheme()
   const [showAuth, setShowAuth] = useState<boolean>(false)
+  const isMobile = useMobile()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
 
   const [elements,        setElements]        = useState<GraphElement[]>([])
@@ -398,6 +411,7 @@ function AppInner() {
     setSearchLabel(undefined)
     setNavHistory([])
     setToast(null)
+    setSidebarOpen(false)
     loadedIds.current = new Set()
   }, [])
 
@@ -417,6 +431,7 @@ function AppInner() {
 
   const handleNodeClick = useCallback((nodeData: NodeData) => {
     setSelectedNode(nodeData)
+    if (window.matchMedia('(max-width: 640px)').matches) setSidebarOpen(true)
   }, [])
 
   const handleBreadcrumbNav = useCallback((nodeData: NodeData, index: number) => {
@@ -511,7 +526,17 @@ function AppInner() {
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      <div className="left-panel">
+      {isMobile && sidebarOpen && (
+        <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {isMobile && (
+        <button className="mobile-toggle" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar">
+          {sidebarOpen ? <FiX /> : <FiMenu />}
+        </button>
+      )}
+
+      <div className={`left-panel${sidebarOpen ? ' left-panel--open' : ''}`}>
         <div className="left-panel__header">
           <div className="left-panel__header-row">
             <div
