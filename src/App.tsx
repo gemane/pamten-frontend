@@ -112,25 +112,6 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
     }
   }
 
-  for (const exec of executives) {
-    const person = exec.person
-    if (!person) continue
-    addNode({
-      id:       person.id,
-      label:    person.full_name,
-      nodeType: 'person',
-      raw:      person,
-    })
-    addEdge({
-      id:       `${person.id}__role__${entity.id}`,
-      source:   person.id,
-      target:   entity.id,
-      label:    exec.role?.role || '',
-      edgeType: 'role',
-      edgeDir:  'in',
-    })
-  }
-
   return els
 }
 
