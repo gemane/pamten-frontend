@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload } from 'react-icons/fi'
-import { getFullProfile } from '../services/api'
+import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield } from 'react-icons/fi'
+import { getFullProfile, getEntitySources } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
-import type { NodeData, FullProfile, Person } from '../types'
+import type { NodeData, FullProfile, Person, Source } from '../types'
 
 function useWikidataImage(wikidataId: string | undefined): string | null {
   const [src, setSrc] = useState<string | null>(null)
@@ -67,6 +67,8 @@ interface NodePanelProps {
   onExportCsv?: () => void
 }
 
+
+
 interface MetaRowProps {
   icon: React.ElementType
   label: string
@@ -118,11 +120,18 @@ function PersonView({ raw }: { raw: Person }) {
 
 interface EntityOverviewProps {
   profile: FullProfile
+  sources: Source[]
   onExportPng?: () => void
   onExportCsv?: () => void
 }
 
-function EntityOverview({ profile, onExportPng, onExportCsv }: EntityOverviewProps) {
+function credibilityColor(score: number): string {
+  if (score >= 70) return '#2ECC71'
+  if (score >= 40) return '#F39C12'
+  return '#E74C3C'
+}
+
+function EntityOverview({ profile, sources, onExportPng, onExportCsv }: EntityOverviewProps) {
   const { t } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
@@ -187,6 +196,33 @@ function EntityOverview({ profile, onExportPng, onExportCsv }: EntityOverviewPro
         </Section>
       )}
 
+      {sources.length > 0 && (
+        <Section title={t('panel.sources')}>
+          {sources.map((s) => (
+            <div key={s.id} className="source-item">
+              <div className="source-item__header">
+                {s.url
+                  ? <a className="source-item__name" href={s.url} target="_blank" rel="noreferrer">
+                      <FiExternalLink size={11} /> {s.name}
+                    </a>
+                  : <span className="source-item__name">{s.name}</span>
+                }
+                <span className="source-type-badge">{s.type}</span>
+              </div>
+              <div className="credibility-bar" title={`${t('panel.credibility')}: ${s.credibility_score}/100`}>
+                <div
+                  className="credibility-bar__fill"
+                  style={{ width: `${s.credibility_score}%`, background: credibilityColor(s.credibility_score) }}
+                />
+              </div>
+              <span className="credibility-score" style={{ color: credibilityColor(s.credibility_score) }}>
+                {s.credibility_score}/100
+              </span>
+            </div>
+          ))}
+        </Section>
+      )}
+
       {(onExportPng || onExportCsv) && (
         <div className="panel-export">
           {onExportPng && (
@@ -228,20 +264,29 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
 
 export default function NodePanel({ node, onExportPng, onExportCsv }: NodePanelProps) {
   const { t } = useTranslation()
-  const [profile,     setProfile]     = useState<FullProfile | null>(null)
-  const [loading,     setLoading]     = useState<boolean>(false)
-  const [activeView,  setActiveView]  = useState<string>('overview')
+  const [profile,    setProfile]    = useState<FullProfile | null>(null)
+  const [sources,    setSources]    = useState<Source[]>([])
+  const [loading,    setLoading]    = useState<boolean>(false)
+  const [activeView, setActiveView] = useState<string>('overview')
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {
       setProfile(null)
+      setSources([])
       return
     }
     setActiveView('overview')
     setLoading(true)
     setProfile(null)
-    getFullProfile(node.id)
-      .then(({ data }) => setProfile(data))
+    setSources([])
+    Promise.all([
+      getFullProfile(node.id),
+      getEntitySources(node.id).catch(() => ({ data: [] as Source[] })),
+    ])
+      .then(([{ data: prof }, { data: srcs }]) => {
+        setProfile(prof)
+        setSources(srcs)
+      })
       .catch(() => setProfile(null))
       .finally(() => setLoading(false))
   }, [node?.id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -271,7 +316,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv }: NodePanelP
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} onExportPng={onExportPng} onExportCsv={onExportCsv} />
+        ? <EntityOverview profile={profile} sources={sources} onExportPng={onExportPng} onExportCsv={onExportCsv} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )

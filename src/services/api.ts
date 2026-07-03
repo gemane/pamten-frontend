@@ -10,6 +10,7 @@ import type {
   BodsImportResult,
   CountryEntityGroup,
   AuthUser,
+  Source,
 } from '../types'
 
 const client = axios.create({
@@ -46,6 +47,9 @@ export const getPerson = (id: string): Promise<AxiosResponse<unknown>> =>
 
 export const getEntitiesByCountry = (): Promise<AxiosResponse<CountryEntityGroup[]>> =>
   client.get('/entities/by-country')
+
+export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
+  client.get(`/sources/entity/${id}`)
 
 export const authRegister = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
   client.post('/auth/register', { email, password })
