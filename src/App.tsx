@@ -43,7 +43,7 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
     }
   }
 
-  const { entity, subsidiaries = [], executives = [], owners = [] } = profile
+  const { entity, subsidiaries = [], owners = [] } = profile
 
   addNode({
     id:            entity.id,
@@ -112,6 +112,59 @@ function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphEleme
     }
   }
 
+  return els
+}
+
+function buildElementsUpward(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
+  const els: GraphElement[] = []
+  const { entity, owners = [] } = profile
+  for (const own of owners) {
+    const owner = own.owner
+    if (!owner) continue
+    const importance = own.relationship?.voting_power_pct ?? own.relationship?.stake_percent ?? 0
+    if (!loadedIds.has(owner.id)) {
+      loadedIds.add(owner.id)
+      els.push({ data: {
+        id:            owner.id,
+        label:         ('name' in owner ? owner.name : owner.full_name) || '?',
+        nodeType:      ('first_name' in owner ? 'person' : 'entity') as 'person' | 'entity',
+        entitySubtype: 'type' in owner ? owner.type : null,
+        raw:           owner,
+        importance:    importance > 0 ? importance : undefined,
+      } })
+    }
+    const stake = own.relationship?.stake_percent
+    const vote  = own.relationship?.voting_power_pct
+    const edgeId = `${owner.id}__owns__${entity.id}`
+    if (!loadedIds.has(edgeId)) {
+      loadedIds.add(edgeId)
+      els.push({ data: { id: edgeId, source: owner.id, target: entity.id, label: stake != null ? `${stake}%` : '', edgeType: 'owns', edgeDir: 'in', ownershipType: own.relationship?.ownership_type || '', votingPowerPct: vote ?? null, stakePct: stake ?? null } } as GraphElement)
+    }
+    if (vote != null && vote !== stake) {
+      const votesId = `${owner.id}__votes__${entity.id}`
+      if (!loadedIds.has(votesId)) {
+        loadedIds.add(votesId)
+        els.push({ data: { id: votesId, source: owner.id, target: entity.id, label: `${vote}%`, edgeType: 'votes', edgeDir: 'in', votingPowerPct: vote, stakePct: stake ?? null } } as GraphElement)
+      }
+    }
+  }
+  return els
+}
+
+function buildElementsDownward(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
+  const els: GraphElement[] = []
+  const { entity, subsidiaries = [] } = profile
+  for (const sub of subsidiaries) {
+    if (!loadedIds.has(sub.entity.id)) {
+      loadedIds.add(sub.entity.id)
+      els.push({ data: { id: sub.entity.id, label: sub.entity.name, nodeType: 'entity', entitySubtype: sub.entity.type, raw: sub.entity } })
+    }
+    const edgeId = `${entity.id}__owns__${sub.entity.id}`
+    if (!loadedIds.has(edgeId)) {
+      loadedIds.add(edgeId)
+      els.push({ data: { id: edgeId, source: entity.id, target: sub.entity.id, label: sub.relationship?.stake_percent != null ? `${sub.relationship.stake_percent}%` : '', edgeType: 'owns', edgeDir: 'out', ownershipType: sub.relationship?.ownership_type || '', stakePct: sub.relationship?.stake_percent ?? null } } as GraphElement)
+    }
+  }
   return els
 }
 
@@ -211,7 +264,9 @@ function AppInner() {
   const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
   const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
-  const loadedIds = useRef<Set<string>>(new Set())
+  const loadedIds   = useRef<Set<string>>(new Set())
+  const elementsRef = useRef<GraphElement[]>([])
+  elementsRef.current = elements
 
   const showToast = useCallback((message: string, type = 'info') => {
     setToast({ message, type })
@@ -305,7 +360,21 @@ function AppInner() {
   const handleExpand = useCallback(async (entityId: string) => {
     setExpandingId(entityId)
     try {
-      const newEls = await loadEntity(entityId)
+      const { data: profile } = await getFullProfile(entityId)
+      const cur = elementsRef.current
+      const isAbove = cur.some(el => {
+        const d = el.data as Record<string, unknown>
+        return d.source === entityId && d.edgeDir === 'in'
+      })
+      const isBelow = cur.some(el => {
+        const d = el.data as Record<string, unknown>
+        return d.target === entityId && d.edgeDir === 'out'
+      })
+      const newEls = isAbove && !isBelow
+        ? buildElementsUpward(profile as FullProfile, loadedIds.current)
+        : isBelow && !isAbove
+          ? buildElementsDownward(profile as FullProfile, loadedIds.current)
+          : buildElements(profile as FullProfile, loadedIds.current)
       const newNodes = newEls.filter(el => !(el.data as Record<string, unknown>).source)
       if (newNodes.length > 0) {
         setElements(prev => [...prev, ...newEls])
@@ -317,7 +386,7 @@ function AppInner() {
     } finally {
       setExpandingId(null)
     }
-  }, [loadEntity, showToast])
+  }, [showToast])
 
   const handleClearGraph = useCallback(() => {
     setElements([])
