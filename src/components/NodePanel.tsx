@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiNavigation, FiList, FiClock, FiLoader, FiPlusCircle } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload } from 'react-icons/fi'
 import { getFullProfile } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
-import type { NodeData, FullProfile, Person, Entity } from '../types'
+import type { NodeData, FullProfile, Person } from '../types'
 
 function useWikidataImage(wikidataId: string | undefined): string | null {
   const [src, setSrc] = useState<string | null>(null)
@@ -63,10 +63,8 @@ function usePersonImage(fullName: string | undefined, wikipediaUrl?: string): st
 
 interface NodePanelProps {
   node: NodeData | null
-  onExpand: (id: string) => void
-  expandingId: string | null
-  onNavigateTo?: (nodeData: NodeData) => void
-  centerId?: string | null
+  onExportPng?: () => void
+  onExportCsv?: () => void
 }
 
 interface MetaRowProps {
@@ -95,7 +93,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function PersonView({ raw, onNavigateTo, isCenter }: { raw: Person; onNavigateTo?: (nodeData: NodeData) => void; isCenter?: boolean }) {
+function PersonView({ raw }: { raw: Person }) {
   const { t } = useTranslation()
   const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
   return (
@@ -114,27 +112,17 @@ function PersonView({ raw, onNavigateTo, isCenter }: { raw: Person; onNavigateTo
           <FiExternalLink /> {t('panel.wikipedia')}
         </a>
       )}
-      {!isCenter && onNavigateTo && (
-        <button
-          className="expand-btn"
-          onClick={() => onNavigateTo({ id: raw.id, label: raw.full_name, nodeType: 'person', raw })}
-        >
-          <FiNavigation /> {t('graph.openAsCenter')}
-        </button>
-      )}
     </div>
   )
 }
 
 interface EntityOverviewProps {
   profile: FullProfile
-  onExpand: (id: string) => void
-  expandingId: string | null
-  onNavigateTo?: (nodeData: NodeData) => void
-  isCenter?: boolean
+  onExportPng?: () => void
+  onExportCsv?: () => void
 }
 
-function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter }: EntityOverviewProps) {
+function EntityOverview({ profile, onExportPng, onExportCsv }: EntityOverviewProps) {
   const { t } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
@@ -199,28 +187,21 @@ function EntityOverview({ profile, onExpand, expandingId, onNavigateTo, isCenter
         </Section>
       )}
 
-      <div className="panel-actions">
-        {!isCenter && (
-          <button
-            className="expand-btn"
-            disabled={expandingId === entity.id}
-            onClick={() => onExpand(entity.id)}
-          >
-            {expandingId === entity.id
-              ? <FiLoader className="spin" />
-              : <FiPlusCircle />}
-            {' '}{t('graph.expandGraph')}
-          </button>
-        )}
-        {!isCenter && onNavigateTo && (
-          <button
-            className="expand-btn"
-            onClick={() => onNavigateTo({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: profile.entity })}
-          >
-            <FiNavigation /> {t('graph.openAsCenter')}
-          </button>
-        )}
-      </div>
+      {(onExportPng || onExportCsv) && (
+        <div className="panel-export">
+          {onExportPng && (
+            <button className="panel-export__btn" onClick={onExportPng}>
+              <FiDownload /> {t('graph.exportPng')}
+            </button>
+          )}
+          {onExportCsv && (
+            <button className="panel-export__btn" onClick={onExportCsv}>
+              <FiDownload /> {t('graph.exportCsv')}
+            </button>
+          )}
+        </div>
+      )}
+
     </div>
   )
 }
@@ -245,7 +226,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExpand, expandingId, onNavigateTo, centerId }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,     setProfile]     = useState<FullProfile | null>(null)
   const [loading,     setLoading]     = useState<boolean>(false)
@@ -274,7 +255,7 @@ export default function NodePanel({ node, onExpand, expandingId, onNavigateTo, c
     )
   }
 
-  if (node.nodeType === 'person') return <PersonView raw={node.raw as Person} onNavigateTo={onNavigateTo} isCenter={node.id === centerId} />
+  if (node.nodeType === 'person') return <PersonView raw={node.raw as Person} />
 
   if (loading) {
     return (
@@ -290,7 +271,7 @@ export default function NodePanel({ node, onExpand, expandingId, onNavigateTo, c
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} onExpand={onExpand} expandingId={expandingId} onNavigateTo={onNavigateTo} isCenter={node.id === centerId} />
+        ? <EntityOverview profile={profile} onExportPng={onExportPng} onExportCsv={onExportCsv} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )

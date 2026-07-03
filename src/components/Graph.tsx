@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiX, FiDownload } from 'react-icons/fi'
+import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import type { GraphElement, NodeData } from '../types'
-import { buildCsvContent } from '../utils/exportCsv'
+
+export interface GraphHandle {
+  exportPng: () => void
+}
 
 interface TooltipState {
   x: number
@@ -269,6 +272,7 @@ function pickRandom(arr: string[], n: number): string[] {
 interface GraphProps {
   elements: GraphElement[]
   centerId?: string | null
+  selectedNode?: NodeData | null
   onNodeClick: (data: NodeData) => void
   onExampleClick?: (query: string) => void
   onClear?: (() => void) | null
@@ -279,7 +283,10 @@ interface GraphProps {
   theme: 'dark' | 'light'
 }
 
-export default function Graph({ elements, centerId, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, onToast, expandingId, theme }: GraphProps) {
+const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme }: GraphProps,
+  ref
+) {
   const { t } = useTranslation()
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
@@ -440,32 +447,24 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
     })
   }, [threshold, elements, centerId])
 
-  const [exportOpen, setExportOpen] = useState(false)
-
   const centerLabel = elements.find(el => 'id' in el.data && el.data.id === centerId)
     ?.data.label ?? 'graph'
 
-  const handleExportPng = () => {
-    const cy = cyRef.current
-    if (!cy) return
-    const uri = cy.png({ output: 'base64uri', bg: theme === 'dark' ? '#1a1a2e' : '#f0f4f8', full: true, scale: 2 })
-    const a = document.createElement('a')
-    a.href = uri
-    a.download = `${centerLabel}.png`
-    a.click()
-    setExportOpen(false)
-  }
+  useImperativeHandle(ref, () => ({
+    exportPng: () => {
+      const cy = cyRef.current
+      if (!cy) return
+      const uri = cy.png({ output: 'base64uri', bg: theme === 'dark' ? '#1a1a2e' : '#f0f4f8', full: true, scale: 2 })
+      const a = document.createElement('a')
+      a.href = uri
+      a.download = `${centerLabel}.png`
+      a.click()
+    },
+  }), [theme, centerLabel])
 
-  const handleExportCsv = () => {
-    const content = buildCsvContent(elements, t)
-    const blob = new Blob([content], { type: 'text/csv' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `${centerLabel}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
-    setExportOpen(false)
-  }
+  const showNodeActions = elements.length > 0
+    && selectedNode?.nodeType === 'entity'
+    && selectedNode.id !== centerId
 
   return (
     <div className="graph-wrapper">
@@ -489,22 +488,29 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
         </div>
       )}
 
-      {onClear && (
-        <button className="graph-clear-btn" onClick={onClear} title={t('graph.clear')}>
-          <FiX /> {t('graph.clear')}
-        </button>
-      )}
-
       {elements.length > 0 && (
-        <div className="graph-export">
-          <button className="graph-export__btn" onClick={() => setExportOpen(v => !v)} title={t('graph.export')}>
-            <FiDownload /> {t('graph.export')}
-          </button>
-          {exportOpen && (
-            <div className="graph-export__menu">
-              <button onClick={handleExportPng}>{t('graph.exportPng')}</button>
-              <button onClick={handleExportCsv}>{t('graph.exportCsv')}</button>
-            </div>
+        <div className="graph-actions">
+          {showNodeActions && (
+            <>
+              <button
+                className="graph-action-btn"
+                onClick={() => onExpand?.(selectedNode!.id)}
+                disabled={expandingId === selectedNode!.id}
+              >
+                <FiPlusCircle /> {t('graph.expandGraph')}
+              </button>
+              <button
+                className="graph-action-btn"
+                onClick={() => onNavigateTo?.(selectedNode!)}
+              >
+                <FiNavigation /> {t('graph.openAsCenter')}
+              </button>
+            </>
+          )}
+          {onClear && (
+            <button className="graph-action-btn graph-action-btn--clear" onClick={onClear}>
+              <FiX /> {t('graph.clear')}
+            </button>
           )}
         </div>
       )}
@@ -529,4 +535,6 @@ export default function Graph({ elements, centerId, onNodeClick, onExampleClick,
       )}
     </div>
   )
-}
+})
+
+export default Graph

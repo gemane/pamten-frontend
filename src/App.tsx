@@ -5,6 +5,8 @@ import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
 import SearchBar     from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
+import type { GraphHandle } from './components/Graph'
+import { buildCsvContent } from './utils/exportCsv'
 import GraphLegend   from './components/GraphLegend'
 import NodePanel     from './components/NodePanel'
 import ScraperPanel  from './components/ScraperPanel'
@@ -267,6 +269,7 @@ function AppInner() {
   const loadedIds   = useRef<Set<string>>(new Set())
   const elementsRef = useRef<GraphElement[]>([])
   elementsRef.current = elements
+  const graphRef = useRef<GraphHandle | null>(null)
 
   const showToast = useCallback((message: string, type = 'info') => {
     setToast({ message, type })
@@ -397,6 +400,20 @@ function AppInner() {
     setToast(null)
     loadedIds.current = new Set()
   }, [])
+
+  const handleExportPng = useCallback(() => {
+    graphRef.current?.exportPng()
+  }, [])
+
+  const handleExportCsv = useCallback(() => {
+    const csv = buildCsvContent(elementsRef.current, t)
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'pamten-graph.csv'
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }, [t])
 
   const handleNodeClick = useCallback((nodeData: NodeData) => {
     setSelectedNode(nodeData)
@@ -543,7 +560,11 @@ function AppInner() {
             <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
             <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
             <div className="left-panel__detail">
-              <NodePanel node={selectedNode} onExpand={handleExpand} expandingId={expandingId} onNavigateTo={handleNavigateTo} centerId={centerId} />
+              <NodePanel
+                node={selectedNode}
+                onExportPng={elements.length > 0 ? handleExportPng : undefined}
+                onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
+              />
             </div>
           </>
         )}
@@ -589,8 +610,10 @@ function AppInner() {
               theme={theme}
             />
           : <Graph
+              ref={graphRef}
               elements={elements}
               centerId={centerId}
+              selectedNode={selectedNode}
               onNodeClick={handleNodeClick}
               onExampleClick={handleExampleClick}
               onClear={elements.length > 0 ? handleClearGraph : null}
