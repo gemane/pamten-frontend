@@ -6,7 +6,9 @@
     "logout": "Cerrar sesión"
   },
   "search": {
-    "placeholder": "Buscar empresas, marcas, personas…"
+    "placeholder": "Buscar empresas, marcas, personas…",
+    "allCountries": "Todos los países",
+    "filterCountries": "Filtrar países…"
   },
   "graph": {
     "tagline": "Mapea la propiedad corporativa mundial",

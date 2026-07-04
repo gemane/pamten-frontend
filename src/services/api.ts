@@ -24,8 +24,11 @@ client.interceptors.request.use((config) => {
   return config
 })
 
-export const search = (q: string): Promise<AxiosResponse<SearchResult[]>> =>
-  client.get('/search/', { params: { q } })
+export const search = (q: string, country?: string): Promise<AxiosResponse<SearchResult[]>> =>
+  client.get('/search/', { params: country ? { q, country } : { q } })
+
+export const getCountries = (): Promise<AxiosResponse<{ country: string; count: number }[]>> =>
+  client.get('/entities/countries')
 
 export const getFullProfile = (id: string): Promise<AxiosResponse<FullProfile>> =>
   client.get(`/search/entity/${id}/full-profile`)

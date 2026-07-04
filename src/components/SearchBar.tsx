@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiSearch, FiX } from 'react-icons/fi'
-import { search } from '../services/api'
+import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
+import { search, getCountries } from '../services/api'
 import type { SearchResult } from '../types'
 
 interface SearchBarProps {
@@ -12,14 +12,32 @@ interface SearchBarProps {
 
 export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
   const { t } = useTranslation()
-  const [query, setQuery]     = useState<string>('')
-  const [results, setResults] = useState<SearchResult[]>([])
-  const [open, setOpen]       = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [query, setQuery]           = useState<string>('')
+  const [results, setResults]       = useState<SearchResult[]>([])
+  const [open, setOpen]             = useState<boolean>(false)
+  const [loading, setLoading]       = useState<boolean>(false)
+  const [countries, setCountries]   = useState<{ country: string; count: number }[]>([])
+  const [country, setCountry]       = useState<string>('')
+  const [countryQuery, setCountryQuery] = useState<string>('')
+  const [countryOpen, setCountryOpen]   = useState<boolean>(false)
   const timer      = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapRef    = useRef<HTMLDivElement>(null)
   const inputRef   = useRef<HTMLInputElement>(null)
+  const countryRef = useRef<HTMLDivElement>(null)
   const skipSearch = useRef<boolean>(false)
+
+  useEffect(() => {
+    getCountries().then(r => setCountries(r.data)).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (countryRef.current && !countryRef.current.contains(e.target as Node))
+        setCountryOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -59,7 +77,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
     timer.current = setTimeout(async () => {
       setLoading(true)
       try {
-        const { data } = await search(query)
+        const { data } = await search(query, country || undefined)
         setResults(data)
         setOpen(true)
       } catch {
@@ -71,7 +89,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
     return () => {
       if (timer.current) clearTimeout(timer.current)
     }
-  }, [query])
+  }, [query, country])
 
   const handleSelect = (result: SearchResult) => {
     const nodeName = 'name' in result.node ? result.node.name : ('full_name' in result.node ? result.node.full_name : '')
@@ -91,6 +109,10 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
 
   const badge = (type: string) => (
     <span className={`type-badge type-badge--${type.toLowerCase()}`}>{type}</span>
+  )
+
+  const filteredCountries = countries.filter(c =>
+    c.country.toLowerCase().includes(countryQuery.toLowerCase())
   )
 
   return (
@@ -113,6 +135,55 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
           </button>
         )}
       </div>
+
+      {countries.length > 0 && (
+        <div className="country-filter" ref={countryRef}>
+          <button
+            className={`country-filter__toggle ${country ? 'country-filter__toggle--active' : ''}`}
+            onClick={() => { setCountryOpen(o => !o); setCountryQuery('') }}
+            type="button"
+          >
+            <span className="country-filter__label">
+              {country || t('search.allCountries')}
+            </span>
+            {country
+              ? <FiX className="country-filter__icon" onMouseDown={e => { e.stopPropagation(); setCountry(''); setCountryOpen(false) }} />
+              : <FiChevronDown className="country-filter__icon" />
+            }
+          </button>
+
+          {countryOpen && (
+            <div className="country-filter__dropdown">
+              <input
+                className="country-filter__search"
+                type="text"
+                placeholder={t('search.filterCountries')}
+                value={countryQuery}
+                onChange={e => setCountryQuery(e.target.value)}
+                autoFocus
+              />
+              <ul className="country-filter__list">
+                <li
+                  className={`country-filter__item ${!country ? 'country-filter__item--active' : ''}`}
+                  onMouseDown={() => { setCountry(''); setCountryOpen(false) }}
+                >
+                  {t('search.allCountries')}
+                </li>
+                {filteredCountries.map(c => (
+                  <li
+                    key={c.country}
+                    className={`country-filter__item ${country === c.country ? 'country-filter__item--active' : ''}`}
+                    onMouseDown={() => { setCountry(c.country); setCountryOpen(false) }}
+                  >
+                    <span>{c.country}</span>
+                    <span className="country-filter__count">{c.count.toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {open && results.length > 0 && (
         <ul className="search-dropdown">

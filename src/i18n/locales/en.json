@@ -6,7 +6,9 @@
     "logout": "Logout"
   },
   "search": {
-    "placeholder": "Search companies, brands, people…"
+    "placeholder": "Search companies, brands, people…",
+    "allCountries": "All countries",
+    "filterCountries": "Filter countries…"
   },
   "graph": {
     "tagline": "Map the world's corporate ownership",

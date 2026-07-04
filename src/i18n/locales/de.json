@@ -6,7 +6,9 @@
     "logout": "Abmelden"
   },
   "search": {
-    "placeholder": "Unternehmen, Marken, Personen suchen…"
+    "placeholder": "Unternehmen, Marken, Personen suchen…",
+    "allCountries": "Alle Länder",
+    "filterCountries": "Länder filtern…"
   },
   "graph": {
     "tagline": "Die globale Unternehmensstruktur kartieren",
