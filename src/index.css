@@ -288,6 +288,42 @@ body {
 
 .user-badge__logout:hover { color: #e87c6e; }
 
+/* ── User management (admin Settings panel) ─────────────────────── */
+.user-list { display: flex; flex-direction: column; gap: 6px; }
+
+.user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.user-row__email { font-size: 0.8rem; color: #a0aec0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.user-row__actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.user-row__select-wrap { position: relative; display: flex; align-items: center; }
+.user-row__role-select {
+  appearance: none;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  padding: 3px 22px 3px 7px;
+  cursor: pointer;
+}
+.user-row__role-select:focus { outline: none; border-color: #4A90D9; }
+.user-row__select-icon { position: absolute; right: 5px; pointer-events: none; font-size: 0.7rem; color: #718096; }
+.user-row__delete {
+  background: none; border: none; cursor: pointer;
+  color: #718096; display: flex; align-items: center;
+  padding: 2px; border-radius: 3px; transition: color 0.15s;
+}
+.user-row__delete:hover { color: #e87c6e; }
+.settings-error { font-size: 0.78rem; color: #e87c6e; margin: 4px 0; }
+
 /* ── App shell ─────────────────────────────────────────── */
 .app {
   display: flex;

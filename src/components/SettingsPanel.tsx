@@ -1,14 +1,19 @@
-import { FiLogIn, FiLogOut, FiUser } from 'react-icons/fi'
+import { useState, useEffect, useCallback } from 'react'
+import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import ThemeToggle from './ThemeToggle'
 import type { Theme } from '../hooks/useTheme'
 import type { AuthUser } from '../types'
+import { getUsers, updateUserRole, deleteUser } from '../services/api'
+import type { UserRecord } from '../services/api'
 
 const LANGS = [
   { code: 'en', label: 'EN' },
   { code: 'de', label: 'DE' },
   { code: 'es', label: 'ES' },
 ]
+
+const ROLES = ['admin', 'contributor', 'viewer'] as const
 
 interface SettingsPanelProps {
   theme: Theme
@@ -18,8 +23,64 @@ interface SettingsPanelProps {
   onLogout: () => void
 }
 
+function UserRow({ u, currentId, onRoleChange, onDelete }: {
+  u: UserRecord
+  currentId: string
+  onRoleChange: (id: string, role: string) => void
+  onDelete: (id: string) => void
+}) {
+  return (
+    <div className="user-row">
+      <span className="user-row__email">{u.email}</span>
+      <div className="user-row__actions">
+        <div className="user-row__select-wrap">
+          <select
+            className="user-row__role-select"
+            value={u.role}
+            onChange={e => onRoleChange(u.id, e.target.value)}
+          >
+            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <FiChevronDown className="user-row__select-icon" />
+        </div>
+        {u.id !== currentId && (
+          <button className="user-row__delete" onClick={() => onDelete(u.id)} title="Delete user">
+            <FiTrash2 />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onLogout }: SettingsPanelProps) {
   const { t, i18n } = useTranslation()
+  const [users,    setUsers]    = useState<UserRecord[]>([])
+  const [usersErr, setUsersErr] = useState<string | null>(null)
+
+  const loadUsers = useCallback(() => {
+    if (user?.role !== 'admin') return
+    getUsers()
+      .then(({ data }) => setUsers(data))
+      .catch(() => setUsersErr('Could not load users.'))
+  }, [user?.role])
+
+  useEffect(() => { loadUsers() }, [loadUsers])
+
+  const handleRoleChange = async (id: string, role: string) => {
+    try {
+      await updateUserRole(id, role)
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u))
+    } catch { /* ignore */ }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteUser(id)
+      setUsers(prev => prev.filter(u => u.id !== id))
+    } catch { /* ignore */ }
+  }
+
   return (
     <div className="settings-panel">
       <div className="settings-section">
@@ -66,6 +127,24 @@ export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onL
           </button>
         )}
       </div>
+
+      {user?.role === 'admin' && (
+        <div className="settings-section">
+          <h4 className="settings-section__title">Users</h4>
+          {usersErr && <p className="settings-error">{usersErr}</p>}
+          <div className="user-list">
+            {users.map(u => (
+              <UserRow
+                key={u.id}
+                u={u}
+                currentId={user.id}
+                onRoleChange={handleRoleChange}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

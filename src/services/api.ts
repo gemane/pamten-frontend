@@ -25,6 +25,17 @@ client.interceptors.request.use((config) => {
   return config
 })
 
+let _onUnauthorized: (() => void) | null = null
+export const setUnauthorizedHandler = (fn: () => void) => { _onUnauthorized = fn }
+
+client.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401 && _onUnauthorized) _onUnauthorized()
+    return Promise.reject(err)
+  },
+)
+
 export const search = (q: string, country?: string): Promise<AxiosResponse<SearchResult[]>> =>
   client.get('/search/', { params: country ? { q, country } : { q } })
 
@@ -66,6 +77,13 @@ export const authLogin = (email: string, password: string): Promise<AxiosRespons
 
 export const authMe = (): Promise<AxiosResponse<AuthUser>> =>
   client.get('/auth/me')
+
+export interface UserRecord { id: string; email: string; role: string; created_at?: string }
+export const getUsers       = (): Promise<AxiosResponse<UserRecord[]>> => client.get('/auth/users')
+export const updateUserRole = (id: string, role: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.patch(`/auth/users/${id}/role`, { role })
+export const deleteUser     = (id: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.delete(`/auth/users/${id}`)
 
 export const getScraperStatus  = (): Promise<AxiosResponse<ScraperStatus>> => client.get('/scraper/status')
 export const getScraperSources = (): Promise<AxiosResponse<ScraperSource[]>> => client.get('/scraper/sources')

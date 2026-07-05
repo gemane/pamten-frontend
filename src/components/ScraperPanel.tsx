@@ -273,7 +273,7 @@ function BodsImportCard({
 
 export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProps) {
   const { t } = useTranslation()
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.role === 'admin' || user?.role === 'contributor'
 
   const [masterStatus,   setMasterStatus]   = useState<ScraperStatus | null>(null)
   const [sources,        setSources]        = useState<ScraperSource[]>([])
