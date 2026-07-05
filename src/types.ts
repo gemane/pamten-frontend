@@ -218,6 +218,14 @@ export interface CountryEntityGroup {
   entities?: Entity[]  // loaded lazily when a country is selected
 }
 
+export interface ContextCountry {
+  country: string        // alpha-2 or full name
+  role: 'primary' | 'subsidiary'
+  lat?: number           // hq_lat if available
+  lng?: number           // hq_lng if available
+  label: string          // entity name for tooltip
+}
+
 // Toast
 export type ToastVariant = 'info' | 'success' | 'error'
 

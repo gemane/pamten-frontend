@@ -1,6 +1,6 @@
 import { FiArrowLeft, FiMapPin, FiLoader } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
-import type { CountryEntityGroup, Entity } from '../types'
+import type { CountryEntityGroup, Entity, NodeData } from '../types'
 
 const TYPE_COLOR: Record<string, string> = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
 
@@ -28,9 +28,15 @@ interface MapPanelProps {
   onSelectCountry: (country: string | null) => void
   onLoadEntity: (id: string) => void
   loading: boolean
+  contextNode?: NodeData | null
+  contextSubsidiaries?: NodeData[]
+  onSelectSubsidiary?: (node: NodeData) => void
 }
 
-export default function MapPanel({ countryData, selectedCountry, onSelectCountry, onLoadEntity, loading }: MapPanelProps) {
+export default function MapPanel({
+  countryData, selectedCountry, onSelectCountry, onLoadEntity, loading,
+  contextNode, contextSubsidiaries = [], onSelectSubsidiary,
+}: MapPanelProps) {
   const selected = countryData.find(d => d.country === selectedCountry)
 
   if (loading) {
@@ -41,6 +47,50 @@ export default function MapPanel({ countryData, selectedCountry, onSelectCountry
     )
   }
 
+  // Context mode: a graph node is selected — show that company + its subsidiaries
+  if (contextNode) {
+    const primary = contextNode.raw as Entity
+    const primaryCountry = primary.hq_country || primary.country
+    return (
+      <div className="map-panel">
+        <div className="map-panel__country-header">
+          <span className="map-entity-dot" style={{ background: '#b45309', width: 10, height: 10, flexShrink: 0 }} />
+          <div>
+            <div className="map-panel__country-name">{contextNode.label}</div>
+            {primaryCountry && (
+              <div className="map-panel__country-count">{countryName(primaryCountry)}</div>
+            )}
+          </div>
+        </div>
+        {contextSubsidiaries.length > 0 ? (
+          <div className="map-panel__entity-list">
+            {contextSubsidiaries.map(sub => {
+              const e = sub.raw as Entity
+              const subCountry = e.hq_country || e.country
+              return (
+                <button
+                  key={sub.id}
+                  className="map-entity-item"
+                  onClick={() => onSelectSubsidiary ? onSelectSubsidiary(sub) : onLoadEntity(sub.id)}
+                >
+                  <span className="map-entity-dot" style={{ background: '#d97706' }} />
+                  <span className="map-entity-name">{sub.label}</span>
+                  {subCountry
+                    ? <span className="map-entity-type">{countryName(subCountry)}</span>
+                    : <span className="map-entity-type">{(e as Entity).type}</span>
+                  }
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="map-panel__hint">No subsidiaries in graph.</p>
+        )}
+      </div>
+    )
+  }
+
+  // Normal mode: country selected from map click
   if (selected) {
     return (
       <div className="map-panel">
