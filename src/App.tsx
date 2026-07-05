@@ -547,7 +547,7 @@ function AppInner() {
               <span className="logo">Pamten</span>
               <span className="logo-sub">Ownership Graph</span>
             </div>
-            <div className="tab-toggle">
+            <div className="tab-toggle tab-toggle--header">
               <button
                 className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`}
                 onClick={() => handleTabChange('graph')}
@@ -622,6 +622,7 @@ function AppInner() {
             />
           </div>
         )}
+
       </div>
 
       <div className="right-panel">
@@ -661,6 +662,39 @@ function AppInner() {
           }
         </div>
       </div>
+
+      {isMobile && (
+        <nav className="app-bottom-nav">
+          <button
+            className={`bottom-nav-btn ${activeTab === 'graph' ? 'bottom-nav-btn--active' : ''}`}
+            onClick={() => { handleTabChange('graph'); setSidebarOpen(false) }}
+          >
+            <FiSearch />
+            <span>{t('nav.graph')}</span>
+          </button>
+          <button
+            className={`bottom-nav-btn ${activeTab === 'map' ? 'bottom-nav-btn--active' : ''}`}
+            onClick={() => { handleTabChange('map'); setSidebarOpen(true) }}
+          >
+            <FiGlobe />
+            <span>{t('nav.map')}</span>
+          </button>
+          <button
+            className={`bottom-nav-btn ${activeTab === 'scraper' ? 'bottom-nav-btn--active' : ''}`}
+            onClick={() => { handleTabChange('scraper'); setSidebarOpen(true) }}
+          >
+            <FiDatabase />
+            <span>{t('scraper.title')}</span>
+          </button>
+          <button
+            className={`bottom-nav-btn ${activeTab === 'settings' ? 'bottom-nav-btn--active' : ''}`}
+            onClick={() => { handleTabChange('settings'); setSidebarOpen(true) }}
+          >
+            <FiSettings />
+            <span>{t('settings.title')}</span>
+          </button>
+        </nav>
+      )}
     </div>
   )
 }
