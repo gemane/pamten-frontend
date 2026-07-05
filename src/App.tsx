@@ -17,7 +17,7 @@ import AuthModal     from './components/AuthModal'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPerson, getOwners, search, getEntitiesByCountry, getCountryEntities } from './services/api'
+import { getFullProfile, getPerson, getOwners, search, getEntitiesByCountry, getCountryEntities, setUnauthorizedHandler } from './services/api'
 import type {
   GraphElement,
   NodeData,
@@ -286,6 +286,10 @@ function AppInner() {
   // Cache entity→country resolved during contextCountries so subsidiaries can use it when selected
   const entityCountryCache = useRef<Map<string, { country: string; lat?: number; lng?: number }>>(new Map())
   const graphRef = useRef<GraphHandle | null>(null)
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => setShowAuth(true))
+  }, [])
 
   const showToast = useCallback((message: string, type = 'info') => {
     setToast({ message, type })
