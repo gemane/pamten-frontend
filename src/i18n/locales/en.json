@@ -12,6 +12,7 @@
   },
   "graph": {
     "tagline": "Map the world's corporate ownership",
+    "tagline2": "Search for ownership",
     "clear": "Clear",
     "export": "Export",
     "exportPng": "PNG image",

@@ -1,12 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiInfo } from 'react-icons/fi'
 
 export default function GraphLegend() {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent | TouchEvent) => {
+      const target = e instanceof TouchEvent ? e.touches[0]?.target : (e as MouseEvent).target
+      if (ref.current && !ref.current.contains(target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+    }
+  }, [open])
+
   return (
-    <div className="graph-legend">
+    <div className="graph-legend" ref={ref}>
       <button className="graph-legend__toggle" onClick={() => setOpen(v => !v)} title="Legend">
         <FiInfo />
       </button>

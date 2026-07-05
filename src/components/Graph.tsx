@@ -308,9 +308,15 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
   const [threshold, setThreshold] = useState(0)
   const [examples, setExamples]   = useState(() => pickRandom(ALL_EXAMPLE_QUERIES, 3))
+  const [taglineIdx, setTaglineIdx] = useState(0)
 
   useEffect(() => {
     const id = setInterval(() => setExamples(pickRandom(ALL_EXAMPLE_QUERIES, 3)), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    const id = setInterval(() => setTaglineIdx(i => 1 - i), 30_000)
     return () => clearInterval(id)
   }, [])
 
@@ -487,7 +493,9 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       {elements.length === 0 && (
         <div className="graph-welcome">
           <div className="graph-welcome__logo">Pamten</div>
-          <p className="graph-welcome__tagline">{t('graph.tagline')}</p>
+          <p key={taglineIdx} className="graph-welcome__tagline">
+            {taglineIdx === 0 ? t('graph.tagline') : t('graph.tagline2')}
+          </p>
           <div className="graph-welcome__chips">
             {examples.map(name => (
               <button
@@ -504,6 +512,11 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
       {elements.length > 0 && (
         <div className="graph-actions">
+          {onClear && (
+            <button className="graph-action-btn graph-action-btn--clear" onClick={onClear}>
+              <FiX /> {t('graph.clear')}
+            </button>
+          )}
           {showNodeActions && (
             <>
               <button
@@ -520,11 +533,6 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
                 <FiNavigation /> {t('graph.openAsCenter')}
               </button>
             </>
-          )}
-          {onClear && (
-            <button className="graph-action-btn graph-action-btn--clear" onClick={onClear}>
-              <FiX /> {t('graph.clear')}
-            </button>
           )}
         </div>
       )}

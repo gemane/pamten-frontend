@@ -530,7 +530,7 @@ function AppInner() {
         <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {isMobile && (
+      {isMobile && activeTab !== 'graph' && (
         <button className="mobile-toggle" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar">
           {sidebarOpen ? <FiX /> : <FiMenu />}
         </button>
@@ -582,7 +582,6 @@ function AppInner() {
 
         {activeTab === 'graph' && (
           <>
-            <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
             <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
             <div className="left-panel__detail">
               <NodePanel
@@ -626,29 +625,41 @@ function AppInner() {
       </div>
 
       <div className="right-panel">
-        {activeTab === 'graph' && elements.length > 0 && <GraphLegend />}
-        {activeTab === 'map'
-          ? <MapView
-              countryData={countryData}
-              selectedCountry={selectedCountry}
-              onCountryClick={setSelectedCountry}
-              theme={theme}
-            />
-          : <Graph
-              ref={graphRef}
-              elements={elements}
-              centerId={centerId}
-              selectedNode={selectedNode}
-              onNodeClick={handleNodeClick}
-              onExampleClick={handleExampleClick}
-              onClear={elements.length > 0 ? handleClearGraph : null}
-              onNavigateTo={handleNavigateTo}
-              onExpand={handleExpand}
-              expandingId={expandingId}
-              onToast={showToast}
-              theme={theme}
-            />
-        }
+        {activeTab === 'graph' && (
+          <div className="graph-topbar">
+            {isMobile && (
+              <button className="mobile-toggle--topbar" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar">
+                {sidebarOpen ? <FiX /> : <FiMenu />}
+              </button>
+            )}
+            <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
+          </div>
+        )}
+        <div className="graph-area">
+          {activeTab === 'graph' && elements.length > 0 && <GraphLegend />}
+          {activeTab === 'map'
+            ? <MapView
+                countryData={countryData}
+                selectedCountry={selectedCountry}
+                onCountryClick={setSelectedCountry}
+                theme={theme}
+              />
+            : <Graph
+                ref={graphRef}
+                elements={elements}
+                centerId={centerId}
+                selectedNode={selectedNode}
+                onNodeClick={handleNodeClick}
+                onExampleClick={handleExampleClick}
+                onClear={elements.length > 0 ? handleClearGraph : null}
+                onNavigateTo={handleNavigateTo}
+                onExpand={handleExpand}
+                expandingId={expandingId}
+                onToast={showToast}
+                theme={theme}
+              />
+          }
+        </div>
       </div>
     </div>
   )
