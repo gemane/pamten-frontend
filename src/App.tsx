@@ -288,8 +288,11 @@ function AppInner() {
   const graphRef = useRef<GraphHandle | null>(null)
 
   useEffect(() => {
-    setUnauthorizedHandler(() => setShowAuth(true))
-  }, [])
+    setUnauthorizedHandler(() => {
+      logout()
+      setShowAuth(true)
+    })
+  }, [logout])
 
   const showToast = useCallback((message: string, type = 'info') => {
     setToast({ message, type })
