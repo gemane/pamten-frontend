@@ -292,6 +292,7 @@ body {
 .app {
   display: flex;
   height: 100vh;
+  overflow: hidden;
   position: relative;
 }
 
@@ -315,6 +316,7 @@ body {
   width: 30%;
   min-width: 280px;
   max-width: 420px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #16213e;
@@ -460,8 +462,10 @@ body {
 
 .left-panel__detail {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  padding-bottom: 16px;
 }
 
 .left-panel__detail::-webkit-scrollbar { width: 4px; }
@@ -2487,8 +2491,39 @@ a.source-item__name:hover { color: #4A90D9; }
   .graph-welcome__chips { gap: 6px; }
   .graph-welcome__chip { font-size: 12px; padding: 6px 12px; }
 
-  /* Hide header tab icons on mobile — replaced by bottom nav */
-  .tab-toggle--header { display: none; }
+  /* Right panel: flex column, fills screen above bottom nav */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 58px;
+  }
+
+  /* Graph / map canvas: equal split with the detail panel below */
+  .mobile-canvas {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Detail panel below canvas: fills remaining height, scrolls internally */
+  .mobile-panel {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background: #16213e;
+    border-top: 1px solid #2a2a4a;
+    padding-bottom: 72px; /* clears fixed bottom nav (58px) + breathing room */
+  }
+
+  /* Full-screen panel for scraper / settings */
+  .mobile-full-panel {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 72px;
+  }
 
   /* Bottom nav: fixed bar below everything */
   .app-bottom-nav {
@@ -2506,11 +2541,6 @@ a.source-item__name:hover { color: #4A90D9; }
   /* Sidebar drawer stops above the bottom nav */
   .left-panel {
     bottom: 58px;
-  }
-
-  /* Right panel content doesn't hide behind bottom nav */
-  .right-panel {
-    padding-bottom: 58px;
   }
 
   .bottom-nav-btn {
@@ -2600,6 +2630,7 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .left-panel__detail::-webkit-scrollbar-thumb { background: #d1d9e6; }
 
 @media (max-width: 640px) {
+  [data-theme="light"] .mobile-panel { background: #ffffff; border-top-color: #d1d9e6; }
   [data-theme="light"] .app-bottom-nav { background: #ffffff; border-top-color: #d1d9e6; }
   [data-theme="light"] .bottom-nav-btn { color: #718096; }
   [data-theme="light"] .bottom-nav-btn:hover { color: #1a202c; }

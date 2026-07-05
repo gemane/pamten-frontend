@@ -215,7 +215,7 @@ export interface BodsImportResult {
 export interface CountryEntityGroup {
   country: string
   count: number
-  entities: Entity[]
+  entities?: Entity[]  // loaded lazily when a country is selected
 }
 
 // Toast

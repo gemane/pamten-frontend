@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
-import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiMenu, FiX } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
 import SearchBar     from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
@@ -17,7 +17,7 @@ import AuthModal     from './components/AuthModal'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPerson, getOwners, search, getEntitiesByCountry } from './services/api'
+import { getFullProfile, getPerson, getOwners, search, getEntitiesByCountry, getCountryEntities } from './services/api'
 import type {
   GraphElement,
   NodeData,
@@ -431,7 +431,6 @@ function AppInner() {
 
   const handleNodeClick = useCallback((nodeData: NodeData) => {
     setSelectedNode(nodeData)
-    if (window.matchMedia('(max-width: 640px)').matches) setSidebarOpen(true)
   }, [])
 
   const handleBreadcrumbNav = useCallback((nodeData: NodeData, index: number) => {
@@ -477,6 +476,20 @@ function AppInner() {
         .finally(() => setCountryLoading(false))
     }
   }, [countryData.length])
+
+  // Lazy-load entities for a country the first time it is selected
+  useEffect(() => {
+    if (!selectedCountry) return
+    const already = countryData.find(d => d.country === selectedCountry)
+    if (already?.entities) return
+    getCountryEntities(selectedCountry)
+      .then(({ data: entities }) => {
+        setCountryData(prev => prev.map(d =>
+          d.country === selectedCountry ? { ...d, entities } : d
+        ))
+      })
+      .catch(() => {})
+  }, [selectedCountry]) // intentionally excludes countryData to avoid re-runs
 
   const handleEntityFromMap = useCallback(async (entityId: string) => {
     setActiveTab('graph')
@@ -526,172 +539,194 @@ function AppInner() {
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      {isMobile && sidebarOpen && (
-        <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {isMobile && activeTab !== 'graph' && (
-        <button className="mobile-toggle" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar">
-          {sidebarOpen ? <FiX /> : <FiMenu />}
-        </button>
-      )}
-
-      <div className={`left-panel${sidebarOpen ? ' left-panel--open' : ''}`}>
-        <div className="left-panel__header">
-          <div className="left-panel__header-row">
-            <div
-              className="logo-group logo-group--clickable"
-              onClick={handleClearGraph}
-              title="Return to home"
-            >
-              <span className="logo">Pamten</span>
-              <span className="logo-sub">Ownership Graph</span>
-            </div>
-            <div className="tab-toggle tab-toggle--header">
-              <button
-                className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`}
-                onClick={() => handleTabChange('graph')}
-                title={t('nav.graph')}
+      {/* Desktop sidebar — hidden on mobile */}
+      {!isMobile && (
+        <div className="left-panel">
+          <div className="left-panel__header">
+            <div className="left-panel__header-row">
+              <div
+                className="logo-group logo-group--clickable"
+                onClick={handleClearGraph}
+                title="Return to home"
               >
-                <FiSearch />
-              </button>
-              <button
-                className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`}
-                onClick={() => handleTabChange('map')}
-                title={t('nav.map')}
-              >
-                <FiGlobe />
-              </button>
-              <button
-                className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`}
-                onClick={() => handleTabChange('scraper')}
-                title={t('scraper.title')}
-              >
-                <FiDatabase />
-              </button>
-              <button
-                className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`}
-                onClick={() => handleTabChange('settings')}
-                title={t('settings.title')}
-              >
-                <FiSettings />
-              </button>
+                <span className="logo">Pamten</span>
+                <span className="logo-sub">Ownership Graph</span>
+              </div>
+              <div className="tab-toggle">
+                <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('graph')} title={t('nav.graph')}><FiSearch /></button>
+                <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /></button>
+                <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
+                <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {activeTab === 'graph' && (
-          <>
-            <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
+          {activeTab === 'graph' && (
+            <>
+              <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
+              <div className="left-panel__detail">
+                <NodePanel
+                  node={selectedNode}
+                  onExportPng={elements.length > 0 ? handleExportPng : undefined}
+                  onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
+                />
+              </div>
+            </>
+          )}
+          {activeTab === 'map' && (
             <div className="left-panel__detail">
-              <NodePanel
-                node={selectedNode}
-                onExportPng={elements.length > 0 ? handleExportPng : undefined}
-                onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
+              <MapPanel
+                countryData={countryData}
+                selectedCountry={selectedCountry}
+                onSelectCountry={setSelectedCountry}
+                onLoadEntity={handleEntityFromMap}
+                loading={countryLoading}
               />
+            </div>
+          )}
+          {activeTab === 'scraper' && (
+            <div className="left-panel__detail">
+              <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
+            </div>
+          )}
+          {activeTab === 'settings' && (
+            <div className="left-panel__detail">
+              <SettingsPanel
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                user={user}
+                onLogin={() => setShowAuth(true)}
+                onLogout={logout}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="right-panel">
+        {isMobile ? (
+          /* ── Mobile layout ── */
+          <>
+            {activeTab === 'graph' && (
+              <>
+                <div className="graph-topbar">
+                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
+                </div>
+                <div className="mobile-canvas">
+                  {elements.length > 0 && <GraphLegend />}
+                  <Graph
+                    ref={graphRef}
+                    elements={elements}
+                    centerId={centerId}
+                    selectedNode={selectedNode}
+                    onNodeClick={handleNodeClick}
+                    onExampleClick={handleExampleClick}
+                    onClear={elements.length > 0 ? handleClearGraph : null}
+                    onNavigateTo={handleNavigateTo}
+                    onExpand={handleExpand}
+                    expandingId={expandingId}
+                    onToast={showToast}
+                    theme={theme}
+                  />
+                </div>
+                <div className="mobile-panel">
+                  <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
+                  <NodePanel
+                    node={selectedNode}
+                    onExportPng={elements.length > 0 ? handleExportPng : undefined}
+                    onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
+                  />
+                </div>
+              </>
+            )}
+            {activeTab === 'map' && (
+              <>
+                <div className="mobile-canvas">
+                  <MapView
+                    countryData={countryData}
+                    selectedCountry={selectedCountry}
+                    onCountryClick={setSelectedCountry}
+                    theme={theme}
+                  />
+                </div>
+                <div className="mobile-panel">
+                  <MapPanel
+                    countryData={countryData}
+                    selectedCountry={selectedCountry}
+                    onSelectCountry={setSelectedCountry}
+                    onLoadEntity={handleEntityFromMap}
+                    loading={countryLoading}
+                  />
+                </div>
+              </>
+            )}
+            {activeTab === 'scraper' && (
+              <div className="mobile-full-panel">
+                <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
+              </div>
+            )}
+            {activeTab === 'settings' && (
+              <div className="mobile-full-panel">
+                <SettingsPanel
+                  theme={theme}
+                  onToggleTheme={toggleTheme}
+                  user={user}
+                  onLogin={() => setShowAuth(true)}
+                  onLogout={logout}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          /* ── Desktop layout ── */
+          <>
+            {activeTab === 'graph' && (
+              <div className="graph-topbar">
+                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
+              </div>
+            )}
+            <div className="graph-area">
+              {activeTab === 'graph' && elements.length > 0 && <GraphLegend />}
+              {activeTab === 'map'
+                ? <MapView
+                    countryData={countryData}
+                    selectedCountry={selectedCountry}
+                    onCountryClick={setSelectedCountry}
+                    theme={theme}
+                  />
+                : <Graph
+                    ref={graphRef}
+                    elements={elements}
+                    centerId={centerId}
+                    selectedNode={selectedNode}
+                    onNodeClick={handleNodeClick}
+                    onExampleClick={handleExampleClick}
+                    onClear={elements.length > 0 ? handleClearGraph : null}
+                    onNavigateTo={handleNavigateTo}
+                    onExpand={handleExpand}
+                    expandingId={expandingId}
+                    onToast={showToast}
+                    theme={theme}
+                  />
+              }
             </div>
           </>
         )}
-
-        {activeTab === 'map' && (
-          <div className="left-panel__detail">
-            <MapPanel
-              countryData={countryData}
-              selectedCountry={selectedCountry}
-              onSelectCountry={setSelectedCountry}
-              onLoadEntity={handleEntityFromMap}
-              loading={countryLoading}
-            />
-          </div>
-        )}
-
-        {activeTab === 'scraper' && (
-          <div className="left-panel__detail">
-            <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="left-panel__detail">
-            <SettingsPanel
-              theme={theme}
-              onToggleTheme={toggleTheme}
-              user={user}
-              onLogin={() => setShowAuth(true)}
-              onLogout={logout}
-            />
-          </div>
-        )}
-
-      </div>
-
-      <div className="right-panel">
-        {activeTab === 'graph' && (
-          <div className="graph-topbar">
-            {isMobile && (
-              <button className="mobile-toggle--topbar" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar">
-                {sidebarOpen ? <FiX /> : <FiMenu />}
-              </button>
-            )}
-            <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
-          </div>
-        )}
-        <div className="graph-area">
-          {activeTab === 'graph' && elements.length > 0 && <GraphLegend />}
-          {activeTab === 'map'
-            ? <MapView
-                countryData={countryData}
-                selectedCountry={selectedCountry}
-                onCountryClick={setSelectedCountry}
-                theme={theme}
-              />
-            : <Graph
-                ref={graphRef}
-                elements={elements}
-                centerId={centerId}
-                selectedNode={selectedNode}
-                onNodeClick={handleNodeClick}
-                onExampleClick={handleExampleClick}
-                onClear={elements.length > 0 ? handleClearGraph : null}
-                onNavigateTo={handleNavigateTo}
-                onExpand={handleExpand}
-                expandingId={expandingId}
-                onToast={showToast}
-                theme={theme}
-              />
-          }
-        </div>
       </div>
 
       {isMobile && (
         <nav className="app-bottom-nav">
-          <button
-            className={`bottom-nav-btn ${activeTab === 'graph' ? 'bottom-nav-btn--active' : ''}`}
-            onClick={() => { handleTabChange('graph'); setSidebarOpen(false) }}
-          >
-            <FiSearch />
-            <span>{t('nav.graph')}</span>
+          <button className={`bottom-nav-btn ${activeTab === 'graph' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('graph')}>
+            <FiSearch /><span>{t('nav.graph')}</span>
           </button>
-          <button
-            className={`bottom-nav-btn ${activeTab === 'map' ? 'bottom-nav-btn--active' : ''}`}
-            onClick={() => { handleTabChange('map'); setSidebarOpen(true) }}
-          >
-            <FiGlobe />
-            <span>{t('nav.map')}</span>
+          <button className={`bottom-nav-btn ${activeTab === 'map' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('map')}>
+            <FiGlobe /><span>{t('nav.map')}</span>
           </button>
-          <button
-            className={`bottom-nav-btn ${activeTab === 'scraper' ? 'bottom-nav-btn--active' : ''}`}
-            onClick={() => { handleTabChange('scraper'); setSidebarOpen(true) }}
-          >
-            <FiDatabase />
-            <span>{t('scraper.title')}</span>
+          <button className={`bottom-nav-btn ${activeTab === 'scraper' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('scraper')}>
+            <FiDatabase /><span>{t('scraper.title')}</span>
           </button>
-          <button
-            className={`bottom-nav-btn ${activeTab === 'settings' ? 'bottom-nav-btn--active' : ''}`}
-            onClick={() => { handleTabChange('settings'); setSidebarOpen(true) }}
-          >
-            <FiSettings />
-            <span>{t('settings.title')}</span>
+          <button className={`bottom-nav-btn ${activeTab === 'settings' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('settings')}>
+            <FiSettings /><span>{t('settings.title')}</span>
           </button>
         </nav>
       )}

@@ -54,11 +54,22 @@ export default function MapPanel({ countryData, selectedCountry, onSelectCountry
             <div className="map-panel__country-count">{selected.count} {selected.count === 1 ? 'entity' : 'entities'}</div>
           </div>
         </div>
-        <div className="map-panel__entity-list">
-          {selected.entities.map(e => (
-            <EntityItem key={e.id} entity={e} onLoad={(id) => { onLoadEntity(id) }} />
-          ))}
-        </div>
+        {!selected.entities ? (
+          <div className="map-panel__loading"><FiLoader className="spin" /> Loading entities…</div>
+        ) : (
+          <>
+            <div className="map-panel__entity-list">
+              {selected.entities.map(e => (
+                <EntityItem key={e.id} entity={e} onLoad={(id) => { onLoadEntity(id) }} />
+              ))}
+            </div>
+            {selected.count > selected.entities.length && (
+              <p className="map-panel__limit-note">
+                Showing first {selected.entities.length} of {selected.count} entities
+              </p>
+            )}
+          </>
+        )}
       </div>
     )
   }

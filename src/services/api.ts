@@ -9,6 +9,7 @@ import type {
   ScraperSource,
   BodsImportResult,
   CountryEntityGroup,
+  Entity,
   AuthUser,
   Source,
 } from '../types'
@@ -50,6 +51,9 @@ export const getPerson = (id: string): Promise<AxiosResponse<unknown>> =>
 
 export const getEntitiesByCountry = (): Promise<AxiosResponse<CountryEntityGroup[]>> =>
   client.get('/entities/by-country')
+
+export const getCountryEntities = (country: string, limit = 200): Promise<AxiosResponse<Entity[]>> =>
+  client.get(`/entities/by-country/${encodeURIComponent(country)}`, { params: { limit } })
 
 export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/entity/${id}`)
