@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
 import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
@@ -24,6 +24,7 @@ import type {
   FullProfile,
   SearchResult,
   CountryEntityGroup,
+  ContextCountry,
   Entity,
   Person,
 } from './types'
@@ -282,6 +283,8 @@ function AppInner() {
   const loadedIds   = useRef<Set<string>>(new Set())
   const elementsRef = useRef<GraphElement[]>([])
   elementsRef.current = elements
+  // Cache entity→country resolved during contextCountries so subsidiaries can use it when selected
+  const entityCountryCache = useRef<Map<string, { country: string; lat?: number; lng?: number }>>(new Map())
   const graphRef = useRef<GraphHandle | null>(null)
 
   const showToast = useCallback((message: string, type = 'info') => {
@@ -477,6 +480,64 @@ function AppInner() {
     }
   }, [countryData.length])
 
+  // Subsidiary NodeData for the MapPanel list when a company is selected
+  const contextSubsidiaries = useMemo((): NodeData[] => {
+    if (!selectedNode || selectedNode.nodeType !== 'entity') return []
+    const subsidiaryIds = new Set<string>()
+    for (const el of elements) {
+      const d = el.data as Record<string, unknown>
+      if (d.source === selectedNode.id && d.edgeDir === 'out') {
+        subsidiaryIds.add(d.target as string)
+      }
+    }
+    return elements
+      .filter(el => {
+        const d = el.data as NodeData & Record<string, unknown>
+        return !d.source && subsidiaryIds.has(d.id) && d.nodeType === 'entity'
+      })
+      .map(el => el.data as NodeData)
+  }, [selectedNode, elements])
+
+  // Countries to highlight on the map based on the selected graph node
+  const contextCountries = useMemo((): ContextCountry[] => {
+    if (!selectedNode || selectedNode.nodeType !== 'entity') return []
+    const result: ContextCountry[] = []
+    const seen = new Set<string>()
+    const cache = entityCountryCache.current
+
+    const addEntity = (raw: Entity, id: string, role: 'primary' | 'subsidiary') => {
+      const country = raw.hq_country || raw.country || cache.get(id)?.country
+      if (!country) return
+      const lat = raw.hq_lat ?? cache.get(id)?.lat
+      const lng = raw.hq_lng ?? cache.get(id)?.lng
+      const key = `${role}:${country}`
+      if (seen.has(key)) return
+      seen.add(key)
+      cache.set(id, { country, lat, lng })
+      result.push({ country, role, lat, lng, label: raw.name })
+    }
+
+    addEntity(selectedNode.raw as Entity, selectedNode.id, 'primary')
+
+    // Collect IDs of direct subsidiaries (outbound ownership edges)
+    const subsidiaryIds = new Set<string>()
+    for (const el of elements) {
+      const d = el.data as Record<string, unknown>
+      if (d.source === selectedNode.id && d.edgeDir === 'out') {
+        subsidiaryIds.add(d.target as string)
+      }
+    }
+
+    for (const el of elements) {
+      const d = el.data as NodeData & Record<string, unknown>
+      if (!d.source && subsidiaryIds.has(d.id) && d.nodeType === 'entity' && d.raw) {
+        addEntity(d.raw as Entity, d.id as string, 'subsidiary')
+      }
+    }
+
+    return result
+  }, [selectedNode, elements])
+
   // Lazy-load entities for a country the first time it is selected
   useEffect(() => {
     if (!selectedCountry) return
@@ -581,6 +642,9 @@ function AppInner() {
                 onSelectCountry={setSelectedCountry}
                 onLoadEntity={handleEntityFromMap}
                 loading={countryLoading}
+                contextNode={selectedNode}
+                contextSubsidiaries={contextSubsidiaries}
+                onSelectSubsidiary={setSelectedNode}
               />
             </div>
           )}
@@ -646,6 +710,7 @@ function AppInner() {
                     countryData={countryData}
                     selectedCountry={selectedCountry}
                     onCountryClick={setSelectedCountry}
+                    contextCountries={contextCountries}
                     theme={theme}
                   />
                 </div>
@@ -656,6 +721,9 @@ function AppInner() {
                     onSelectCountry={setSelectedCountry}
                     onLoadEntity={handleEntityFromMap}
                     loading={countryLoading}
+                    contextNode={selectedNode}
+                    contextSubsidiaries={contextSubsidiaries}
+                    onSelectSubsidiary={setSelectedNode}
                   />
                 </div>
               </>
@@ -692,6 +760,7 @@ function AppInner() {
                     countryData={countryData}
                     selectedCountry={selectedCountry}
                     onCountryClick={setSelectedCountry}
+                    contextCountries={contextCountries}
                     theme={theme}
                   />
                 : <Graph

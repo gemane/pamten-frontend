@@ -50,3 +50,16 @@ export const COUNTRY_NAMES: Record<string, string> = {
 
 export const countryName = (alpha2: string): string =>
   COUNTRY_NAMES[alpha2] || alpha2
+
+// Reverse map: full country name → alpha-2 (covers BODS full-name storage)
+export const COUNTRY_NAME_TO_ALPHA2: Record<string, string> = Object.fromEntries(
+  Object.entries(COUNTRY_NAMES).map(([a2, name]) => [name, a2])
+)
+
+// Resolve a country string (alpha-2 code OR full name) to alpha-2, or null
+export function toAlpha2(country: string | undefined): string | null {
+  if (!country) return null
+  const upper = country.toUpperCase()
+  if (upper.length === 2 && ALPHA2_TO_NUMERIC[upper] !== undefined) return upper
+  return COUNTRY_NAME_TO_ALPHA2[country] ?? null
+}
