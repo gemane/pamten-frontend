@@ -388,20 +388,16 @@ function AppInner() {
     try {
       const { data: profile } = await getFullProfile(entityId)
       const cur = elementsRef.current
-      const isAbove = cur.some(el => {
-        const d = el.data as Record<string, unknown>
-        return d.source === entityId && d.edgeDir === 'in'
-      })
-      const isBelow = cur.some(el => {
-        const d = el.data as Record<string, unknown>
-        return d.target === entityId && d.edgeDir === 'out'
-      })
+      const isAbove = cur.some(el =>
+        'source' in el.data && el.data.source === entityId && el.data.edgeDir === 'in')
+      const isBelow = cur.some(el =>
+        'source' in el.data && el.data.target === entityId && el.data.edgeDir === 'out')
       const newEls = isAbove && !isBelow
         ? buildElementsUpward(profile as FullProfile, loadedIds.current)
         : isBelow && !isAbove
           ? buildElementsDownward(profile as FullProfile, loadedIds.current)
           : buildElements(profile as FullProfile, loadedIds.current)
-      const newNodes = newEls.filter(el => !(el.data as Record<string, unknown>).source)
+      const newNodes = newEls.filter(el => !('source' in el.data))
       if (newNodes.length > 0) {
         setElements(prev => [...prev, ...newEls])
       } else {
@@ -492,9 +488,9 @@ function AppInner() {
     if (!selectedNode || selectedNode.nodeType !== 'entity') return []
     const subsidiaryIds = new Set<string>()
     for (const el of elements) {
-      const d = el.data as Record<string, unknown>
-      if (d.source === selectedNode.id && d.edgeDir === 'out') {
-        subsidiaryIds.add(d.target as string)
+      const d = el.data
+      if ('source' in d && d.source === selectedNode.id && d.edgeDir === 'out') {
+        subsidiaryIds.add(d.target)
       }
     }
     return elements
@@ -529,9 +525,9 @@ function AppInner() {
     // Collect IDs of direct subsidiaries (outbound ownership edges)
     const subsidiaryIds = new Set<string>()
     for (const el of elements) {
-      const d = el.data as Record<string, unknown>
-      if (d.source === selectedNode.id && d.edgeDir === 'out') {
-        subsidiaryIds.add(d.target as string)
+      const d = el.data
+      if ('source' in d && d.source === selectedNode.id && d.edgeDir === 'out') {
+        subsidiaryIds.add(d.target)
       }
     }
 
@@ -569,7 +565,7 @@ function AppInner() {
       const els = await loadEntity(entityId)
       setCenterId(entityId)
       setElements(els)
-      const center = els.find(el => (el.data as NodeData).id === entityId && !(el.data as Record<string, unknown>).source)
+      const center = els.find(el => !('source' in el.data) && el.data.id === entityId)
       if (center) {
         setSelectedNode(center.data as NodeData)
         setNavHistory([center.data as NodeData])

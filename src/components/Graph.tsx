@@ -166,17 +166,16 @@ function computeArcPositions(
   const nodeImportance = new Map<string, number>()
 
   for (const el of elements) {
-    const d = el.data as Record<string, unknown>
-    if (d.source && d.target) {
-      const src = d.source as string
-      const tgt = d.target as string
+    const d = el.data
+    if ('source' in d) {
+      const src = d.source
+      const tgt = d.target
       if (!outgoersOf.has(src)) outgoersOf.set(src, [])
       outgoersOf.get(src)!.push(tgt)
       if (!incomersOf.has(tgt)) incomersOf.set(tgt, [])
       incomersOf.get(tgt)!.push(src)
     } else if (d.id) {
-      const imp = (d as { importance?: number }).importance
-      if (imp != null) nodeImportance.set(d.id as string, imp)
+      if (d.importance != null) nodeImportance.set(d.id, d.importance)
     }
   }
 

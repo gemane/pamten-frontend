@@ -9,8 +9,8 @@ export function buildCsvContent(
 ): string {
   const nameOf = new Map<string, string>()
   for (const el of elements) {
-    const d = el.data as Record<string, unknown>
-    if (!('source' in d) && d.id && d.label) nameOf.set(d.id as string, d.label as string)
+    const d = el.data
+    if (!('source' in d) && d.id && d.label) nameOf.set(d.id, d.label)
   }
 
   const edgeTypeLabel: Record<string, string> = {
@@ -23,11 +23,11 @@ export function buildCsvContent(
   const edgeRows = [[t('csv.from'), t('csv.to'), t('csv.relationship'), t('csv.ownershipType'), t('csv.stakePct'), t('csv.votingPct')].join(',')]
 
   for (const el of elements) {
-    const d = el.data as Record<string, unknown>
+    const d = el.data
     if ('source' in d) {
-      const from  = nameOf.get(d.source as string) ?? (d.source as string)
-      const to    = nameOf.get(d.target as string) ?? (d.target as string)
-      const rel   = edgeTypeLabel[d.edgeType as string] ?? cap(String(d.edgeType ?? ''))
+      const from  = nameOf.get(d.source) ?? d.source
+      const to    = nameOf.get(d.target) ?? d.target
+      const rel   = edgeTypeLabel[d.edgeType] ?? cap(String(d.edgeType ?? ''))
       const otype = d.ownershipType
         ? (t(`ownershipType.${d.ownershipType}`, { defaultValue: '' }) || cap(String(d.ownershipType)))
         : ''
@@ -35,7 +35,7 @@ export function buildCsvContent(
       const vote  = d.votingPowerPct != null ? `${d.votingPowerPct}%` : ''
       edgeRows.push([from, to, rel, otype, stake, vote].map(escape).join(','))
     } else {
-      const raw     = (d.raw ?? {}) as Record<string, unknown>
+      const raw     = (d.raw ?? {}) as unknown as Record<string, unknown>
       const type    = d.nodeType === 'person'
         ? t('legend.person')
         : (t(`legend.${d.entitySubtype ?? d.nodeType ?? ''}`, { defaultValue: '' }) || cap(String(d.entitySubtype ?? d.nodeType ?? '')))
