@@ -5,6 +5,18 @@
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión"
   },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "register": "Registrarse",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "tu@ejemplo.com",
+    "password": "Contraseña",
+    "passwordPlaceholderRegister": "Al menos 8 caracteres",
+    "genericError": "Algo salió mal.",
+    "firstAdminNote": "La primera cuenta registrada se convierte en administrador. Las cuentas posteriores comienzan como visor.",
+    "working": "Procesando…",
+    "createAccount": "Crear cuenta"
+  },
   "search": {
     "placeholder": "Buscar empresas, marcas, personas…",
     "allCountries": "Todos los países",
@@ -102,7 +114,12 @@
     "theme": "Tema",
     "dark": "Oscuro",
     "light": "Claro",
-    "account": "Cuenta"
+    "account": "Cuenta",
+    "users": "Usuarios",
+    "deleteUser": "Eliminar usuario",
+    "usersLoadError": "No se pudieron cargar los usuarios.",
+    "roleUpdateError": "No se pudo actualizar el rol.",
+    "deleteUserError": "No se pudo eliminar el usuario."
   },
   "scraper": {
     "title": "Scraper",

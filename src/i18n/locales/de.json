@@ -5,6 +5,18 @@
     "login": "Anmelden",
     "logout": "Abmelden"
   },
+  "auth": {
+    "signIn": "Anmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "emailPlaceholder": "name@beispiel.de",
+    "password": "Passwort",
+    "passwordPlaceholderRegister": "Mindestens 8 Zeichen",
+    "genericError": "Etwas ist schiefgelaufen.",
+    "firstAdminNote": "Das erste registrierte Konto wird Administrator. Weitere Konten beginnen als Betrachter.",
+    "working": "Wird bearbeitet…",
+    "createAccount": "Konto erstellen"
+  },
   "search": {
     "placeholder": "Unternehmen, Marken, Personen suchen…",
     "allCountries": "Alle Länder",
@@ -102,7 +114,12 @@
     "theme": "Design",
     "dark": "Dunkel",
     "light": "Hell",
-    "account": "Konto"
+    "account": "Konto",
+    "users": "Benutzer",
+    "deleteUser": "Benutzer löschen",
+    "usersLoadError": "Benutzer konnten nicht geladen werden.",
+    "roleUpdateError": "Rolle konnte nicht aktualisiert werden.",
+    "deleteUserError": "Benutzer konnte nicht gelöscht werden."
   },
   "scraper": {
     "title": "Scraper",

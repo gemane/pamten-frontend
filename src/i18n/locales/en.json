@@ -5,6 +5,18 @@
     "login": "Login",
     "logout": "Logout"
   },
+  "auth": {
+    "signIn": "Sign in",
+    "register": "Register",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholderRegister": "At least 8 characters",
+    "genericError": "Something went wrong.",
+    "firstAdminNote": "The first registered account becomes admin. Subsequent accounts start as viewer.",
+    "working": "Working…",
+    "createAccount": "Create account"
+  },
   "search": {
     "placeholder": "Search companies, brands, people…",
     "allCountries": "All countries",
@@ -102,7 +114,12 @@
     "theme": "Theme",
     "dark": "Dark",
     "light": "Light",
-    "account": "Account"
+    "account": "Account",
+    "users": "Users",
+    "deleteUser": "Delete user",
+    "usersLoadError": "Could not load users.",
+    "roleUpdateError": "Could not update role.",
+    "deleteUserError": "Could not delete user."
   },
   "scraper": {
     "title": "Scraper",
