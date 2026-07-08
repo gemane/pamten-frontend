@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { FiX, FiLogIn, FiUserPlus, FiAlertCircle, FiLoader } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 
 interface AuthModalProps {
@@ -7,6 +8,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ onClose }: AuthModalProps) {
+  const { t } = useTranslation()
   const { login, register } = useAuth()
   const [mode,     setMode]     = useState<'login' | 'register'>('login')
   const [email,    setEmail]    = useState<string>('')
@@ -27,7 +29,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
       onClose()
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } }
-      setError(axiosErr.response?.data?.detail || 'Something went wrong.')
+      setError(axiosErr.response?.data?.detail || t('auth.genericError'))
     } finally {
       setLoading(false)
     }
@@ -43,33 +45,33 @@ export default function AuthModal({ onClose }: AuthModalProps) {
             className={`modal__tab ${mode === 'login' ? 'modal__tab--active' : ''}`}
             onClick={() => { setMode('login'); setError(null) }}
           >
-            <FiLogIn /> Sign in
+            <FiLogIn /> {t('auth.signIn')}
           </button>
           <button
             className={`modal__tab ${mode === 'register' ? 'modal__tab--active' : ''}`}
             onClick={() => { setMode('register'); setError(null) }}
           >
-            <FiUserPlus /> Register
+            <FiUserPlus /> {t('auth.register')}
           </button>
         </div>
 
         <form className="modal__form" onSubmit={handleSubmit}>
-          <label className="modal__label">Email</label>
+          <label className="modal__label">{t('auth.email')}</label>
           <input
             className="modal__input"
             type="email"
-            placeholder="you@example.com"
+            placeholder={t('auth.emailPlaceholder')}
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
             autoFocus
           />
 
-          <label className="modal__label">Password</label>
+          <label className="modal__label">{t('auth.password')}</label>
           <input
             className="modal__input"
             type="password"
-            placeholder={mode === 'register' ? 'At least 8 characters' : '••••••••'}
+            placeholder={mode === 'register' ? t('auth.passwordPlaceholderRegister') : '••••••••'}
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
@@ -83,14 +85,14 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
           {mode === 'register' && (
             <p className="modal__note">
-              The first registered account becomes admin. Subsequent accounts start as viewer.
+              {t('auth.firstAdminNote')}
             </p>
           )}
 
           <button className="modal__submit" type="submit" disabled={loading}>
             {loading
-              ? <><FiLoader className="spin" /> Working…</>
-              : mode === 'login' ? 'Sign in' : 'Create account'}
+              ? <><FiLoader className="spin" /> {t('auth.working')}</>
+              : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
           </button>
         </form>
       </div>

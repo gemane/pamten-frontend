@@ -29,6 +29,7 @@ function UserRow({ u, currentId, onRoleChange, onDelete }: {
   onRoleChange: (id: string, role: string) => void
   onDelete: (id: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="user-row">
       <span className="user-row__email">{u.email}</span>
@@ -44,7 +45,7 @@ function UserRow({ u, currentId, onRoleChange, onDelete }: {
           <FiChevronDown className="user-row__select-icon" />
         </div>
         {u.id !== currentId && (
-          <button className="user-row__delete" onClick={() => onDelete(u.id)} title="Delete user">
+          <button className="user-row__delete" onClick={() => onDelete(u.id)} title={t('settings.deleteUser')}>
             <FiTrash2 />
           </button>
         )}
@@ -61,9 +62,9 @@ export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onL
   const loadUsers = useCallback(() => {
     if (user?.role !== 'admin') return
     getUsers()
-      .then(({ data }) => setUsers(data))
-      .catch(() => setUsersErr('Could not load users.'))
-  }, [user?.role])
+      .then(({ data }) => { setUsers(data); setUsersErr(null) })
+      .catch(() => setUsersErr(t('settings.usersLoadError')))
+  }, [user?.role, t])
 
   useEffect(() => { loadUsers() }, [loadUsers])
 
@@ -71,14 +72,20 @@ export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onL
     try {
       await updateUserRole(id, role)
       setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u))
-    } catch { /* ignore */ }
+      setUsersErr(null)
+    } catch {
+      setUsersErr(t('settings.roleUpdateError'))
+    }
   }
 
   const handleDelete = async (id: string) => {
     try {
       await deleteUser(id)
       setUsers(prev => prev.filter(u => u.id !== id))
-    } catch { /* ignore */ }
+      setUsersErr(null)
+    } catch {
+      setUsersErr(t('settings.deleteUserError'))
+    }
   }
 
   return (
@@ -130,7 +137,7 @@ export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onL
 
       {user?.role === 'admin' && (
         <div className="settings-section">
-          <h4 className="settings-section__title">Users</h4>
+          <h4 className="settings-section__title">{t('settings.users')}</h4>
           {usersErr && <p className="settings-error">{usersErr}</p>}
           <div className="user-list">
             {users.map(u => (
