@@ -1,6 +1,11 @@
 import type { GraphElement } from '../types'
 
-const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+const escape = (v: unknown) => {
+  const s = String(v ?? '')
+  // Prefix formula-trigger characters so spreadsheets don't evaluate them
+  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s
+  return `"${safe.replace(/"/g, '""')}"`
+}
 const cap    = (s: string)  => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function buildCsvContent(
