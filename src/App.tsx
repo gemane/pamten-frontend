@@ -392,13 +392,17 @@ function AppInner() {
         'source' in el.data && el.data.source === entityId && el.data.edgeDir === 'in')
       const isBelow = cur.some(el =>
         'source' in el.data && el.data.target === entityId && el.data.edgeDir === 'out')
+      // Build against a draft copy: the build functions mark every ID they
+      // emit, so mutating loadedIds directly and then discarding the elements
+      // would make those edges unloadable forever.
+      const draftIds = new Set(loadedIds.current)
       const newEls = isAbove && !isBelow
-        ? buildElementsUpward(profile as FullProfile, loadedIds.current)
+        ? buildElementsUpward(profile as FullProfile, draftIds)
         : isBelow && !isAbove
-          ? buildElementsDownward(profile as FullProfile, loadedIds.current)
-          : buildElements(profile as FullProfile, loadedIds.current)
-      const newNodes = newEls.filter(el => !('source' in el.data))
-      if (newNodes.length > 0) {
+          ? buildElementsDownward(profile as FullProfile, draftIds)
+          : buildElements(profile as FullProfile, draftIds)
+      if (newEls.length > 0) {
+        loadedIds.current = draftIds
         setElements(prev => [...prev, ...newEls])
       } else {
         showToast('No new connections found.', 'info')
