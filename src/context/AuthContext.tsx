@@ -22,7 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) { setLoading(false); return }
     authMe()
       .then(({ data }) => setUser(data))
-      .catch(() => localStorage.removeItem('pamten_token'))
+      .catch((err: unknown) => {
+        // Only discard the token when the server rejected it — a network
+        // blip or 5xx must not log the user out.
+        const status = (err as { response?: { status?: number } }).response?.status
+        if (status === 401) localStorage.removeItem('pamten_token')
+      })
       .finally(() => setLoading(false))
   }, [])
 
