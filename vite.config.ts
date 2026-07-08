@@ -48,10 +48,13 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor:    ['react', 'react-dom'],
-            cytoscape: ['cytoscape', 'cytoscape-cola'],
-            icons:     ['react-icons'],
+          // Function form (rolldown, vite 8+, only supports this — not the
+          // object map). Splits the heavy deps into stable, cacheable chunks.
+          manualChunks(id) {
+            if (!id.includes('/node_modules/')) return
+            if (id.includes('/node_modules/cytoscape')) return 'cytoscape'
+            if (id.includes('/node_modules/react-icons/')) return 'icons'
+            if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'vendor'
           },
         },
       },
