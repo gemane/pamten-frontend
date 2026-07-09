@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiMapPin, FiLoader } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
@@ -37,12 +38,13 @@ export default function MapPanel({
   countryData, selectedCountry, onSelectCountry, onLoadEntity, loading,
   contextNode, contextSubsidiaries = [], onSelectSubsidiary,
 }: MapPanelProps) {
+  const { t } = useTranslation()
   const selected = countryData.find(d => d.country === selectedCountry)
 
   if (loading) {
     return (
       <div className="map-panel">
-        <div className="map-panel__loading"><FiLoader className="spin" /> Loading map data…</div>
+        <div className="map-panel__loading"><FiLoader className="spin" /> {t('map.loadingData')}</div>
       </div>
     )
   }
@@ -84,7 +86,7 @@ export default function MapPanel({
             })}
           </div>
         ) : (
-          <p className="map-panel__hint">No subsidiaries in graph.</p>
+          <p className="map-panel__hint">{t('map.noSubsidiaries')}</p>
         )}
       </div>
     )
@@ -95,17 +97,17 @@ export default function MapPanel({
     return (
       <div className="map-panel">
         <button className="map-panel__back" onClick={() => onSelectCountry(null)}>
-          <FiArrowLeft /> All countries
+          <FiArrowLeft /> {t('map.allCountries')}
         </button>
         <div className="map-panel__country-header">
           <FiMapPin />
           <div>
             <div className="map-panel__country-name">{countryName(selected.country)}</div>
-            <div className="map-panel__country-count">{selected.count} {selected.count === 1 ? 'entity' : 'entities'}</div>
+            <div className="map-panel__country-count">{t('map.entityCount', { count: selected.count })}</div>
           </div>
         </div>
         {!selected.entities ? (
-          <div className="map-panel__loading"><FiLoader className="spin" /> Loading entities…</div>
+          <div className="map-panel__loading"><FiLoader className="spin" /> {t('map.loadingEntities')}</div>
         ) : (
           <>
             <div className="map-panel__entity-list">
@@ -115,7 +117,7 @@ export default function MapPanel({
             </div>
             {selected.count > selected.entities.length && (
               <p className="map-panel__limit-note">
-                Showing first {selected.entities.length} of {selected.count} entities
+                {t('map.showingFirst', { shown: selected.entities.length, total: selected.count })}
               </p>
             )}
           </>
@@ -127,7 +129,7 @@ export default function MapPanel({
   return (
     <div className="map-panel">
       <p className="map-panel__hint">
-        Click a highlighted country to see its entities. Click an entity to load it into the graph.
+        {t('map.panelHint')}
       </p>
       <div className="map-panel__country-list">
         {countryData.map(d => (

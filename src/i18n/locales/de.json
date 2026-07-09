@@ -3,7 +3,8 @@
     "graph": "Graph",
     "map": "Karte",
     "login": "Anmelden",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "home": "Zurück zur Startseite"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -107,6 +108,31 @@
     "error": "Zeitverlauf konnte nicht geladen werden.",
     "empty": "Noch keine historischen Daten.",
     "emptyHint": "Daten werden erfasst, wenn Beziehungen manuell oder über den Scraper angelegt werden."
+  },
+  "toast": {
+    "personGraphError": "Personendiagramm konnte nicht geladen werden.",
+    "entityLoadError": "Eintrag konnte nicht geladen werden. Bitte erneut versuchen.",
+    "nodeLoadError": "Knoten konnte nicht geladen werden.",
+    "noNewConnections": "Keine neuen Verbindungen gefunden.",
+    "expandError": "Knoten konnte nicht erweitert werden.",
+    "noResults": "Keine Ergebnisse für \"{{query}}\".",
+    "entityIntoGraphError": "Eintrag konnte nicht in den Graph geladen werden.",
+    "loadedIntoGraph": "{{query}} in den Graph geladen.",
+    "scrapedIntoGraphError": "Gescrapter Eintrag konnte nicht in den Graph geladen werden."
+  },
+  "map": {
+    "resetView": "Ansicht zurücksetzen",
+    "hint": "Scrollen zum Zoomen · Ziehen zum Verschieben · Land anklicken",
+    "empty1": "Noch keine geografischen Daten.",
+    "empty2": "Unternehmen scrapen, um die Karte zu füllen.",
+    "loadingData": "Kartendaten werden geladen…",
+    "loadingEntities": "Einträge werden geladen…",
+    "noSubsidiaries": "Keine Tochtergesellschaften im Graph.",
+    "allCountries": "Alle Länder",
+    "panelHint": "Klicken Sie auf ein hervorgehobenes Land, um seine Einträge zu sehen. Klicken Sie auf einen Eintrag, um ihn in den Graph zu laden.",
+    "showingFirst": "Zeige die ersten {{shown}} von {{total}} Einträgen",
+    "entityCount_one": "{{count}} Entität",
+    "entityCount_other": "{{count}} Entitäten"
   },
   "settings": {
     "title": "Einstellungen",

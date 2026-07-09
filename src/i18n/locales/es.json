@@ -3,7 +3,8 @@
     "graph": "Grafo",
     "map": "Mapa",
     "login": "Iniciar sesión",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "home": "Volver al inicio"
   },
   "auth": {
     "signIn": "Iniciar sesión",
@@ -107,6 +108,31 @@
     "error": "No se pudo cargar la cronología.",
     "empty": "Aún no hay datos históricos.",
     "emptyHint": "Las fechas se registran cuando las relaciones se crean manualmente o mediante el scraper."
+  },
+  "toast": {
+    "personGraphError": "No se pudo cargar el grafo de la persona.",
+    "entityLoadError": "No se pudo cargar la entidad. Inténtalo de nuevo.",
+    "nodeLoadError": "No se pudo cargar el nodo.",
+    "noNewConnections": "No se encontraron nuevas conexiones.",
+    "expandError": "No se pudo expandir el nodo.",
+    "noResults": "No se encontraron resultados para \"{{query}}\".",
+    "entityIntoGraphError": "No se pudo cargar la entidad en el grafo.",
+    "loadedIntoGraph": "{{query}} cargado en el grafo.",
+    "scrapedIntoGraphError": "No se pudo cargar la entidad extraída en el grafo."
+  },
+  "map": {
+    "resetView": "Restablecer vista",
+    "hint": "Desplázate para acercar · Arrastra para mover · Haz clic en un país",
+    "empty1": "Aún no hay datos geográficos.",
+    "empty2": "Extrae empresas para poblar el mapa.",
+    "loadingData": "Cargando datos del mapa…",
+    "loadingEntities": "Cargando entidades…",
+    "noSubsidiaries": "No hay filiales en el grafo.",
+    "allCountries": "Todos los países",
+    "panelHint": "Haz clic en un país resaltado para ver sus entidades. Haz clic en una entidad para cargarla en el grafo.",
+    "showingFirst": "Mostrando las primeras {{shown}} de {{total}} entidades",
+    "entityCount_one": "{{count}} entidad",
+    "entityCount_other": "{{count}} entidades"
   },
   "settings": {
     "title": "Ajustes",

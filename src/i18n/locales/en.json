@@ -3,7 +3,8 @@
     "graph": "Graph",
     "map": "Map",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "home": "Return to home"
   },
   "auth": {
     "signIn": "Sign in",
@@ -107,6 +108,31 @@
     "error": "Could not load timeline.",
     "empty": "No historical data yet.",
     "emptyHint": "Dates are recorded when relationships are created manually or via the scraper."
+  },
+  "toast": {
+    "personGraphError": "Could not load person graph.",
+    "entityLoadError": "Could not load entity. Please try again.",
+    "nodeLoadError": "Could not load node.",
+    "noNewConnections": "No new connections found.",
+    "expandError": "Could not expand node.",
+    "noResults": "No results found for \"{{query}}\".",
+    "entityIntoGraphError": "Could not load entity into graph.",
+    "loadedIntoGraph": "Loaded {{query}} into graph.",
+    "scrapedIntoGraphError": "Could not load scraped entity into graph."
+  },
+  "map": {
+    "resetView": "Reset view",
+    "hint": "Scroll to zoom · Drag to pan · Click a country",
+    "empty1": "No geographic data yet.",
+    "empty2": "Scrape companies to populate the map.",
+    "loadingData": "Loading map data…",
+    "loadingEntities": "Loading entities…",
+    "noSubsidiaries": "No subsidiaries in graph.",
+    "allCountries": "All countries",
+    "panelHint": "Click a highlighted country to see its entities. Click an entity to load it into the graph.",
+    "showingFirst": "Showing first {{shown}} of {{total}} entities",
+    "entityCount_one": "{{count}} entity",
+    "entityCount_other": "{{count}} entities"
   },
   "settings": {
     "title": "Settings",
