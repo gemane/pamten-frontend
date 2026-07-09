@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import worldData from 'world-atlas/countries-110m.json'
 import { ALPHA2_TO_NUMERIC, countryName, toAlpha2 } from '../utils/isoCountries'
@@ -72,6 +73,7 @@ export default function MapView({
   contextCountries = [],
   theme = 'dark',
 }: MapViewProps) {
+  const { t } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
@@ -98,11 +100,11 @@ export default function MapView({
         </div>
       )}
 
-      <button className="map-reset-btn" onClick={() => setResetKey(k => k + 1)} title="Reset view">
+      <button className="map-reset-btn" onClick={() => setResetKey(k => k + 1)} title={t('map.resetView')}>
         <FiRotateCcw />
       </button>
 
-      <div className="map-hint">Scroll to zoom · Drag to pan · Click a country</div>
+      <div className="map-hint">{t('map.hint')}</div>
 
       <ComposableMap
         projectionConfig={{ scale: 140 }}
@@ -135,7 +137,7 @@ export default function MapView({
                         setTooltip({ x: 0, y: 0, text: label || countryName(String(numId)) })
                       } else if (data) {
                         setTooltip({ x: 0, y: 0,
-                          text: `${countryName(data.country)} — ${data.count} ${data.count === 1 ? 'entity' : 'entities'}`,
+                          text: `${countryName(data.country)} — ${t('map.entityCount', { count: data.count })}`,
                         })
                       }
                     }}
@@ -168,7 +170,7 @@ export default function MapView({
 
       {countryData.length === 0 && contextCountries.length === 0 && (
         <div className="map-empty">
-          <p>No geographic data yet.<br />Scrape companies to populate the map.</p>
+          <p>{t('map.empty1')}<br />{t('map.empty2')}</p>
         </div>
       )}
     </div>

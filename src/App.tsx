@@ -322,7 +322,7 @@ function AppInner() {
         setSelectedNode(newNode)
         setNavHistory([newNode])
       } catch {
-        showToast('Could not load person graph.', 'error')
+        showToast(t('toast.personGraphError'), 'error')
         setSelectedNode({ id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node })
       } finally {
         setLoading(false)
@@ -346,7 +346,7 @@ function AppInner() {
       setSelectedNode(newNode)
       setNavHistory([newNode])
     } catch {
-      showToast('Could not load entity. Please try again.', 'error')
+      showToast(t('toast.entityLoadError'), 'error')
     } finally {
       setLoading(false)
     }
@@ -377,7 +377,7 @@ function AppInner() {
         setNavHistory(prev => [...prev, nodeData])
       }
     } catch {
-      showToast('Could not load node.', 'error')
+      showToast(t('toast.nodeLoadError'), 'error')
     } finally {
       setLoading(false)
     }
@@ -405,10 +405,10 @@ function AppInner() {
         loadedIds.current = draftIds
         setElements(prev => [...prev, ...newEls])
       } else {
-        showToast('No new connections found.', 'info')
+        showToast(t('toast.noNewConnections'), 'info')
       }
     } catch {
-      showToast('Could not expand node.', 'error')
+      showToast(t('toast.expandError'), 'error')
     } finally {
       setExpandingId(null)
     }
@@ -470,7 +470,7 @@ function AppInner() {
       setSelectedNode(newNode)
       setNavHistory([newNode])
     } catch {
-      showToast(`No results found for "${query}".`, 'info')
+      showToast(t('toast.noResults', { query }), 'info')
     } finally {
       setLoading(false)
     }
@@ -575,7 +575,7 @@ function AppInner() {
         setNavHistory([center.data as NodeData])
       }
     } catch {
-      showToast('Could not load entity into graph.', 'error')
+      showToast(t('toast.entityIntoGraphError'), 'error')
     } finally {
       setLoading(false)
     }
@@ -593,9 +593,9 @@ function AppInner() {
       const els = await loadEntity(entity.node.id)
       setCenterId(entity.node.id)
       setElements(els)
-      showToast(`Loaded ${queryStr} into graph.`, 'success')
+      showToast(t('toast.loadedIntoGraph', { query: queryStr }), 'success')
     } catch {
-      showToast('Could not load scraped entity into graph.', 'error')
+      showToast(t('toast.scrapedIntoGraphError'), 'error')
     } finally {
       setLoading(false)
     }
@@ -615,7 +615,7 @@ function AppInner() {
               <div
                 className="logo-group logo-group--clickable"
                 onClick={handleClearGraph}
-                title="Return to home"
+                title={t('nav.home')}
               >
                 <span className="logo">Pamten</span>
                 <span className="logo-sub">Ownership Graph</span>
