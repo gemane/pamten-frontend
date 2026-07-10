@@ -154,6 +154,8 @@
     "title": "Scraper",
     "masterOn": "Master activo",
     "masterOff": "Master inactivo",
+    "geocodingOn": "Geocodificación activada",
+    "geocodingOff": "Geocodificación desactivada",
     "description": "Importar datos de propiedad corporativa de fuentes externas al grafo.",
     "signInRequired": "Inicia sesión como administrador para usar el scraper.",
     "adminRequired": "Solo los administradores pueden usar el scraper. Tu rol es {{role}}.",

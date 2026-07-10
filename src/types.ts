@@ -191,6 +191,7 @@ export interface ScraperStatus {
   open_corporates_enabled: boolean
   bods_gleif_enabled?: boolean
   bods_uk_psc_enabled?: boolean
+  geocoding_enabled?: boolean
 }
 
 export interface ScrapeResult {

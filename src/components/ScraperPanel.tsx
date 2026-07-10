@@ -357,6 +357,12 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
             {masterOn ? t('scraper.masterOn') : t('scraper.masterOff')}
           </div>
         )}
+        {masterStatus && (
+          <div className={`scraper-status ${masterStatus.geocoding_enabled ? 'scraper-status--on' : 'scraper-status--off'}`}>
+            <span className="scraper-status__dot" />
+            {masterStatus.geocoding_enabled ? t('scraper.geocodingOn') : t('scraper.geocodingOff')}
+          </div>
+        )}
       </div>
 
       <p className="scraper-panel__desc">{t('scraper.description')}</p>
