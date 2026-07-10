@@ -154,6 +154,8 @@
     "title": "Scraper",
     "masterOn": "Master on",
     "masterOff": "Master off",
+    "geocodingOn": "Geocoding on",
+    "geocodingOff": "Geocoding off",
     "description": "Import corporate ownership data from external sources into the graph.",
     "signInRequired": "Sign in as admin to use the scraper.",
     "adminRequired": "Only admins can run the scraper. Your role is {{role}}.",

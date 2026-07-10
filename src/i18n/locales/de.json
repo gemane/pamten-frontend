@@ -154,6 +154,8 @@
     "title": "Scraper",
     "masterOn": "Master aktiv",
     "masterOff": "Master inaktiv",
+    "geocodingOn": "Geocoding an",
+    "geocodingOff": "Geocoding aus",
     "description": "Unternehmensdaten aus externen Quellen in den Graph importieren.",
     "signInRequired": "Als Admin anmelden, um den Scraper zu verwenden.",
     "adminRequired": "Nur Admins können den Scraper nutzen. Ihre Rolle ist {{role}}.",
