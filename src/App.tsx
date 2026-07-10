@@ -430,6 +430,7 @@ function AppInner() {
                   node={selectedNode}
                   onExportPng={elements.length > 0 ? handleExportPng : undefined}
                   onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
+                  onViewOnMap={() => handleTabChange('map')}
                 />
               </div>
             </>
@@ -499,6 +500,7 @@ function AppInner() {
                     node={selectedNode}
                     onExportPng={elements.length > 0 ? handleExportPng : undefined}
                     onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
+                    onViewOnMap={() => handleTabChange('map')}
                   />
                 </div>
               </>

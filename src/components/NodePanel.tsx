@@ -65,6 +65,7 @@ interface NodePanelProps {
   node: NodeData | null
   onExportPng?: () => void
   onExportCsv?: () => void
+  onViewOnMap?: () => void
 }
 
 
@@ -123,6 +124,7 @@ interface EntityOverviewProps {
   sources: Source[]
   onExportPng?: () => void
   onExportCsv?: () => void
+  onViewOnMap?: () => void
 }
 
 function credibilityColor(score: number): string {
@@ -131,13 +133,24 @@ function credibilityColor(score: number): string {
   return '#E74C3C'
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap }: EntityOverviewProps) {
   const { t } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
   const fmt = (n: number) =>
     n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${n}`
+
+  // HQ location: prefer a linked headquarters Location, fall back to the
+  // coordinates/city denormalized onto the entity by the scrapers.
+  const hqCity    = headquarters?.city    || entity.hq_city
+  const hqCountry = headquarters?.country || entity.hq_country
+  const hqText    = [hqCity, hqCountry].filter(Boolean).join(', ')
+  const address   = headquarters
+    ? [headquarters.street, headquarters.city, headquarters.state, headquarters.zip, headquarters.country]
+        .filter(Boolean).join(', ')
+    : ''
+  const hasCoords = entity.hq_lat != null && entity.hq_lng != null
 
   return (
     <div className="panel-body">
@@ -154,8 +167,23 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv }: EntityOv
         <MetaRow icon={FiMapPin}     label={t('panel.country')}  value={entity.country} />
         <MetaRow icon={FiCalendar}   label={t('panel.founded')}  value={entity.founded} />
         <MetaRow icon={FiDollarSign} label={t('panel.revenue')}  value={entity.revenue != null ? fmt(entity.revenue) : null} />
-        {headquarters && (
-          <MetaRow icon={FiMapPin} label={t('panel.hq')} value={`${headquarters.city}, ${headquarters.country}`} />
+        {hqText && <MetaRow icon={FiMapPin} label={t('panel.hq')} value={hqText} />}
+        {address && address !== hqText && (
+          <MetaRow icon={FiMapPin} label={t('panel.address')} value={address} />
+        )}
+        {hasCoords && (
+          <div className="meta-row">
+            <FiMapPin className="meta-icon" />
+            <span className="meta-label">{t('panel.coordinates')}</span>
+            <span className="meta-value">
+              {entity.hq_lat!.toFixed(4)}, {entity.hq_lng!.toFixed(4)}
+              {onViewOnMap && (
+                <button type="button" className="panel-map-link" onClick={onViewOnMap}>
+                  {t('panel.viewOnMap')}
+                </button>
+              )}
+            </span>
+          </div>
         )}
       </div>
 
@@ -262,7 +290,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -316,7 +344,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv }: NodePanelP
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} sources={sources} onExportPng={onExportPng} onExportCsv={onExportCsv} />
+        ? <EntityOverview profile={profile} sources={sources} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )
