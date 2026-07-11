@@ -77,6 +77,7 @@ export default function MapView({
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
+  const [zoom,       setZoom]       = useState<number>(1)
 
   const numericMap        = useMemo(() => buildNumericMap(countryData), [countryData])
   const contextNumericMap = useMemo(() => buildContextNumericMap(contextCountries), [contextCountries])
@@ -110,7 +111,7 @@ export default function MapView({
         projectionConfig={{ scale: 140 }}
         style={{ width: '100%', height: '100%' }}
       >
-        <ZoomableGroup key={resetKey} minZoom={1} maxZoom={12}>
+        <ZoomableGroup key={resetKey} minZoom={1} maxZoom={12} onMoveEnd={({ zoom: z }: { coordinates: [number, number]; zoom: number }) => setZoom(z)}>
           <Geographies geography={worldData}>
             {({ geographies }: { geographies: Array<{ id: string; rsmKey: string }> }) =>
               geographies.map((geo) => {
@@ -157,10 +158,10 @@ export default function MapView({
           {gpsMarkers.map((c, i) => (
             <Marker key={i} coordinates={[c.lng!, c.lat!]}>
               <circle
-                r={c.role === 'primary' ? 5 : 4}
+                r={(c.role === 'primary' ? 5 : 4) / zoom}
                 fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
                 stroke={theme === 'dark' ? '#111827' : '#fff'}
-                strokeWidth={1.5}
+                strokeWidth={1.5 / zoom}
                 style={{ cursor: 'default', pointerEvents: 'none' }}
               />
             </Marker>
