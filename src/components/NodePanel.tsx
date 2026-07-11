@@ -6,6 +6,13 @@ import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import type { NodeData, FullProfile, Person, Source } from '../types'
 
+function pickClaim(claims: Record<string, { rank: string; mainsnak: { datavalue?: { value: unknown } } }[]> | undefined, prop: string): string | null {
+  const list = claims?.[prop]
+  if (!list?.length) return null
+  const preferred = list.find(c => c.rank === 'preferred') ?? list.find(c => c.rank === 'normal')
+  return (preferred?.mainsnak?.datavalue?.value as string) ?? null
+}
+
 function useWikidataImage(wikidataId: string | undefined): string | null {
   const [src, setSrc] = useState<string | null>(null)
   useEffect(() => {
@@ -17,9 +24,9 @@ function useWikidataImage(wikidataId: string | undefined): string | null {
         const claims = data?.entities?.[wikidataId]?.claims
         if (!claims) return
         for (const prop of ['P154', 'P18']) {
-          const val = claims?.[prop]?.[0]?.mainsnak?.datavalue?.value
+          const val = pickClaim(claims, prop)
           if (val) {
-            const filename = (val as string).replace(/ /g, '_')
+            const filename = val.replace(/ /g, '_')
             setSrc(`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=200`)
             return
           }
