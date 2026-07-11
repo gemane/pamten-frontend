@@ -6,7 +6,7 @@ import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import type { NodeData, FullProfile, Person, Source } from '../types'
 
-function pickClaim(claims: Record<string, { rank: string; mainsnak: { datavalue?: { value: unknown } } }[]> | undefined, prop: string): string | null {
+export function pickClaim(claims: Record<string, { rank: string; mainsnak: { datavalue?: { value: unknown } } }[]> | undefined, prop: string): string | null {
   const list = claims?.[prop]
   if (!list?.length) return null
   const preferred = list.find(c => c.rank === 'preferred') ?? list.find(c => c.rank === 'normal')

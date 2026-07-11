@@ -12,12 +12,18 @@ interface TooltipState {
   text: string
 }
 
+interface FlyTo {
+  center: [number, number]
+  zoom: number
+}
+
 interface MapViewProps {
   countryData?: CountryEntityGroup[]
   selectedCountry?: string | null
   onCountryClick: (country: string) => void
   contextCountries?: ContextCountry[]
   theme?: 'dark' | 'light'
+  flyTo?: FlyTo | null
 }
 
 function buildNumericMap(countryData: CountryEntityGroup[]): Map<number, CountryEntityGroup> {
@@ -44,15 +50,15 @@ function buildContextNumericMap(contextCountries: ContextCountry[]): Map<number,
 
 const MAX_COUNT = 20
 
-function countryFill(
+export function countryFill(
   data: CountryEntityGroup | undefined,
   context: 'primary' | 'subsidiary' | undefined,
   isHovered: boolean,
   theme: 'dark' | 'light',
   hasContext: boolean,
 ): string {
-  const noData    = theme === 'dark' ? '#1c2540' : '#dde3ec'
-  const noDataHov = theme === 'dark' ? '#252d45' : '#c8d1e0'
+  const noData    = theme === 'dark' ? '#1e2d4a' : '#c8d4e8'
+  const noDataHov = theme === 'dark' ? '#263657' : '#b4c4da'
 
   if (context === 'primary')    return isHovered ? '#fcd34d' : '#b45309'
   if (context === 'subsidiary') return isHovered ? '#f59e0b' : '#d97706'
@@ -72,6 +78,7 @@ export default function MapView({
   onCountryClick,
   contextCountries = [],
   theme = 'dark',
+  flyTo,
 }: MapViewProps) {
   const { t } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
@@ -87,6 +94,9 @@ export default function MapView({
   const gpsMarkers = useMemo(() =>
     contextCountries.filter(c => c.lat != null && c.lng != null),
   [contextCountries])
+
+  // Guard against NaN coordinates that would corrupt the d3-zoom transform
+  const safeCenter = flyTo && isFinite(flyTo.center[0]) && isFinite(flyTo.center[1]) ? flyTo : null
 
   const handleMouseMove = (evt: React.MouseEvent<HTMLDivElement>) => {
     const rect = evt.currentTarget.getBoundingClientRect()
@@ -111,7 +121,14 @@ export default function MapView({
         projectionConfig={{ scale: 140 }}
         style={{ width: '100%', height: '100%' }}
       >
-        <ZoomableGroup key={resetKey} minZoom={1} maxZoom={12} onMoveEnd={({ zoom: z }: { coordinates: [number, number]; zoom: number }) => setZoom(z)}>
+        <ZoomableGroup
+          key={`${resetKey}-${safeCenter ? `${safeCenter.center[0]},${safeCenter.center[1]}` : 'default'}`}
+          center={safeCenter?.center ?? [0, 20]}
+          zoom={safeCenter?.zoom ?? 1}
+          minZoom={1}
+          maxZoom={12}
+          onMoveEnd={({ zoom: z }: { coordinates: [number, number]; zoom: number }) => setZoom(z)}
+        >
           <Geographies geography={worldData}>
             {({ geographies }: { geographies: Array<{ id: string; rsmKey: string }> }) =>
               geographies.map((geo) => {
@@ -120,8 +137,8 @@ export default function MapView({
                 const context    = contextNumericMap.get(numId)
                 const isHovered  = numId === hoveredNum
                 const fill       = countryFill(data, context, isHovered, theme, hasContext)
-                const stroke     = theme === 'dark' ? '#111827' : '#b8c4d4'
-                const strokeW    = context ? 0.8 : 0.4
+                const stroke     = theme === 'dark' ? '#2a3a5a' : '#8898b4'
+                const strokeW    = context ? 0.8 : 0.5
 
                 return (
                   <Geography

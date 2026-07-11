@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { Component, useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
 import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
@@ -41,6 +42,23 @@ interface ToastState {
   type: string
 }
 
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null }
+  static getDerivedStateFromError(error: Error) { return { error } }
+  componentDidCatch(_err: Error, info: ErrorInfo) { console.error('React render error:', info.componentStack) }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 32, color: '#e87c6e', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+          <strong>Render error — please reload the page.</strong>{'\n\n'}
+          {String(this.state.error)}
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 
 function useMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 640)
@@ -73,8 +91,10 @@ function AppInner() {
   const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
   const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
-  const loadedIds   = useRef<Set<string>>(new Set())
-  const elementsRef = useRef<GraphElement[]>([])
+  const [mapFlyTo,        setMapFlyTo]        = useState<{ center: [number, number]; zoom: number } | null>(null)
+  const loadedIds          = useRef<Set<string>>(new Set())
+  const elementsRef        = useRef<GraphElement[]>([])
+  const contextCountriesRef = useRef<ContextCountry[]>([])
   elementsRef.current = elements
   // Cache entity→country resolved during contextCountries so subsidiaries can use it when selected
   const entityCountryCache = useRef<Map<string, { country: string; lat?: number; lng?: number }>>(new Map())
@@ -271,12 +291,16 @@ function AppInner() {
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab)
-    if (tab === 'map' && countryData.length === 0) {
-      setCountryLoading(true)
-      getEntitiesByCountry()
-        .then(({ data }) => setCountryData(data))
-        .catch(() => {})
-        .finally(() => setCountryLoading(false))
+    if (tab === 'map') {
+      if (countryData.length === 0) {
+        setCountryLoading(true)
+        getEntitiesByCountry()
+          .then(({ data }) => setCountryData(data))
+          .catch(() => {})
+          .finally(() => setCountryLoading(false))
+      }
+      const primary = contextCountriesRef.current.find(c => c.role === 'primary' && c.lat != null && c.lng != null)
+      setMapFlyTo(primary ? { center: [primary.lng!, primary.lat!], zoom: 4 } : null)
     }
   }, [countryData.length])
 
@@ -337,6 +361,7 @@ function AppInner() {
 
     return result
   }, [selectedNode, elements])
+  contextCountriesRef.current = contextCountries
 
   // Lazy-load entities for a country the first time it is selected
   useEffect(() => {
@@ -514,6 +539,7 @@ function AppInner() {
                     onCountryClick={setSelectedCountry}
                     contextCountries={contextCountries}
                     theme={theme}
+                    flyTo={mapFlyTo}
                   />
                 </div>
                 <div className="mobile-panel">
@@ -564,6 +590,7 @@ function AppInner() {
                     onCountryClick={setSelectedCountry}
                     contextCountries={contextCountries}
                     theme={theme}
+                    flyTo={mapFlyTo}
                   />
                 : <Graph
                     ref={graphRef}
@@ -607,8 +634,10 @@ function AppInner() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppInner />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppInner />
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
