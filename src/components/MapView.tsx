@@ -84,7 +84,10 @@ export default function MapView({
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
-  const [zoom,       setZoom]       = useState<number>(1)
+  // Seed from flyTo so pin markers (sized as radius / zoom) are correct on the
+  // first paint after an auto-zoom. react-simple-maps bypasses move events for
+  // flyTo, so onMoveEnd never fires to correct a stale zoom of 1.
+  const [zoom,       setZoom]       = useState<number>(() => flyTo?.zoom ?? 1)
 
   const numericMap        = useMemo(() => buildNumericMap(countryData), [countryData])
   const contextNumericMap = useMemo(() => buildContextNumericMap(contextCountries), [contextCountries])
@@ -111,7 +114,7 @@ export default function MapView({
         </div>
       )}
 
-      <button className="map-reset-btn" onClick={() => setResetKey(k => k + 1)} title={t('map.resetView')}>
+      <button className="map-reset-btn" onClick={() => { setResetKey(k => k + 1); setZoom(flyTo?.zoom ?? 1) }} title={t('map.resetView')}>
         <FiRotateCcw />
       </button>
 
