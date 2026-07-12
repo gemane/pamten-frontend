@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim } from './NodePanel'
+import { pickClaim, formatProvenanceDate } from './NodePanel'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
 
@@ -50,5 +50,30 @@ describe('pickClaim', () => {
   it('returns null when mainsnak has no datavalue', () => {
     const claims = { P154: [{ rank: 'preferred', mainsnak: {} }] }
     expect(pickClaim(claims, 'P154')).toBeNull()
+  })
+})
+
+describe('formatProvenanceDate', () => {
+  it('returns null for empty / missing input', () => {
+    expect(formatProvenanceDate(undefined)).toBeNull()
+    expect(formatProvenanceDate(null)).toBeNull()
+    expect(formatProvenanceDate('')).toBeNull()
+  })
+
+  it('formats a plain YYYY-MM-DD date', () => {
+    expect(formatProvenanceDate('2025-02-14')).toBe('Feb 14, 2025')
+  })
+
+  it('formats a full ISO timestamp by its date part (timezone-independent)', () => {
+    expect(formatProvenanceDate('2026-07-12T09:00:00+00:00')).toBe('Jul 12, 2026')
+  })
+
+  it('strips a leading zero from the day', () => {
+    expect(formatProvenanceDate('2025-12-03')).toBe('Dec 3, 2025')
+  })
+
+  it('returns null for unparseable input or an invalid month', () => {
+    expect(formatProvenanceDate('not-a-date')).toBeNull()
+    expect(formatProvenanceDate('2025-13-01')).toBeNull()
   })
 })

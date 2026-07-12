@@ -73,7 +73,9 @@
     "executives": "Führungskräfte",
     "sources": "Quellen",
     "credibility": "Glaubwürdigkeit",
-    "wikipedia": "Wikipedia"
+    "wikipedia": "Wikipedia",
+    "reported": "Erfasst {{date}}",
+    "lastChecked": "Zuletzt geprüft {{date}}"
   },
   "csv": {
     "name": "Name",

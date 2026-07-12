@@ -14,6 +14,20 @@ export function pickClaim(claims: Record<string, { rank: string; mainsnak: { dat
   return (preferred?.mainsnak?.datavalue?.value as string) ?? null
 }
 
+const PROV_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// Format a provenance date/timestamp ('YYYY-MM-DD' or a full ISO string) into a
+// short, timezone-independent label like "Feb 14, 2025". Returns null for empty
+// or unparseable input so the caller can omit the line entirely.
+export function formatProvenanceDate(value?: string | null): string | null {
+  if (!value) return null
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+  if (!m) return null
+  const month = PROV_MONTHS[Number(m[2]) - 1]
+  if (!month) return null
+  return `${month} ${Number(m[3])}, ${m[1]}`
+}
+
 function useWikidataImage(wikidataId: string | undefined): string | null {
   const [src, setSrc] = useState<string | null>(null)
   useEffect(() => {
@@ -234,8 +248,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       {sources.length > 0 && (
         <Section title={t('panel.sources')}>
-          {sources.map((s) => (
-            <div key={s.id} className="source-item">
+          {sources.map((s, i) => {
+            const reported    = formatProvenanceDate(s.source_date)
+            const lastChecked = formatProvenanceDate(s.last_scraped_at)
+            return (
+            <div key={`${s.id}-${s.url ?? ''}-${i}`} className="source-item">
               <div className="source-item__header">
                 {s.url
                   ? <a className="source-item__name" href={s.url} target="_blank" rel="noreferrer">
@@ -254,8 +271,14 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               <span className="credibility-score" style={{ color: credibilityColor(s.credibility_score) }}>
                 {s.credibility_score}/100
               </span>
+              {(reported || lastChecked) && (
+                <div className="source-item__prov">
+                  {reported    && <span>{t('panel.reported',    { date: reported })}</span>}
+                  {lastChecked && <span>{t('panel.lastChecked', { date: lastChecked })}</span>}
+                </div>
+              )}
             </div>
-          ))}
+          )})}
         </Section>
       )}
 

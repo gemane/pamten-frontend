@@ -73,7 +73,9 @@
     "executives": "Executives",
     "sources": "Sources",
     "credibility": "Credibility",
-    "wikipedia": "Wikipedia"
+    "wikipedia": "Wikipedia",
+    "reported": "Reported {{date}}",
+    "lastChecked": "Last checked {{date}}"
   },
   "csv": {
     "name": "Name",

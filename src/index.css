@@ -1038,6 +1038,17 @@ a.source-item__name:hover { color: #4A90D9; }
   font-weight: 600;
 }
 
+.source-item__prov {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #6b7688;
+}
+
+[data-theme="light"] .source-item__prov { color: #718096; }
+
 .panel-export {
   display: flex;
   gap: 8px;
