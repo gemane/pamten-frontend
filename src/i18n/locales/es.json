@@ -6,6 +6,11 @@
     "logout": "Cerrar sesión",
     "home": "Volver al inicio"
   },
+  "share": {
+    "title": "Compartir esta vista",
+    "copied": "Enlace copiado al portapapeles",
+    "error": "No se pudo copiar el enlace"
+  },
   "auth": {
     "signIn": "Iniciar sesión",
     "register": "Registrarse",

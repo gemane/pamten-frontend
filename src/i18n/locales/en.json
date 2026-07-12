@@ -6,6 +6,11 @@
     "logout": "Logout",
     "home": "Return to home"
   },
+  "share": {
+    "title": "Share this view",
+    "copied": "Link copied to clipboard",
+    "error": "Could not copy the link"
+  },
   "auth": {
     "signIn": "Sign in",
     "register": "Register",

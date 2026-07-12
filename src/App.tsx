@@ -2,7 +2,7 @@ import { Component, useState, useRef, useCallback, useEffect, useMemo } from 're
 import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
-import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiShare2 } from 'react-icons/fi'
 import SearchBar     from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
@@ -37,6 +37,7 @@ import {
   type OwnershipItem,
 } from './utils/buildElements'
 import { buildHash, parseHash, type ViewState } from './utils/viewHash'
+import { shareLink } from './utils/shareLink'
 
 interface ToastState {
   message: string
@@ -252,6 +253,13 @@ function AppInner() {
     a.click()
     URL.revokeObjectURL(a.href)
   }, [t])
+
+  const handleShare = useCallback(async () => {
+    const outcome = await shareLink(window.location.href, isMobile)
+    if (outcome === 'copied')      showToast(t('share.copied'), 'success')
+    else if (outcome === 'failed') showToast(t('share.error'), 'error')
+    // 'shared' / 'dismissed': the native share sheet provides its own feedback
+  }, [isMobile, showToast, t])
 
   const handleNodeClick = useCallback((nodeData: NodeData) => {
     setSelectedNode(nodeData)
@@ -547,6 +555,7 @@ function AppInner() {
                 <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
               </div>
+              <button className="tab-btn share-btn" onClick={handleShare} title={t('share.title')}><FiShare2 /></button>
             </div>
           </div>
 
@@ -675,6 +684,9 @@ function AppInner() {
                 />
               </div>
             )}
+            <button className="mobile-share-fab" onClick={handleShare} title={t('share.title')}>
+              <FiShare2 />
+            </button>
           </>
         ) : (
           /* ── Desktop layout ── */

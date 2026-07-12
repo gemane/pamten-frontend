@@ -6,6 +6,11 @@
     "logout": "Abmelden",
     "home": "Zurück zur Startseite"
   },
+  "share": {
+    "title": "Diese Ansicht teilen",
+    "copied": "Link in die Zwischenablage kopiert",
+    "error": "Link konnte nicht kopiert werden"
+  },
   "auth": {
     "signIn": "Anmelden",
     "register": "Registrieren",
