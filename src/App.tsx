@@ -36,6 +36,7 @@ import {
   type PersonData,
   type OwnershipItem,
 } from './utils/buildElements'
+import { buildHash, parseHash, type ViewState } from './utils/viewHash'
 
 interface ToastState {
   message: string
@@ -418,6 +419,108 @@ function AppInner() {
       setLoading(false)
     }
   }, [loadEntity, showToast])
+
+  // ── Browser history integration ──────────────────────────────────────────
+  // Navigation state (tab, centered node, selected country) is mirrored into
+  // location.hash so back/forward walk through views and hashes deep-link.
+
+  const centerType = useMemo((): 'entity' | 'person' | undefined => {
+    if (!centerId) return undefined
+    const center = elements.find(el => !('source' in el.data) && el.data.id === centerId)
+    return center ? (center.data as NodeData).nodeType : undefined
+  }, [elements, centerId])
+
+  const centerIdRef = useRef<string | null>(null)
+  centerIdRef.current = centerId
+  // While a popstate/deep-link restore is in flight, URL pushes are suppressed
+  // until app state has caught up with this target hash.
+  const restoreTargetRef = useRef<string | null>(null)
+
+  const restoreEntity = useCallback(async (entityId: string, entityType: 'entity' | 'person') => {
+    setToast(null)
+    setSelectedNode(null)
+    setLoading(true)
+    loadedIds.current = new Set()
+    try {
+      let els: GraphElement[]
+      if (entityType === 'person') {
+        const [personRes, ownersRes] = await Promise.all([
+          getPerson(entityId),
+          getOwners(entityId).catch(() => ({ data: [] })),
+        ])
+        els = buildPersonElements(personRes.data as PersonData, ownersRes.data as OwnershipItem[])
+      } else {
+        els = await loadEntity(entityId)
+      }
+      setCenterId(entityId)
+      setElements(els)
+      const center = els.find(el => !('source' in el.data) && el.data.id === entityId)
+      if (center) {
+        setSelectedNode(center.data as NodeData)
+        setNavHistory([center.data as NodeData])
+      }
+    } catch {
+      restoreTargetRef.current = null  // give up so normal URL syncing resumes
+      showToast(t('toast.entityLoadError'), 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [loadEntity, showToast])
+
+  const applyView = useCallback((view: ViewState) => {
+    handleTabChange(view.tab)
+    setSelectedCountry(view.tab === 'map' ? (view.country ?? null) : null)
+    if (view.tab === 'graph') {
+      if (view.entityId && view.entityId !== centerIdRef.current) {
+        restoreEntity(view.entityId, view.entityType ?? 'entity')
+      } else if (!view.entityId && centerIdRef.current) {
+        handleClearGraph()
+      }
+    }
+  }, [handleTabChange, restoreEntity, handleClearGraph])
+
+  // Restore a deep link once on load (runs before the URL-sync effect below).
+  const didInitViewRef = useRef(false)
+  useEffect(() => {
+    if (didInitViewRef.current) return
+    didInitViewRef.current = true
+    const view = parseHash(window.location.hash)
+    const target = buildHash(view)
+    if (target !== '#graph') {
+      restoreTargetRef.current = target
+      applyView(view)
+    }
+  }, [applyView])
+
+  useEffect(() => {
+    const onPop = () => {
+      const view = parseHash(window.location.hash)
+      restoreTargetRef.current = buildHash(view)
+      applyView(view)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [applyView])
+
+  // Push a history entry whenever the view changes (except during restores).
+  useEffect(() => {
+    const hash = buildHash({
+      tab:        activeTab,
+      entityId:   centerId ?? undefined,
+      entityType: centerType,
+      country:    selectedCountry ?? undefined,
+    })
+    if (restoreTargetRef.current) {
+      if (hash === restoreTargetRef.current) restoreTargetRef.current = null
+      return
+    }
+    if (window.location.hash === hash) return
+    if (window.location.hash === '') {
+      window.history.replaceState(null, '', hash)  // normalize the landing entry
+    } else {
+      window.history.pushState(null, '', hash)
+    }
+  }, [activeTab, centerId, centerType, selectedCountry])
 
   return (
     <div className="app">
