@@ -1,6 +1,8 @@
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiMapPin, FiLoader } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
+import { sortCountries, type CountrySort } from '../utils/sortCountries'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
 
 const TYPE_COLOR: Record<string, string> = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
@@ -38,8 +40,20 @@ export default function MapPanel({
   countryData, selectedCountry, onSelectCountry, onLoadEntity, loading,
   contextNode, contextSubsidiaries = [], onSelectSubsidiary,
 }: MapPanelProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const selected = countryData.find(d => d.country === selectedCountry)
+
+  const [sortBy, setSortBy] = useState<CountrySort>(
+    () => (localStorage.getItem('map-sort') === 'name' ? 'name' : 'count'),
+  )
+  const changeSort = (s: CountrySort) => {
+    setSortBy(s)
+    localStorage.setItem('map-sort', s)
+  }
+  const sortedCountries = useMemo(
+    () => sortCountries(countryData, sortBy, i18n.language),
+    [countryData, sortBy, i18n.language],
+  )
 
   if (loading) {
     return (
@@ -131,8 +145,22 @@ export default function MapPanel({
       <p className="map-panel__hint">
         {t('map.panelHint')}
       </p>
+      <div className="map-sort-toggle">
+        <button
+          className={`map-sort-btn ${sortBy === 'count' ? 'map-sort-btn--active' : ''}`}
+          onClick={() => changeSort('count')}
+        >
+          {t('map.sortByCount')}
+        </button>
+        <button
+          className={`map-sort-btn ${sortBy === 'name' ? 'map-sort-btn--active' : ''}`}
+          onClick={() => changeSort('name')}
+        >
+          {t('map.sortByName')}
+        </button>
+      </div>
       <div className="map-panel__country-list">
-        {countryData.map(d => (
+        {sortedCountries.map(d => (
           <button
             key={d.country}
             className="map-country-row"

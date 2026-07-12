@@ -137,6 +137,8 @@
     "loadingEntities": "Cargando entidades…",
     "noSubsidiaries": "No hay filiales en el grafo.",
     "allCountries": "Todos los países",
+    "sortByCount": "Más empresas",
+    "sortByName": "A–Z",
     "panelHint": "Haz clic en un país resaltado para ver sus entidades. Haz clic en una entidad para cargarla en el grafo.",
     "showingFirst": "Mostrando las primeras {{shown}} de {{total}} entidades",
     "entityCount_one": "{{count}} entidad",
