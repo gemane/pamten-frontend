@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield } from 'react-icons/fi'
 import { getFullProfile, getEntitySources } from '../services/api'
+import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import type { NodeData, FullProfile, Person, Source } from '../types'
@@ -152,7 +153,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // coordinates/city denormalized onto the entity by the scrapers.
   const hqCity    = headquarters?.city    || entity.hq_city
   const hqCountry = headquarters?.country || entity.hq_country
-  const hqText    = [hqCity, hqCountry].filter(Boolean).join(', ')
+  const hqText    = [hqCity, hqCountry && countryName(hqCountry)].filter(Boolean).join(', ')
   const address   = headquarters
     ? [headquarters.street, headquarters.city, headquarters.state, headquarters.zip, headquarters.country]
         .filter(Boolean).join(', ')
@@ -171,7 +172,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {entity.description && <p className="panel-desc">{entity.description}</p>}
 
       <div className="panel-meta">
-        <MetaRow icon={FiMapPin}     label={t('panel.country')}  value={entity.country} />
+        <MetaRow icon={FiMapPin}     label={t('panel.country')}  value={entity.country ? countryName(entity.country) : null} />
         <MetaRow icon={FiCalendar}   label={t('panel.founded')}  value={entity.founded} />
         <MetaRow icon={FiDollarSign} label={t('panel.revenue')}  value={entity.revenue != null ? fmt(entity.revenue) : null} />
         {hqText && <MetaRow icon={FiMapPin} label={t('panel.hq')} value={hqText} />}
