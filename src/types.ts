@@ -73,6 +73,9 @@ export interface Source {
   url?: string
   credibility_score: number
   type: SourceType
+  // Per-entry provenance (for later verification, e.g. by journalists):
+  source_date?: string      // date the fact was recorded/published in the source
+  last_scraped_at?: string  // when we last confirmed it against the source
 }
 
 // Relationship types
