@@ -74,7 +74,7 @@ export default function MapPanel({
           <div>
             <div className="map-panel__country-name">{contextNode.label}</div>
             {primaryCountry && (
-              <div className="map-panel__country-count">{countryName(primaryCountry)}</div>
+              <div className="map-panel__country-count">{countryName(primaryCountry, i18n.language)}</div>
             )}
           </div>
         </div>
@@ -92,7 +92,7 @@ export default function MapPanel({
                   <span className="map-entity-dot" style={{ background: '#d97706' }} />
                   <span className="map-entity-name">{sub.label}</span>
                   {subCountry
-                    ? <span className="map-entity-type">{countryName(subCountry)}</span>
+                    ? <span className="map-entity-type">{countryName(subCountry, i18n.language)}</span>
                     : <span className="map-entity-type">{(e as Entity).type}</span>
                   }
                 </button>
@@ -116,7 +116,7 @@ export default function MapPanel({
         <div className="map-panel__country-header">
           <FiMapPin />
           <div>
-            <div className="map-panel__country-name">{countryName(selected.country)}</div>
+            <div className="map-panel__country-name">{countryName(selected.country, i18n.language)}</div>
             <div className="map-panel__country-count">{t('map.entityCount', { count: selected.count })}</div>
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function MapPanel({
             onClick={() => onSelectCountry(d.country)}
           >
             <FiMapPin className="map-country-row__pin" />
-            <span className="map-country-row__name">{countryName(d.country)}</span>
+            <span className="map-country-row__name">{countryName(d.country, i18n.language)}</span>
             <span className="map-country-row__count">{d.count}</span>
           </button>
         ))}

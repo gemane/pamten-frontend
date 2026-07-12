@@ -11,7 +11,7 @@ export function sortCountries(
   locale?: string,
 ): CountryEntityGroup[] {
   const byName = (a: CountryEntityGroup, b: CountryEntityGroup) =>
-    countryName(a.country).localeCompare(countryName(b.country), locale)
+    countryName(a.country, locale).localeCompare(countryName(b.country, locale), locale)
   const arr = [...data]
   arr.sort(by === 'name' ? byName : (a, b) => b.count - a.count || byName(a, b))
   return arr

@@ -142,7 +142,7 @@ function credibilityColor(score: number): string {
 }
 
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap }: EntityOverviewProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
@@ -153,7 +153,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // coordinates/city denormalized onto the entity by the scrapers.
   const hqCity    = headquarters?.city    || entity.hq_city
   const hqCountry = headquarters?.country || entity.hq_country
-  const hqText    = [hqCity, hqCountry && countryName(hqCountry)].filter(Boolean).join(', ')
+  const hqText    = [hqCity, hqCountry && countryName(hqCountry, i18n.language)].filter(Boolean).join(', ')
   const address   = headquarters
     ? [headquarters.street, headquarters.city, headquarters.state, headquarters.zip, headquarters.country]
         .filter(Boolean).join(', ')
@@ -172,7 +172,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {entity.description && <p className="panel-desc">{entity.description}</p>}
 
       <div className="panel-meta">
-        <MetaRow icon={FiMapPin}     label={t('panel.country')}  value={entity.country ? countryName(entity.country) : null} />
+        <MetaRow icon={FiMapPin}     label={t('panel.country')}  value={entity.country ? countryName(entity.country, i18n.language) : null} />
         <MetaRow icon={FiCalendar}   label={t('panel.founded')}  value={entity.founded} />
         <MetaRow icon={FiDollarSign} label={t('panel.revenue')}  value={entity.revenue != null ? fmt(entity.revenue) : null} />
         {hqText && <MetaRow icon={FiMapPin} label={t('panel.hq')} value={hqText} />}

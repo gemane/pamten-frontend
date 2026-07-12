@@ -12,7 +12,7 @@ interface SearchBarProps {
 }
 
 export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [query, setQuery]           = useState<string>('')
   const [results, setResults]       = useState<SearchResult[]>([])
   const [open, setOpen]             = useState<boolean>(false)
@@ -113,7 +113,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
   )
 
   const filteredCountries = countries.filter(c =>
-    countryName(c.country).toLowerCase().includes(countryQuery.toLowerCase())
+    countryName(c.country, i18n.language).toLowerCase().includes(countryQuery.toLowerCase())
   )
 
   return (
@@ -176,7 +176,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
                     className={`country-filter__item ${country === c.country ? 'country-filter__item--active' : ''}`}
                     onMouseDown={() => { setCountry(c.country); setCountryOpen(false) }}
                   >
-                    <span>{countryName(c.country)}</span>
+                    <span>{countryName(c.country, i18n.language)}</span>
                     <span className="country-filter__count">{c.count.toLocaleString()}</span>
                   </li>
                 ))}
@@ -199,7 +199,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
                 {'name' in r.node ? r.node.name : ('full_name' in r.node ? r.node.full_name : '')}
               </span>
               {'country' in r.node && r.node.country && (
-                <span className="search-item__country">{countryName(r.node.country)}</span>
+                <span className="search-item__country">{countryName(r.node.country, i18n.language)}</span>
               )}
             </li>
           ))}

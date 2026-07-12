@@ -80,7 +80,7 @@ export default function MapView({
   theme = 'dark',
   flyTo,
 }: MapViewProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
@@ -155,10 +155,10 @@ export default function MapView({
                           .filter(c => (toAlpha2(c.country) ? ALPHA2_TO_NUMERIC[toAlpha2(c.country)!] : null) === numId)
                           .map(c => c.label)
                           .join(', ')
-                        setTooltip({ x: 0, y: 0, text: label || countryName(String(numId)) })
+                        setTooltip({ x: 0, y: 0, text: label || countryName(String(numId), i18n.language) })
                       } else if (data) {
                         setTooltip({ x: 0, y: 0,
-                          text: `${countryName(data.country)} — ${t('map.entityCount', { count: data.count })}`,
+                          text: `${countryName(data.country, i18n.language)} — ${t('map.entityCount', { count: data.count })}`,
                         })
                       }
                     }}

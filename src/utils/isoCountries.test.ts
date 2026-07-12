@@ -25,3 +25,26 @@ describe('isoCountries coverage', () => {
     expect(ALPHA2_TO_NUMERIC.AL).toBe(8)
   })
 })
+
+describe('countryName localization', () => {
+  it('localizes codes when a locale is given', () => {
+    expect(countryName('BR', 'de')).toBe('Brasilien')
+    expect(countryName('DE', 'de')).toBe('Deutschland')
+    expect(countryName('AT', 'de')).toBe('Österreich')
+    expect(countryName('BR', 'es')).toBe('Brasil')
+    expect(countryName('US', 'en')).toBe('United States')
+  })
+
+  it('keeps English map behavior without a locale', () => {
+    expect(countryName('BR')).toBe('Brazil')
+  })
+
+  it('falls back to the English map for user-assigned codes Intl cannot name', () => {
+    expect(countryName('XI', 'de')).toBe('International')
+    expect(countryName('XK', 'de')).toBe('Kosovo')
+  })
+
+  it('passes non-code values through regardless of locale', () => {
+    expect(countryName('Atlantis', 'de')).toBe('Atlantis')
+  })
+})
