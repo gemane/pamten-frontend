@@ -1,3 +1,4 @@
+import { countryName } from './isoCountries'
 import type { GraphElement } from '../types'
 
 const escape = (v: unknown) => {
@@ -47,7 +48,7 @@ export function buildCsvContent(
       const revenue = raw.revenue != null
         ? `$${((raw.revenue as number) / 1e9).toFixed(1)}B`
         : ''
-      nodeRows.push([d.label, type, '', raw.country ?? '', raw.founded ?? '', revenue].map(escape).join(','))
+      nodeRows.push([d.label, type, '', raw.country ? countryName(String(raw.country)) : '', raw.founded ?? '', revenue].map(escape).join(','))
     }
   }
 

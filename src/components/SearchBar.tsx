@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
 import { search, getCountries } from '../services/api'
+import { countryName } from '../utils/isoCountries'
 import type { SearchResult } from '../types'
 
 interface SearchBarProps {
@@ -112,7 +113,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
   )
 
   const filteredCountries = countries.filter(c =>
-    c.country.toLowerCase().includes(countryQuery.toLowerCase())
+    countryName(c.country).toLowerCase().includes(countryQuery.toLowerCase())
   )
 
   return (
@@ -175,7 +176,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
                     className={`country-filter__item ${country === c.country ? 'country-filter__item--active' : ''}`}
                     onMouseDown={() => { setCountry(c.country); setCountryOpen(false) }}
                   >
-                    <span>{c.country}</span>
+                    <span>{countryName(c.country)}</span>
                     <span className="country-filter__count">{c.count.toLocaleString()}</span>
                   </li>
                 ))}
@@ -198,7 +199,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
                 {'name' in r.node ? r.node.name : ('full_name' in r.node ? r.node.full_name : '')}
               </span>
               {'country' in r.node && r.node.country && (
-                <span className="search-item__country">{r.node.country}</span>
+                <span className="search-item__country">{countryName(r.node.country)}</span>
               )}
             </li>
           ))}

@@ -49,7 +49,7 @@ describe('buildCsvContent', () => {
     const row = nodes[1]
     expect(row[0]).toBe('Acme Corp')
     expect(row[1]).toBe('Company')
-    expect(row[3]).toBe('DE')
+    expect(row[3]).toBe('Germany')  // ISO-2 codes render as display names
     expect(row[4]).toBe('1990')
     expect(row[5]).toBe('$5.0B')
   })
