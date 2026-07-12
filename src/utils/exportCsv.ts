@@ -12,6 +12,7 @@ const cap    = (s: string)  => s.charAt(0).toUpperCase() + s.slice(1)
 export function buildCsvContent(
   elements: GraphElement[],
   t: (key: string, opts?: Record<string, unknown>) => string,
+  locale?: string,
 ): string {
   const nameOf = new Map<string, string>()
   for (const el of elements) {
@@ -48,7 +49,7 @@ export function buildCsvContent(
       const revenue = raw.revenue != null
         ? `$${((raw.revenue as number) / 1e9).toFixed(1)}B`
         : ''
-      nodeRows.push([d.label, type, '', raw.country ? countryName(String(raw.country)) : '', raw.founded ?? '', revenue].map(escape).join(','))
+      nodeRows.push([d.label, type, '', raw.country ? countryName(String(raw.country), locale) : '', raw.founded ?? '', revenue].map(escape).join(','))
     }
   }
 

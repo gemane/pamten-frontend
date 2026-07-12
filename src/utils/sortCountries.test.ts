@@ -31,4 +31,13 @@ describe('sortCountries', () => {
   it('handles empty input', () => {
     expect(sortCountries([], 'count')).toEqual([])
   })
+
+  it('sorts by the localized name: German order differs from English', () => {
+    const pair: CountryEntityGroup[] = [
+      { country: 'AT', count: 1 },  // Austria / Österreich
+      { country: 'EG', count: 1 },  // Egypt / Ägypten
+    ]
+    expect(sortCountries(pair, 'name', 'en').map(d => d.country)).toEqual(['AT', 'EG'])
+    expect(sortCountries(pair, 'name', 'de').map(d => d.country)).toEqual(['EG', 'AT'])
+  })
 })

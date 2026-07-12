@@ -245,7 +245,7 @@ function AppInner() {
   }, [])
 
   const handleExportCsv = useCallback(() => {
-    const csv = buildCsvContent(elementsRef.current, t)
+    const csv = buildCsvContent(elementsRef.current, t, i18n.language)
     const blob = new Blob([csv], { type: 'text/csv' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)

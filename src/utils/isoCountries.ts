@@ -101,8 +101,37 @@ export const COUNTRY_NAMES: Record<string, string> = {
   ZA:'South Africa', ZM:'Zambia', ZW:'Zimbabwe',
 }
 
-export const countryName = (alpha2: string): string =>
-  COUNTRY_NAMES[alpha2] || alpha2
+// Localized region names via the built-in Intl.DisplayNames, cached per
+// locale (constructing one per render would be wasteful in list loops).
+const displayNamesCache = new Map<string, Intl.DisplayNames | null>()
+
+function displayNames(locale: string): Intl.DisplayNames | null {
+  if (!displayNamesCache.has(locale)) {
+    try {
+      displayNamesCache.set(locale, new Intl.DisplayNames([locale], { type: 'region' }))
+    } catch {
+      displayNamesCache.set(locale, null)  // unsupported locale/runtime
+    }
+  }
+  return displayNamesCache.get(locale) ?? null
+}
+
+// Resolve a country value to a display name. Codes are localized when a
+// locale is given (falling back to the English map for user-assigned codes
+// like XI/XK that Intl doesn't name); non-code values pass through unchanged.
+export function countryName(country: string, locale?: string): string {
+  const code = country.toUpperCase()
+  if (code.length !== 2 || COUNTRY_NAMES[code] === undefined) {
+    return COUNTRY_NAMES[country] || country
+  }
+  if (locale) {
+    try {
+      const name = displayNames(locale)?.of(code)
+      if (name && name !== code) return name
+    } catch { /* structurally invalid for Intl — use the fallback map */ }
+  }
+  return COUNTRY_NAMES[code]
+}
 
 // Reverse map: full country name → alpha-2 (covers BODS full-name storage)
 export const COUNTRY_NAME_TO_ALPHA2: Record<string, string> = Object.fromEntries(
