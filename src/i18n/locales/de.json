@@ -137,6 +137,8 @@
     "loadingEntities": "Einträge werden geladen…",
     "noSubsidiaries": "Keine Tochtergesellschaften im Graph.",
     "allCountries": "Alle Länder",
+    "sortByCount": "Meiste Unternehmen",
+    "sortByName": "A–Z",
     "panelHint": "Klicken Sie auf ein hervorgehobenes Land, um seine Einträge zu sehen. Klicken Sie auf einen Eintrag, um ihn in den Graph zu laden.",
     "showingFirst": "Zeige die ersten {{shown}} von {{total}} Einträgen",
     "entityCount_one": "{{count}} Entität",

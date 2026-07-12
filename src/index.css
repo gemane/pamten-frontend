@@ -1354,6 +1354,37 @@ a.source-item__name:hover { color: #4A90D9; }
   margin-bottom: 16px;
 }
 
+.map-sort-toggle {
+  display: flex;
+  gap: 4px;
+  background: #1a2540;
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 12px;
+  width: fit-content;
+}
+
+.map-sort-btn {
+  padding: 4px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #8892a4;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.map-sort-btn--active {
+  background: #24304f;
+  color: #eaeaea;
+}
+
+[data-theme="light"] .map-sort-toggle { background: #eef2f7; }
+[data-theme="light"] .map-sort-btn { color: #718096; }
+[data-theme="light"] .map-sort-btn--active { background: #ffffff; color: #2d3748; }
+
 .map-panel__country-list {
   display: flex;
   flex-direction: column;

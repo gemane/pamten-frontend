@@ -137,6 +137,8 @@
     "loadingEntities": "Loading entities…",
     "noSubsidiaries": "No subsidiaries in graph.",
     "allCountries": "All countries",
+    "sortByCount": "Most companies",
+    "sortByName": "A–Z",
     "panelHint": "Click a highlighted country to see its entities. Click an entity to load it into the graph.",
     "showingFirst": "Showing first {{shown}} of {{total}} entities",
     "entityCount_one": "{{count}} entity",
