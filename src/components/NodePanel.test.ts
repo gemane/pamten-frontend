@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode } from './NodePanel'
+import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
 
@@ -75,5 +76,28 @@ describe('formatProvenanceDate', () => {
   it('returns null for unparseable input or an invalid month', () => {
     expect(formatProvenanceDate('not-a-date')).toBeNull()
     expect(formatProvenanceDate('2025-13-01')).toBeNull()
+  })
+})
+
+describe('rel-row node mappers', () => {
+  const entity = { id: 'e1', name: 'Acme Corp', type: 'company' } as Entity
+  const person = { id: 'p1', full_name: 'Jane Doe' } as Person
+
+  it('maps an entity to an entity NodeData with subtype', () => {
+    const n = entityToNode(entity)
+    expect(n).toMatchObject({ id: 'e1', label: 'Acme Corp', nodeType: 'entity', entitySubtype: 'company' })
+    expect(n.raw).toBe(entity)
+  })
+
+  it('maps a person to a person NodeData', () => {
+    const n = personToNode(person)
+    expect(n).toMatchObject({ id: 'p1', label: 'Jane Doe', nodeType: 'person' })
+    expect(n.raw).toBe(person)
+  })
+
+  it('ownerToNode picks entity vs person by shape', () => {
+    expect(ownerToNode(entity).nodeType).toBe('entity')   // has `name`
+    expect(ownerToNode(person).nodeType).toBe('person')   // has `full_name`
+    expect(ownerToNode(person).label).toBe('Jane Doe')
   })
 })

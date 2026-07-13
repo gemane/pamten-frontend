@@ -5,7 +5,19 @@ import { getFullProfile, getEntitySources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
-import type { NodeData, FullProfile, Person, Source } from '../types'
+import type { NodeData, FullProfile, Person, Entity, Source } from '../types'
+
+// Build a NodeData (as the graph uses) from a related entity/person so the
+// panel rows can navigate the same way clicking a graph node does.
+export function entityToNode(e: Entity): NodeData {
+  return { id: e.id, label: e.name, nodeType: 'entity', entitySubtype: e.type, raw: e }
+}
+export function personToNode(p: Person): NodeData {
+  return { id: p.id, label: p.full_name, nodeType: 'person', raw: p }
+}
+export function ownerToNode(owner: Entity | Person): NodeData {
+  return 'name' in owner ? entityToNode(owner) : personToNode(owner)
+}
 
 export function pickClaim(claims: Record<string, { rank: string; mainsnak: { datavalue?: { value: unknown } } }[]> | undefined, prop: string): string | null {
   const list = claims?.[prop]
@@ -88,6 +100,7 @@ interface NodePanelProps {
   onExportPng?: () => void
   onExportCsv?: () => void
   onViewOnMap?: () => void
+  onNavigate?: (node: NodeData) => void
 }
 
 
@@ -141,12 +154,30 @@ function PersonView({ raw }: { raw: Person }) {
   )
 }
 
+// A relationship row. Clickable (navigates like a graph node) when onNavigate
+// and a resolvable target node are provided; otherwise a plain row.
+function RelRow({ node, onNavigate, children }: {
+  node: NodeData | null
+  onNavigate?: (n: NodeData) => void
+  children: React.ReactNode
+}) {
+  if (node && node.id && onNavigate) {
+    return (
+      <button type="button" className="rel-item rel-item--clickable" onClick={() => onNavigate(node)}>
+        {children}
+      </button>
+    )
+  }
+  return <div className="rel-item">{children}</div>
+}
+
 interface EntityOverviewProps {
   profile: FullProfile
   sources: Source[]
   onExportPng?: () => void
   onExportCsv?: () => void
   onViewOnMap?: () => void
+  onNavigate?: (node: NodeData) => void
 }
 
 function credibilityColor(score: number): string {
@@ -155,7 +186,7 @@ function credibilityColor(score: number): string {
   return '#E74C3C'
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
@@ -212,14 +243,14 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {owners.length > 0 && (
         <Section title={t('panel.ownedBy')}>
           {owners.map((o, i) => (
-            <div key={i} className="rel-item">
+            <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}>
               <span className="rel-item__name">{o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}</span>
               <OwnershipBadge
                 type={o.relationship?.ownership_type}
                 percent={o.relationship?.stake_percent}
                 votingPct={o.relationship?.voting_power_pct}
               />
-            </div>
+            </RelRow>
           ))}
         </Section>
       )}
@@ -227,10 +258,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {subsidiaries.length > 0 && (
         <Section title={t('panel.subsidiaries')}>
           {subsidiaries.map((s, i) => (
-            <div key={i} className="rel-item">
+            <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}>
               <span className="rel-item__name">{s.entity.name}</span>
               <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
-            </div>
+            </RelRow>
           ))}
         </Section>
       )}
@@ -238,10 +269,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {executives.length > 0 && (
         <Section title={t('panel.executives')}>
           {executives.map((e, i) => (
-            <div key={i} className="rel-item">
+            <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}>
               <span className="rel-item__name">{e.person.full_name}</span>
               <span className="role-badge">{e.role?.role}</span>
-            </div>
+            </RelRow>
           ))}
         </Section>
       )}
@@ -321,7 +352,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onNavigate }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -375,7 +406,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap 
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} sources={sources} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} />
+        ? <EntityOverview profile={profile} sources={sources} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onNavigate={onNavigate} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )
