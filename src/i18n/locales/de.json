@@ -169,6 +169,8 @@
     "signInRequired": "Als Admin anmelden, um den Scraper zu verwenden.",
     "adminRequired": "Nur Admins können den Scraper nutzen. Ihre Rolle ist {{role}}.",
     "enableRequired": "Setzen Sie SCRAPER_ENABLED=true in Render, um den Scraper zu aktivieren.",
+    "sourceDisabledEnv": "{{source}} ist deaktiviert. Setzen Sie {{envVar}}=true in Render, um es zu aktivieren.",
+    "sourceDisabledToggle": "{{source}} ist ausgeschaltet. Aktivieren Sie es unten unter „Quellen-Schalter“.",
     "runSource": "Quelle ausführen",
     "allSources": "Alle Quellen",
     "sourceToggles": "Quellen-Schalter",
