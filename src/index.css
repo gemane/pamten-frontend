@@ -928,6 +928,33 @@ body {
   margin-bottom: 8px;
 }
 
+/* Collapsible section header (e.g. Sources) */
+.panel-section__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 8px;
+  background: none;
+  border: none;
+  color: #4a5568;
+  cursor: pointer;
+}
+.panel-section__toggle:hover { color: #8892a4; }
+[data-theme="light"] .panel-section__toggle:hover { color: #4a5568; }
+
+.panel-section__title--inline { margin-bottom: 0; }
+
+.panel-section__count {
+  font-size: 10px;
+  font-weight: 700;
+  color: #4A90D9;
+  background: rgba(74,144,217,0.12);
+  padding: 1px 7px;
+  border-radius: 99px;
+}
+
 .rel-item {
   display: flex;
   align-items: center;

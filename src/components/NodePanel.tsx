@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown } from 'react-icons/fi'
 import { getFullProfile, getEntitySources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
@@ -127,6 +127,30 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div className="panel-section">
       <h4 className="panel-section__title">{title}</h4>
       {children}
+    </div>
+  )
+}
+
+function CollapsibleSection({ title, count, defaultOpen = false, children }: {
+  title: string
+  count?: number
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="panel-section">
+      <button
+        type="button"
+        className="panel-section__toggle"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+      >
+        {open ? <FiChevronDown size={12} /> : <FiChevronRight size={12} />}
+        <span className="panel-section__title panel-section__title--inline">{title}</span>
+        {count != null && <span className="panel-section__count">{count}</span>}
+      </button>
+      {open && children}
     </div>
   )
 }
@@ -278,7 +302,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {sources.length > 0 && (
-        <Section title={t('panel.sources')}>
+        <CollapsibleSection title={t('panel.sources')} count={sources.length}>
           {sources.map((s, i) => {
             const reported    = formatProvenanceDate(s.source_date)
             const lastChecked = formatProvenanceDate(s.last_scraped_at)
@@ -310,7 +334,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               )}
             </div>
           )})}
-        </Section>
+        </CollapsibleSection>
       )}
 
       {(onExportPng || onExportCsv) && (
