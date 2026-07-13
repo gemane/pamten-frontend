@@ -568,6 +568,7 @@ function AppInner() {
                   onExportPng={elements.length > 0 ? handleExportPng : undefined}
                   onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                   onViewOnMap={() => handleTabChange('map')}
+                  onNavigate={handleNavigateTo}
                 />
               </div>
             </>
@@ -638,6 +639,7 @@ function AppInner() {
                     onExportPng={elements.length > 0 ? handleExportPng : undefined}
                     onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                     onViewOnMap={() => handleTabChange('map')}
+                    onNavigate={handleNavigateTo}
                   />
                 </div>
               </>

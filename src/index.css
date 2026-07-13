@@ -938,6 +938,19 @@ body {
   margin-bottom: 4px;
 }
 
+/* Clickable relationship row (navigates like a graph node) */
+button.rel-item--clickable {
+  width: 100%;
+  border: none;
+  gap: 8px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+button.rel-item--clickable:hover { background: #253454; }
+[data-theme="light"] button.rel-item--clickable:hover { background: #e2e8f4; }
+
 .rel-item__name {
   font-size: 13px;
   color: #e2e8f0;
