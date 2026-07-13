@@ -169,6 +169,8 @@
     "signInRequired": "Sign in as admin to use the scraper.",
     "adminRequired": "Only admins can run the scraper. Your role is {{role}}.",
     "enableRequired": "Set SCRAPER_ENABLED=true in Render to activate.",
+    "sourceDisabledEnv": "{{source}} is disabled. Set {{envVar}}=true in Render to enable it.",
+    "sourceDisabledToggle": "{{source}} is turned off. Enable it under Source toggles below.",
     "runSource": "Run source",
     "allSources": "All sources",
     "sourceToggles": "Source toggles",

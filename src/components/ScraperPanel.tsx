@@ -23,6 +23,13 @@ const SOURCE_LABEL: Record<string, string> = {
   bods_uk_psc:    'UK PSC',
 }
 
+// Env var that gates each single-source run (checked by the backend + status).
+const SOURCE_ENV_VAR: Record<string, string> = {
+  wikidata:        'SCRAPER_WIKIDATA_ENABLED',
+  sec_edgar:       'SCRAPER_SEC_EDGAR_ENABLED',
+  open_corporates: 'SCRAPER_OPENCORPORATES_ENABLED',
+}
+
 // ── Source toggle ─────────────────────────────────────────────────────────────
 
 interface SourceToggleProps {
@@ -312,6 +319,28 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
                : selectedSource === 'open_corporates'   ? canRunOpenCorporates
                : canRunAll
 
+  // When admin + master are fine but the *selected* single source is off, explain
+  // why the run form is disabled instead of silently greying it out.
+  const selectedSourceObj = sources.find(s => s.name === selectedSource)
+  const selectedEnvOff =
+      selectedSource === 'sec_edgar'       ? masterStatus?.sec_edgar_enabled === false
+    : selectedSource === 'open_corporates' ? masterStatus?.open_corporates_enabled === false
+    : selectedSource === 'wikidata'        ? masterStatus?.wikidata_enabled === false
+    : false
+  const disabledReason =
+    !isAdmin || !masterOn || canRun || selectedSource === 'all'
+      ? null
+      : selectedEnvOff
+        ? t('scraper.sourceDisabledEnv', {
+            source: SOURCE_LABEL[selectedSource] || selectedSource,
+            envVar: SOURCE_ENV_VAR[selectedSource],
+          })
+        : selectedSourceObj?.enabled === false
+          ? t('scraper.sourceDisabledToggle', {
+              source: SOURCE_LABEL[selectedSource] || selectedSource,
+            })
+          : null
+
   const gleifSource  = sources.find(s => s.name === 'bods_gleif')
   const ukPscSource  = sources.find(s => s.name === 'bods_uk_psc')
   const gleifEnabled = !!masterOn && !!masterStatus?.bods_gleif_enabled && gleifSource?.enabled !== false
@@ -399,6 +428,11 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
             ))}
           </div>
         </div>
+      )}
+
+      {/* Why the run form is disabled for the selected single source */}
+      {disabledReason && (
+        <div className="scraper-disabled-msg"><FiAlertCircle /> {disabledReason}</div>
       )}
 
       {/* Per-source toggles */}

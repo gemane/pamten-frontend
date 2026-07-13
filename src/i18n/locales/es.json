@@ -169,6 +169,8 @@
     "signInRequired": "Inicia sesión como administrador para usar el scraper.",
     "adminRequired": "Solo los administradores pueden usar el scraper. Tu rol es {{role}}.",
     "enableRequired": "Establece SCRAPER_ENABLED=true en Render para activarlo.",
+    "sourceDisabledEnv": "{{source}} está deshabilitado. Establece {{envVar}}=true en Render para habilitarlo.",
+    "sourceDisabledToggle": "{{source}} está desactivado. Actívalo abajo en «Interruptores de fuentes».",
     "runSource": "Ejecutar fuente",
     "allSources": "Todas las fuentes",
     "sourceToggles": "Activar fuentes",
