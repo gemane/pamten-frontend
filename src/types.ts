@@ -129,6 +129,7 @@ export interface FullProfile {
   owners: OwnerEntry[]
   subsidiaries: SubsidiaryEntry[]
   executives: ExecutiveEntry[]
+  dual_listed?: Entity[]   // paired legal entities of a dual-listed company
 }
 
 export interface HistoryEntry {
