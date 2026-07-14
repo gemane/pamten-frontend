@@ -36,6 +36,8 @@ export interface Entity {
   hq_city?: string
   hq_lat?: number
   hq_lng?: number
+  countries?: string[]      // all domiciles (dual-listed companies have >1)
+  hq_locations?: string[]   // all HQs as "City|CC" strings
 }
 
 export interface Person {
