@@ -28,10 +28,21 @@ client.interceptors.request.use((config) => {
 let _onUnauthorized: (() => void) | null = null
 export const setUnauthorizedHandler = (fn: () => void) => { _onUnauthorized = fn }
 
+// Whether a 401 should trigger the global "session expired" handler (which pops
+// the login modal). Auth endpoints handle their own 401s and must NOT trigger
+// it: /auth/me is the silent on-load session-restore check (an expired token
+// there should just clear quietly, not pop a login), and /auth/login|register
+// show their own inline errors.
+export function shouldNotifyUnauthorized(status: number | undefined, url: string | undefined): boolean {
+  return status === 401 && !(url ?? '').includes('/auth/')
+}
+
 client.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401 && _onUnauthorized) _onUnauthorized()
+    if (_onUnauthorized && shouldNotifyUnauthorized(err.response?.status, err.config?.url)) {
+      _onUnauthorized()
+    }
     return Promise.reject(err)
   },
 )
