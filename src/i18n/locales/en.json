@@ -78,7 +78,8 @@
     "credibility": "Credibility",
     "wikipedia": "Wikipedia",
     "reported": "Reported {{date}}",
-    "lastChecked": "Last checked {{date}}"
+    "lastChecked": "Last checked {{date}}",
+    "dualListedWith": "Dual-listed with"
   },
   "csv": {
     "name": "Name",

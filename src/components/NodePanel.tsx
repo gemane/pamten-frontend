@@ -212,7 +212,7 @@ function credibilityColor(score: number): string {
 
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
-  const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
+  const { entity, headquarters, owners = [], subsidiaries = [], executives = [], dual_listed = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
   // Surface founders in their own section rather than buried among executives.
@@ -294,6 +294,16 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                 percent={o.relationship?.stake_percent}
                 votingPct={o.relationship?.voting_power_pct}
               />
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
+      {dual_listed.length > 0 && (
+        <Section title={t('panel.dualListedWith')}>
+          {dual_listed.map((d, i) => (
+            <RelRow key={i} node={entityToNode(d)} onNavigate={onNavigate}>
+              <span className="rel-item__name">{d.name}</span>
             </RelRow>
           ))}
         </Section>

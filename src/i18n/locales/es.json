@@ -78,7 +78,8 @@
     "credibility": "Credibilidad",
     "wikipedia": "Wikipedia",
     "reported": "Registrado {{date}}",
-    "lastChecked": "Última comprobación {{date}}"
+    "lastChecked": "Última comprobación {{date}}",
+    "dualListedWith": "Cotización dual con"
   },
   "csv": {
     "name": "Nombre",
