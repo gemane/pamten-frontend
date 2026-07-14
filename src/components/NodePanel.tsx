@@ -215,6 +215,15 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
+  // Surface founders in their own section rather than buried among executives.
+  const seenFounders = new Set<string>()
+  const founders = executives.filter(e => {
+    if (e.role?.role !== 'Founder' || seenFounders.has(e.person.id)) return false
+    seenFounders.add(e.person.id)
+    return true
+  })
+  const otherExecutives = executives.filter(e => e.role?.role !== 'Founder')
+
   const fmt = (n: number) =>
     n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${n}`
 
@@ -279,6 +288,16 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
+      {founders.length > 0 && (
+        <Section title={t('panel.foundedBy')}>
+          {founders.map((f, i) => (
+            <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}>
+              <span className="rel-item__name">{f.person.full_name}</span>
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
       {subsidiaries.length > 0 && (
         <Section title={t('panel.subsidiaries')}>
           {subsidiaries.map((s, i) => (
@@ -290,9 +309,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      {executives.length > 0 && (
+      {otherExecutives.length > 0 && (
         <Section title={t('panel.executives')}>
-          {executives.map((e, i) => (
+          {otherExecutives.map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}>
               <span className="rel-item__name">{e.person.full_name}</span>
               <span className="role-badge">{e.role?.role}</span>
