@@ -21,7 +21,7 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
     }
   }
 
-  const { entity, subsidiaries = [], owners = [] } = profile
+  const { entity, subsidiaries = [], owners = [], executives = [] } = profile
 
   addNode({
     id:            entity.id,
@@ -88,6 +88,28 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
         stakePct:       stake ?? null,
       })
     }
+  }
+
+  // Executives / directors → person node + role edge, so a company's people are
+  // in the graph and can be clicked through to (double-click a person node
+  // navigates to them). Person is the outer node → role label sits near it.
+  for (const ex of executives) {
+    const p = ex.person
+    if (!p) continue
+    addNode({
+      id:       p.id,
+      label:    p.full_name,
+      nodeType: 'person',
+      raw:      p,
+    })
+    addEdge({
+      id:       `${p.id}__role__${entity.id}`,
+      source:   p.id,
+      target:   entity.id,
+      label:    ex.role?.role || '',
+      edgeType: 'role',
+      edgeDir:  'in',
+    })
   }
 
   return els
@@ -192,6 +214,7 @@ export function buildPersonElements(personData: PersonData, ownerships: Ownershi
       const vote  = (item.relationship as { voting_power_pct?: number | null })?.voting_power_pct
       els.push({ data: {
         id: edgeId, source: person.id, target: entity.id, edgeType: 'owns',
+        edgeDir:        'out',   // entity is the outer node → label (stake %) near it
         label:          stake != null ? `${stake}%` : '',
         ownershipType:  item.relationship?.ownership_type || '',
         votingPowerPct: vote ?? null,
@@ -222,7 +245,7 @@ export function buildPersonElements(personData: PersonData, ownerships: Ownershi
     const edgeId = `${person.id}__role__${entity.id}`
     if (!seen.has(edgeId)) {
       seen.add(edgeId)
-      els.push({ data: { id: edgeId, source: person.id, target: entity.id, label: r.role?.role || '', edgeType: 'role' } })
+      els.push({ data: { id: edgeId, source: person.id, target: entity.id, label: r.role?.role || '', edgeType: 'role', edgeDir: 'out' } })
     }
   }
 
