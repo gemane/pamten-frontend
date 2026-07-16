@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag } from 'react-icons/fi'
 import { getFullProfile, getEntitySources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
@@ -38,6 +38,22 @@ export function formatProvenanceDate(value?: string | null): string | null {
   const month = PROV_MONTHS[Number(m[2]) - 1]
   if (!month) return null
   return `${month} ${Number(m[3])}, ${m[1]}`
+}
+
+// Derive the display detail shown for a person (birth/death formatted, the
+// nationality list resolved to localized names, and aliases). Kept pure and
+// exported so it can be unit-tested without rendering.
+export function personDisplayDetails(p: Person, lang: string) {
+  const nationalities = (p.nationalities?.length ? p.nationalities
+                        : (p.nationality ? [p.nationality] : []))
+    .map(c => countryName(c, lang))
+    .filter(Boolean)
+  return {
+    born: formatProvenanceDate(p.birth_date),
+    died: formatProvenanceDate(p.death_date),
+    nationalities,
+    aka: (p.alias ?? []).filter(Boolean),
+  }
 }
 
 function useWikidataImage(wikidataId: string | undefined): string | null {
@@ -156,8 +172,9 @@ function CollapsibleSection({ title, count, defaultOpen = false, children }: {
 }
 
 function PersonView({ raw }: { raw: Person }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
+  const { born, died, nationalities, aka } = personDisplayDetails(raw, i18n.language)
   return (
     <div className="panel-body">
       {imgSrc && (
@@ -167,7 +184,14 @@ function PersonView({ raw }: { raw: Person }) {
       <h2 className="panel-name">{raw.full_name}</h2>
       {raw.description && <p className="panel-desc">{raw.description}</p>}
       <div className="panel-meta">
-        <MetaRow icon={FiMapPin} label={t('panel.nationality')} value={raw.nationality} />
+        <MetaRow icon={FiCalendar} label={t('panel.born')} value={born} />
+        <MetaRow icon={FiCalendar} label={t('panel.died')} value={died} />
+        <MetaRow
+          icon={FiFlag}
+          label={nationalities.length > 1 ? t('panel.nationalities') : t('panel.nationality')}
+          value={nationalities.join(', ') || null}
+        />
+        <MetaRow icon={FiTag} label={t('panel.alsoKnownAs')} value={aka.length ? aka.join(', ') : null} />
       </div>
       {raw.wikipedia_url && (
         <a className="panel-link" href={raw.wikipedia_url} target="_blank" rel="noreferrer">

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails } from './NodePanel'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
@@ -99,5 +99,46 @@ describe('rel-row node mappers', () => {
     expect(ownerToNode(entity).nodeType).toBe('entity')   // has `name`
     expect(ownerToNode(person).nodeType).toBe('person')   // has `full_name`
     expect(ownerToNode(person).label).toBe('Jane Doe')
+  })
+})
+
+describe('personDisplayDetails', () => {
+  const base: Person = {
+    id: 'p1', first_name: 'Elon', last_name: 'Musk', full_name: 'Elon Musk',
+    verified: false,
+  }
+
+  it('formats birth and death dates', () => {
+    const d = personDisplayDetails({ ...base, birth_date: '1971-06-28', death_date: '2099-01-02' }, 'en')
+    expect(d.born).toBe('Jun 28, 1971')
+    expect(d.died).toBe('Jan 2, 2099')
+  })
+
+  it('returns null dates when absent', () => {
+    const d = personDisplayDetails(base, 'en')
+    expect(d.born).toBeNull()
+    expect(d.died).toBeNull()
+  })
+
+  it('surfaces aliases (nicknames), filtering blanks', () => {
+    const d = personDisplayDetails({ ...base, alias: ['Elon', '', 'Technoking'] }, 'en')
+    expect(d.aka).toEqual(['Elon', 'Technoking'])
+  })
+
+  it('empty aliases yield an empty list', () => {
+    expect(personDisplayDetails(base, 'en').aka).toEqual([])
+  })
+
+  it('uses the nationalities list when present, resolving each to a name', () => {
+    const d = personDisplayDetails({ ...base, nationalities: ['US', 'CA'] }, 'en')
+    expect(d.nationalities).toHaveLength(2)
+    // codes resolve to human-readable names (not the raw ISO-2 code)
+    expect(d.nationalities[0]).not.toBe('US')
+    expect(d.nationalities[0].length).toBeGreaterThan(2)
+  })
+
+  it('falls back to the single nationality field when the list is empty', () => {
+    const d = personDisplayDetails({ ...base, nationality: 'GB' }, 'en')
+    expect(d.nationalities).toHaveLength(1)
   })
 })
