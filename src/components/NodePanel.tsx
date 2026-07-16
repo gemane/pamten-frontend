@@ -201,6 +201,7 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
       {raw.description && <p className="panel-desc">{raw.description}</p>}
       <div className="panel-meta">
         <MetaRow icon={FiCalendar} label={t('panel.born')} value={born} />
+        <MetaRow icon={FiMapPin} label={t('panel.birthPlace')} value={raw.birth_place} />
         <MetaRow icon={FiCalendar} label={t('panel.died')} value={died} />
         <MetaRow
           icon={FiFlag}
