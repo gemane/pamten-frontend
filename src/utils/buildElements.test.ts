@@ -193,4 +193,12 @@ describe('buildPersonProfileElements', () => {
     expect(nodes(els).map(e => e.data.id)).toEqual(['solo'])
     expect(edges(els)).toHaveLength(0)
   })
+
+  it('respects a shared loadedIds set so a person can be expanded incrementally', () => {
+    // person + tesla holding already in the graph; expanding pulls in only the new bits
+    const seen = new Set<string>(['musk', 'tesla', 'musk__owns__tesla'])
+    const els = buildPersonProfileElements(profile, seen)
+    expect(nodes(els).map(e => e.data.id)).toEqual(['spacex'])
+    expect(ids(edges(els))).toEqual(['musk__role__spacex'])
+  })
 })

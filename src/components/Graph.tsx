@@ -482,7 +482,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   }), [theme, centerLabel])
 
   const showNodeActions = elements.length > 0
-    && selectedNode?.nodeType === 'entity'
+    && !!selectedNode
     && selectedNode.id !== centerId
 
   return (

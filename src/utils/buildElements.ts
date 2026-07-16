@@ -183,70 +183,65 @@ export interface OwnershipItem {
 // Build the graph around a person from their full-profile: the person node plus
 // an entity node + edge for every position they hold (role edge) and every
 // entity they own (owns edge). Delegates to buildPersonElements, which maps
-// positions → role edges and holdings → owns edges.
-export function buildPersonProfileElements(profile: PersonProfile): GraphElement[] {
+// positions → role edges and holdings → owns edges. Passing a shared loadedIds
+// set lets the person be expanded incrementally into an existing graph.
+export function buildPersonProfileElements(profile: PersonProfile, loadedIds: Set<string> = new Set()): GraphElement[] {
   return buildPersonElements(
     { person: profile.person, roles: profile.positions },
     profile.holdings,
+    loadedIds,
   )
 }
 
-export function buildPersonElements(personData: PersonData, ownerships: OwnershipItem[]): GraphElement[] {
+export function buildPersonElements(
+  personData: PersonData,
+  ownerships: OwnershipItem[],
+  loadedIds: Set<string> = new Set(),
+): GraphElement[] {
   const person = personData.person || (personData as unknown as Person)
   const roles  = personData.roles  || []
-  const els: GraphElement[]    = []
-  const seen   = new Set<string>()
+  const els: GraphElement[] = []
+  const seen   = loadedIds   // node/edge ids already in the graph — only emit new ones
 
-  seen.add(person.id)
-  els.push({ data: { id: person.id, label: person.full_name, nodeType: 'person', raw: person } })
+  const addNode = (data: NodeData) => {
+    if (!seen.has(data.id)) { seen.add(data.id); els.push({ data }) }
+  }
+  const addEdge = (data: GraphElement['data']) => {
+    if (!seen.has(data.id)) { seen.add(data.id); els.push({ data } as GraphElement) }
+  }
+
+  addNode({ id: person.id, label: person.full_name, nodeType: 'person', raw: person })
 
   // Entities the person owns
   const ownList = Array.isArray(ownerships) ? ownerships : []
   for (const item of ownList) {
     const entity = item.entity || item.owned_entity
-    if (!entity?.id || seen.has(entity.id)) continue
-    seen.add(entity.id)
-    els.push({ data: { id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: entity } })
-    const edgeId = `${person.id}__owns__${entity.id}`
-    if (!seen.has(edgeId)) {
-      seen.add(edgeId)
-      const stake = item.relationship?.stake_percent
-      const vote  = (item.relationship as { voting_power_pct?: number | null })?.voting_power_pct
-      els.push({ data: {
-        id: edgeId, source: person.id, target: entity.id, edgeType: 'owns',
-        edgeDir:        'out',   // entity is the outer node → label (stake %) near it
-        label:          stake != null ? `${stake}%` : '',
-        ownershipType:  item.relationship?.ownership_type || '',
-        votingPowerPct: vote ?? null,
-        stakePct:       stake ?? null,
-      } })
-      if (vote != null && vote !== stake) {
-        const votesId = `${person.id}__votes__${entity.id}`
-        if (!seen.has(votesId)) {
-          seen.add(votesId)
-          els.push({ data: {
-            id: votesId, source: person.id, target: entity.id,
-            label: `${vote}%`, edgeType: 'votes', edgeDir: 'in',
-            votingPowerPct: vote,
-          } })
-        }
-      }
+    if (!entity?.id) continue
+    addNode({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: entity })
+    const stake = item.relationship?.stake_percent
+    const vote  = (item.relationship as { voting_power_pct?: number | null })?.voting_power_pct
+    addEdge({
+      id: `${person.id}__owns__${entity.id}`, source: person.id, target: entity.id, edgeType: 'owns',
+      edgeDir:        'out',   // entity is the outer node → label (stake %) near it
+      label:          stake != null ? `${stake}%` : '',
+      ownershipType:  item.relationship?.ownership_type || '',
+      votingPowerPct: vote ?? null,
+      stakePct:       stake ?? null,
+    })
+    if (vote != null && vote !== stake) {
+      addEdge({
+        id: `${person.id}__votes__${entity.id}`, source: person.id, target: entity.id,
+        label: `${vote}%`, edgeType: 'votes', edgeDir: 'out', votingPowerPct: vote,
+      })
     }
   }
 
-  // Role relationships from person data
+  // Role relationships (positions the person holds)
   for (const r of roles) {
     const entity = r.entity
     if (!entity?.id) continue
-    if (!seen.has(entity.id)) {
-      seen.add(entity.id)
-      els.push({ data: { id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: entity } })
-    }
-    const edgeId = `${person.id}__role__${entity.id}`
-    if (!seen.has(edgeId)) {
-      seen.add(edgeId)
-      els.push({ data: { id: edgeId, source: person.id, target: entity.id, label: r.role?.role || '', edgeType: 'role', edgeDir: 'out' } })
-    }
+    addNode({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: entity })
+    addEdge({ id: `${person.id}__role__${entity.id}`, source: person.id, target: entity.id, label: r.role?.role || '', edgeType: 'role', edgeDir: 'out' })
   }
 
   return els
