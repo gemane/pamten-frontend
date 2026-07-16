@@ -7,7 +7,7 @@ import {
   buildPersonProfileElements,
 } from './buildElements'
 import type {
-  Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, OwnsRelationship,
+  Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, ExecutiveEntry, OwnsRelationship,
 } from '../types'
 
 // ── fixtures ────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ function person(id: string, full = id): Person {
 
 function makeProfile(
   center: Entity,
-  opts: { owners?: OwnerEntry[]; subsidiaries?: SubsidiaryEntry[] } = {},
+  opts: { owners?: OwnerEntry[]; subsidiaries?: SubsidiaryEntry[]; executives?: ExecutiveEntry[] } = {},
 ): FullProfile {
   return {
     entity: center,
@@ -30,7 +30,7 @@ function makeProfile(
     operations: [],
     owners: opts.owners ?? [],
     subsidiaries: opts.subsidiaries ?? [],
-    executives: [],
+    executives: opts.executives ?? [],
   }
 }
 
@@ -100,6 +100,28 @@ describe('buildElements', () => {
     }), new Set())
     const p = nodes(els).find(e => e.data.id === 'p1')!
     expect((p.data as unknown as { nodeType: string }).nodeType).toBe('person')
+  })
+
+  it('emits executives as person nodes with role edges', () => {
+    const els = buildElements(makeProfile(entity('acme'), {
+      executives: [{ person: person('ceo', 'Jane Doe'), role: { role: 'CEO' } }],
+    }), new Set())
+    const p = nodes(els).find(e => e.data.id === 'ceo')!
+    expect((p.data as unknown as { nodeType: string }).nodeType).toBe('person')
+    const edge = edges(els).find(e => e.data.id === 'ceo__role__acme')!
+    expect((edge.data as unknown as { edgeType: string; label: string }).edgeType).toBe('role')
+    expect((edge.data as unknown as { label: string }).label).toBe('CEO')
+  })
+
+  it('does not duplicate a person who is both owner and executive', () => {
+    const jane = person('p1', 'Jane Doe')
+    const els = buildElements(makeProfile(entity('acme'), {
+      owners: [{ owner: jane, relationship: rel({ stake_percent: 10 }) }],
+      executives: [{ person: jane, role: { role: 'CEO' } }],
+    }), new Set())
+    expect(nodes(els).filter(e => e.data.id === 'p1')).toHaveLength(1)
+    // both relationships still present as distinct edges
+    expect(ids(edges(els)).sort()).toEqual(['p1__owns__acme', 'p1__role__acme'])
   })
 })
 
