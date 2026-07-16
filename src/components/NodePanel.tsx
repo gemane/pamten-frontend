@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag } from 'react-icons/fi'
-import { getFullProfile, getEntitySources } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
-import type { NodeData, FullProfile, Person, Entity, Source } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source } from '../types'
 
 // Build a NodeData (as the graph uses) from a related entity/person so the
 // panel rows can navigate the same way clicking a graph node does.
@@ -171,10 +171,26 @@ function CollapsibleSection({ title, count, defaultOpen = false, children }: {
   )
 }
 
-function PersonView({ raw }: { raw: Person }) {
+function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: NodeData) => void }) {
+  const raw = node.raw as Person
   const { t, i18n } = useTranslation()
   const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
   const { born, died, nationalities, aka } = personDisplayDetails(raw, i18n.language)
+
+  // A person's positions (HAS_ROLE) and ownerships (OWNS) already exist in the
+  // graph — fetch them so the panel shows what they hold, not just their bio.
+  const [profile, setProfile] = useState<PersonProfile | null>(null)
+  useEffect(() => {
+    let active = true
+    setProfile(null)
+    getPersonProfile(node.id)
+      .then(({ data }) => { if (active) setProfile(data) })
+      .catch(() => { if (active) setProfile(null) })
+    return () => { active = false }
+  }, [node.id])
+  const positions = profile?.positions ?? []
+  const holdings  = profile?.holdings ?? []
+
   return (
     <div className="panel-body">
       {imgSrc && (
@@ -193,6 +209,33 @@ function PersonView({ raw }: { raw: Person }) {
         />
         <MetaRow icon={FiTag} label={t('panel.alsoKnownAs')} value={aka.length ? aka.join(', ') : null} />
       </div>
+
+      {positions.length > 0 && (
+        <Section title={t('panel.positions')}>
+          {positions.map((p, i) => (
+            <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}>
+              <span className="rel-item__name">{p.entity.name}</span>
+              <span className="role-badge">{p.role?.role}</span>
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
+      {holdings.length > 0 && (
+        <Section title={t('panel.ownerships')}>
+          {holdings.map((h, i) => (
+            <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}>
+              <span className="rel-item__name">{h.entity.name}</span>
+              <OwnershipBadge
+                type={h.relationship?.ownership_type}
+                percent={h.relationship?.stake_percent}
+                votingPct={h.relationship?.voting_power_pct}
+              />
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
       {raw.wikipedia_url && (
         <a className="panel-link" href={raw.wikipedia_url} target="_blank" rel="noreferrer">
           <FiExternalLink /> {t('panel.wikipedia')}
@@ -478,7 +521,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     )
   }
 
-  if (node.nodeType === 'person') return <PersonView raw={node.raw as Person} />
+  if (node.nodeType === 'person') return <PersonView node={node} onNavigate={onNavigate} />
 
   if (loading) {
     return (
