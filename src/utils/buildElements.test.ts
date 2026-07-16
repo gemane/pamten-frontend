@@ -4,9 +4,10 @@ import {
   buildElementsUpward,
   buildElementsDownward,
   buildPersonElements,
+  buildPersonProfileElements,
 } from './buildElements'
 import type {
-  Entity, Person, FullProfile, OwnerEntry, SubsidiaryEntry, OwnsRelationship,
+  Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, OwnsRelationship,
 } from '../types'
 
 // ── fixtures ────────────────────────────────────────────────────────────────
@@ -141,5 +142,33 @@ describe('buildPersonElements', () => {
       [{ entity: entity('shared'), relationship: { stake_percent: 5 } }],
     )
     expect(nodes(els).filter(e => e.data.id === 'shared')).toHaveLength(1)
+  })
+})
+
+// ── buildPersonProfileElements ───────────────────────────────────────────────
+
+describe('buildPersonProfileElements', () => {
+  const profile: PersonProfile = {
+    person: person('musk', 'Elon Musk'),
+    positions: [{ entity: entity('spacex', 'SpaceX'), role: { role: 'CEO' } }],
+    holdings:  [{ entity: entity('tesla', 'Tesla'), relationship: { stake_percent: 20.5, ownership_type: 'controlling' } }],
+  }
+
+  it('maps positions to role edges and holdings to owns edges, with entity nodes', () => {
+    const els = buildPersonProfileElements(profile)
+    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['musk', 'spacex', 'tesla'])
+    expect(ids(edges(els)).sort()).toEqual(['musk__owns__tesla', 'musk__role__spacex'])
+  })
+
+  it('carries the role label onto the role edge', () => {
+    const els = buildPersonProfileElements(profile)
+    const roleEdge = edges(els).find(e => e.data.id === 'musk__role__spacex')
+    expect((roleEdge!.data as unknown as { label: string }).label).toBe('CEO')
+  })
+
+  it('emits nothing but the person node when there are no positions or holdings', () => {
+    const els = buildPersonProfileElements({ person: person('solo'), positions: [], holdings: [] })
+    expect(nodes(els).map(e => e.data.id)).toEqual(['solo'])
+    expect(edges(els)).toHaveLength(0)
   })
 })

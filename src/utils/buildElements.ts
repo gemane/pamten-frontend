@@ -1,4 +1,4 @@
-import type { GraphElement, NodeData, FullProfile, Entity, Person } from '../types'
+import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person } from '../types'
 
 // Cytoscape element builders. Each takes a `loadedIds`/`seen` set and only
 // emits nodes/edges whose id isn't already present, so a graph can be grown
@@ -156,6 +156,17 @@ export interface OwnershipItem {
   entity?: Entity
   owned_entity?: Entity
   relationship?: { stake_percent?: number | null; ownership_type?: string | null }
+}
+
+// Build the graph around a person from their full-profile: the person node plus
+// an entity node + edge for every position they hold (role edge) and every
+// entity they own (owns edge). Delegates to buildPersonElements, which maps
+// positions → role edges and holdings → owns edges.
+export function buildPersonProfileElements(profile: PersonProfile): GraphElement[] {
+  return buildPersonElements(
+    { person: profile.person, roles: profile.positions },
+    profile.holdings,
+  )
 }
 
 export function buildPersonElements(personData: PersonData, ownerships: OwnershipItem[]): GraphElement[] {
