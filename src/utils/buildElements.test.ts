@@ -102,26 +102,13 @@ describe('buildElements', () => {
     expect((p.data as unknown as { nodeType: string }).nodeType).toBe('person')
   })
 
-  it('emits executives as person nodes with role edges', () => {
+  it('does not add executives (non-owners) to the graph — ownership only', () => {
     const els = buildElements(makeProfile(entity('acme'), {
-      executives: [{ person: person('ceo', 'Jane Doe'), role: { role: 'CEO' } }],
+      owners: [{ owner: person('own', 'Owner'), relationship: rel({ stake_percent: 10 }) }],
+      executives: [{ person: person('ceo', 'Chief'), role: { role: 'CEO' } }],
     }), new Set())
-    const p = nodes(els).find(e => e.data.id === 'ceo')!
-    expect((p.data as unknown as { nodeType: string }).nodeType).toBe('person')
-    const edge = edges(els).find(e => e.data.id === 'ceo__role__acme')!
-    expect((edge.data as unknown as { edgeType: string; label: string }).edgeType).toBe('role')
-    expect((edge.data as unknown as { label: string }).label).toBe('CEO')
-  })
-
-  it('does not duplicate a person who is both owner and executive', () => {
-    const jane = person('p1', 'Jane Doe')
-    const els = buildElements(makeProfile(entity('acme'), {
-      owners: [{ owner: jane, relationship: rel({ stake_percent: 10 }) }],
-      executives: [{ person: jane, role: { role: 'CEO' } }],
-    }), new Set())
-    expect(nodes(els).filter(e => e.data.id === 'p1')).toHaveLength(1)
-    // both relationships still present as distinct edges
-    expect(ids(edges(els)).sort()).toEqual(['p1__owns__acme', 'p1__role__acme'])
+    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['acme', 'own'])   // no 'ceo'
+    expect(ids(edges(els))).toEqual(['own__owns__acme'])                     // no role edge
   })
 })
 
@@ -149,21 +136,21 @@ describe('buildElementsUpward / Downward', () => {
 // ── buildPersonElements ─────────────────────────────────────────────────────
 
 describe('buildPersonElements', () => {
-  it('emits the person, owned entities (owns edges) and roles (role edges)', () => {
+  it('emits the person and owned entities (owns edges) only — ownership graph', () => {
     const els = buildPersonElements(
-      { person: person('p1', 'Jane'), roles: [{ entity: entity('boardco'), role: { role: 'Director' } }] },
+      { person: person('p1', 'Jane') },
       [{ entity: entity('ownco'), relationship: { stake_percent: 25 } }],
     )
-    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['boardco', 'ownco', 'p1'])
-    expect(ids(edges(els)).sort()).toEqual(['p1__owns__ownco', 'p1__role__boardco'])
+    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['ownco', 'p1'])
+    expect(ids(edges(els)).sort()).toEqual(['p1__owns__ownco'])
   })
 
-  it('does not duplicate an entity that is both owned and a role target', () => {
+  it('emits a separate votes edge only when voting power differs from stake', () => {
     const els = buildPersonElements(
-      { person: person('p1'), roles: [{ entity: entity('shared'), role: { role: 'CEO' } }] },
-      [{ entity: entity('shared'), relationship: { stake_percent: 5 } }],
+      { person: person('p1') },
+      [{ entity: entity('ownco'), relationship: { stake_percent: 10, voting_power_pct: 30 } as OwnsRelationship }],
     )
-    expect(nodes(els).filter(e => e.data.id === 'shared')).toHaveLength(1)
+    expect(ids(edges(els))).toContain('p1__votes__ownco')
   })
 })
 
@@ -176,29 +163,38 @@ describe('buildPersonProfileElements', () => {
     holdings:  [{ entity: entity('tesla', 'Tesla'), relationship: { stake_percent: 20.5, ownership_type: 'controlling' } }],
   }
 
-  it('maps positions to role edges and holdings to owns edges, with entity nodes', () => {
+  it('maps holdings to owns edges and ignores positions — ownership graph only', () => {
     const els = buildPersonProfileElements(profile)
-    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['musk', 'spacex', 'tesla'])
-    expect(ids(edges(els)).sort()).toEqual(['musk__owns__tesla', 'musk__role__spacex'])
+    // spacex is a position (role, no stake) → not in the graph
+    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['musk', 'tesla'])
+    expect(ids(edges(els))).toEqual(['musk__owns__tesla'])
   })
 
-  it('carries the role label onto the role edge', () => {
+  it('carries the stake % onto the owns edge', () => {
     const els = buildPersonProfileElements(profile)
-    const roleEdge = edges(els).find(e => e.data.id === 'musk__role__spacex')
-    expect((roleEdge!.data as unknown as { label: string }).label).toBe('CEO')
+    const ownsEdge = edges(els).find(e => e.data.id === 'musk__owns__tesla')
+    expect((ownsEdge!.data as unknown as { label: string }).label).toBe('20.5%')
   })
 
-  it('emits nothing but the person node when there are no positions or holdings', () => {
+  it('emits nothing but the person node when there are no holdings', () => {
     const els = buildPersonProfileElements({ person: person('solo'), positions: [], holdings: [] })
     expect(nodes(els).map(e => e.data.id)).toEqual(['solo'])
     expect(edges(els)).toHaveLength(0)
   })
 
   it('respects a shared loadedIds set so a person can be expanded incrementally', () => {
+    const twoHoldings: PersonProfile = {
+      person: person('musk', 'Elon Musk'),
+      positions: [],
+      holdings: [
+        { entity: entity('tesla', 'Tesla'),   relationship: { stake_percent: 20.5 } },
+        { entity: entity('spacex', 'SpaceX'), relationship: { stake_percent: 42 } },
+      ],
+    }
     // person + tesla holding already in the graph; expanding pulls in only the new bits
     const seen = new Set<string>(['musk', 'tesla', 'musk__owns__tesla'])
-    const els = buildPersonProfileElements(profile, seen)
+    const els = buildPersonProfileElements(twoHoldings, seen)
     expect(nodes(els).map(e => e.data.id)).toEqual(['spacex'])
-    expect(ids(edges(els))).toEqual(['musk__role__spacex'])
+    expect(ids(edges(els))).toEqual(['musk__owns__spacex'])
   })
 })

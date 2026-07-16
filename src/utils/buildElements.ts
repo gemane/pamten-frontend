@@ -21,7 +21,7 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
     }
   }
 
-  const { entity, subsidiaries = [], owners = [], executives = [] } = profile
+  const { entity, subsidiaries = [], owners = [] } = profile
 
   addNode({
     id:            entity.id,
@@ -90,28 +90,6 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
     }
   }
 
-  // Executives / directors → person node + role edge, so a company's people are
-  // in the graph and can be clicked through to (double-click a person node
-  // navigates to them). Person is the outer node → role label sits near it.
-  for (const ex of executives) {
-    const p = ex.person
-    if (!p) continue
-    addNode({
-      id:       p.id,
-      label:    p.full_name,
-      nodeType: 'person',
-      raw:      p,
-    })
-    addEdge({
-      id:       `${p.id}__role__${entity.id}`,
-      source:   p.id,
-      target:   entity.id,
-      label:    ex.role?.role || '',
-      edgeType: 'role',
-      edgeDir:  'in',
-    })
-  }
-
   return els
 }
 
@@ -170,7 +148,6 @@ export function buildElementsDownward(profile: FullProfile, loadedIds: Set<strin
 
 export interface PersonData {
   person?: Person
-  roles?: Array<{ entity: Entity; role?: { role?: string } }>
   [key: string]: unknown
 }
 
@@ -181,16 +158,12 @@ export interface OwnershipItem {
 }
 
 // Build the graph around a person from their full-profile: the person node plus
-// an entity node + edge for every position they hold (role edge) and every
-// entity they own (owns edge). Delegates to buildPersonElements, which maps
-// positions → role edges and holdings → owns edges. Passing a shared loadedIds
-// set lets the person be expanded incrementally into an existing graph.
+// an entity node + owns edge for every entity they OWN. The graph is ownership-
+// only — positions/roles (companies they merely lead) are shown in the panel,
+// not the graph. Passing a shared loadedIds set lets the person be expanded
+// incrementally into an existing graph.
 export function buildPersonProfileElements(profile: PersonProfile, loadedIds: Set<string> = new Set()): GraphElement[] {
-  return buildPersonElements(
-    { person: profile.person, roles: profile.positions },
-    profile.holdings,
-    loadedIds,
-  )
+  return buildPersonElements({ person: profile.person }, profile.holdings, loadedIds)
 }
 
 export function buildPersonElements(
@@ -199,7 +172,6 @@ export function buildPersonElements(
   loadedIds: Set<string> = new Set(),
 ): GraphElement[] {
   const person = personData.person || (personData as unknown as Person)
-  const roles  = personData.roles  || []
   const els: GraphElement[] = []
   const seen   = loadedIds   // node/edge ids already in the graph — only emit new ones
 
@@ -234,14 +206,6 @@ export function buildPersonElements(
         label: `${vote}%`, edgeType: 'votes', edgeDir: 'out', votingPowerPct: vote,
       })
     }
-  }
-
-  // Role relationships (positions the person holds)
-  for (const r of roles) {
-    const entity = r.entity
-    if (!entity?.id) continue
-    addNode({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: entity })
-    addEdge({ id: `${person.id}__role__${entity.id}`, source: person.id, target: entity.id, label: r.role?.role || '', edgeType: 'role', edgeDir: 'out' })
   }
 
   return els
