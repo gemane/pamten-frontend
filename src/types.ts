@@ -132,6 +132,22 @@ export interface FullProfile {
   dual_listed?: Entity[]   // paired legal entities of a dual-listed company
 }
 
+export interface PositionEntry {
+  entity: Entity
+  role: RoleRelationship
+}
+
+export interface HoldingEntry {
+  entity: Entity
+  relationship: OwnsRelationship
+}
+
+export interface PersonProfile {
+  person: Person
+  positions: PositionEntry[]   // HAS_ROLE → entity (CEO, Founder, Chairman, ...)
+  holdings: HoldingEntry[]     // OWNS → entity
+}
+
 export interface HistoryEntry {
   owner?: Entity | Person
   entity?: Entity

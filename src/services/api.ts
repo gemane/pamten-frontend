@@ -3,6 +3,7 @@ import type { AxiosResponse } from 'axios'
 import type {
   SearchResult,
   FullProfile,
+  PersonProfile,
   HistoryEntry,
   ScraperStatus,
   ScrapeResult,
@@ -55,6 +56,9 @@ export const getCountries = (): Promise<AxiosResponse<{ country: string; count: 
 
 export const getFullProfile = (id: string): Promise<AxiosResponse<FullProfile>> =>
   client.get(`/search/entity/${id}/full-profile`)
+
+export const getPersonProfile = (id: string): Promise<AxiosResponse<PersonProfile>> =>
+  client.get(`/search/person/${id}/full-profile`)
 
 export const getOwnershipTree = (id: string, depth = 3): Promise<AxiosResponse<unknown>> =>
   client.get(`/relationships/ownership-tree/${id}`, { params: { depth } })

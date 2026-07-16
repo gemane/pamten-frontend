@@ -18,7 +18,7 @@ import AuthModal     from './components/AuthModal'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPerson, getOwners, search, getEntitiesByCountry, getCountryEntities, setUnauthorizedHandler } from './services/api'
+import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, setUnauthorizedHandler } from './services/api'
 import type {
   GraphElement,
   NodeData,
@@ -27,14 +27,13 @@ import type {
   CountryEntityGroup,
   ContextCountry,
   Entity,
+  Person,
 } from './types'
 import {
   buildElements,
   buildElementsUpward,
   buildElementsDownward,
-  buildPersonElements,
-  type PersonData,
-  type OwnershipItem,
+  buildPersonProfileElements,
 } from './utils/buildElements'
 import { buildHash, parseHash, type ViewState } from './utils/viewHash'
 import { shareLink } from './utils/shareLink'
@@ -118,6 +117,13 @@ function AppInner() {
     return buildElements(profile, loadedIds.current)
   }, [])
 
+  // Build the graph around a person: their positions (role edges) and
+  // ownerships (owns edges) as connected entity nodes.
+  const loadPerson = useCallback(async (personId: string): Promise<{ els: GraphElement[]; person: Person }> => {
+    const { data: profile } = await getPersonProfile(personId)
+    return { els: buildPersonProfileElements(profile, loadedIds.current), person: profile.person }
+  }, [])
+
   const handleSearchSelect = useCallback(async (result: SearchResult) => {
     setToast(null)
     setSelectedNode(null)
@@ -126,13 +132,9 @@ function AppInner() {
       setLoading(true)
       loadedIds.current = new Set()
       try {
-        const [personRes, ownersRes] = await Promise.all([
-          getPerson(result.node.id),
-          getOwners(result.node.id).catch(() => ({ data: [] })),
-        ])
-        const els = buildPersonElements(personRes.data as PersonData, ownersRes.data as OwnershipItem[])
-        const newNode: NodeData = { id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node }
-        setCenterId(result.node.id)
+        const { els, person } = await loadPerson(result.node.id)
+        const newNode: NodeData = { id: person.id, nodeType: 'person', label: person.full_name, raw: person }
+        setCenterId(person.id)
         setElements(els)
         setSelectedNode(newNode)
         setNavHistory([newNode])
@@ -165,7 +167,7 @@ function AppInner() {
     } finally {
       setLoading(false)
     }
-  }, [loadEntity, showToast])
+  }, [loadEntity, loadPerson, showToast])
 
   const handleNavigateTo = useCallback(async (nodeData: NodeData) => {
     setToast(null)
@@ -175,11 +177,7 @@ function AppInner() {
     loadedIds.current = new Set()
     try {
       if (nodeData.nodeType === 'person') {
-        const [personRes, ownersRes] = await Promise.all([
-          getPerson(nodeData.id),
-          getOwners(nodeData.id).catch(() => ({ data: [] })),
-        ])
-        const els = buildPersonElements(personRes.data as PersonData, ownersRes.data as OwnershipItem[])
+        const { els } = await loadPerson(nodeData.id)
         setCenterId(nodeData.id)
         setElements(els)
         setSelectedNode(nodeData)
@@ -196,26 +194,34 @@ function AppInner() {
     } finally {
       setLoading(false)
     }
-  }, [loadEntity, showToast])
+  }, [loadEntity, loadPerson, showToast])
 
-  const handleExpand = useCallback(async (entityId: string) => {
-    setExpandingId(entityId)
+  const handleExpand = useCallback(async (nodeId: string) => {
+    setExpandingId(nodeId)
     try {
-      const { data: profile } = await getFullProfile(entityId)
-      const cur = elementsRef.current
-      const isAbove = cur.some(el =>
-        'source' in el.data && el.data.source === entityId && el.data.edgeDir === 'in')
-      const isBelow = cur.some(el =>
-        'source' in el.data && el.data.target === entityId && el.data.edgeDir === 'out')
       // Build against a draft copy: the build functions mark every ID they
       // emit, so mutating loadedIds directly and then discarding the elements
       // would make those edges unloadable forever.
       const draftIds = new Set(loadedIds.current)
-      const newEls = isAbove && !isBelow
-        ? buildElementsUpward(profile as FullProfile, draftIds)
-        : isBelow && !isAbove
-          ? buildElementsDownward(profile as FullProfile, draftIds)
-          : buildElements(profile as FullProfile, draftIds)
+      const node = elementsRef.current.find(el => !('source' in el.data) && el.data.id === nodeId)
+      let newEls: GraphElement[]
+      if (node && (node.data as NodeData).nodeType === 'person') {
+        // Person: pull in their positions/ownerships around the existing graph.
+        const { data: profile } = await getPersonProfile(nodeId)
+        newEls = buildPersonProfileElements(profile, draftIds)
+      } else {
+        const { data: profile } = await getFullProfile(nodeId)
+        const cur = elementsRef.current
+        const isAbove = cur.some(el =>
+          'source' in el.data && el.data.source === nodeId && el.data.edgeDir === 'in')
+        const isBelow = cur.some(el =>
+          'source' in el.data && el.data.target === nodeId && el.data.edgeDir === 'out')
+        newEls = isAbove && !isBelow
+          ? buildElementsUpward(profile as FullProfile, draftIds)
+          : isBelow && !isAbove
+            ? buildElementsDownward(profile as FullProfile, draftIds)
+            : buildElements(profile as FullProfile, draftIds)
+      }
       if (newEls.length > 0) {
         loadedIds.current = draftIds
         setElements(prev => [...prev, ...newEls])
@@ -452,11 +458,7 @@ function AppInner() {
     try {
       let els: GraphElement[]
       if (entityType === 'person') {
-        const [personRes, ownersRes] = await Promise.all([
-          getPerson(entityId),
-          getOwners(entityId).catch(() => ({ data: [] })),
-        ])
-        els = buildPersonElements(personRes.data as PersonData, ownersRes.data as OwnershipItem[])
+        els = (await loadPerson(entityId)).els
       } else {
         els = await loadEntity(entityId)
       }
@@ -473,7 +475,7 @@ function AppInner() {
     } finally {
       setLoading(false)
     }
-  }, [loadEntity, showToast])
+  }, [loadEntity, loadPerson, showToast])
 
   const applyView = useCallback((view: ViewState) => {
     handleTabChange(view.tab)
