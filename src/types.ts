@@ -50,6 +50,7 @@ export interface Person {
   nationalities?: string[]
   birth_date?: string
   death_date?: string
+  birth_place?: string
   description?: string
   wikipedia_url?: string
   verified: boolean
