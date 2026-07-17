@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag } from 'react-icons/fi'
-import { getFullProfile, getEntitySources, getPersonProfile } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
@@ -180,12 +180,17 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
   // A person's positions (HAS_ROLE) and ownerships (OWNS) already exist in the
   // graph — fetch them so the panel shows what they hold, not just their bio.
   const [profile, setProfile] = useState<PersonProfile | null>(null)
+  const [sources, setSources] = useState<Source[]>([])
   useEffect(() => {
     let active = true
     setProfile(null)
+    setSources([])
     getPersonProfile(node.id)
       .then(({ data }) => { if (active) setProfile(data) })
       .catch(() => { if (active) setProfile(null) })
+    getPersonSources(node.id)
+      .then(({ data }) => { if (active) setSources(data) })
+      .catch(() => { if (active) setSources([]) })
     return () => { active = false }
   }, [node.id])
   const positions = profile?.positions ?? []
@@ -242,6 +247,8 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
           <FiExternalLink /> {t('panel.wikipedia')}
         </a>
       )}
+
+      <SourcesSection sources={sources} />
     </div>
   )
 }
@@ -276,6 +283,49 @@ function credibilityColor(score: number): string {
   if (score >= 70) return '#2ECC71'
   if (score >= 40) return '#F39C12'
   return '#E74C3C'
+}
+
+// Collapsible provenance list — the sources behind a node's facts. Shared by the
+// entity and person panels.
+function SourcesSection({ sources }: { sources: Source[] }) {
+  const { t } = useTranslation()
+  if (!sources.length) return null
+  return (
+    <CollapsibleSection title={t('panel.sources')} count={sources.length}>
+      {sources.map((s, i) => {
+        const reported    = formatProvenanceDate(s.source_date)
+        const lastChecked = formatProvenanceDate(s.last_scraped_at)
+        return (
+          <div key={`${s.id}-${s.url ?? ''}-${i}`} className="source-item">
+            <div className="source-item__header">
+              {s.url
+                ? <a className="source-item__name" href={s.url} target="_blank" rel="noreferrer">
+                    <FiExternalLink size={11} /> {s.name}
+                  </a>
+                : <span className="source-item__name">{s.name}</span>
+              }
+              <span className="source-type-badge">{s.type}</span>
+            </div>
+            <div className="credibility-bar" title={`${t('panel.credibility')}: ${s.credibility_score}/100`}>
+              <div
+                className="credibility-bar__fill"
+                style={{ width: `${s.credibility_score}%`, background: credibilityColor(s.credibility_score) }}
+              />
+            </div>
+            <span className="credibility-score" style={{ color: credibilityColor(s.credibility_score) }}>
+              {s.credibility_score}/100
+            </span>
+            {(reported || lastChecked) && (
+              <div className="source-item__prov">
+                {reported    && <span>{t('panel.reported',    { date: reported })}</span>}
+                {lastChecked && <span>{t('panel.lastChecked', { date: lastChecked })}</span>}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </CollapsibleSection>
+  )
 }
 
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate }: EntityOverviewProps) {
@@ -409,41 +459,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      {sources.length > 0 && (
-        <CollapsibleSection title={t('panel.sources')} count={sources.length}>
-          {sources.map((s, i) => {
-            const reported    = formatProvenanceDate(s.source_date)
-            const lastChecked = formatProvenanceDate(s.last_scraped_at)
-            return (
-            <div key={`${s.id}-${s.url ?? ''}-${i}`} className="source-item">
-              <div className="source-item__header">
-                {s.url
-                  ? <a className="source-item__name" href={s.url} target="_blank" rel="noreferrer">
-                      <FiExternalLink size={11} /> {s.name}
-                    </a>
-                  : <span className="source-item__name">{s.name}</span>
-                }
-                <span className="source-type-badge">{s.type}</span>
-              </div>
-              <div className="credibility-bar" title={`${t('panel.credibility')}: ${s.credibility_score}/100`}>
-                <div
-                  className="credibility-bar__fill"
-                  style={{ width: `${s.credibility_score}%`, background: credibilityColor(s.credibility_score) }}
-                />
-              </div>
-              <span className="credibility-score" style={{ color: credibilityColor(s.credibility_score) }}>
-                {s.credibility_score}/100
-              </span>
-              {(reported || lastChecked) && (
-                <div className="source-item__prov">
-                  {reported    && <span>{t('panel.reported',    { date: reported })}</span>}
-                  {lastChecked && <span>{t('panel.lastChecked', { date: lastChecked })}</span>}
-                </div>
-              )}
-            </div>
-          )})}
-        </CollapsibleSection>
-      )}
+      <SourcesSection sources={sources} />
 
       {(onExportPng || onExportCsv) && (
         <div className="panel-export">
