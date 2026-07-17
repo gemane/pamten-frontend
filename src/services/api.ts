@@ -81,6 +81,9 @@ export const getEntitiesByCountry = (): Promise<AxiosResponse<CountryEntityGroup
 export const getCountryEntities = (country: string, limit = 200): Promise<AxiosResponse<Entity[]>> =>
   client.get(`/entities/by-country/${encodeURIComponent(country)}`, { params: { limit } })
 
+export const getPersonSources = (id: string): Promise<AxiosResponse<Source[]>> =>
+  client.get(`/sources/person/${id}`)
+
 export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/entity/${id}`)
 
