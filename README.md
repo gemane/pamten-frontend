@@ -101,6 +101,14 @@ src/
 - Per-source toggle switches — each source can be enabled/disabled independently by admins
 - Master switches are controlled by env vars on the backend (`SCRAPER_ENABLED`, `SCRAPER_SEC_EDGAR_ENABLED`)
 - After a scrape, **Load into graph →** button jumps straight to the graph view with results
+- **Review duplicate persons** opens a modal to merge duplicate people (or keep them separate), backed by the backend duplicate scan
+
+### Federation panel (admin only)
+Inside the Scraper tab — sync ownership data with **trusted peer** instances (see the backend README's *Federation* section for setup):
+- Shows whether federation is enabled and what this instance publishes (entity / person / ownership counts), plus your signing `key_id` (or an "unsigned" note)
+- Register a trusted peer (name, base URL, optional access token, and their public key), then **Pull** to import and reconcile their data
+- Pulled peers show a **verified / unverified** badge, and each pull reports whether the peer's signature was cryptographically verified
+- Requires `FEDERATION_ENABLED` (and, for signing, `FEDERATION_SIGNING_KEY`) on the backend
 
 ### Authentication
 - JWT-based, 7-day tokens stored in `localStorage`
