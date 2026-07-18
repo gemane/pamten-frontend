@@ -216,5 +216,35 @@
       "skipped": "{{count}} omitidos",
       "errors": "{{count}} errores"
     }
+  },
+  "duplicates": {
+    "open": "Revisar personas duplicadas",
+    "autoOn": "auto",
+    "title": "Personas duplicadas",
+    "desc": "La misma persona aparece con distintas grafías según la fuente. Los duplicados de alta confianza se fusionan automáticamente tras cada scrape; revisa y fusiona el resto aquí.",
+    "autoRun": "Ejecutar auto-dedupe",
+    "autoRunning": "Deduplicando…",
+    "autoDone": "{{count}} duplicado(s) fusionado(s) automáticamente.",
+    "autoError": "Falló el auto-dedupe.",
+    "count": "{{count}} grupo(s)",
+    "loading": "Buscando duplicados…",
+    "loadError": "No se pudieron cargar los duplicados.",
+    "none": "No hay duplicados que revisar.",
+    "likelyDistinct": "probablemente personas distintas",
+    "chooseKeep": "Haz clic para conservar esta",
+    "keepHint": "Haz clic en un nombre para elegir cuál conservar",
+    "merge": "Fusionar",
+    "merging": "Fusionando…",
+    "mergeError": "Falló la fusión.",
+    "tabReview": "Por revisar",
+    "tabMerged": "Fusionadas",
+    "tabSeparate": "Mantenidas aparte",
+    "keepSeparate": "Mantener aparte",
+    "keepSeparateHint": "Confirma que son personas distintas — quitar de la lista",
+    "separateError": "No se pudo actualizar.",
+    "noneMerged": "Nada fusionado todavía.",
+    "noneSeparate": "Ninguna marcada como aparte.",
+    "undo": "Deshacer",
+    "undoSeparate": "Volver a revisar"
   }
 }

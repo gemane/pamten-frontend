@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiAlertTriangle } from 'react-icons/fi'
+import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiAlertTriangle, FiUsers } from 'react-icons/fi'
 import {
   getScraperStatus, getScraperSources, toggleScraperSource,
   runScraper, runScraperSecEdgar, runScraperOpenCorporates, runScraperAll,
   runBodsGleif, runBodsUkPsc,
 } from '../services/api'
 import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser, BodsImportResult } from '../types'
+import DuplicatesModal from './DuplicatesModal'
 
 interface ScraperPanelProps {
   onLoadIntoGraph: (query: string) => void
@@ -290,6 +291,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
   const [running,        setRunning]        = useState<boolean>(false)
   const [result,         setResult]         = useState<(ResultData & AllResultData) | null>(null)
   const [error,          setError]          = useState<string | null>(null)
+  const [showDuplicates, setShowDuplicates] = useState<boolean>(false)
 
   useEffect(() => {
     getScraperStatus().then(({ data }) => setMasterStatus(data))
@@ -395,6 +397,17 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       </div>
 
       <p className="scraper-panel__desc">{t('scraper.description')}</p>
+
+      {isAdmin && (
+        <button className="scraper-dup-link" onClick={() => setShowDuplicates(true)}>
+          <FiUsers /> {t('duplicates.open')}
+          {masterStatus?.autodedup_enabled && (
+            <span className="scraper-dup-link__badge">{t('duplicates.autoOn')}</span>
+          )}
+        </button>
+      )}
+
+      {showDuplicates && <DuplicatesModal onClose={() => setShowDuplicates(false)} />}
 
       {!user && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.signInRequired')}</div>
