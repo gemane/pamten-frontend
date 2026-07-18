@@ -270,6 +270,13 @@
     "tokenPlaceholder": "Token de acceso (opcional)",
     "add": "Añadir par",
     "adding": "Añadiendo…",
-    "addError": "No se pudo añadir el par."
+    "addError": "No se pudo añadir el par.",
+    "signingOn": "Firmando exportaciones como",
+    "signingOff": "Las exportaciones no están firmadas (sin clave de firma).",
+    "verifiedPeer": "verificado",
+    "unverifiedPeer": "sin verificar",
+    "wasVerified": "· firma verificada ✓",
+    "wasUnverified": "· sin verificar",
+    "pubkeyPlaceholder": "Clave pública del par (opcional, para verificar sus exportaciones)"
   }
 }

@@ -270,6 +270,13 @@
     "tokenPlaceholder": "Zugriffstoken (optional)",
     "add": "Peer hinzufügen",
     "adding": "Füge hinzu…",
-    "addError": "Peer konnte nicht hinzugefügt werden."
+    "addError": "Peer konnte nicht hinzugefügt werden.",
+    "signingOn": "Signiere Exporte als",
+    "signingOff": "Exporte sind unsigniert (kein Signaturschlüssel gesetzt).",
+    "verifiedPeer": "verifiziert",
+    "unverifiedPeer": "unverifiziert",
+    "wasVerified": "· Signatur verifiziert ✓",
+    "wasUnverified": "· unverifiziert",
+    "pubkeyPlaceholder": "Öffentlicher Schlüssel des Peers (optional, zur Verifizierung seiner Exporte)"
   }
 }

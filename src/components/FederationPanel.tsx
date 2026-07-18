@@ -2,17 +2,18 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   FiPlus, FiTrash2, FiDownloadCloud, FiLoader, FiAlertCircle, FiCheckCircle,
-  FiServer, FiUploadCloud,
+  FiServer, FiUploadCloud, FiShield, FiKey,
 } from 'react-icons/fi'
 import {
-  getFederationStatus, getFederationPeers, addFederationPeer,
+  getFederationStatus, getFederationPeers, getFederationPublicKey, addFederationPeer,
   deleteFederationPeer, pullFederationPeer,
 } from '../services/api'
-import type { FederationStatus, FederationPeer, PeerPullResult } from '../types'
+import type { FederationStatus, FederationPeer, FederationPublicKey, PeerPullResult } from '../types'
 
 export default function FederationPanel() {
   const { t } = useTranslation()
   const [status,  setStatus]  = useState<FederationStatus | null>(null)
+  const [pubkey,  setPubkey]  = useState<FederationPublicKey | null>(null)
   const [peers,   setPeers]   = useState<FederationPeer[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error,   setError]   = useState<string | null>(null)
@@ -21,9 +22,10 @@ export default function FederationPanel() {
   const [adding,  setAdding]  = useState<boolean>(false)
 
   // add-peer form
-  const [name,  setName]  = useState<string>('')
-  const [url,   setUrl]   = useState<string>('')
-  const [token, setToken] = useState<string>('')
+  const [name,   setName]   = useState<string>('')
+  const [url,    setUrl]    = useState<string>('')
+  const [token,  setToken]  = useState<string>('')
+  const [pubIn,  setPubIn]  = useState<string>('')
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -31,8 +33,9 @@ export default function FederationPanel() {
       const { data: st } = await getFederationStatus()
       setStatus(st)
       if (st.enabled) {
-        const { data } = await getFederationPeers()
-        setPeers(data.peers)
+        const [pk, pr] = await Promise.all([getFederationPublicKey(), getFederationPeers()])
+        setPubkey(pk.data)
+        setPeers(pr.data.peers)
       }
     } catch {
       setError(t('federation.loadError'))
@@ -47,8 +50,11 @@ export default function FederationPanel() {
     if (!name.trim() || !url.trim()) return
     setAdding(true); setError(null)
     try {
-      await addFederationPeer({ name: name.trim(), base_url: url.trim(), auth_token: token.trim() || undefined })
-      setName(''); setUrl(''); setToken('')
+      await addFederationPeer({
+        name: name.trim(), base_url: url.trim(),
+        auth_token: token.trim() || undefined, public_key: pubIn.trim() || undefined,
+      })
+      setName(''); setUrl(''); setToken(''); setPubIn('')
       const { data } = await getFederationPeers()
       setPeers(data.peers)
     } catch {
@@ -112,6 +118,14 @@ export default function FederationPanel() {
             })}</span>
           </div>
 
+          {/* this instance's signing identity */}
+          <div className="fed-key">
+            <FiKey className="fed-key__icon" />
+            {pubkey?.signing_enabled
+              ? <span>{t('federation.signingOn')} <code className="fed-key__id">{pubkey.key_id}</code></span>
+              : <span className="fed-key__off">{t('federation.signingOff')}</span>}
+          </div>
+
           {/* peer list */}
           <div className="fed-peers">
             {peers.length === 0 && <div className="fed-empty">{t('federation.noPeers')}</div>}
@@ -123,6 +137,9 @@ export default function FederationPanel() {
                   <div className="fed-peer__info">
                     <span className="fed-peer__name">{p.name}</span>
                     <span className="fed-peer__url">{p.base_url}</span>
+                    {p.has_public_key
+                      ? <span className="fed-peer__verified"><FiShield /> {t('federation.verifiedPeer')}</span>
+                      : <span className="fed-peer__unverified">{t('federation.unverifiedPeer')}</span>}
                     {p.has_token && <span className="fed-peer__tok">{t('federation.tokenSet')}</span>}
                   </div>
                   <div className="fed-peer__actions">
@@ -137,10 +154,16 @@ export default function FederationPanel() {
                   {res && (
                     <div className="fed-peer__result">
                       <FiCheckCircle className="fed-peer__result-icon" />
-                      {t('federation.pullResult', {
-                        entities: res.imported.entities, persons: res.imported.persons,
-                        ownerships: res.imported.ownerships, merged: res.deduplication.merged_count,
-                      })}
+                      <span>
+                        {t('federation.pullResult', {
+                          entities: res.imported.entities, persons: res.imported.persons,
+                          ownerships: res.imported.ownerships, merged: res.deduplication.merged_count,
+                        })}
+                        {' '}
+                        <span className={res.verified ? 'fed-verified' : 'fed-unverified'}>
+                          {res.verified ? t('federation.wasVerified') : t('federation.wasUnverified')}
+                        </span>
+                      </span>
                     </div>
                   )}
                 </div>
@@ -157,6 +180,8 @@ export default function FederationPanel() {
               value={url} onChange={e => setUrl(e.target.value)} disabled={adding} />
             <input className="scraper-input" type="password" placeholder={t('federation.tokenPlaceholder')}
               value={token} onChange={e => setToken(e.target.value)} disabled={adding} />
+            <input className="scraper-input" type="text" placeholder={t('federation.pubkeyPlaceholder')}
+              value={pubIn} onChange={e => setPubIn(e.target.value)} disabled={adding} />
             <button className="fed-add-btn" onClick={handleAdd} disabled={adding || !name.trim() || !url.trim()}>
               {adding
                 ? <><FiLoader className="spin" /> {t('federation.adding')}</>
