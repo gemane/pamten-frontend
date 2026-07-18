@@ -217,6 +217,18 @@
       "errors": "{{count}} Fehler"
     }
   },
+  "activity": {
+    "title": "Letzte Aktivität",
+    "running": "{{count}} laufend",
+    "inProgress": "scrape…",
+    "stale": "abgebrochen (kein Ergebnis)",
+    "failed": "fehlgeschlagen",
+    "nodes": "{{count}} Knoten",
+    "secondsAgo": "vor {{count}}s",
+    "minutesAgo": "vor {{count}}m",
+    "hoursAgo": "vor {{count}}h",
+    "daysAgo": "vor {{count}}T"
+  },
   "duplicates": {
     "open": "Doppelte Personen prüfen",
     "autoOn": "auto",

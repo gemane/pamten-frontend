@@ -217,6 +217,18 @@
       "errors": "{{count}} errors"
     }
   },
+  "activity": {
+    "title": "Recent activity",
+    "running": "{{count}} running",
+    "inProgress": "scraping…",
+    "stale": "stopped (no result)",
+    "failed": "failed",
+    "nodes": "{{count}} nodes",
+    "secondsAgo": "{{count}}s ago",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  },
   "duplicates": {
     "open": "Review duplicate persons",
     "autoOn": "auto",
