@@ -246,5 +246,30 @@
     "noneSeparate": "Ninguna marcada como aparte.",
     "undo": "Deshacer",
     "undoSeparate": "Volver a revisar"
+  },
+  "federation": {
+    "title": "Federación de pares de confianza",
+    "desc": "Publica el grafo de propiedad de esta instancia y extrae datos de pares de confianza. Los datos extraídos se atribuyen al par y se concilian mediante el análisis de duplicados.",
+    "on": "activada",
+    "off": "desactivada",
+    "disabled": "La federación está desactivada. Establece FEDERATION_ENABLED=true en el servidor para activarla.",
+    "loading": "Cargando federación…",
+    "loadError": "No se pudo cargar la federación.",
+    "publishing": "Publicando {{entities}} entidades, {{persons}} personas, {{ownerships}} participaciones.",
+    "noPeers": "Aún no hay pares de confianza. Añade uno abajo.",
+    "tokenSet": "token definido",
+    "pull": "Extraer",
+    "pulling": "Extrayendo…",
+    "pullResult": "Importados {{entities}} entidades, {{persons}} personas, {{ownerships}} participaciones · {{merged}} fusionadas.",
+    "pullError": "La extracción falló.",
+    "remove": "Eliminar par",
+    "deleteError": "No se pudo eliminar el par.",
+    "addTitle": "Añadir un par de confianza",
+    "namePlaceholder": "Nombre del par",
+    "urlPlaceholder": "https://peer.example.com",
+    "tokenPlaceholder": "Token de acceso (opcional)",
+    "add": "Añadir par",
+    "adding": "Añadiendo…",
+    "addError": "No se pudo añadir el par."
   }
 }

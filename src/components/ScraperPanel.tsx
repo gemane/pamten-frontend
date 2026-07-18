@@ -8,6 +8,7 @@ import {
 } from '../services/api'
 import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser, BodsImportResult } from '../types'
 import DuplicatesModal from './DuplicatesModal'
+import FederationPanel from './FederationPanel'
 
 interface ScraperPanelProps {
   onLoadIntoGraph: (query: string) => void
@@ -542,6 +543,14 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
             showJurisdiction={false}
             onRun={params => runBodsUkPsc(params).then(r => r.data)}
           />
+        </div>
+      )}
+
+      {/* ── Trusted-peer federation ──────────────────────────────────────────── */}
+      {isAdmin && (
+        <div className="scraper-bods">
+          <div className="scraper-bods__divider" />
+          <FederationPanel />
         </div>
       )}
     </div>

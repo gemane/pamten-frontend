@@ -274,6 +274,29 @@ export interface MergeLogList {
   entries: MergeLogEntry[]
 }
 
+export interface FederationStatus {
+  enabled: boolean
+  entities: number
+  persons: number
+  ownerships: number
+}
+
+export interface FederationPeer {
+  id: string
+  name: string
+  base_url: string
+  credibility_score?: number
+  enabled?: boolean
+  has_token?: boolean
+  created_at?: string
+}
+
+export interface PeerPullResult {
+  peer: string
+  imported: { entities: number; persons: number; ownerships: number; skipped: number }
+  deduplication: { merged_count: number; review_count: number }
+}
+
 export interface ScrapeResult {
   status: string
   query?: string

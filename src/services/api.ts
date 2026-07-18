@@ -17,6 +17,9 @@ import type {
   DedupResult,
   KeptSeparateList,
   MergeLogList,
+  FederationStatus,
+  FederationPeer,
+  PeerPullResult,
 } from '../types'
 
 const client = axios.create({
@@ -108,6 +111,24 @@ export const getKeptSeparate = (): Promise<AxiosResponse<KeptSeparateList>> =>
 
 export const getMergeLog = (): Promise<AxiosResponse<MergeLogList>> =>
   client.get('/persons/merge-log')
+
+// ── Federation (trusted-peer sync) ──────────────────────────────────────────
+export const getFederationStatus = (): Promise<AxiosResponse<FederationStatus>> =>
+  client.get('/federation/status')
+
+export const getFederationPeers = (): Promise<AxiosResponse<{ count: number; peers: FederationPeer[] }>> =>
+  client.get('/federation/peers')
+
+export const addFederationPeer = (
+  body: { name: string; base_url: string; auth_token?: string; credibility_score?: number }
+): Promise<AxiosResponse<FederationPeer>> =>
+  client.post('/federation/peers', body)
+
+export const deleteFederationPeer = (id: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.delete(`/federation/peers/${id}`)
+
+export const pullFederationPeer = (id: string): Promise<AxiosResponse<PeerPullResult>> =>
+  client.post(`/federation/peers/${id}/pull`)
 
 export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/entity/${id}`)
