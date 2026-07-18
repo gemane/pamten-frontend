@@ -216,6 +216,35 @@ export interface ScraperStatus {
   bods_gleif_enabled?: boolean
   bods_uk_psc_enabled?: boolean
   geocoding_enabled?: boolean
+  autodedup_enabled?: boolean
+}
+
+export interface DuplicateMember {
+  id: string
+  full_name: string
+  wikidata_id?: string | null
+  connected?: number
+}
+
+export interface DuplicateGroup {
+  confidence: 'high' | 'medium' | 'low'
+  likely_distinct?: boolean
+  reason: string
+  suggested_keep_id: string
+  members: DuplicateMember[]
+}
+
+export interface DuplicateScan {
+  count: number
+  groups: DuplicateGroup[]
+}
+
+export interface DedupResult {
+  applied: boolean
+  merged_count: number
+  review_count: number
+  merged: Array<{ keep_id: string; keep_name: string; merged: string[] }>
+  needs_review: DuplicateGroup[]
 }
 
 export interface ScrapeResult {

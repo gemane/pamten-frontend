@@ -216,5 +216,25 @@
       "skipped": "{{count}} übersprungen",
       "errors": "{{count}} Fehler"
     }
+  },
+  "duplicates": {
+    "open": "Doppelte Personen prüfen",
+    "autoOn": "auto",
+    "title": "Doppelte Personen",
+    "desc": "Dieselbe Person taucht je nach Quelle unter verschiedenen Schreibweisen auf. Eindeutige Duplikate werden nach jedem Scrape automatisch zusammengeführt; den Rest hier prüfen und zusammenführen.",
+    "autoRun": "Auto-Dedupe starten",
+    "autoRunning": "Dedupliziere…",
+    "autoDone": "{{count}} Duplikat(e) automatisch zusammengeführt.",
+    "autoError": "Auto-Dedupe fehlgeschlagen.",
+    "count": "{{count}} Gruppe(n)",
+    "loading": "Suche nach Duplikaten…",
+    "loadError": "Duplikate konnten nicht geladen werden.",
+    "none": "Keine Duplikate zu prüfen.",
+    "likelyDistinct": "wahrscheinlich verschiedene Personen",
+    "chooseKeep": "Klicken, um diese zu behalten",
+    "keepHint": "Auf einen Namen klicken, um den zu behaltenden zu wählen",
+    "merge": "Zusammenführen",
+    "merging": "Führe zusammen…",
+    "mergeError": "Zusammenführen fehlgeschlagen."
   }
 }
