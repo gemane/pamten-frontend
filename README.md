@@ -101,6 +101,7 @@ src/
 - Per-source toggle switches — each source can be enabled/disabled independently by admins
 - Master switches are controlled by env vars on the backend (`SCRAPER_ENABLED`, `SCRAPER_SEC_EDGAR_ENABLED`)
 - After a scrape, **Load into graph →** button jumps straight to the graph view with results
+- **BODS bulk import** — a separate card for the **GLEIF** and **UK PSC** beneficial-ownership datasets (bulk file import with jurisdiction / limit filters), distinct from the per-company scrapers above
 - **Recent activity** — a live run log (polls every 6s) showing each scrape's status (running / ok / failed / stale), node count, and errors; covers UI *and* `update.sh` runs (backed by `/scraper/runs`)
 - **Review duplicate persons** opens a modal (tabs: To review / Merged / Kept separate) to merge duplicate people, keep confirmed-different ones separate, or run an auto-dedupe — backed by the backend duplicate scan
 
