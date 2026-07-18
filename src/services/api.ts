@@ -13,6 +13,8 @@ import type {
   Entity,
   AuthUser,
   Source,
+  DuplicateScan,
+  DedupResult,
 } from '../types'
 
 const client = axios.create({
@@ -83,6 +85,15 @@ export const getCountryEntities = (country: string, limit = 200): Promise<AxiosR
 
 export const getPersonSources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/person/${id}`)
+
+export const getPersonDuplicates = (): Promise<AxiosResponse<DuplicateScan>> =>
+  client.get('/persons/duplicates')
+
+export const mergePersons = (keep_id: string, dup_id: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.post('/persons/merge', { keep_id, dup_id })
+
+export const runDeduplicate = (apply = true): Promise<AxiosResponse<DedupResult>> =>
+  client.post('/persons/deduplicate', null, { params: { apply } })
 
 export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/entity/${id}`)
