@@ -246,5 +246,30 @@
     "noneSeparate": "Keine als getrennt markiert.",
     "undo": "Rückgängig",
     "undoSeparate": "Zurück zur Prüfung"
+  },
+  "federation": {
+    "title": "Föderation vertrauenswürdiger Peers",
+    "desc": "Den Eigentumsgraphen dieser Instanz veröffentlichen und von vertrauenswürdigen Peers abrufen. Abgerufene Daten werden dem Peer zugeordnet und über die Duplikatsuche abgeglichen.",
+    "on": "an",
+    "off": "aus",
+    "disabled": "Föderation ist deaktiviert. Setze FEDERATION_ENABLED=true auf dem Server, um sie zu aktivieren.",
+    "loading": "Lade Föderation…",
+    "loadError": "Föderation konnte nicht geladen werden.",
+    "publishing": "Veröffentlicht {{entities}} Entitäten, {{persons}} Personen, {{ownerships}} Beteiligungen.",
+    "noPeers": "Noch keine vertrauenswürdigen Peers. Unten einen hinzufügen.",
+    "tokenSet": "Token gesetzt",
+    "pull": "Abrufen",
+    "pulling": "Rufe ab…",
+    "pullResult": "{{entities}} Entitäten, {{persons}} Personen, {{ownerships}} Beteiligungen importiert · {{merged}} zusammengeführt.",
+    "pullError": "Abruf fehlgeschlagen.",
+    "remove": "Peer entfernen",
+    "deleteError": "Peer konnte nicht entfernt werden.",
+    "addTitle": "Vertrauenswürdigen Peer hinzufügen",
+    "namePlaceholder": "Peer-Name",
+    "urlPlaceholder": "https://peer.example.com",
+    "tokenPlaceholder": "Zugriffstoken (optional)",
+    "add": "Peer hinzufügen",
+    "adding": "Füge hinzu…",
+    "addError": "Peer konnte nicht hinzugefügt werden."
   }
 }
