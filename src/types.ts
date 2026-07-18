@@ -314,6 +314,18 @@ export interface ScrapeResult {
   scraped: Array<{ name: string; type: string }>
 }
 
+export interface ScrapeRun {
+  id: string
+  source: string
+  target: string
+  status: 'running' | 'ok' | 'failed'
+  started_at: string
+  finished_at?: string | null
+  total: number
+  error?: string
+  stale?: boolean
+}
+
 export interface BodsImportResult {
   status: string
   source: string

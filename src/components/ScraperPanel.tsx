@@ -9,6 +9,7 @@ import {
 import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser, BodsImportResult } from '../types'
 import DuplicatesModal from './DuplicatesModal'
 import FederationPanel from './FederationPanel'
+import ScraperActivity from './ScraperActivity'
 
 interface ScraperPanelProps {
   onLoadIntoGraph: (query: string) => void
@@ -510,6 +511,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
           </button>
         </>
       )}
+
+      {/* ── Recent scrape activity (live) ────────────────────────────────────── */}
+      {isAdmin && <ScraperActivity />}
 
       {/* ── BODS bulk import ─────────────────────────────────────────────────── */}
       {isAdmin && (

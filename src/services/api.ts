@@ -7,6 +7,7 @@ import type {
   HistoryEntry,
   ScraperStatus,
   ScrapeResult,
+  ScrapeRun,
   ScraperSource,
   BodsImportResult,
   CountryEntityGroup,
@@ -154,6 +155,8 @@ export const deleteUser     = (id: string): Promise<AxiosResponse<{ message: str
   client.delete(`/auth/users/${id}`)
 
 export const getScraperStatus  = (): Promise<AxiosResponse<ScraperStatus>> => client.get('/scraper/status')
+export const getScraperRuns    = (limit = 50): Promise<AxiosResponse<{ count: number; runs: ScrapeRun[] }>> =>
+  client.get('/scraper/runs', { params: { limit } })
 export const getScraperSources = (): Promise<AxiosResponse<ScraperSource[]>> => client.get('/scraper/sources')
 export const toggleScraperSource = (name: string): Promise<AxiosResponse<ScraperSource>> => client.patch(`/scraper/sources/${name}/toggle`)
 

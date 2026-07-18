@@ -3169,3 +3169,25 @@ a.source-item__name:hover { color: #4A90D9; }
 .fed-peer__unverified { font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #d0a24a; background: #2c2410; padding: 1px 6px; border-radius: 4px; }
 .fed-verified { color: #7ee29b; font-weight: 600; }
 .fed-unverified { color: #d0a24a; font-weight: 600; }
+
+/* ── Scraper recent activity (live run log) ─────────────────────────────────── */
+.scr-activity { margin: 14px 0; border: 1px solid #2a3a5a; border-radius: 10px; padding: 12px; background: #12203c; }
+.scr-activity__head { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.scr-activity__icon { color: #7aa2e0; }
+.scr-activity__title { font-size: 13px; font-weight: 600; color: #eaeaea; }
+.scr-activity__live { margin-left: auto; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #7aa2e0; background: #1c2e52; padding: 2px 7px; border-radius: 10px; }
+.scr-activity__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.scr-run { display: grid; grid-template-columns: 18px auto 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; background: #16213e; font-size: 12.5px; }
+.scr-run--running { border-left: 2px solid #3d7cef; }
+.scr-run--failed  { border-left: 2px solid #e0524a; }
+.scr-run--stale   { border-left: 2px solid #d0a24a; }
+.scr-run--ok      { border-left: 2px solid #2e6a3f; }
+.scr-run__status { display: flex; align-items: center; justify-content: center; }
+.scr-run--running .scr-run__status { color: #7aa2e0; }
+.scr-run--failed  .scr-run__status { color: #e0837a; }
+.scr-run--stale   .scr-run__status { color: #d0a24a; }
+.scr-run--ok      .scr-run__status { color: #7ee29b; }
+.scr-run__src { font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #9db0d0; background: #22304a; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.scr-run__target { color: #eaeaea; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scr-run__meta { color: #8892a4; font-size: 11px; white-space: nowrap; }
+.scr-run__error { grid-column: 2 / -1; color: #e0837a; font-size: 11px; word-break: break-word; }

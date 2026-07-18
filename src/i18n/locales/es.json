@@ -217,6 +217,18 @@
       "errors": "{{count}} errores"
     }
   },
+  "activity": {
+    "title": "Actividad reciente",
+    "running": "{{count}} en curso",
+    "inProgress": "extrayendo…",
+    "stale": "detenido (sin resultado)",
+    "failed": "falló",
+    "nodes": "{{count}} nodos",
+    "secondsAgo": "hace {{count}}s",
+    "minutesAgo": "hace {{count}}m",
+    "hoursAgo": "hace {{count}}h",
+    "daysAgo": "hace {{count}}d"
+  },
   "duplicates": {
     "open": "Revisar personas duplicadas",
     "autoOn": "auto",
