@@ -270,6 +270,13 @@
     "tokenPlaceholder": "Access token (optional)",
     "add": "Add peer",
     "adding": "Adding…",
-    "addError": "Could not add peer."
+    "addError": "Could not add peer.",
+    "signingOn": "Signing exports as",
+    "signingOff": "Exports are unsigned (no signing key set).",
+    "verifiedPeer": "verified",
+    "unverifiedPeer": "unverified",
+    "wasVerified": "· signature verified ✓",
+    "wasUnverified": "· unverified",
+    "pubkeyPlaceholder": "Peer public key (optional, to verify their exports)"
   }
 }

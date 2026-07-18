@@ -288,11 +288,20 @@ export interface FederationPeer {
   credibility_score?: number
   enabled?: boolean
   has_token?: boolean
+  has_public_key?: boolean
   created_at?: string
+}
+
+export interface FederationPublicKey {
+  signing_enabled: boolean
+  algorithm?: string
+  public_key?: string
+  key_id?: string
 }
 
 export interface PeerPullResult {
   peer: string
+  verified: boolean
   imported: { entities: number; persons: number; ownerships: number; skipped: number }
   deduplication: { merged_count: number; review_count: number }
 }

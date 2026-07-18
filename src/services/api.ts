@@ -19,6 +19,7 @@ import type {
   MergeLogList,
   FederationStatus,
   FederationPeer,
+  FederationPublicKey,
   PeerPullResult,
 } from '../types'
 
@@ -119,8 +120,11 @@ export const getFederationStatus = (): Promise<AxiosResponse<FederationStatus>> 
 export const getFederationPeers = (): Promise<AxiosResponse<{ count: number; peers: FederationPeer[] }>> =>
   client.get('/federation/peers')
 
+export const getFederationPublicKey = (): Promise<AxiosResponse<FederationPublicKey>> =>
+  client.get('/federation/public-key')
+
 export const addFederationPeer = (
-  body: { name: string; base_url: string; auth_token?: string; credibility_score?: number }
+  body: { name: string; base_url: string; auth_token?: string; public_key?: string; credibility_score?: number }
 ): Promise<AxiosResponse<FederationPeer>> =>
   client.post('/federation/peers', body)
 
