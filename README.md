@@ -81,7 +81,7 @@ src/
 
 ### Node detail panel
 - **Entity panel**: shows company logo (fetched from Wikidata via P154/P18 → Wikimedia Commons), ownership badges, subsidiaries, executives, and a link to Wikipedia
-- **Person panel**: shows person photo (fetched from Wikipedia REST API, falls back to name search), nationality, and Wikipedia link
+- **Person panel**: shows person photo (fetched from Wikipedia REST API, falls back to name search), nationality, **place of birth**, the **positions** they hold and **ownership stakes** they own, the **sources** behind those facts, and a Wikipedia link
 - **Overview / Timeline tabs** for entities
 
 ### Timeline view
@@ -101,7 +101,8 @@ src/
 - Per-source toggle switches — each source can be enabled/disabled independently by admins
 - Master switches are controlled by env vars on the backend (`SCRAPER_ENABLED`, `SCRAPER_SEC_EDGAR_ENABLED`)
 - After a scrape, **Load into graph →** button jumps straight to the graph view with results
-- **Review duplicate persons** opens a modal to merge duplicate people (or keep them separate), backed by the backend duplicate scan
+- **Recent activity** — a live run log (polls every 6s) showing each scrape's status (running / ok / failed / stale), node count, and errors; covers UI *and* `update.sh` runs (backed by `/scraper/runs`)
+- **Review duplicate persons** opens a modal (tabs: To review / Merged / Kept separate) to merge duplicate people, keep confirmed-different ones separate, or run an auto-dedupe — backed by the backend duplicate scan
 
 ### Federation panel (admin only)
 Inside the Scraper tab — sync ownership data with **trusted peer** instances (see the backend README's *Federation* section for setup):
@@ -113,7 +114,7 @@ Inside the Scraper tab — sync ownership data with **trusted peer** instances (
 ### Authentication
 - JWT-based, 7-day tokens stored in `localStorage`
 - First registered account becomes **admin**; subsequent accounts start as **viewer**
-- Roles: `admin` (full access including scraper), `contributor` (future), `viewer` (read-only)
+- Roles: `admin` (full access), `contributor` (scraping, dedup, federation), `viewer` (read-only)
 - Login / register modal accessible from the header
 
 ---
