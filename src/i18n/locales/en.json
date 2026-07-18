@@ -235,6 +235,16 @@
     "keepHint": "Click a name to choose which to keep",
     "merge": "Merge",
     "merging": "Merging…",
-    "mergeError": "Merge failed."
+    "mergeError": "Merge failed.",
+    "tabReview": "To review",
+    "tabMerged": "Merged",
+    "tabSeparate": "Kept separate",
+    "keepSeparate": "Keep separate",
+    "keepSeparateHint": "Confirm these are different people — remove from the list",
+    "separateError": "Could not update.",
+    "noneMerged": "Nothing merged yet.",
+    "noneSeparate": "None marked as separate.",
+    "undo": "Undo",
+    "undoSeparate": "Move back to review"
   }
 }

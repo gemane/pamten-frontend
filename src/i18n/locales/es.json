@@ -235,6 +235,16 @@
     "keepHint": "Haz clic en un nombre para elegir cuál conservar",
     "merge": "Fusionar",
     "merging": "Fusionando…",
-    "mergeError": "Falló la fusión."
+    "mergeError": "Falló la fusión.",
+    "tabReview": "Por revisar",
+    "tabMerged": "Fusionadas",
+    "tabSeparate": "Mantenidas aparte",
+    "keepSeparate": "Mantener aparte",
+    "keepSeparateHint": "Confirma que son personas distintas — quitar de la lista",
+    "separateError": "No se pudo actualizar.",
+    "noneMerged": "Nada fusionado todavía.",
+    "noneSeparate": "Ninguna marcada como aparte.",
+    "undo": "Deshacer",
+    "undoSeparate": "Volver a revisar"
   }
 }

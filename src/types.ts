@@ -247,6 +247,33 @@ export interface DedupResult {
   needs_review: DuplicateGroup[]
 }
 
+export interface KeptSeparatePair {
+  a_id: string
+  a_name: string
+  b_id: string
+  b_name: string
+  at?: string | null
+}
+
+export interface KeptSeparateList {
+  count: number
+  pairs: KeptSeparatePair[]
+}
+
+export interface MergeLogEntry {
+  id: string
+  keep_id: string
+  keep_name: string
+  dup_name: string
+  at?: string | null
+  count?: number
+}
+
+export interface MergeLogList {
+  count: number
+  entries: MergeLogEntry[]
+}
+
 export interface ScrapeResult {
   status: string
   query?: string

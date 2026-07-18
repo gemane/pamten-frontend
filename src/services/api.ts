@@ -15,6 +15,8 @@ import type {
   Source,
   DuplicateScan,
   DedupResult,
+  KeptSeparateList,
+  MergeLogList,
 } from '../types'
 
 const client = axios.create({
@@ -94,6 +96,18 @@ export const mergePersons = (keep_id: string, dup_id: string): Promise<AxiosResp
 
 export const runDeduplicate = (apply = true): Promise<AxiosResponse<DedupResult>> =>
   client.post('/persons/deduplicate', null, { params: { apply } })
+
+export const keepSeparate = (ids: string[]): Promise<AxiosResponse<{ message: string }>> =>
+  client.post('/persons/keep-separate', { ids })
+
+export const undoKeepSeparate = (ids: string[]): Promise<AxiosResponse<{ message: string }>> =>
+  client.delete('/persons/keep-separate', { data: { ids } })
+
+export const getKeptSeparate = (): Promise<AxiosResponse<KeptSeparateList>> =>
+  client.get('/persons/kept-separate')
+
+export const getMergeLog = (): Promise<AxiosResponse<MergeLogList>> =>
+  client.get('/persons/merge-log')
 
 export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/entity/${id}`)

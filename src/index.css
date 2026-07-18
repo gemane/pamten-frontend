@@ -3072,3 +3072,39 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 .scraper-dup-link:hover { border-color: #3d7cef; background: #1a2848; }
 .scraper-dup-link__badge { font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #7ee29b; background: #16351f; padding: 2px 6px; border-radius: 4px; }
+
+/* ── Duplicate modal: tabs + history/separate rows ──────────────────────────── */
+.dup-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid #2a3a5a; }
+.dup-tab {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  color: #8892a4; font-size: 13px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+}
+.dup-tab:hover { color: #c3ccda; }
+.dup-tab--active { color: #eaeaea; border-bottom-color: #3d7cef; }
+.dup-tab__n { font-size: 10.5px; font-weight: 700; color: #9db0d0; background: #22304a; padding: 1px 6px; border-radius: 8px; }
+.dup-sep-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px;
+  background: transparent; color: #e0a83a; border: 1px solid #6a531f; border-radius: 7px;
+  font-size: 12px; cursor: pointer; transition: background 0.15s;
+}
+.dup-sep-btn:hover:not(:disabled) { background: #2a2410; }
+.dup-sep-btn:disabled { opacity: 0.6; cursor: default; }
+.dup-row {
+  display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+  background: #12203c; border: 1px solid #2a3a5a; border-radius: 8px; font-size: 13px; color: #c3ccda;
+}
+.dup-row__icon { font-size: 14px; flex-shrink: 0; }
+.dup-row__icon--merged { color: #7ee29b; }
+.dup-row__icon--sep { color: #e0a83a; }
+.dup-row__from { color: #8892a4; }
+.dup-row__arrow { color: #6b7a92; }
+.dup-row__to { color: #eaeaea; font-weight: 500; }
+.dup-row__badge { font-size: 10.5px; font-weight: 700; color: #9db0d0; background: #22304a; padding: 1px 6px; border-radius: 6px; }
+.dup-undo-btn {
+  display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 4px 10px;
+  background: transparent; color: #9db0d0; border: 1px solid #3a4a6a; border-radius: 6px;
+  font-size: 11.5px; cursor: pointer; transition: background 0.15s;
+}
+.dup-undo-btn:hover:not(:disabled) { background: #22304a; }
+.dup-undo-btn:disabled { opacity: 0.6; cursor: default; }

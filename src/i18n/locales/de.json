@@ -235,6 +235,16 @@
     "keepHint": "Auf einen Namen klicken, um den zu behaltenden zu wählen",
     "merge": "Zusammenführen",
     "merging": "Führe zusammen…",
-    "mergeError": "Zusammenführen fehlgeschlagen."
+    "mergeError": "Zusammenführen fehlgeschlagen.",
+    "tabReview": "Zu prüfen",
+    "tabMerged": "Zusammengeführt",
+    "tabSeparate": "Getrennt gehalten",
+    "keepSeparate": "Getrennt halten",
+    "keepSeparateHint": "Bestätigen, dass dies verschiedene Personen sind — aus der Liste entfernen",
+    "separateError": "Aktualisierung fehlgeschlagen.",
+    "noneMerged": "Noch nichts zusammengeführt.",
+    "noneSeparate": "Keine als getrennt markiert.",
+    "undo": "Rückgängig",
+    "undoSeparate": "Zurück zur Prüfung"
   }
 }
