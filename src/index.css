@@ -54,6 +54,7 @@ body {
 
 .modal__tabs {
   display: flex;
+  flex-wrap: wrap; /* the 6 queue tabs must wrap on narrow screens, not clip on the right */
   gap: 4px;
   margin-bottom: 24px;
   border-bottom: 1px solid #2a2a4a;
