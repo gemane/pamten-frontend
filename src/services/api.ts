@@ -25,6 +25,7 @@ import type {
   FlagCreatePayload,
   FlagCreateResult,
   FlagSummary,
+  Flag,
 } from '../types'
 
 const client = axios.create({
@@ -149,6 +150,15 @@ export const getFlagSummary = (
   params: { node_id?: string; from_id?: string; to_id?: string; role?: string }
 ): Promise<AxiosResponse<FlagSummary>> =>
   client.get('/flags/summary', { params })
+
+// Moderation (moderator/admin only on the server)
+export const getFlags = (
+  params: { status?: string; target_kind?: string; category?: string; limit?: number }
+): Promise<AxiosResponse<Flag[]>> =>
+  client.get('/flags', { params })
+
+export const updateFlagStatus = (id: string, status: string): Promise<AxiosResponse<{ id: string; status: string }>> =>
+  client.patch(`/flags/${id}`, { status })
 
 export const authRegister = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
   client.post('/auth/register', { email, password })

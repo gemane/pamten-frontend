@@ -190,7 +190,7 @@ export type GraphElement =
 export interface AuthUser {
   id: string
   email: string
-  role: 'admin' | 'contributor' | 'viewer'
+  role: 'admin' | 'moderator' | 'contributor' | 'viewer'
 }
 
 export interface AuthContextValue {
@@ -383,3 +383,20 @@ export interface FlagCreatePayload {
 
 export interface FlagSummary { open: number }
 export interface FlagCreateResult { id: string; status: 'open' | 'duplicate' }
+
+export type FlagStatus = 'open' | 'reviewing' | 'resolved' | 'rejected'
+
+export interface Flag {
+  id: string
+  target_kind: FlagTargetKind
+  category: FlagCategory
+  note: string
+  status: FlagStatus
+  reporter_kind: 'user' | 'anon'
+  from_id: string
+  to_id: string
+  role: string
+  node_id: string
+  created_at: string
+  updated_at: string
+}
