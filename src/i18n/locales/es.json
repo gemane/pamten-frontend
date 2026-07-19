@@ -120,7 +120,7 @@
     "review": "En revisión",
     "reject": "Rechazar",
     "suppress": "Ocultar",
-    "suppressTip": "Eliminar esta relación y mantenerla oculta tras re-escrapeos",
+    "suppressTip": "Ocultar y mantenerlo oculto tras re-escrapeos",
     "suppressionsTab": "Ocultas",
     "unsuppress": "Restaurar",
     "unsuppressTip": "Restaurar esta relación (reaparece si un escrapeo la recrea)",

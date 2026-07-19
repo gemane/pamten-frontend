@@ -120,7 +120,7 @@
     "review": "In Prüfung",
     "reject": "Ablehnen",
     "suppress": "Ausblenden",
-    "suppressTip": "Diese Beziehung löschen und über Re-Scrapes hinweg ausgeblendet halten",
+    "suppressTip": "Ausblenden und über Re-Scrapes hinweg ausgeblendet halten",
     "suppressionsTab": "Ausgeblendet",
     "unsuppress": "Wieder einblenden",
     "unsuppressTip": "Diese Beziehung wiederherstellen (erscheint erneut, wenn ein Scrape sie neu anlegt)",
