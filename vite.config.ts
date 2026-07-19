@@ -45,6 +45,11 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react(), cspPlugin(apiUrl)],
     build: {
+      // Keep legacy media-query syntax (`max-width: 640px`). Without an older
+      // target the CSS minifier rewrites it to the range form `(width <= 640px)`,
+      // which iOS Safari < 16.4 doesn't understand — so those media queries were
+      // silently dropped on older phones.
+      cssTarget: ['chrome87', 'safari14', 'firefox78', 'edge88'],
       chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
