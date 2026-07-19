@@ -247,6 +247,7 @@ body {
 }
 .mod-flag__btn:hover:not(:disabled) { border-color: #4A90D9; color: #4A90D9; }
 .mod-flag__btn--reject:hover:not(:disabled) { border-color: #E74C3C; color: #E74C3C; }
+.mod-flag__btn--suppress:hover:not(:disabled) { border-color: #E67E22; color: #E67E22; }
 .mod-flag__btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Per-edge report affordance (on relationship rows) ── */

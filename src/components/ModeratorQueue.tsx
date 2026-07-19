@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { FiX, FiFlag, FiEye, FiSlash, FiLoader, FiUser, FiInbox } from 'react-icons/fi'
+import { FiX, FiFlag, FiEye, FiEyeOff, FiSlash, FiLoader, FiUser, FiInbox } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
-import { getFlags, updateFlagStatus } from '../services/api'
+import { getFlags, updateFlagStatus, suppressFlag } from '../services/api'
 import type { Flag } from '../types'
 
 // Human-readable target for a flag row. Exported for unit testing.
@@ -11,7 +11,9 @@ export function describeTarget(f: Flag): string {
   return f.node_id
 }
 
-const STATUSES = ['open', 'reviewing', 'rejected'] as const
+const STATUSES = ['open', 'reviewing', 'rejected', 'resolved'] as const
+
+const isEdge = (f: Flag) => f.target_kind === 'owns' || f.target_kind === 'role'
 
 export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
@@ -35,6 +37,15 @@ export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
     try {
       await updateFlagStatus(id, next)
       setFlags(fs => fs.filter(f => f.id !== id))   // drops out of the current filter
+    } catch { /* leave it in place on failure */ }
+    finally { setBusy(null) }
+  }
+
+  const suppress = async (id: string) => {
+    setBusy(id)
+    try {
+      await suppressFlag(id)                          // deletes the edge + records the override
+      setFlags(fs => fs.filter(f => f.id !== id))     // now resolved → leaves this filter
     } catch { /* leave it in place on failure */ }
     finally { setBusy(null) }
   }
@@ -72,18 +83,26 @@ export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
                     {' · '}{(f.created_at || '').slice(0, 10)}
                   </span>
                 </div>
-                <div className="mod-flag__actions">
-                  {status === 'open' && (
-                    <button className="mod-flag__btn" disabled={busy === f.id}
-                            onClick={() => act(f.id, 'reviewing')} title={t('modQueue.review')}>
-                      <FiEye /> {t('modQueue.review')}
+                {(status === 'open' || status === 'reviewing') && (
+                  <div className="mod-flag__actions">
+                    {status === 'open' && (
+                      <button className="mod-flag__btn" disabled={busy === f.id}
+                              onClick={() => act(f.id, 'reviewing')} title={t('modQueue.review')}>
+                        <FiEye /> {t('modQueue.review')}
+                      </button>
+                    )}
+                    {isEdge(f) && (
+                      <button className="mod-flag__btn mod-flag__btn--suppress" disabled={busy === f.id}
+                              onClick={() => suppress(f.id)} title={t('modQueue.suppressTip')}>
+                        <FiEyeOff /> {t('modQueue.suppress')}
+                      </button>
+                    )}
+                    <button className="mod-flag__btn mod-flag__btn--reject" disabled={busy === f.id}
+                            onClick={() => act(f.id, 'rejected')} title={t('modQueue.reject')}>
+                      <FiSlash /> {t('modQueue.reject')}
                     </button>
-                  )}
-                  <button className="mod-flag__btn mod-flag__btn--reject" disabled={busy === f.id}
-                          onClick={() => act(f.id, 'rejected')} title={t('modQueue.reject')}>
-                    <FiSlash /> {t('modQueue.reject')}
-                  </button>
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

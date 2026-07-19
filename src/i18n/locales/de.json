@@ -119,7 +119,9 @@
     "empty": "Nichts hier.",
     "review": "In Prüfung",
     "reject": "Ablehnen",
-    "status": { "open": "Offen", "reviewing": "In Prüfung", "rejected": "Abgelehnt" },
+    "suppress": "Ausblenden",
+    "suppressTip": "Diese Beziehung löschen und über Re-Scrapes hinweg ausgeblendet halten",
+    "status": { "open": "Offen", "reviewing": "In Prüfung", "rejected": "Abgelehnt", "resolved": "Erledigt" },
     "reporter": { "user": "Angemeldeter Nutzer", "anon": "Anonym" }
   },
   "csv": {

@@ -160,6 +160,10 @@ export const getFlags = (
 export const updateFlagStatus = (id: string, status: string): Promise<AxiosResponse<{ id: string; status: string }>> =>
   client.patch(`/flags/${id}`, { status })
 
+// Suppress an edge flag: deletes the edge + records a re-scrape-surviving override.
+export const suppressFlag = (id: string): Promise<AxiosResponse<{ id: string; flag_id: string; status: string }>> =>
+  client.post(`/flags/${id}/suppress`)
+
 export const authRegister = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
   client.post('/auth/register', { email, password })
 
