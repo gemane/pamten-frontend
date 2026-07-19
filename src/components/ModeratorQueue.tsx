@@ -20,8 +20,6 @@ const SUPPRESSIONS = 'suppressions'
 const PINS = 'pins'
 const TABS = [...STATUSES, SUPPRESSIONS, PINS] as const
 
-const isEdge = (f: Flag) => f.target_kind === 'owns' || f.target_kind === 'role'
-
 export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
   const [tab,       setTab]       = useState<string>('open')
@@ -141,12 +139,11 @@ export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
                         <FiEdit3 /> {t('modQueue.pin')}
                       </button>
                     )}
-                    {isEdge(f) && (
-                      <button className="mod-flag__btn mod-flag__btn--suppress" disabled={busy === f.id}
-                              onClick={() => suppress(f.id)} title={t('modQueue.suppressTip')}>
-                        <FiEyeOff /> {t('modQueue.suppress')}
-                      </button>
-                    )}
+                    {/* Suppress works for edges and nodes (entity/person). */}
+                    <button className="mod-flag__btn mod-flag__btn--suppress" disabled={busy === f.id}
+                            onClick={() => suppress(f.id)} title={t('modQueue.suppressTip')}>
+                      <FiEyeOff /> {t('modQueue.suppress')}
+                    </button>
                     <button className="mod-flag__btn mod-flag__btn--reject" disabled={busy === f.id}
                             onClick={() => act(f.id, 'rejected')} title={t('modQueue.reject')}>
                       <FiSlash /> {t('modQueue.reject')}
