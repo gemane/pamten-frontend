@@ -131,6 +131,7 @@
     "unpin": "Un-pin",
     "unpinTip": "Remove the correction (reads fall back to the scraped value)",
     "emptyPins": "No pins.",
+    "reports": "{{count}} reports",
     "status": { "open": "Open", "reviewing": "Reviewing", "rejected": "Rejected", "resolved": "Resolved" },
     "reporter": { "user": "Signed-in user", "anon": "Anonymous" }
   },

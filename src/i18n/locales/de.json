@@ -131,6 +131,7 @@
     "unpin": "Aufheben",
     "unpinTip": "Korrektur entfernen (Anzeige nutzt wieder den gescrapten Wert)",
     "emptyPins": "Keine Korrekturen.",
+    "reports": "{{count}} Meldungen",
     "status": { "open": "Offen", "reviewing": "In Prüfung", "rejected": "Abgelehnt", "resolved": "Erledigt" },
     "reporter": { "user": "Angemeldeter Nutzer", "anon": "Anonym" }
   },

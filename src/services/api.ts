@@ -26,6 +26,7 @@ import type {
   FlagCreateResult,
   FlagSummary,
   Flag,
+  FlagGroup,
   Suppression,
   Pin,
 } from '../types'
@@ -161,6 +162,12 @@ export const getFlags = (
 
 export const updateFlagStatus = (id: string, status: string): Promise<AxiosResponse<{ id: string; status: string }>> =>
   client.patch(`/flags/${id}`, { status })
+
+// Aggregated queue — one row per target+category with a count + member flag_ids.
+export const getFlagGroups = (
+  params: { status?: string; target_kind?: string; category?: string }
+): Promise<AxiosResponse<FlagGroup[]>> =>
+  client.get('/flags', { params: { ...params, group: true, limit: 500 } })
 
 // Suppress an edge flag: deletes the edge + records a re-scrape-surviving override.
 export const suppressFlag = (id: string): Promise<AxiosResponse<{ id: string; flag_id: string; status: string }>> =>
