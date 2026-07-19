@@ -125,8 +125,25 @@
     "unsuppress": "Restaurar",
     "unsuppressTip": "Restaurar esta relación (reaparece si un escrapeo la recrea)",
     "emptySuppressions": "Sin ocultaciones.",
+    "pin": "Corregir",
+    "pinTip": "Fijar un % de propiedad/tipo corregido para esta propiedad",
+    "pinsTab": "Corregidas",
+    "unpin": "Quitar",
+    "unpinTip": "Quitar la corrección (la lectura vuelve al valor escrapeado)",
+    "emptyPins": "Sin correcciones.",
     "status": { "open": "Abiertos", "reviewing": "En revisión", "rejected": "Rechazados", "resolved": "Resueltos" },
     "reporter": { "user": "Usuario registrado", "anon": "Anónimo" }
+  },
+  "pin": {
+    "title": "Fijar una corrección",
+    "subtitle": "Indica los valores correctos para {{name}}.",
+    "stake": "% de propiedad",
+    "stakePlaceholder": "p. ej. 51",
+    "type": "Tipo de propiedad",
+    "typeUnchanged": "(sin cambios)",
+    "submit": "Fijar corrección",
+    "saving": "Guardando…",
+    "error": "No se pudo guardar. Inténtalo de nuevo."
   },
   "csv": {
     "name": "Nombre",

@@ -125,8 +125,25 @@
     "unsuppress": "Wieder einblenden",
     "unsuppressTip": "Diese Beziehung wiederherstellen (erscheint erneut, wenn ein Scrape sie neu anlegt)",
     "emptySuppressions": "Keine Ausblendungen.",
+    "pin": "Korrektur",
+    "pinTip": "Korrigierten Anteil %/Typ für diese Beteiligung festsetzen",
+    "pinsTab": "Korrigiert",
+    "unpin": "Aufheben",
+    "unpinTip": "Korrektur entfernen (Anzeige nutzt wieder den gescrapten Wert)",
+    "emptyPins": "Keine Korrekturen.",
     "status": { "open": "Offen", "reviewing": "In Prüfung", "rejected": "Abgelehnt", "resolved": "Erledigt" },
     "reporter": { "user": "Angemeldeter Nutzer", "anon": "Anonym" }
+  },
+  "pin": {
+    "title": "Korrektur festsetzen",
+    "subtitle": "Korrekte Werte für {{name}} festlegen.",
+    "stake": "Anteil %",
+    "stakePlaceholder": "z. B. 51",
+    "type": "Eigentumsart",
+    "typeUnchanged": "(unverändert)",
+    "submit": "Korrektur festsetzen",
+    "saving": "Wird gespeichert…",
+    "error": "Speichern fehlgeschlagen. Bitte erneut versuchen."
   },
   "csv": {
     "name": "Name",

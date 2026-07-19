@@ -27,6 +27,7 @@ import type {
   FlagSummary,
   Flag,
   Suppression,
+  Pin,
 } from '../types'
 
 const client = axios.create({
@@ -170,6 +171,18 @@ export const getSuppressions = (): Promise<AxiosResponse<Suppression[]>> =>
 
 export const removeSuppression = (id: string): Promise<AxiosResponse<{ id: string; status: string }>> =>
   client.delete(`/flags/suppressions/${id}`)
+
+// Pin a corrected OWNS value (stake % and/or ownership type) as a read-time override.
+export const pinFlag = (
+  id: string, body: { stake_percent?: number; ownership_type?: string }
+): Promise<AxiosResponse<{ id: string; flag_id: string; status: string }>> =>
+  client.post(`/flags/${id}/pin`, body)
+
+export const getPins = (): Promise<AxiosResponse<Pin[]>> =>
+  client.get('/flags/pins')
+
+export const removePin = (id: string): Promise<AxiosResponse<{ id: string; status: string }>> =>
+  client.delete(`/flags/pins/${id}`)
 
 export const authRegister = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
   client.post('/auth/register', { email, password })
