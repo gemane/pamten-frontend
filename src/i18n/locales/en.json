@@ -119,7 +119,9 @@
     "empty": "Nothing here.",
     "review": "Reviewing",
     "reject": "Reject",
-    "status": { "open": "Open", "reviewing": "Reviewing", "rejected": "Rejected" },
+    "suppress": "Suppress",
+    "suppressTip": "Delete this relationship and keep it hidden across re-scrapes",
+    "status": { "open": "Open", "reviewing": "Reviewing", "rejected": "Rejected", "resolved": "Resolved" },
     "reporter": { "user": "Signed-in user", "anon": "Anonymous" }
   },
   "csv": {

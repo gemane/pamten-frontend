@@ -119,7 +119,9 @@
     "empty": "Nada aquí.",
     "review": "En revisión",
     "reject": "Rechazar",
-    "status": { "open": "Abiertos", "reviewing": "En revisión", "rejected": "Rechazados" },
+    "suppress": "Ocultar",
+    "suppressTip": "Eliminar esta relación y mantenerla oculta tras re-escrapeos",
+    "status": { "open": "Abiertos", "reviewing": "En revisión", "rejected": "Rechazados", "resolved": "Resueltos" },
     "reporter": { "user": "Usuario registrado", "anon": "Anónimo" }
   },
   "csv": {
