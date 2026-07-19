@@ -695,6 +695,11 @@ function AppInner() {
                 />
               </div>
             )}
+            {canModerate && (
+              <button className="mobile-share-fab mobile-flag-fab" onClick={() => setShowFlagQueue(true)} title={t('modQueue.title')}>
+                <FiFlag />
+              </button>
+            )}
             <button className="mobile-share-fab" onClick={handleShare} title={t('share.title')}>
               <FiShare2 />
             </button>
