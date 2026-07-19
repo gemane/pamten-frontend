@@ -249,6 +249,27 @@ body {
 .mod-flag__btn--reject:hover:not(:disabled) { border-color: #E74C3C; color: #E74C3C; }
 .mod-flag__btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ── Per-edge report affordance (on relationship rows) ── */
+.rel-row { display: flex; align-items: center; gap: 4px; }
+.rel-row > .rel-item { flex: 1; min-width: 0; }
+.edge-report-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #a0aec0;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s, color 0.15s;
+}
+.rel-row:hover .edge-report-btn { opacity: 1; }
+.edge-report-btn:hover { color: #E74C3C; }
+
 /* ── User badge + login button ─────────────────────────── */
 /* ── Settings panel ────────────────────────────────────── */
 .settings-panel {
