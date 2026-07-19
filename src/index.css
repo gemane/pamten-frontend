@@ -260,6 +260,15 @@ body {
 .mod-flag__btn--pin:hover:not(:disabled) { border-color: #4A90D9; color: #4A90D9; }
 .mod-flag__btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* On mobile the modal is narrow — stack the row so the action buttons wrap
+   into a row below the details instead of being clipped on the right. */
+@media (max-width: 640px) {
+  .modal--wide { width: 94vw; }
+  .mod-flag { flex-direction: column; align-items: stretch; }
+  .mod-flag__actions { flex-direction: row; flex-wrap: wrap; }
+  .mod-flag__actions .mod-flag__btn { flex: 1 1 auto; justify-content: center; }
+}
+
 /* ── Per-edge report affordance (on relationship rows) ── */
 .rel-row { display: flex; align-items: center; gap: 4px; }
 .rel-row > .rel-item { flex: 1; min-width: 0; }
