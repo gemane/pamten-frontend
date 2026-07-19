@@ -26,6 +26,7 @@ import type {
   FlagCreateResult,
   FlagSummary,
   Flag,
+  Suppression,
 } from '../types'
 
 const client = axios.create({
@@ -163,6 +164,12 @@ export const updateFlagStatus = (id: string, status: string): Promise<AxiosRespo
 // Suppress an edge flag: deletes the edge + records a re-scrape-surviving override.
 export const suppressFlag = (id: string): Promise<AxiosResponse<{ id: string; flag_id: string; status: string }>> =>
   client.post(`/flags/${id}/suppress`)
+
+export const getSuppressions = (): Promise<AxiosResponse<Suppression[]>> =>
+  client.get('/flags/suppressions')
+
+export const removeSuppression = (id: string): Promise<AxiosResponse<{ id: string; status: string }>> =>
+  client.delete(`/flags/suppressions/${id}`)
 
 export const authRegister = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
   client.post('/auth/register', { email, password })

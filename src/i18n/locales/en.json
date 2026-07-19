@@ -121,6 +121,10 @@
     "reject": "Reject",
     "suppress": "Suppress",
     "suppressTip": "Delete this relationship and keep it hidden across re-scrapes",
+    "suppressionsTab": "Suppressed",
+    "unsuppress": "Un-suppress",
+    "unsuppressTip": "Restore this relationship (reappears if a scrape recreates it)",
+    "emptySuppressions": "No suppressions.",
     "status": { "open": "Open", "reviewing": "Reviewing", "rejected": "Rejected", "resolved": "Resolved" },
     "reporter": { "user": "Signed-in user", "anon": "Anonymous" }
   },

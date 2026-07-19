@@ -400,3 +400,13 @@ export interface Flag {
   created_at: string
   updated_at: string
 }
+
+export interface Suppression {
+  id: string
+  target_kind: FlagTargetKind
+  from_id: string
+  to_id: string
+  role: string
+  flag_id: string
+  created_at: string
+}

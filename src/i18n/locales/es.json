@@ -121,6 +121,10 @@
     "reject": "Rechazar",
     "suppress": "Ocultar",
     "suppressTip": "Eliminar esta relación y mantenerla oculta tras re-escrapeos",
+    "suppressionsTab": "Ocultas",
+    "unsuppress": "Restaurar",
+    "unsuppressTip": "Restaurar esta relación (reaparece si un escrapeo la recrea)",
+    "emptySuppressions": "Sin ocultaciones.",
     "status": { "open": "Abiertos", "reviewing": "En revisión", "rejected": "Rechazados", "resolved": "Resueltos" },
     "reporter": { "user": "Usuario registrado", "anon": "Anónimo" }
   },
