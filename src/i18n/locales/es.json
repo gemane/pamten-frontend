@@ -114,6 +114,14 @@
       "other": "Otra cosa"
     }
   },
+  "modQueue": {
+    "title": "Cola de reportes",
+    "empty": "Nada aquí.",
+    "review": "En revisión",
+    "reject": "Rechazar",
+    "status": { "open": "Abiertos", "reviewing": "En revisión", "rejected": "Rechazados" },
+    "reporter": { "user": "Usuario registrado", "anon": "Anónimo" }
+  },
   "csv": {
     "name": "Nombre",
     "type": "Tipo",

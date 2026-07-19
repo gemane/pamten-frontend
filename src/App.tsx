@@ -2,7 +2,7 @@ import { Component, useState, useRef, useCallback, useEffect, useMemo } from 're
 import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
-import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiShare2 } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiShare2, FiFlag } from 'react-icons/fi'
 import SearchBar     from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
@@ -15,6 +15,7 @@ import SettingsPanel from './components/SettingsPanel'
 import MapView       from './components/MapView'
 import MapPanel      from './components/MapPanel'
 import AuthModal     from './components/AuthModal'
+import ModeratorQueue from './components/ModeratorQueue'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -77,6 +78,8 @@ function AppInner() {
   const { t } = useTranslation()
   const [theme, toggleTheme] = useTheme()
   const [showAuth, setShowAuth] = useState<boolean>(false)
+  const [showFlagQueue, setShowFlagQueue] = useState<boolean>(false)
+  const canModerate = user?.role === 'moderator' || user?.role === 'admin'
   const isMobile = useMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
@@ -536,6 +539,7 @@ function AppInner() {
     <div className="app">
       {loading && <div className="loading-bar" />}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showFlagQueue && canModerate && <ModeratorQueue onClose={() => setShowFlagQueue(false)} />}
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       {/* Desktop sidebar — hidden on mobile */}
@@ -557,6 +561,9 @@ function AppInner() {
                 <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
               </div>
+              {canModerate && (
+                <button className="tab-btn" onClick={() => setShowFlagQueue(true)} title={t('modQueue.title')}><FiFlag /></button>
+              )}
               <button className="tab-btn share-btn" onClick={handleShare} title={t('share.title')}><FiShare2 /></button>
             </div>
           </div>

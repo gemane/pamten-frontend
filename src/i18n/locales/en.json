@@ -114,6 +114,14 @@
       "other": "Something else"
     }
   },
+  "modQueue": {
+    "title": "Flag queue",
+    "empty": "Nothing here.",
+    "review": "Reviewing",
+    "reject": "Reject",
+    "status": { "open": "Open", "reviewing": "Reviewing", "rejected": "Rejected" },
+    "reporter": { "user": "Signed-in user", "anon": "Anonymous" }
+  },
   "csv": {
     "name": "Name",
     "type": "Type",
