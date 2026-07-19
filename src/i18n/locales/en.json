@@ -125,8 +125,25 @@
     "unsuppress": "Un-suppress",
     "unsuppressTip": "Restore this relationship (reappears if a scrape recreates it)",
     "emptySuppressions": "No suppressions.",
+    "pin": "Pin fix",
+    "pinTip": "Pin a corrected stake %/type for this ownership",
+    "pinsTab": "Pinned",
+    "unpin": "Un-pin",
+    "unpinTip": "Remove the correction (reads fall back to the scraped value)",
+    "emptyPins": "No pins.",
     "status": { "open": "Open", "reviewing": "Reviewing", "rejected": "Rejected", "resolved": "Resolved" },
     "reporter": { "user": "Signed-in user", "anon": "Anonymous" }
+  },
+  "pin": {
+    "title": "Pin a correction",
+    "subtitle": "Set the correct values for {{name}}.",
+    "stake": "Ownership %",
+    "stakePlaceholder": "e.g. 51",
+    "type": "Ownership type",
+    "typeUnchanged": "(unchanged)",
+    "submit": "Pin correction",
+    "saving": "Saving…",
+    "error": "Couldn't save. Please try again."
   },
   "csv": {
     "name": "Name",

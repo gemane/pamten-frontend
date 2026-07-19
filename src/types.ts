@@ -410,3 +410,13 @@ export interface Suppression {
   flag_id: string
   created_at: string
 }
+
+export interface Pin {
+  id: string
+  from_id: string
+  to_id: string
+  stake_percent: number | null
+  ownership_type: string | null
+  flag_id: string
+  created_at: string
+}
