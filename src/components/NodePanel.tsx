@@ -6,6 +6,7 @@ import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
+import EdgeReportButton from './EdgeReportButton'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source } from '../types'
 
 // Build a NodeData (as the graph uses) from a related entity/person so the
@@ -221,7 +222,9 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
       {positions.length > 0 && (
         <Section title={t('panel.positions')}>
           {positions.map((p, i) => (
-            <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}>
+            <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
+              action={<EdgeReportButton targetKind="role" fromId={node.id} toId={p.entity.id}
+                        role={p.role?.role} label={p.entity.name} />}>
               <span className="rel-item__name">{p.entity.name}</span>
               <span className="role-badge">{p.role?.role}</span>
             </RelRow>
@@ -232,7 +235,9 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
       {holdings.length > 0 && (
         <Section title={t('panel.ownerships')}>
           {holdings.map((h, i) => (
-            <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}>
+            <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
+              action={<EdgeReportButton targetKind="owns" fromId={node.id} toId={h.entity.id}
+                        label={h.entity.name} />}>
               <span className="rel-item__name">{h.entity.name}</span>
               <OwnershipBadge
                 type={h.relationship?.ownership_type}
@@ -256,20 +261,20 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
 }
 
 // A relationship row. Clickable (navigates like a graph node) when onNavigate
-// and a resolvable target node are provided; otherwise a plain row.
-function RelRow({ node, onNavigate, children }: {
+// and a resolvable target node are provided; otherwise a plain row. An optional
+// `action` (e.g. the edge report button) is rendered beside the row — a sibling,
+// not nested inside the clickable <button>, so the markup stays valid.
+function RelRow({ node, onNavigate, action, children }: {
   node: NodeData | null
   onNavigate?: (n: NodeData) => void
+  action?: React.ReactNode
   children: React.ReactNode
 }) {
-  if (node && node.id && onNavigate) {
-    return (
-      <button type="button" className="rel-item rel-item--clickable" onClick={() => onNavigate(node)}>
-        {children}
-      </button>
-    )
-  }
-  return <div className="rel-item">{children}</div>
+  const row = (node && node.id && onNavigate)
+    ? <button type="button" className="rel-item rel-item--clickable" onClick={() => onNavigate(node)}>{children}</button>
+    : <div className="rel-item">{children}</div>
+  if (!action) return row
+  return <div className="rel-row">{row}{action}</div>
 }
 
 interface EntityOverviewProps {
@@ -408,7 +413,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {owners.length > 0 && (
         <Section title={t('panel.ownedBy')}>
           {owners.map((o, i) => (
-            <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}>
+            <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}
+              action={o.owner
+                ? <EdgeReportButton targetKind="owns" fromId={o.owner.id} toId={entity.id}
+                    label={('name' in o.owner ? o.owner.name : o.owner.full_name)} />
+                : undefined}>
               <span className="rel-item__name">{o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}</span>
               <OwnershipBadge
                 type={o.relationship?.ownership_type}
@@ -433,7 +442,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {founders.length > 0 && (
         <Section title={t('panel.foundedBy')}>
           {founders.map((f, i) => (
-            <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}>
+            <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}
+              action={<EdgeReportButton targetKind="role" fromId={f.person.id} toId={entity.id}
+                        role={f.role?.role || 'Founder'} label={f.person.full_name} />}>
               <span className="rel-item__name">{f.person.full_name}</span>
             </RelRow>
           ))}
@@ -443,7 +454,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {subsidiaries.length > 0 && (
         <Section title={t('panel.subsidiaries')}>
           {subsidiaries.map((s, i) => (
-            <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}>
+            <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
+              action={<EdgeReportButton targetKind="owns" fromId={entity.id} toId={s.entity.id}
+                        label={s.entity.name} />}>
               <span className="rel-item__name">{s.entity.name}</span>
               <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
             </RelRow>
@@ -454,7 +467,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {otherExecutives.length > 0 && (
         <Section title={t('panel.executives')}>
           {otherExecutives.map((e, i) => (
-            <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}>
+            <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
+              action={<EdgeReportButton targetKind="role" fromId={e.person.id} toId={entity.id}
+                        role={e.role?.role} label={e.person.full_name} />}>
               <span className="rel-item__name">{e.person.full_name}</span>
               <span className="role-badge">{e.role?.role}</span>
             </RelRow>
