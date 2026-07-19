@@ -359,3 +359,27 @@ export interface Toast {
   message: string
   variant: ToastVariant
 }
+
+// ── Verification flags (report a wrong node/edge) ───────────────────────────
+export type FlagTargetKind = 'owns' | 'role' | 'entity' | 'person'
+export type FlagCategory =
+  | 'wrong-owner'
+  | 'wrong-percent'
+  | 'wrong-role'
+  | 'not-real'
+  | 'outdated'
+  | 'duplicate'
+  | 'other'
+
+export interface FlagCreatePayload {
+  target_kind: FlagTargetKind
+  category: FlagCategory
+  note?: string
+  node_id?: string
+  from_id?: string
+  to_id?: string
+  role?: string
+}
+
+export interface FlagSummary { open: number }
+export interface FlagCreateResult { id: string; status: 'open' | 'duplicate' }

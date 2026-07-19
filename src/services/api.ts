@@ -22,6 +22,9 @@ import type {
   FederationPeer,
   FederationPublicKey,
   PeerPullResult,
+  FlagCreatePayload,
+  FlagCreateResult,
+  FlagSummary,
 } from '../types'
 
 const client = axios.create({
@@ -137,6 +140,15 @@ export const pullFederationPeer = (id: string): Promise<AxiosResponse<PeerPullRe
 
 export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/entity/${id}`)
+
+// ── Verification flags ───────────────────────────────────────────────────────
+export const createFlag = (payload: FlagCreatePayload): Promise<AxiosResponse<FlagCreateResult>> =>
+  client.post('/flags', payload)
+
+export const getFlagSummary = (
+  params: { node_id?: string; from_id?: string; to_id?: string; role?: string }
+): Promise<AxiosResponse<FlagSummary>> =>
+  client.get('/flags/summary', { params })
 
 export const authRegister = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
   client.post('/auth/register', { email, password })
