@@ -88,6 +88,32 @@
     "lastChecked": "Last checked {{date}}",
     "dualListedWith": "Dual-listed with"
   },
+  "report": {
+    "button": "Report",
+    "disputed": "Disputed ({{count}})",
+    "disputedTip": "Users have reported this as possibly wrong",
+    "title": "Report a problem",
+    "subtitle": "Tell us what looks wrong about {{name}}.",
+    "reason": "What's wrong?",
+    "note": "Details (optional)",
+    "notePlaceholder": "Anything that helps us check it…",
+    "submit": "Send report",
+    "sending": "Sending…",
+    "close": "Close",
+    "thanks": "Thanks — a moderator will review it.",
+    "alreadyReported": "You've already reported this. Thanks!",
+    "error": "Couldn't send the report. Please try again.",
+    "rateLimited": "Too many reports for now — please try again later.",
+    "category": {
+      "wrong-owner": "Wrong owner",
+      "wrong-percent": "Wrong ownership %",
+      "wrong-role": "Wrong role",
+      "not-real": "This isn't a real entity",
+      "outdated": "Out of date",
+      "duplicate": "Duplicate",
+      "other": "Something else"
+    }
+  },
   "csv": {
     "name": "Name",
     "type": "Type",

@@ -88,6 +88,32 @@
     "lastChecked": "Última comprobación {{date}}",
     "dualListedWith": "Cotización dual con"
   },
+  "report": {
+    "button": "Reportar",
+    "disputed": "En disputa ({{count}})",
+    "disputedTip": "Usuarios han reportado esto como posiblemente incorrecto",
+    "title": "Reportar un problema",
+    "subtitle": "Cuéntanos qué parece incorrecto sobre {{name}}.",
+    "reason": "¿Qué está mal?",
+    "note": "Detalles (opcional)",
+    "notePlaceholder": "Cualquier cosa que ayude a verificarlo…",
+    "submit": "Enviar reporte",
+    "sending": "Enviando…",
+    "close": "Cerrar",
+    "thanks": "Gracias — un moderador lo revisará.",
+    "alreadyReported": "Ya reportaste esto. ¡Gracias!",
+    "error": "No se pudo enviar el reporte. Inténtalo de nuevo.",
+    "rateLimited": "Demasiados reportes por ahora — inténtalo más tarde.",
+    "category": {
+      "wrong-owner": "Propietario incorrecto",
+      "wrong-percent": "% de propiedad incorrecto",
+      "wrong-role": "Rol incorrecto",
+      "not-real": "No es una entidad real",
+      "outdated": "Desactualizado",
+      "duplicate": "Duplicado",
+      "other": "Otra cosa"
+    }
+  },
   "csv": {
     "name": "Nombre",
     "type": "Tipo",

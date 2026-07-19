@@ -5,6 +5,7 @@ import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } 
 import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
+import NodeFlags      from './NodeFlags'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source } from '../types'
 
 // Build a NodeData (as the graph uses) from a related entity/person so the
@@ -203,6 +204,7 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
       )}
       <span className="node-type-badge node-type-badge--person">{t('legend.person')}</span>
       <h2 className="panel-name">{raw.full_name}</h2>
+      <NodeFlags nodeId={node.id} targetKind="person" label={raw.full_name} />
       {raw.description && <p className="panel-desc">{raw.description}</p>}
       <div className="panel-meta">
         <MetaRow icon={FiCalendar} label={t('panel.born')} value={born} />
@@ -376,6 +378,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         {t(`legend.${entity.type || 'company'}`, { defaultValue: entity.type || 'company' })}
       </span>
       <h2 className="panel-name">{entity.name}</h2>
+      <NodeFlags nodeId={entity.id} targetKind="entity" label={entity.name} />
       {entity.description && <p className="panel-desc">{entity.description}</p>}
 
       <div className="panel-meta">

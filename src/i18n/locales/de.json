@@ -88,6 +88,32 @@
     "lastChecked": "Zuletzt geprüft {{date}}",
     "dualListedWith": "Zweitnotiert mit"
   },
+  "report": {
+    "button": "Melden",
+    "disputed": "Umstritten ({{count}})",
+    "disputedTip": "Nutzer haben dies als möglicherweise falsch gemeldet",
+    "title": "Problem melden",
+    "subtitle": "Sag uns, was an {{name}} falsch aussieht.",
+    "reason": "Was ist falsch?",
+    "note": "Details (optional)",
+    "notePlaceholder": "Alles, was bei der Prüfung hilft…",
+    "submit": "Meldung senden",
+    "sending": "Wird gesendet…",
+    "close": "Schließen",
+    "thanks": "Danke — ein Moderator prüft es.",
+    "alreadyReported": "Du hast dies bereits gemeldet. Danke!",
+    "error": "Meldung konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "rateLimited": "Vorerst zu viele Meldungen — bitte später erneut versuchen.",
+    "category": {
+      "wrong-owner": "Falscher Eigentümer",
+      "wrong-percent": "Falscher Anteil %",
+      "wrong-role": "Falsche Rolle",
+      "not-real": "Keine echte Entität",
+      "outdated": "Veraltet",
+      "duplicate": "Duplikat",
+      "other": "Etwas anderes"
+    }
+  },
   "csv": {
     "name": "Name",
     "type": "Typ",
