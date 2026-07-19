@@ -131,6 +131,7 @@
     "unpin": "Quitar",
     "unpinTip": "Quitar la corrección (la lectura vuelve al valor escrapeado)",
     "emptyPins": "Sin correcciones.",
+    "reports": "{{count}} reportes",
     "status": { "open": "Abiertos", "reviewing": "En revisión", "rejected": "Rechazados", "resolved": "Resueltos" },
     "reporter": { "user": "Usuario registrado", "anon": "Anónimo" }
   },

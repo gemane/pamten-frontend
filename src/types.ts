@@ -420,3 +420,17 @@ export interface Pin {
   flag_id: string
   created_at: string
 }
+
+// A collapsed queue row: many reports of the same target+category as one entry.
+export interface FlagGroup {
+  target_kind: FlagTargetKind
+  from_id: string
+  to_id: string
+  role: string
+  node_id: string
+  category: FlagCategory
+  count: number
+  flag_ids: string[]
+  note: string
+  created_at: string
+}

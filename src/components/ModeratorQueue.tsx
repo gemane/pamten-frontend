@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { FiX, FiFlag, FiEye, FiEyeOff, FiEdit3, FiSlash, FiRotateCcw, FiLoader, FiUser, FiInbox } from 'react-icons/fi'
+import { FiX, FiFlag, FiEye, FiEyeOff, FiEdit3, FiSlash, FiRotateCcw, FiLoader, FiInbox } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import {
-  getFlags, updateFlagStatus, suppressFlag,
+  getFlagGroups, updateFlagStatus, suppressFlag,
   getSuppressions, removeSuppression, getPins, removePin,
 } from '../services/api'
-import type { Flag, Suppression, Pin } from '../types'
+import type { FlagGroup, Suppression, Pin } from '../types'
 import PinModal from './PinModal'
 
 // Human-readable target for a flag/suppression row. Exported for unit testing.
@@ -20,22 +20,24 @@ const SUPPRESSIONS = 'suppressions'
 const PINS = 'pins'
 const TABS = [...STATUSES, SUPPRESSIONS, PINS] as const
 
+const gid = (g: FlagGroup) => g.flag_ids[0]   // stable client-side key for a group
+
 export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
   const [tab,       setTab]       = useState<string>('open')
-  const [flags,     setFlags]     = useState<Flag[]>([])
+  const [groups,    setGroups]    = useState<FlagGroup[]>([])
   const [sups,      setSups]      = useState<Suppression[]>([])
   const [pins,      setPins]      = useState<Pin[]>([])
   const [loading,   setLoading]   = useState<boolean>(true)
   const [busy,      setBusy]      = useState<string | null>(null)
-  const [pinTarget, setPinTarget] = useState<{ id: string; label: string } | null>(null)
+  const [pinTarget, setPinTarget] = useState<FlagGroup | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
     const done = () => setLoading(false)
     if (tab === SUPPRESSIONS)      getSuppressions().then(({ data }) => setSups(data)).catch(() => setSups([])).finally(done)
     else if (tab === PINS)         getPins().then(({ data }) => setPins(data)).catch(() => setPins([])).finally(done)
-    else                          getFlags({ status: tab, limit: 200 }).then(({ data }) => setFlags(data)).catch(() => setFlags([])).finally(done)
+    else                          getFlagGroups({ status: tab }).then(({ data }) => setGroups(data)).catch(() => setGroups([])).finally(done)
   }, [tab])
 
   useEffect(() => { load() }, [load])
@@ -45,12 +47,14 @@ export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
     try { await fn(); drop() } catch { /* leave in place on failure */ }
     finally { setBusy(null) }
   }
-  const act        = (id: string, next: string) => withBusy(id, () => updateFlagStatus(id, next), () => setFlags(fs => fs.filter(f => f.id !== id)))
-  const suppress   = (id: string) => withBusy(id, () => suppressFlag(id),      () => setFlags(fs => fs.filter(f => f.id !== id)))
+  const dropGroup  = (g: FlagGroup) => setGroups(gs => gs.filter(x => gid(x) !== gid(g)))
+  // Reject/reviewing apply to every flag in the group; suppress cascades server-side.
+  const act        = (g: FlagGroup, next: string) => withBusy(gid(g), () => Promise.all(g.flag_ids.map(id => updateFlagStatus(id, next))), () => dropGroup(g))
+  const suppress   = (g: FlagGroup) => withBusy(gid(g), () => suppressFlag(g.flag_ids[0]), () => dropGroup(g))
   const unsuppress = (id: string) => withBusy(id, () => removeSuppression(id), () => setSups(ss => ss.filter(s => s.id !== id)))
   const unpin      = (id: string) => withBusy(id, () => removePin(id),         () => setPins(ps => ps.filter(p => p.id !== id)))
 
-  const empty = tab === SUPPRESSIONS ? sups.length === 0 : tab === PINS ? pins.length === 0 : flags.length === 0
+  const empty = tab === SUPPRESSIONS ? sups.length === 0 : tab === PINS ? pins.length === 0 : groups.length === 0
   const tabLabel = (tb: string) =>
     tb === SUPPRESSIONS ? t('modQueue.suppressionsTab') : tb === PINS ? t('modQueue.pinsTab') : t(`modQueue.status.${tb}`)
   const emptyKey = tab === SUPPRESSIONS ? 'modQueue.emptySuppressions' : tab === PINS ? 'modQueue.emptyPins' : 'modQueue.empty'
@@ -113,39 +117,37 @@ export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <div className="mod-queue">
-            {flags.map(f => (
-              <div key={f.id} className="mod-flag">
+            {groups.map(g => (
+              <div key={gid(g)} className="mod-flag">
                 <div className="mod-flag__main">
-                  <span className="mod-flag__category">{t(`report.category.${f.category}`)}</span>
-                  <span className="mod-flag__target" title={f.target_kind}>{describeTarget(f)}</span>
-                  {f.note && <p className="mod-flag__note">{f.note}</p>}
-                  <span className="mod-flag__meta">
-                    <FiUser size={10} /> {t(`modQueue.reporter.${f.reporter_kind}`)}
-                    {' · '}{(f.created_at || '').slice(0, 10)}
+                  <span className="mod-flag__category">
+                    {t(`report.category.${g.category}`)}
+                    {g.count > 1 && <span className="mod-flag__count">{t('modQueue.reports', { count: g.count })}</span>}
                   </span>
+                  <span className="mod-flag__target" title={g.target_kind}>{describeTarget(g)}</span>
+                  {g.note && <p className="mod-flag__note">{g.note}</p>}
+                  <span className="mod-flag__meta">{(g.created_at || '').slice(0, 10)}</span>
                 </div>
                 {(tab === 'open' || tab === 'reviewing') && (
                   <div className="mod-flag__actions">
                     {tab === 'open' && (
-                      <button className="mod-flag__btn" disabled={busy === f.id}
-                              onClick={() => act(f.id, 'reviewing')} title={t('modQueue.review')}>
+                      <button className="mod-flag__btn" disabled={busy === gid(g)}
+                              onClick={() => act(g, 'reviewing')} title={t('modQueue.review')}>
                         <FiEye /> {t('modQueue.review')}
                       </button>
                     )}
-                    {f.target_kind === 'owns' && (
-                      <button className="mod-flag__btn mod-flag__btn--pin" disabled={busy === f.id}
-                              onClick={() => setPinTarget({ id: f.id, label: describeTarget(f) })}
-                              title={t('modQueue.pinTip')}>
+                    {g.target_kind === 'owns' && (
+                      <button className="mod-flag__btn mod-flag__btn--pin" disabled={busy === gid(g)}
+                              onClick={() => setPinTarget(g)} title={t('modQueue.pinTip')}>
                         <FiEdit3 /> {t('modQueue.pin')}
                       </button>
                     )}
-                    {/* Suppress works for edges and nodes (entity/person). */}
-                    <button className="mod-flag__btn mod-flag__btn--suppress" disabled={busy === f.id}
-                            onClick={() => suppress(f.id)} title={t('modQueue.suppressTip')}>
+                    <button className="mod-flag__btn mod-flag__btn--suppress" disabled={busy === gid(g)}
+                            onClick={() => suppress(g)} title={t('modQueue.suppressTip')}>
                       <FiEyeOff /> {t('modQueue.suppress')}
                     </button>
-                    <button className="mod-flag__btn mod-flag__btn--reject" disabled={busy === f.id}
-                            onClick={() => act(f.id, 'rejected')} title={t('modQueue.reject')}>
+                    <button className="mod-flag__btn mod-flag__btn--reject" disabled={busy === gid(g)}
+                            onClick={() => act(g, 'rejected')} title={t('modQueue.reject')}>
                       <FiSlash /> {t('modQueue.reject')}
                     </button>
                   </div>
@@ -157,9 +159,9 @@ export default function ModeratorQueue({ onClose }: { onClose: () => void }) {
       </div>
 
       {pinTarget && (
-        <PinModal flagId={pinTarget.id} targetLabel={pinTarget.label}
+        <PinModal flagId={pinTarget.flag_ids[0]} targetLabel={describeTarget(pinTarget)}
                   onClose={() => setPinTarget(null)}
-                  onPinned={() => setFlags(fs => fs.filter(f => f.id !== pinTarget.id))} />
+                  onPinned={() => dropGroup(pinTarget)} />
       )}
     </div>
   )
