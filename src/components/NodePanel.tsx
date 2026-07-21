@@ -14,7 +14,7 @@ import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source } fro
 // - byStakeDesc: largest ownership stake first (the most meaningful order for an
 //   ownership map); rows with no known stake sort last, ties alphabetical.
 // - byName: plain A→Z, for people/relationships without a stake.
-function byStakeDesc<T>(getStake: (x: T) => number | null | undefined, getName: (x: T) => string) {
+export function byStakeDesc<T>(getStake: (x: T) => number | null | undefined, getName: (x: T) => string) {
   return (a: T, b: T) => {
     const sa = getStake(a), sb = getStake(b)
     if (sa != null && sb != null && sa !== sb) return sb - sa
@@ -25,6 +25,32 @@ function byStakeDesc<T>(getStake: (x: T) => number | null | undefined, getName: 
 }
 function byName<T>(getName: (x: T) => string) {
   return (a: T, b: T) => getName(a).localeCompare(getName(b))
+}
+
+// Executive seniority: rank a role string by importance (CEO first, board/other
+// last); the final tiebreak is always alphabetical by name. Matched on keywords
+// so scraped variants ("Chief Executive Officer", "CEO", "Chairman"…) all land.
+const ROLE_RANK: [RegExp, number][] = [
+  [/chief exec|\bceo\b/i, 0],
+  [/chair/i, 1],
+  [/president/i, 2],
+  [/chief financ|\bcfo\b/i, 3],
+  [/chief operat|\bcoo\b/i, 4],
+  [/chief|\bc[tio]o\b|\bcmo\b|officer/i, 5],
+  [/managing director/i, 6],
+  [/board|director|member/i, 7],
+]
+export function roleRank(role?: string | null): number {
+  const r = role ?? ''
+  for (const [re, rank] of ROLE_RANK) if (re.test(r)) return rank
+  return ROLE_RANK.length + 1
+}
+export function byRoleImportance<T>(getRole: (x: T) => string | null | undefined, getName: (x: T) => string) {
+  return (a: T, b: T) => {
+    const ra = roleRank(getRole(a)), rb = roleRank(getRole(b))
+    if (ra !== rb) return ra - rb
+    return getName(a).localeCompare(getName(b))
+  }
 }
 
 // Build a NodeData (as the graph uses) from a related entity/person so the
@@ -482,7 +508,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       {subsidiaries.length > 0 && (
         <Section title={t('panel.subsidiaries')}>
-          {subsidiaries.map((s, i) => (
+          {[...subsidiaries].sort(byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? '')).map((s, i) => (
             <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
               action={<EdgeReportButton targetKind="owns" fromId={entity.id} toId={s.entity.id}
                         label={s.entity.name} />}>
@@ -495,7 +521,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       {otherExecutives.length > 0 && (
         <Section title={t('panel.executives')}>
-          {[...otherExecutives].sort(byName(e => e.person?.full_name ?? '')).map((e, i) => (
+          {[...otherExecutives].sort(byRoleImportance(e => e.role?.role, e => e.person?.full_name ?? '')).map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
               action={<EdgeReportButton targetKind="role" fromId={e.person.id} toId={entity.id}
                         role={e.role?.role} label={e.person.full_name} />}>

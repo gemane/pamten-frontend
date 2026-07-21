@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank } from './NodePanel'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
@@ -140,5 +140,50 @@ describe('personDisplayDetails', () => {
   it('falls back to the single nationality field when the list is empty', () => {
     const d = personDisplayDetails({ ...base, nationality: 'GB' }, 'en')
     expect(d.nationalities).toHaveLength(1)
+  })
+})
+
+describe('byStakeDesc', () => {
+  const stake = (n: number | null | undefined, name: string) => ({ s: n, name })
+  const cmp = byStakeDesc<{ s: number | null | undefined; name: string }>(x => x.s, x => x.name)
+
+  it('sorts by stake descending', () => {
+    const out = [stake(10, 'B'), stake(55, 'A'), stake(30, 'C')].sort(cmp)
+    expect(out.map(x => x.name)).toEqual(['A', 'C', 'B'])
+  })
+
+  it('puts unknown stakes last', () => {
+    const out = [stake(null, 'A'), stake(20, 'B')].sort(cmp)
+    expect(out.map(x => x.name)).toEqual(['B', 'A'])
+  })
+
+  it('falls back to alphabetical when stakes are equal/absent', () => {
+    const out = [stake(null, 'Zeta'), stake(null, 'Alpha'), stake(null, 'Mu')].sort(cmp)
+    expect(out.map(x => x.name)).toEqual(['Alpha', 'Mu', 'Zeta'])
+  })
+})
+
+describe('roleRank / byRoleImportance', () => {
+  it('ranks CEO above CFO above board member', () => {
+    expect(roleRank('CEO')).toBeLessThan(roleRank('CFO'))
+    expect(roleRank('Chief Financial Officer')).toBeLessThan(roleRank('Board Member'))
+  })
+
+  it('ranks unknown roles last', () => {
+    expect(roleRank('Wizard')).toBeGreaterThan(roleRank('Board Member'))
+    expect(roleRank(null)).toBeGreaterThan(roleRank('Director'))
+  })
+
+  it('sorts executives by role importance, then alphabetically', () => {
+    const e = (role: string, name: string) => ({ role, name })
+    const cmp = byRoleImportance<{ role: string; name: string }>(x => x.role, x => x.name)
+    const out = [
+      e('Board Member', 'Zoe'),
+      e('Board Member', 'Amy'),
+      e('CEO', 'Uli'),
+      e('CEO', 'Phil'),
+      e('CFO', 'Sam'),
+    ].sort(cmp)
+    expect(out.map(x => x.name)).toEqual(['Phil', 'Uli', 'Sam', 'Amy', 'Zoe'])
   })
 })
