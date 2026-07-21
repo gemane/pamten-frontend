@@ -153,7 +153,7 @@ const LEVEL_GAP    = 220            // vertical px between hop levels beyond the
 
 // Pure function — works on the React elements array, no Cytoscape required.
 // Returns a map of nodeId → {x, y} to use when calling cy.add().
-function computeArcPositions(
+export function computeArcPositions(
   elements: GraphElement[],
   centerId: string | null,
 ): Map<string, { x: number; y: number }> {
@@ -164,6 +164,9 @@ function computeArcPositions(
   const incomersOf  = new Map<string, string[]>()
   const outgoersOf  = new Map<string, string[]>()
   const nodeImportance = new Map<string, number>()
+  const nodeLabel   = new Map<string, string>()
+  const edgeStake   = new Map<string, number | null>()   // key: edgeKey(src, tgt) → max stake%
+  const edgeKey = (a: string, b: string) => a + '\u0000' + b   // sep can't occur in node ids
 
   for (const el of elements) {
     const d = el.data
@@ -174,16 +177,38 @@ function computeArcPositions(
       outgoersOf.get(src)!.push(tgt)
       if (!incomersOf.has(tgt)) incomersOf.set(tgt, [])
       incomersOf.get(tgt)!.push(src)
+      // Keep the largest stake across parallel edges (an owner may have both an
+      // owns and a votes edge to the same target).
+      const key  = edgeKey(src, tgt)
+      const st   = d.stakePct ?? null
+      const prev = edgeStake.get(key)
+      edgeStake.set(key, prev == null ? st : (st == null ? prev : Math.max(prev, st)))
     } else if (d.id) {
       if (d.importance != null) nodeImportance.set(d.id, d.importance)
+      nodeLabel.set(d.id, d.label ?? '')
     }
   }
+
+  // Order arc nodes the same way the side panel does: largest ownership stake
+  // first, unknown stakes last, ties alphabetical by name.
+  const cmpByStake = (getStake: (id: string) => number | null | undefined) =>
+    (a: string, b: string) => {
+      const sa = getStake(a), sb = getStake(b)
+      if (sa != null && sb != null && sa !== sb) return sb - sa
+      if (sa != null && sb == null) return -1
+      if (sa == null && sb != null) return 1
+      return (nodeLabel.get(a) ?? '').localeCompare(nodeLabel.get(b) ?? '')
+    }
 
   pos.set(centerId, { x: 0, y: 0 })
 
   const topIds    = (incomersOf.get(centerId) ?? []).filter(id => id !== centerId)
   const topSet    = new Set(topIds)
   const bottomIds = (outgoersOf.get(centerId) ?? []).filter(id => !topSet.has(id) && id !== centerId)
+
+  // Left-to-right order along each arc follows the panel's stake ordering.
+  topIds.sort(cmpByStake(id => edgeStake.get(edgeKey(id, centerId))))       // owners → center
+  bottomIds.sort(cmpByStake(id => edgeStake.get(edgeKey(centerId, id))))    // center → subsidiaries
 
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)
@@ -224,6 +249,7 @@ function computeArcPositions(
     const parentPos = pos.get(id)!
 
     const newOwners = (incomersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
+    newOwners.sort(cmpByStake(nid => edgeStake.get(edgeKey(nid, id))))
     const nOwners = newOwners.length
     newOwners.forEach((nid, i) => {
       const xOff = nOwners > 1 ? (i - (nOwners - 1) / 2) * MIN_NODE_GAP : 0
@@ -233,6 +259,7 @@ function computeArcPositions(
     })
 
     const newSubs = (outgoersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
+    newSubs.sort(cmpByStake(nid => edgeStake.get(edgeKey(id, nid))))
     const nSubs = newSubs.length
     newSubs.forEach((nid, i) => {
       const xOff = nSubs > 1 ? (i - (nSubs - 1) / 2) * MIN_NODE_GAP : 0
