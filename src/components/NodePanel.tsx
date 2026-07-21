@@ -9,6 +9,24 @@ import NodeFlags      from './NodeFlags'
 import EdgeReportButton from './EdgeReportButton'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source } from '../types'
 
+// Ordering helpers for the related-node lists (owners, subsidiaries, …), which
+// otherwise render in arbitrary backend order.
+// - byStakeDesc: largest ownership stake first (the most meaningful order for an
+//   ownership map); rows with no known stake sort last, ties alphabetical.
+// - byName: plain A→Z, for people/relationships without a stake.
+function byStakeDesc<T>(getStake: (x: T) => number | null | undefined, getName: (x: T) => string) {
+  return (a: T, b: T) => {
+    const sa = getStake(a), sb = getStake(b)
+    if (sa != null && sb != null && sa !== sb) return sb - sa
+    if (sa != null && sb == null) return -1
+    if (sa == null && sb != null) return 1
+    return getName(a).localeCompare(getName(b))
+  }
+}
+function byName<T>(getName: (x: T) => string) {
+  return (a: T, b: T) => getName(a).localeCompare(getName(b))
+}
+
 // Build a NodeData (as the graph uses) from a related entity/person so the
 // panel rows can navigate the same way clicking a graph node does.
 export function entityToNode(e: Entity): NodeData {
@@ -221,7 +239,7 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
 
       {positions.length > 0 && (
         <Section title={t('panel.positions')}>
-          {positions.map((p, i) => (
+          {[...positions].sort(byName(p => p.entity?.name ?? '')).map((p, i) => (
             <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
               action={<EdgeReportButton targetKind="role" fromId={node.id} toId={p.entity.id}
                         role={p.role?.role} label={p.entity.name} />}>
@@ -234,7 +252,7 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
 
       {holdings.length > 0 && (
         <Section title={t('panel.ownerships')}>
-          {holdings.map((h, i) => (
+          {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '')).map((h, i) => (
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
               action={<EdgeReportButton targetKind="owns" fromId={node.id} toId={h.entity.id}
                         label={h.entity.name} />}>
@@ -420,7 +438,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       {owners.length > 0 && (
         <Section title={t('panel.ownedBy')}>
-          {owners.map((o, i) => (
+          {[...owners].sort(byStakeDesc(
+            o => o.relationship?.stake_percent,
+            o => o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '',
+          )).map((o, i) => (
             <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}
               action={o.owner
                 ? <EdgeReportButton targetKind="owns" fromId={o.owner.id} toId={entity.id}
@@ -439,7 +460,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       {dual_listed.length > 0 && (
         <Section title={t('panel.dualListedWith')}>
-          {dual_listed.map((d, i) => (
+          {[...dual_listed].sort(byName(d => d.name ?? '')).map((d, i) => (
             <RelRow key={i} node={entityToNode(d)} onNavigate={onNavigate}>
               <span className="rel-item__name">{d.name}</span>
             </RelRow>
@@ -449,7 +470,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       {founders.length > 0 && (
         <Section title={t('panel.foundedBy')}>
-          {founders.map((f, i) => (
+          {[...founders].sort(byName(f => f.person?.full_name ?? '')).map((f, i) => (
             <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}
               action={<EdgeReportButton targetKind="role" fromId={f.person.id} toId={entity.id}
                         role={f.role?.role || 'Founder'} label={f.person.full_name} />}>
@@ -474,7 +495,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       {otherExecutives.length > 0 && (
         <Section title={t('panel.executives')}>
-          {otherExecutives.map((e, i) => (
+          {[...otherExecutives].sort(byName(e => e.person?.full_name ?? '')).map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
               action={<EdgeReportButton targetKind="role" fromId={e.person.id} toId={entity.id}
                         role={e.role?.role} label={e.person.full_name} />}>
