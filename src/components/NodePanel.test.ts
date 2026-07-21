@@ -186,4 +186,20 @@ describe('roleRank / byRoleImportance', () => {
     ].sort(cmp)
     expect(out.map(x => x.name)).toEqual(['Phil', 'Uli', 'Sam', 'Amy', 'Zoe'])
   })
+
+  it('groups board members and directors by title, each alphabetical', () => {
+    const e = (role: string, name: string) => ({ role, name })
+    const cmp = byRoleImportance<{ role: string; name: string }>(x => x.role, x => x.name)
+    // interleaved input; both roles share the same rank (7)
+    const out = [
+      e('Director', 'Carol'),
+      e('Board Member', 'Bob'),
+      e('Director', 'Alice'),
+      e('Board Member', 'Dave'),
+    ].sort(cmp)
+    // Board Member group (alpha) then Director group (alpha)
+    expect(out.map(x => `${x.role}:${x.name}`)).toEqual([
+      'Board Member:Bob', 'Board Member:Dave', 'Director:Alice', 'Director:Carol',
+    ])
+  })
 })

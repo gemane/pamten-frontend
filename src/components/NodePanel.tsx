@@ -49,6 +49,11 @@ export function byRoleImportance<T>(getRole: (x: T) => string | null | undefined
   return (a: T, b: T) => {
     const ra = roleRank(getRole(a)), rb = roleRank(getRole(b))
     if (ra !== rb) return ra - rb
+    // Same rank → group identical titles together (so all "Board Member"s sit
+    // together, then all "Director"s, rather than interleaving by name)…
+    const roleA = getRole(a) ?? '', roleB = getRole(b) ?? ''
+    if (roleA !== roleB) return roleA.localeCompare(roleB)
+    // …and alphabetical by name within each title.
     return getName(a).localeCompare(getName(b))
   }
 }
