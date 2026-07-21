@@ -28,6 +28,8 @@ export interface Entity {
   country?: string
   founded?: number
   revenue?: number
+  employees?: number
+  employees_as_of?: number
   description?: string
   verified: boolean
   wikidata_id?: string
