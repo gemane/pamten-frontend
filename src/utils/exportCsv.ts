@@ -26,7 +26,7 @@ export function buildCsvContent(
     role:  t('csv.relRole'),
   }
 
-  const nodeRows = [[t('csv.name'), t('csv.type'), t('csv.subtype'), t('csv.country'), t('csv.founded'), t('csv.revenue')].join(',')]
+  const nodeRows = [[t('csv.name'), t('csv.type'), t('csv.subtype'), t('csv.country'), t('csv.founded'), t('csv.revenue'), t('csv.employees')].join(',')]
   const edgeRows = [[t('csv.from'), t('csv.to'), t('csv.relationship'), t('csv.ownershipType'), t('csv.stakePct'), t('csv.votingPct')].join(',')]
 
   for (const el of elements) {
@@ -49,7 +49,8 @@ export function buildCsvContent(
       const revenue = raw.revenue != null
         ? `$${((raw.revenue as number) / 1e9).toFixed(1)}B`
         : ''
-      nodeRows.push([d.label, type, '', raw.country ? countryName(String(raw.country), locale) : '', raw.founded ?? '', revenue].map(escape).join(','))
+      const employees = raw.employees != null ? String(raw.employees) : ''
+      nodeRows.push([d.label, type, '', raw.country ? countryName(String(raw.country), locale) : '', raw.founded ?? '', revenue, employees].map(escape).join(','))
     }
   }
 

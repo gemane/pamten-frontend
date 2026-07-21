@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMapPin, FiCalendar, FiDollarSign, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
@@ -352,6 +352,13 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   const fmt = (n: number) =>
     n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${n}`
 
+  // Employee count: grouped digits, with the as-of year when known
+  // (e.g. "228,000 (2024)").
+  const employeeText = entity.employees != null
+    ? entity.employees.toLocaleString(i18n.language) +
+      (entity.employees_as_of ? ` (${entity.employees_as_of})` : '')
+    : null
+
   // HQ location: prefer a linked headquarters Location, fall back to the
   // coordinates/city denormalized onto the entity by the scrapers.
   const hqCity    = headquarters?.city    || entity.hq_city
@@ -390,6 +397,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         <MetaRow icon={FiMapPin}     label={countryList.length > 1 ? t('panel.countries') : t('panel.country')} value={countryList.join(', ') || null} />
         <MetaRow icon={FiCalendar}   label={t('panel.founded')}  value={entity.founded} />
         <MetaRow icon={FiDollarSign} label={t('panel.revenue')}  value={entity.revenue != null ? fmt(entity.revenue) : null} />
+        <MetaRow icon={FiUsers}      label={t('panel.employees')} value={employeeText} />
         {hqList.length > 0 && <MetaRow icon={FiMapPin} label={hqList.length > 1 ? t('panel.headquarters') : t('panel.hq')} value={hqList.join(' · ')} />}
         {address && address !== hqText && (
           <MetaRow icon={FiMapPin} label={t('panel.address')} value={address} />

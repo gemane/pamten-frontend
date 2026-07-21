@@ -353,6 +353,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (d.raw?.country)     lines.push(`${t('panel.country')}: ${d.raw.country}`)
       if (d.raw?.founded)     lines.push(`${t('panel.founded')}: ${d.raw.founded}`)
       if (d.raw?.revenue)     lines.push(`${t('panel.revenue')}: $${(d.raw.revenue / 1e9).toFixed(1)}B`)
+      if (d.raw?.employees)   lines.push(`${t('panel.employees')}: ${Number(d.raw.employees).toLocaleString()}`)
       if (d.raw?.description) lines.push(d.raw.description.slice(0, 80) + (d.raw.description.length > 80 ? '…' : ''))
       if (d.nodeType === 'entity' && onExpand) lines.push(t('graph.expandHint'))
       setTooltip({ x: me.clientX, y: me.clientY, lines })
