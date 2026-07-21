@@ -819,7 +819,11 @@ body {
   background: #1e2a45;
   border: 1px solid #2a3a5a;
   border-radius: 10px;
-  overflow: hidden;
+  /* Cap the height and scroll when there are more results than fit, instead of
+     running off the bottom of the viewport. */
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   z-index: 100;
