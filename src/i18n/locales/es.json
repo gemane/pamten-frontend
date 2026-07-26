@@ -31,6 +31,10 @@
   "graph": {
     "tagline": "Mapea la propiedad corporativa mundial",
     "tagline2": "Busca la propiedad",
+    "statCompanies": "empresas",
+    "statPeople": "personas",
+    "statRelationships": "relaciones de propiedad",
+    "statSources": "fuentes",
     "clear": "Limpiar",
     "export": "Exportar",
     "exportPng": "Imagen PNG",

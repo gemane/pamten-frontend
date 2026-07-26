@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import type { GraphElement, NodeData } from '../types'
+import { getStats, type StatsResponse } from '../services/api'
 
 export interface GraphHandle {
   exportPng: () => void
@@ -327,7 +328,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme }: GraphProps,
   ref
 ) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
@@ -335,10 +336,18 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const [threshold, setThreshold] = useState(0)
   const [examples, setExamples]   = useState(() => pickRandom(ALL_EXAMPLE_QUERIES, 3))
   const [taglineIdx, setTaglineIdx] = useState(0)
+  const [stats, setStats]         = useState<StatsResponse | null>(null)
 
   useEffect(() => {
     const id = setInterval(() => setExamples(pickRandom(ALL_EXAMPLE_QUERIES, 3)), 60_000)
     return () => clearInterval(id)
+  }, [])
+
+  // Data-scale counts for the welcome screen (best-effort — hidden if unavailable).
+  useEffect(() => {
+    let alive = true
+    getStats().then(r => { if (alive) setStats(r.data) }).catch(() => {})
+    return () => { alive = false }
   }, [])
 
   useEffect(() => {
@@ -523,6 +532,14 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           <p key={taglineIdx} className="graph-welcome__tagline">
             {taglineIdx === 0 ? t('graph.tagline') : t('graph.tagline2')}
           </p>
+          {stats && (
+            <div className="graph-welcome__stats">
+              <span>{stats.companies.toLocaleString(i18n.language)} {t('graph.statCompanies')}</span>
+              <span>{stats.people.toLocaleString(i18n.language)} {t('graph.statPeople')}</span>
+              <span>{stats.relationships.toLocaleString(i18n.language)} {t('graph.statRelationships')}</span>
+              <span>{stats.sources.toLocaleString(i18n.language)} {t('graph.statSources')}</span>
+            </div>
+          )}
           <div className="graph-welcome__chips">
             {examples.map(name => (
               <button

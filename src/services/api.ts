@@ -70,6 +70,17 @@ export const search = (q: string, country?: string): Promise<AxiosResponse<Searc
 export const getCountries = (): Promise<AxiosResponse<{ country: string; count: number }[]>> =>
   client.get('/entities/countries')
 
+export interface StatsResponse {
+  companies: number
+  people: number
+  relationships: number
+  sources: number
+}
+
+// Public data-scale counts for the landing page.
+export const getStats = (): Promise<AxiosResponse<StatsResponse>> =>
+  client.get('/stats')
+
 export const getFullProfile = (id: string): Promise<AxiosResponse<FullProfile>> =>
   client.get(`/search/entity/${id}/full-profile`)
 

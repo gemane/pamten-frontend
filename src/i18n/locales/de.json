@@ -31,6 +31,10 @@
   "graph": {
     "tagline": "Die globale Unternehmensstruktur kartieren",
     "tagline2": "Eigentümerschaft suchen",
+    "statCompanies": "Unternehmen",
+    "statPeople": "Personen",
+    "statRelationships": "Eigentumsbeziehungen",
+    "statSources": "Quellen",
     "clear": "Löschen",
     "export": "Exportieren",
     "exportPng": "PNG-Bild",
