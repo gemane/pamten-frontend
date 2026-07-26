@@ -134,6 +134,8 @@ export interface FullProfile {
   subsidiaries: SubsidiaryEntry[]
   executives: ExecutiveEntry[]
   dual_listed?: Entity[]   // paired legal entities of a dual-listed company
+  succeeded_by?: Entity[]  // entities this one was replaced by (Twitter → X Corp.)
+  replaces?: Entity[]      // entities this one replaced (its predecessors)
 }
 
 export interface PositionEntry {

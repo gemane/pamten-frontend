@@ -406,7 +406,8 @@ function SourceStatements({ ids }: { ids?: string[] }) {
 
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
-  const { entity, headquarters, owners = [], subsidiaries = [], executives = [], dual_listed = [] } = profile
+  const { entity, headquarters, owners = [], subsidiaries = [], executives = [], dual_listed = [],
+          succeeded_by = [], replaces = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
   // Surface founders in their own section rather than buried among executives.
@@ -514,6 +515,26 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
           {[...dual_listed].sort(byName(d => d.name ?? '')).map((d, i) => (
             <RelRow key={i} node={entityToNode(d)} onNavigate={onNavigate}>
               <span className="rel-item__name">{d.name}</span>
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
+      {succeeded_by.length > 0 && (
+        <Section title={t('panel.succeededBy')}>
+          {[...succeeded_by].sort(byName(s => s.name ?? '')).map((s, i) => (
+            <RelRow key={i} node={entityToNode(s)} onNavigate={onNavigate}>
+              <span className="rel-item__name">{s.name}</span>
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
+      {replaces.length > 0 && (
+        <Section title={t('panel.replaces')}>
+          {[...replaces].sort(byName(p => p.name ?? '')).map((p, i) => (
+            <RelRow key={i} node={entityToNode(p)} onNavigate={onNavigate}>
+              <span className="rel-item__name">{p.name}</span>
             </RelRow>
           ))}
         </Section>

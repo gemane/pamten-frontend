@@ -80,7 +80,7 @@ src/
 - **Expand into graph** button in the panel loads an entity's full ownership graph
 
 ### Node detail panel
-- **Entity panel**: shows company logo (fetched from Wikidata via P154/P18 → Wikimedia Commons), ownership badges, subsidiaries, executives, and a link to Wikipedia. Entities collapsed from several BODS filings (an id-less party re-declared per controlled company) list every declaring **source statement** id, so per-statement provenance stays visible after the merge
+- **Entity panel**: shows company logo (fetched from Wikidata via P154/P18 → Wikimedia Commons), ownership badges, subsidiaries, executives, **succession** links (*Succeeded by* / *Formerly*, e.g. Twitter → X Corp.), and a link to Wikipedia. Entities collapsed from several BODS filings (an id-less party re-declared per controlled company) list every declaring **source statement** id, so per-statement provenance stays visible after the merge
 - **Person panel**: shows person photo (fetched from Wikipedia REST API, falls back to name search), nationality, **place of birth**, the **positions** they hold and **ownership stakes** they own, the **sources** behind those facts, and a Wikipedia link
 - **Overview / Timeline tabs** for entities
 

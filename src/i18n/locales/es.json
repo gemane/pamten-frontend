@@ -96,7 +96,9 @@
     "wikipedia": "Wikipedia",
     "reported": "Registrado {{date}}",
     "lastChecked": "Última comprobación {{date}}",
-    "dualListedWith": "Cotización dual con"
+    "dualListedWith": "Cotización dual con",
+    "succeededBy": "Sucedido por",
+    "replaces": "Anteriormente"
   },
   "report": {
     "button": "Reportar",
