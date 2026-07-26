@@ -32,6 +32,10 @@ export default function GraphLegend() {
           <div className="graph-legend__row"><span className="graph-legend__node" style={{ background: '#4A90D9', borderColor: '#2d6aa8' }} />{t('legend.company')}</div>
           <div className="graph-legend__row"><span className="graph-legend__node" style={{ background: '#E67E22', borderColor: '#b05a0d' }} />{t('legend.brand')}</div>
           <div className="graph-legend__row"><span className="graph-legend__node" style={{ background: '#8E44AD', borderColor: '#622d7a' }} />{t('legend.holding')}</div>
+          <div className="graph-legend__row"><span className="graph-legend__node" style={{ background: '#B03A2E', borderColor: '#7a2820' }} />{t('legend.government')}</div>
+          <div className="graph-legend__row"><span className="graph-legend__node" style={{ background: '#16A085', borderColor: '#0e6b59' }} />{t('legend.foundation')}</div>
+          <div className="graph-legend__row"><span className="graph-legend__node" style={{ background: '#B7950B', borderColor: '#7d6608' }} />{t('legend.fund')}</div>
+          <div className="graph-legend__row"><span className="graph-legend__node" style={{ background: '#C0398B', borderColor: '#84265f' }} />{t('legend.nonprofit')}</div>
           <div className="graph-legend__row"><span className="graph-legend__node" style={{ background: '#27AE60', borderColor: '#1a7a42', borderRadius: '50%' }} />{t('legend.person')}</div>
 
           <div className="graph-legend__section" style={{ marginTop: 10 }}>{t('legend.ownership')}</div>

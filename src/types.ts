@@ -1,5 +1,5 @@
 // Entity types
-export type EntityType = 'company' | 'brand' | 'holding' | 'person'
+export type EntityType = 'company' | 'brand' | 'holding' | 'government' | 'foundation' | 'fund' | 'nonprofit' | 'person'
 
 export type OwnershipType =
   | 'full'

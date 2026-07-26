@@ -1017,6 +1017,10 @@ body {
 .node-type-badge--company { background: rgba(74,144,217,0.2); color: #4A90D9; }
 .node-type-badge--brand   { background: rgba(230,126, 34,0.2); color: #E67E22; }
 .node-type-badge--holding { background: rgba(142, 68,173,0.2); color: #8E44AD; }
+.node-type-badge--government { background: rgba(176, 58, 46,0.2); color: #B03A2E; }
+.node-type-badge--foundation { background: rgba(22,160,133,0.2); color: #16A085; }
+.node-type-badge--fund       { background: rgba(183,149, 11,0.2); color: #8a7009; }
+.node-type-badge--nonprofit  { background: rgba(192, 57,139,0.2); color: #C0398B; }
 .node-type-badge--person  { background: rgba(39,174, 96,0.2); color: #27AE60; }
 
 .panel-name {

@@ -74,7 +74,7 @@ src/
 - Start screen shows data-scale counts (companies · people · ownership relationships · sources, from `GET /stats`) and 3 randomly chosen example companies as quick-launch chips
 - Clicking the **Pamten** logo in the top-left clears the graph and returns to the start screen
 - Ownership graph rendered with Cytoscape.js cola layout (randomised, wide spacing)
-- Node colours: company `#4A90D9`, brand `#E67E22`, holding `#8E44AD`, person `#27AE60`
+- Node colours: company `#4A90D9`, brand `#E67E22`, holding `#8E44AD`, government `#B03A2E`, foundation `#16A085`, fund `#B7950B`, nonprofit `#C0398B`, person `#27AE60`
 - Edge colours by ownership type: full/majority `#2ECC71`, minority `#F39C12`, controlling `#E74C3C`
 - Click a node to open the detail panel; double-click to expand its connections directly
 - **Expand into graph** button in the panel loads an entity's full ownership graph

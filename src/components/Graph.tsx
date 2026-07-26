@@ -50,6 +50,22 @@ function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
       style: { 'background-color': '#8E44AD', 'border-color': '#622d7a' },
     },
     {
+      selector: 'node[entitySubtype = "government"]',
+      style: { 'background-color': '#B03A2E', 'border-color': '#7a2820' },
+    },
+    {
+      selector: 'node[entitySubtype = "foundation"]',
+      style: { 'background-color': '#16A085', 'border-color': '#0e6b59' },
+    },
+    {
+      selector: 'node[entitySubtype = "fund"]',
+      style: { 'background-color': '#B7950B', 'border-color': '#7d6608' },
+    },
+    {
+      selector: 'node[entitySubtype = "nonprofit"]',
+      style: { 'background-color': '#C0398B', 'border-color': '#84265f' },
+    },
+    {
       selector: 'node[nodeType = "person"]',
       style: { 'background-color': '#27AE60', shape: 'ellipse', 'border-width': 2, 'border-color': '#1a7a42' },
     },
