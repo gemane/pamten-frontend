@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements } from './NodePanel'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
@@ -140,6 +140,18 @@ describe('personDisplayDetails', () => {
   it('falls back to the single nationality field when the list is empty', () => {
     const d = personDisplayDetails({ ...base, nationality: 'GB' }, 'en')
     expect(d.nationalities).toHaveLength(1)
+  })
+})
+
+describe('showSourceStatements', () => {
+  it('hides for a single or missing statement (opaque id = noise)', () => {
+    expect(showSourceStatements(undefined)).toBe(false)
+    expect(showSourceStatements([])).toBe(false)
+    expect(showSourceStatements(['GB-COH-ENT-A'])).toBe(false)
+  })
+
+  it('shows once several filings collapsed into one node', () => {
+    expect(showSourceStatements(['GB-COH-ENT-A', 'GB-COH-ENT-B'])).toBe(true)
   })
 })
 

@@ -384,6 +384,26 @@ function SourcesSection({ sources }: { sources: Source[] }) {
   )
 }
 
+// Only surface source statements for entities collapsed from several filings — a
+// single opaque statement id per node is noise. For a collapsed party (e.g. a
+// government re-declared per controlled company) every declaring PSC statement is
+// shown, so per-statement provenance stays visible after the merge.
+export function showSourceStatements(ids?: string[]): boolean {
+  return (ids?.length ?? 0) >= 2
+}
+
+function SourceStatements({ ids }: { ids?: string[] }) {
+  const { t } = useTranslation()
+  if (!ids || !showSourceStatements(ids)) return null
+  return (
+    <CollapsibleSection title={t('panel.sourceStatements')} count={ids.length}>
+      <ul className="source-statements">
+        {ids.map(id => <li key={id} className="source-statements__id">{id}</li>)}
+      </ul>
+    </CollapsibleSection>
+  )
+}
+
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [], dual_listed = [] } = profile
@@ -538,6 +558,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       <SourcesSection sources={sources} />
+      <SourceStatements ids={entity.source_statement_ids} />
 
       {(onExportPng || onExportCsv) && (
         <div className="panel-export">

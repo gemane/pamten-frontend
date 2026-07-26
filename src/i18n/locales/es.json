@@ -91,6 +91,7 @@
     "positions": "Cargos",
     "ownerships": "Participaciones",
     "sources": "Fuentes",
+    "sourceStatements": "Declaraciones de origen",
     "credibility": "Credibilidad",
     "wikipedia": "Wikipedia",
     "reported": "Registrado {{date}}",
