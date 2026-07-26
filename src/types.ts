@@ -133,7 +133,14 @@ export interface FullProfile {
   owners: OwnerEntry[]
   subsidiaries: SubsidiaryEntry[]
   executives: ExecutiveEntry[]
-  dual_listed?: Entity[]   // paired legal entities of a dual-listed company
+  dual_listed?: Entity[]              // paired legal entities of a dual-listed company
+  succeeded_by?: SuccessionEntry[]    // entities this one was replaced by (Twitter → X Corp.)
+  replaces?: SuccessionEntry[]        // entities this one replaced (its predecessors)
+}
+
+// A succession neighbour (predecessor/successor) plus when it took effect.
+export interface SuccessionEntry extends Entity {
+  since?: string   // succession date (Wikidata P585), e.g. "2023-04-00"
 }
 
 export interface PositionEntry {

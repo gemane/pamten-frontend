@@ -96,7 +96,9 @@
     "wikipedia": "Wikipedia",
     "reported": "Reported {{date}}",
     "lastChecked": "Last checked {{date}}",
-    "dualListedWith": "Dual-listed with"
+    "dualListedWith": "Dual-listed with",
+    "succeededBy": "Succeeded by",
+    "replaces": "Formerly"
   },
   "report": {
     "button": "Report",

@@ -273,6 +273,9 @@ body {
 /* ── Per-edge report affordance (on relationship rows) ── */
 .rel-row { display: flex; align-items: center; gap: 4px; }
 .rel-row > .rel-item { flex: 1; min-width: 0; }
+/* Bars without an edge-report action (dual-listed, succession) reserve the same
+   trailing space (gap 4px + 22px button) so their width matches the action rows. */
+.panel-section > .rel-item { width: calc(100% - 26px); }
 .edge-report-btn {
   display: inline-flex;
   align-items: center;
@@ -1165,6 +1168,15 @@ button.rel-item--clickable:hover { background: #253454; }
   border-radius: 99px;
   font-weight: 600;
 }
+
+.rel-item__year {
+  font-size: 11px;
+  color: #8b95a7;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+[data-theme="light"] .rel-item__year { color: #718096; }
 
 /* ── Source credibility ─────────────────────────────────── */
 .source-item {
