@@ -525,6 +525,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
           {[...succeeded_by].sort(byName(s => s.name ?? '')).map((s, i) => (
             <RelRow key={i} node={entityToNode(s)} onNavigate={onNavigate}>
               <span className="rel-item__name">{s.name}</span>
+              {s.since && <span className="rel-item__year">{s.since.slice(0, 4)}</span>}
             </RelRow>
           ))}
         </Section>
@@ -535,6 +536,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
           {[...replaces].sort(byName(p => p.name ?? '')).map((p, i) => (
             <RelRow key={i} node={entityToNode(p)} onNavigate={onNavigate}>
               <span className="rel-item__name">{p.name}</span>
+              {p.since && <span className="rel-item__year">{p.since.slice(0, 4)}</span>}
             </RelRow>
           ))}
         </Section>

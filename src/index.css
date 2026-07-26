@@ -1166,6 +1166,15 @@ button.rel-item--clickable:hover { background: #253454; }
   font-weight: 600;
 }
 
+.rel-item__year {
+  font-size: 11px;
+  color: #8b95a7;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+[data-theme="light"] .rel-item__year { color: #718096; }
+
 /* ── Source credibility ─────────────────────────────────── */
 .source-item {
   display: flex;
