@@ -26,6 +26,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
   const inputRef   = useRef<HTMLInputElement>(null)
   const countryRef = useRef<HTMLDivElement>(null)
   const skipSearch = useRef<boolean>(false)
+  const reqSeq     = useRef<number>(0)
 
   useEffect(() => {
     getCountries().then(r => setCountries(r.data)).catch(() => {})
@@ -69,22 +70,27 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
 
   useEffect(() => {
     if (skipSearch.current) { skipSearch.current = false; return }
-    if (query.trim().length < 2) {
+    const q = query.trim()   // keyboard autocomplete can append a space; trim so the exact match still ranks first
+    if (q.length < 2) {
       setResults([])
       setOpen(false)
       return
     }
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(async () => {
+      // Guard against a slow earlier request (e.g. "mi") resolving AFTER a newer
+      // one ("microsoft") and overwriting its results with the stale query's.
+      const mySeq = ++reqSeq.current
       setLoading(true)
       try {
-        const { data } = await search(query, country || undefined)
+        const { data } = await search(q, country || undefined)
+        if (mySeq !== reqSeq.current) return
         setResults(data)
         setOpen(true)
       } catch {
-        setResults([])
+        if (mySeq === reqSeq.current) setResults([])
       } finally {
-        setLoading(false)
+        if (mySeq === reqSeq.current) setLoading(false)
       }
     }, 300)
     return () => {
@@ -94,6 +100,10 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
 
   const handleSelect = (result: SearchResult) => {
     const nodeName = 'name' in result.node ? result.node.name : ('full_name' in result.node ? result.node.full_name : '')
+    // Setting query to the selected name must NOT re-trigger the debounced search
+    // (which would reopen the dropdown). Also drop any in-flight request.
+    skipSearch.current = true
+    reqSeq.current++
     setQuery(nodeName || '')
     setResults([])
     setOpen(false)
