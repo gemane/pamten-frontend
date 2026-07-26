@@ -130,6 +130,7 @@ function AppInner() {
   const handleSearchSelect = useCallback(async (result: SearchResult) => {
     setToast(null)
     setSelectedNode(null)
+    setSearchLabel(('name' in result.node ? result.node.name : result.node.full_name) || '')
 
     if (result.type === 'Person') {
       setLoading(true)
@@ -299,6 +300,7 @@ function AppInner() {
       setCenterId(entity.node.id)
       setElements(els)
       setSelectedNode(newNode)
+      setSearchLabel(newNode.label)
       setNavHistory([newNode])
     } catch {
       showToast(t('toast.noResults', { query }), 'info')
@@ -408,6 +410,7 @@ function AppInner() {
       const center = els.find(el => !('source' in el.data) && el.data.id === entityId)
       if (center) {
         setSelectedNode(center.data as NodeData)
+        setSearchLabel((center.data as NodeData).label)   // keep the search field in sync on back/forward + map load
         setNavHistory([center.data as NodeData])
       }
     } catch {
@@ -470,6 +473,7 @@ function AppInner() {
       const center = els.find(el => !('source' in el.data) && el.data.id === entityId)
       if (center) {
         setSelectedNode(center.data as NodeData)
+        setSearchLabel((center.data as NodeData).label)   // keep the search field in sync on back/forward + map load
         setNavHistory([center.data as NodeData])
       }
     } catch {
