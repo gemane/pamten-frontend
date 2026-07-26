@@ -2098,6 +2098,22 @@ a.source-item__name:hover { color: #4A90D9; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+.graph-welcome__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
+  margin: 4px 0 2px;
+  font-size: 12px;
+  color: #6b7280;
+  animation: tagline-fade 0.7s ease;
+}
+.graph-welcome__stats > span::before {
+  content: "· ";
+  color: #9ca3b8;
+}
+.graph-welcome__stats > span:first-child::before { content: none; }
+
 .graph-welcome__chips {
   display: flex;
   gap: 8px;

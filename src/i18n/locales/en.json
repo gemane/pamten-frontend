@@ -31,6 +31,10 @@
   "graph": {
     "tagline": "Map the world's corporate ownership",
     "tagline2": "Search for ownership",
+    "statCompanies": "companies",
+    "statPeople": "people",
+    "statRelationships": "ownership relationships",
+    "statSources": "sources",
     "clear": "Clear",
     "export": "Export",
     "exportPng": "PNG image",

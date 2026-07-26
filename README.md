@@ -71,7 +71,7 @@ src/
 
 ### Graph view
 - Search for any company, brand, holding, or person
-- Start screen shows 3 randomly chosen example companies as quick-launch chips
+- Start screen shows data-scale counts (companies · people · ownership relationships · sources, from `GET /stats`) and 3 randomly chosen example companies as quick-launch chips
 - Clicking the **Pamten** logo in the top-left clears the graph and returns to the start screen
 - Ownership graph rendered with Cytoscape.js cola layout (randomised, wide spacing)
 - Node colours: company `#4A90D9`, brand `#E67E22`, holding `#8E44AD`, person `#27AE60`
