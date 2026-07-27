@@ -4,7 +4,7 @@ import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiAlertTriangle, FiUser
 import {
   getScraperStatus, getScraperSources, toggleScraperSource,
   runScraper, runScraperSecEdgar, runScraperOpenCorporates, runScraperAll,
-  runBodsGleif, runBodsUkPsc,
+  runBodsUkPsc,
 } from '../services/api'
 import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser, BodsImportResult } from '../types'
 import DuplicatesModal from './DuplicatesModal'
@@ -345,9 +345,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
             })
           : null
 
-  const gleifSource  = sources.find(s => s.name === 'bods_gleif')
   const ukPscSource  = sources.find(s => s.name === 'bods_uk_psc')
-  const gleifEnabled = !!masterOn && !!masterStatus?.bods_gleif_enabled && gleifSource?.enabled !== false
   const ukPscEnabled = !!masterOn && !!masterStatus?.bods_uk_psc_enabled && ukPscSource?.enabled !== false
 
   const handleRun = async () => {
@@ -530,14 +528,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
             {t('scraper.bods.warning')}
           </div>
 
-          <BodsImportCard
-            sourceKey="bods_gleif"
-            title="GLEIF"
-            descKey="scraper.bods.gleifDesc"
-            enabled={gleifEnabled}
-            showJurisdiction
-            onRun={params => runBodsGleif(params).then(r => r.data)}
-          />
+          <p className="scraper-bods__note">{t('scraper.bods.gleifCliNote')}</p>
 
           <BodsImportCard
             sourceKey="bods_uk_psc"

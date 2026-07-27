@@ -282,6 +282,7 @@
       "subtitle": "Große Eigentümerdatensätze unter CC0 importieren",
       "warning": "Große Downloads — GLEIF ≈ 1,1 GB · UK PSC ≈ 3,3 GB. Lokalen Dateipfad angeben, um den Download bei Wiederholungen zu überspringen.",
       "gleifDesc": "Globale Rechtspersonen-Kennungen — weltweite Unternehmenseigentümerschaft",
+      "gleifCliNote": "GLEIF wird aus der GLEIF-Golden-Copy per CLI importiert (Entitäten, Beziehungen, Nachfolge) — nicht über BODS.",
       "ukPscDesc": "Personen mit erheblichem Einfluss — in Großbritannien registrierte Unternehmen",
       "limit": "Limit",
       "limitHint": "Einträge (leer = gesamter Datensatz)",

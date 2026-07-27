@@ -2651,6 +2651,13 @@ a.source-item__name:hover { color: #4A90D9; }
   color: #8892a4;
 }
 
+.scraper-bods__note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #8892a4;
+  line-height: 1.4;
+}
+
 .scraper-bods__warning {
   display: flex;
   align-items: flex-start;

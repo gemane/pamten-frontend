@@ -236,11 +236,6 @@ export const runScraperOpenCorporates = (company: string): Promise<AxiosResponse
 export const runScraperAll = (company: string, depth = 2): Promise<AxiosResponse<unknown>> =>
   client.post('/scraper/run-all', null, { params: { company, depth } })
 
-export const runBodsGleif = (
-  params: { limit?: number; filter_jurisdiction?: string; local_file?: string }
-): Promise<AxiosResponse<BodsImportResult>> =>
-  client.post('/scraper/bods/gleif/run', null, { params })
-
 export const runBodsUkPsc = (
   params: { limit?: number; local_file?: string }
 ): Promise<AxiosResponse<BodsImportResult>> =>
