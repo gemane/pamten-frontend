@@ -282,6 +282,7 @@
       "subtitle": "Import large ownership datasets published under CC0",
       "warning": "Large downloads — GLEIF ≈ 1.1 GB · UK PSC ≈ 3.3 GB. Provide a local file path to skip the download on retries.",
       "gleifDesc": "Global legal entity identifiers — corporate ownership worldwide",
+      "gleifCliNote": "GLEIF is imported from the GLEIF golden copy via the CLI (entities, relationships, succession) — not over BODS.",
       "ukPscDesc": "People with significant control — UK-registered companies",
       "limit": "Limit",
       "limitHint": "rows (blank = full dataset)",
