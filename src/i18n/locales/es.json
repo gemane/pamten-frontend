@@ -100,7 +100,9 @@
     "succeededBy": "Sucedido por",
     "replaces": "Anteriormente",
     "freeFloat": "Free float / no divulgado",
-    "ownershipExceeds": "La propiedad declarada suma {{pct}} % — fuentes o fechas solapadas"
+    "ownershipExceeds": "La propiedad declarada suma {{pct}} % — fuentes o fechas solapadas",
+    "nominee": "Fiduciario",
+    "nomineeHint": "Nominee / custodio — titular registral, no propietario beneficiario"
   },
   "report": {
     "button": "Reportar",

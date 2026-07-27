@@ -459,6 +459,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       <span className={`node-type-badge node-type-badge--${entity.type || 'company'}`}>
         {t(`legend.${entity.type || 'company'}`, { defaultValue: entity.type || 'company' })}
       </span>
+      {entity.is_nominee && (
+        <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
+      )}
       <h2 className="panel-name">{entity.name}</h2>
       <NodeFlags nodeId={entity.id} targetKind="entity" label={entity.name} />
       {entity.description && <p className="panel-desc">{entity.description}</p>}
@@ -499,7 +502,12 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                 ? <EdgeReportButton targetKind="owns" fromId={o.owner.id} toId={entity.id}
                     label={('name' in o.owner ? o.owner.name : o.owner.full_name)} />
                 : undefined}>
-              <span className="rel-item__name">{o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}</span>
+              <span className="rel-item__name">
+                {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
+                {o.owner && 'name' in o.owner && o.owner.is_nominee && (
+                  <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
+                )}
+              </span>
               <OwnershipBadge
                 type={o.relationship?.ownership_type}
                 percent={o.relationship?.stake_percent}

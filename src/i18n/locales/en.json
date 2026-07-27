@@ -100,7 +100,9 @@
     "succeededBy": "Succeeded by",
     "replaces": "Formerly",
     "freeFloat": "Free float / undisclosed",
-    "ownershipExceeds": "Disclosed ownership sums to {{pct}}% — overlapping sources or dates"
+    "ownershipExceeds": "Disclosed ownership sums to {{pct}}% — overlapping sources or dates",
+    "nominee": "Nominee",
+    "nomineeHint": "Nominee / custodian — holder of record, not a beneficial owner"
   },
   "report": {
     "button": "Report",

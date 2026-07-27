@@ -1198,6 +1198,23 @@ button.rel-item--clickable:hover { background: #253454; }
   line-height: 1.35;
 }
 
+/* Nominee / custodian marker — a holder of record, not a beneficial owner */
+.nominee-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #b7791f;
+  background: rgba(214, 158, 46, 0.16);
+  border: 1px solid rgba(214, 158, 46, 0.5);
+  padding: 1px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 /* ── Source credibility ─────────────────────────────────── */
 .source-item {
   display: flex;
