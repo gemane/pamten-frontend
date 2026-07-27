@@ -407,7 +407,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [], dual_listed = [],
-          succeeded_by = [], replaces = [], ownership } = profile
+          succeeded_by = [], replaces = [], ownership, cross_holdings = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
   // Surface founders in their own section rather than buried among executives.
@@ -526,6 +526,17 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               ⚠ {t('panel.ownershipExceeds', { pct: ownership.disclosed_pct })}
             </div>
           )}
+        </Section>
+      )}
+
+      {cross_holdings.length > 0 && (
+        <Section title={t('panel.crossHoldings')}>
+          <div className="ownership-warning">↻ {t('panel.crossHoldingsHint')}</div>
+          {[...cross_holdings].sort(byName(c => c.name ?? '')).map((c, i) => (
+            <RelRow key={i} node={entityToNode(c)} onNavigate={onNavigate}>
+              <span className="rel-item__name">{c.name}</span>
+            </RelRow>
+          ))}
         </Section>
       )}
 

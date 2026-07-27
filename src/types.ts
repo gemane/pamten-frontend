@@ -138,6 +138,7 @@ export interface FullProfile {
   succeeded_by?: SuccessionEntry[]    // entities this one was replaced by (Twitter → X Corp.)
   replaces?: SuccessionEntry[]        // entities this one replaced (its predecessors)
   ownership?: OwnershipSummary        // computed free-float residual + data-quality flag
+  cross_holdings?: Entity[]           // entities in a reciprocal (circular) ownership with this one
 }
 
 // Derived (not sourced) ownership breakdown, computed on read from the owners.
