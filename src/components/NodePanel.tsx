@@ -407,7 +407,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [], dual_listed = [],
-          succeeded_by = [], replaces = [] } = profile
+          succeeded_by = [], replaces = [], ownership } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
   // Surface founders in their own section rather than buried among executives.
@@ -507,6 +507,17 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               />
             </RelRow>
           ))}
+          {ownership?.free_float_pct != null && (
+            <div className="rel-item">
+              <span className="rel-item__name rel-item__name--muted">{t('panel.freeFloat')}</span>
+              <span className="ownership-badge ownership-badge--computed">{ownership.free_float_pct}%</span>
+            </div>
+          )}
+          {ownership?.exceeds_100 && (
+            <div className="ownership-warning">
+              ⚠ {t('panel.ownershipExceeds', { pct: ownership.disclosed_pct })}
+            </div>
+          )}
         </Section>
       )}
 

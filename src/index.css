@@ -1178,6 +1178,26 @@ button.rel-item--clickable:hover { background: #253454; }
 
 [data-theme="light"] .rel-item__year { color: #718096; }
 
+/* Computed (not sourced) rows/badges — e.g. free-float residual */
+.rel-item__name--muted { color: #8b95a7; font-style: italic; font-weight: 400; }
+[data-theme="light"] .rel-item__name--muted { color: #718096; }
+
+.ownership-badge--computed {
+  border-color: #8892a4;
+  color: #8892a4;
+  border-style: dashed;
+}
+
+.ownership-warning {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #d69e2e;
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+  line-height: 1.35;
+}
+
 /* ── Source credibility ─────────────────────────────────── */
 .source-item {
   display: flex;

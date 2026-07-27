@@ -136,6 +136,15 @@ export interface FullProfile {
   dual_listed?: Entity[]              // paired legal entities of a dual-listed company
   succeeded_by?: SuccessionEntry[]    // entities this one was replaced by (Twitter → X Corp.)
   replaces?: SuccessionEntry[]        // entities this one replaced (its predecessors)
+  ownership?: OwnershipSummary        // computed free-float residual + data-quality flag
+}
+
+// Derived (not sourced) ownership breakdown, computed on read from the owners.
+export interface OwnershipSummary {
+  disclosed_pct?: number | null   // sum of disclosed stakes
+  free_float_pct?: number | null  // 100 − disclosed, when every owner's stake is known
+  unknown_owners?: number         // owners with an unknown %
+  exceeds_100?: boolean           // disclosed stakes sum past 100% (overlapping sources/dates)
 }
 
 // A succession neighbour (predecessor/successor) plus when it took effect.

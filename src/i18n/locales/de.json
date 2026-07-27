@@ -98,7 +98,9 @@
     "lastChecked": "Zuletzt geprüft {{date}}",
     "dualListedWith": "Zweitnotiert mit",
     "succeededBy": "Nachfolger",
-    "replaces": "Vormals"
+    "replaces": "Vormals",
+    "freeFloat": "Streubesitz / unbekannt",
+    "ownershipExceeds": "Angegebene Anteile summieren sich auf {{pct}} % — überlappende Quellen oder Daten"
   },
   "report": {
     "button": "Melden",
