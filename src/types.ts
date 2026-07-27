@@ -41,6 +41,7 @@ export interface Entity {
   countries?: string[]      // all domiciles (dual-listed companies have >1)
   hq_locations?: string[]   // all HQs as "City|CC" strings
   source_statement_ids?: string[]  // BODS statement ids that declared this entity (>1 ⇒ collapsed from several filings)
+  is_nominee?: boolean      // holder of record (nominee/custodian), not a beneficial owner
 }
 
 export interface Person {
