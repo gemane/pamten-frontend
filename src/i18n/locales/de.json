@@ -102,7 +102,9 @@
     "freeFloat": "Streubesitz / unbekannt",
     "ownershipExceeds": "Angegebene Anteile summieren sich auf {{pct}} % — überlappende Quellen oder Daten",
     "nominee": "Treuhänder",
-    "nomineeHint": "Nominee / Depotverwalter — nur eingetragener Halter, kein wirtschaftlicher Eigentümer"
+    "nomineeHint": "Nominee / Depotverwalter — nur eingetragener Halter, kein wirtschaftlicher Eigentümer",
+    "crossHoldings": "Überkreuzbeteiligung",
+    "crossHoldingsHint": "Dieses Unternehmen und die unten genannten besitzen sich gegenseitig (wechselseitige Beteiligung)"
   },
   "report": {
     "button": "Melden",
@@ -185,7 +187,9 @@
     "majority": "Mehrheit",
     "minority": "Minderheit",
     "controlling": "Kontrollierend",
-    "owned": "Beteiligung"
+    "owned": "Beteiligung",
+    "specialVoting": "Sonderstimmrecht",
+    "specialVotingHint": "Stimmrechte übersteigen den wirtschaftlichen Anteil deutlich (goldene Aktie / Mehrstimmrecht)"
   },
   "tooltip": {
     "type": "Typ",

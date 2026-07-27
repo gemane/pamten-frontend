@@ -14,6 +14,13 @@ const TYPE_COLORS: Record<string, string> = {
   controlling: '#E74C3C',
 }
 
+// Voting control disproportionate to the economic stake — a golden share /
+// super-voting class (e.g. 0.01% owned but 51% of the votes).
+export function isSpecialVoting(percent?: number | null, votingPct?: number | null): boolean {
+  if (votingPct == null) return false
+  return (percent == null && votingPct >= 25) || (percent != null && votingPct - percent >= 25)
+}
+
 export default function OwnershipBadge({ type, percent, votingPct }: OwnershipBadgeProps) {
   const { t } = useTranslation()
   const resolved = (type && type !== 'unknown') ? type : null
@@ -28,6 +35,11 @@ export default function OwnershipBadge({ type, percent, votingPct }: OwnershipBa
       </span>
       {votingPct != null && (
         <span className="voting-badge">⚡ {votingPct}%</span>
+      )}
+      {isSpecialVoting(percent, votingPct) && (
+        <span className="special-voting-badge" title={t('ownershipType.specialVotingHint')}>
+          ◆ {t('ownershipType.specialVoting')}
+        </span>
       )}
     </span>
   )

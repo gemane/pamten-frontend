@@ -102,7 +102,9 @@
     "freeFloat": "Free float / no divulgado",
     "ownershipExceeds": "La propiedad declarada suma {{pct}} % — fuentes o fechas solapadas",
     "nominee": "Fiduciario",
-    "nomineeHint": "Nominee / custodio — titular registral, no propietario beneficiario"
+    "nomineeHint": "Nominee / custodio — titular registral, no propietario beneficiario",
+    "crossHoldings": "Propiedad circular",
+    "crossHoldingsHint": "Esta entidad y la(s) siguiente(s) se poseen mutuamente (participación recíproca)"
   },
   "report": {
     "button": "Reportar",
@@ -185,7 +187,9 @@
     "majority": "Mayoría",
     "minority": "Minoría",
     "controlling": "Control",
-    "owned": "Participación"
+    "owned": "Participación",
+    "specialVoting": "Voto especial",
+    "specialVotingHint": "El poder de voto supera con creces la participación económica (acción de oro / voto múltiple)"
   },
   "tooltip": {
     "type": "Tipo",

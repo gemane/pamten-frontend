@@ -1198,6 +1198,19 @@ button.rel-item--clickable:hover { background: #253454; }
   line-height: 1.35;
 }
 
+/* Golden share / super-voting: voting control far above the economic stake */
+.special-voting-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #d69e2e;
+  background: rgba(214, 158, 46, 0.14);
+  border: 1px solid rgba(214, 158, 46, 0.45);
+  padding: 1px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* Nominee / custodian marker — a holder of record, not a beneficial owner */
 .nominee-badge {
   display: inline-block;

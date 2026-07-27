@@ -102,7 +102,9 @@
     "freeFloat": "Free float / undisclosed",
     "ownershipExceeds": "Disclosed ownership sums to {{pct}}% — overlapping sources or dates",
     "nominee": "Nominee",
-    "nomineeHint": "Nominee / custodian — holder of record, not a beneficial owner"
+    "nomineeHint": "Nominee / custodian — holder of record, not a beneficial owner",
+    "crossHoldings": "Circular ownership",
+    "crossHoldingsHint": "This entity and the one(s) below own each other (reciprocal holding)"
   },
   "report": {
     "button": "Report",
@@ -185,7 +187,9 @@
     "majority": "Majority",
     "minority": "Minority",
     "controlling": "Controlling",
-    "owned": "Owned"
+    "owned": "Owned",
+    "specialVoting": "Special voting",
+    "specialVotingHint": "Voting power far exceeds the economic stake (golden share / super-voting class)"
   },
   "tooltip": {
     "type": "Type",
