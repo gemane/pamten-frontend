@@ -98,7 +98,9 @@
     "lastChecked": "Last checked {{date}}",
     "dualListedWith": "Dual-listed with",
     "succeededBy": "Succeeded by",
-    "replaces": "Formerly"
+    "replaces": "Formerly",
+    "freeFloat": "Free float / undisclosed",
+    "ownershipExceeds": "Disclosed ownership sums to {{pct}}% — overlapping sources or dates"
   },
   "report": {
     "button": "Report",

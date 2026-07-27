@@ -98,7 +98,9 @@
     "lastChecked": "Última comprobación {{date}}",
     "dualListedWith": "Cotización dual con",
     "succeededBy": "Sucedido por",
-    "replaces": "Anteriormente"
+    "replaces": "Anteriormente",
+    "freeFloat": "Free float / no divulgado",
+    "ownershipExceeds": "La propiedad declarada suma {{pct}} % — fuentes o fechas solapadas"
   },
   "report": {
     "button": "Reportar",
