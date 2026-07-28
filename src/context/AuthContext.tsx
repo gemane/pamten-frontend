@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import { authLogin, authRegister, authMe } from '../services/api'
+import { authLogin, authRegister, authMe, authMfaVerify } from '../services/api'
 import type { AuthUser } from '../types'
 
 interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<{ mfaRequired: boolean; mfaToken?: string }>
+  verifyMfa: (mfaToken: string, code: string) => Promise<void>
   register: (email: string, password: string) => Promise<{ verificationRequired: boolean }>
   logout: () => void
 }
@@ -38,6 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const { data } = await authLogin(email, password)
+    if ('mfa_required' in data) return { mfaRequired: true, mfaToken: data.mfa_token }
+    storeAndSetUser(data)
+    return { mfaRequired: false }
+  }, [])
+
+  const verifyMfa = useCallback(async (mfaToken: string, code: string) => {
+    const { data } = await authMfaVerify(mfaToken, code)
     storeAndSetUser(data)
   }, [])
 
@@ -57,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, verifyMfa, register, logout }}>
       {children}
     </AuthContext.Provider>
   )

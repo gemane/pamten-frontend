@@ -210,11 +210,32 @@ export type RegisterResult =
 export const authRegister = (email: string, password: string): Promise<AxiosResponse<RegisterResult>> =>
   client.post('/auth/register', { email, password })
 
-export const authLogin = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
+// Login returns an access token, or an MFA challenge when 2FA is enabled.
+export type LoginResult =
+  (AuthUser & { access_token: string })
+  | { mfa_required: true; mfa_token: string }
+
+export const authLogin = (email: string, password: string): Promise<AxiosResponse<LoginResult>> =>
   client.post('/auth/login', { email, password })
 
 export const authMe = (): Promise<AxiosResponse<AuthUser>> =>
   client.get('/auth/me')
+
+// ── Two-factor auth (TOTP) ──────────────────────────────────────────────────
+export const authMfaVerify = (mfa_token: string, code: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
+  client.post('/auth/mfa/verify', { mfa_token, code })
+
+export const authMfaStatus = (): Promise<AxiosResponse<{ mfa_enabled: boolean }>> =>
+  client.get('/auth/mfa/status')
+
+export const authMfaSetup = (): Promise<AxiosResponse<{ secret: string; otpauth_uri: string }>> =>
+  client.post('/auth/mfa/setup')
+
+export const authMfaEnable = (code: string): Promise<AxiosResponse<{ enabled: boolean; recovery_codes: string[] }>> =>
+  client.post('/auth/mfa/enable', { code })
+
+export const authMfaDisable = (code: string): Promise<AxiosResponse<{ enabled: boolean }>> =>
+  client.post('/auth/mfa/disable', { code })
 
 export const authVerifyEmail = (token: string): Promise<AxiosResponse<{ message: string; email?: string }>> =>
   client.post('/auth/verify-email', { token })

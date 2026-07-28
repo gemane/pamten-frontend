@@ -36,7 +36,12 @@
     "resetSent": "Si esa cuenta existe, hemos enviado un enlace para restablecer la contraseña.",
     "resetDone": "Contraseña actualizada. Ya puedes iniciar sesión.",
     "verifyOk": "Correo verificado: ya puedes iniciar sesión.",
-    "verifyFail": "Ese enlace de verificación no es válido o ha caducado."
+    "verifyFail": "Ese enlace de verificación no es válido o ha caducado.",
+    "mfaTitle": "Autenticación de dos factores",
+    "mfaPrompt": "Introduce el código de 6 dígitos de tu app de autenticación, o un código de recuperación.",
+    "mfaCode": "Código de autenticación",
+    "mfaCodePlaceholder": "123456 o código de recuperación",
+    "mfaSubmit": "Verificar"
   },
   "search": {
     "placeholder": "Buscar empresas, marcas, personas…",
@@ -270,7 +275,25 @@
     "deleteUser": "Eliminar usuario",
     "usersLoadError": "No se pudieron cargar los usuarios.",
     "roleUpdateError": "No se pudo actualizar el rol.",
-    "deleteUserError": "No se pudo eliminar el usuario."
+    "deleteUserError": "No se pudo eliminar el usuario.",
+    "mfa": {
+      "title": "Autenticación de dos factores",
+      "desc": "Añade un segundo paso al iniciar sesión con una app de autenticación (Google Authenticator, Authy, …).",
+      "enable": "Activar dos factores",
+      "enabled": "Dos factores activado",
+      "disable": "Desactivar dos factores",
+      "scan": "Escanea este código QR con tu app de autenticación y luego introduce el código que muestra.",
+      "manualKey": "O introduce esta clave manualmente:",
+      "enterCode": "Código de la app",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "recoveryNote": "Guarda estos códigos de recuperación en un lugar seguro. Cada uno funciona una vez si pierdes tu autenticador. No se mostrarán de nuevo.",
+      "copy": "Copiar códigos",
+      "done": "Hecho",
+      "disablePrompt": "Introduce un código actual (o de recuperación) para desactivar los dos factores.",
+      "error": "Algo salió mal. Inténtalo de nuevo.",
+      "badCode": "Ese código no es válido. Inténtalo de nuevo."
+    }
   },
   "scraper": {
     "title": "Scraper",
