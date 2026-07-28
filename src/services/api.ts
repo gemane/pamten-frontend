@@ -201,7 +201,13 @@ export const getPins = (): Promise<AxiosResponse<Pin[]>> =>
 export const removePin = (id: string): Promise<AxiosResponse<{ id: string; status: string }>> =>
   client.delete(`/flags/pins/${id}`)
 
-export const authRegister = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
+// Registration returns either an access token (the bootstrap/first-user admin)
+// or a "verify your email" acknowledgement (everyone else).
+export type RegisterResult =
+  (AuthUser & { access_token: string })
+  | { message: string; verification_required: true; email: string }
+
+export const authRegister = (email: string, password: string): Promise<AxiosResponse<RegisterResult>> =>
   client.post('/auth/register', { email, password })
 
 export const authLogin = (email: string, password: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
@@ -210,7 +216,19 @@ export const authLogin = (email: string, password: string): Promise<AxiosRespons
 export const authMe = (): Promise<AxiosResponse<AuthUser>> =>
   client.get('/auth/me')
 
-export interface UserRecord { id: string; email: string; role: string; created_at?: string }
+export const authVerifyEmail = (token: string): Promise<AxiosResponse<{ message: string; email?: string }>> =>
+  client.post('/auth/verify-email', { token })
+
+export const authResendVerification = (email: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.post('/auth/resend-verification', { email })
+
+export const authForgotPassword = (email: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.post('/auth/forgot-password', { email })
+
+export const authResetPassword = (token: string, new_password: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.post('/auth/reset-password', { token, new_password })
+
+export interface UserRecord { id: string; email: string; role: string; email_verified?: boolean; created_at?: string }
 export const getUsers       = (): Promise<AxiosResponse<UserRecord[]>> => client.get('/auth/users')
 export const updateUserRole = (id: string, role: string): Promise<AxiosResponse<{ message: string }>> =>
   client.patch(`/auth/users/${id}/role`, { role })

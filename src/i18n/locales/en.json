@@ -21,7 +21,22 @@
     "genericError": "Something went wrong.",
     "firstAdminNote": "The first registered account becomes admin. Subsequent accounts start as viewer.",
     "working": "Working…",
-    "createAccount": "Create account"
+    "createAccount": "Create account",
+    "forgotPassword": "Forgot password?",
+    "forgotTitle": "Reset your password",
+    "forgotSubmit": "Send reset link",
+    "resetTitle": "Set a new password",
+    "newPassword": "New password",
+    "resetSubmit": "Update password",
+    "backToLogin": "Back to sign in",
+    "resend": "Resend verification email",
+    "resendSent": "Verification email sent. Check your inbox.",
+    "unverified": "Your email isn't verified yet. Check your inbox, or resend the link.",
+    "verifyEmailSent": "We sent a verification link to {{email}}. Open it to activate your account, then sign in.",
+    "resetSent": "If that account exists, we've emailed a password-reset link.",
+    "resetDone": "Password updated. You can now sign in.",
+    "verifyOk": "Email verified — you can now sign in.",
+    "verifyFail": "That verification link is invalid or has expired."
   },
   "search": {
     "placeholder": "Search companies, brands, people…",

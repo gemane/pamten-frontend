@@ -19,7 +19,7 @@ import ModeratorQueue from './components/ModeratorQueue'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, setUnauthorizedHandler } from './services/api'
+import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, setUnauthorizedHandler, authVerifyEmail } from './services/api'
 import type {
   GraphElement,
   NodeData,
@@ -78,6 +78,8 @@ function AppInner() {
   const { t } = useTranslation()
   const [theme, toggleTheme] = useTheme()
   const [showAuth, setShowAuth] = useState<boolean>(false)
+  const [authMode, setAuthMode] = useState<'login' | 'reset'>('login')
+  const [resetToken, setResetToken] = useState<string | null>(null)
   const [showFlagQueue, setShowFlagQueue] = useState<boolean>(false)
   const canModerate = user?.role === 'moderator' || user?.role === 'admin'
   const isMobile = useMobile()
@@ -496,6 +498,28 @@ function AppInner() {
     }
   }, [handleTabChange, restoreEntity, handleClearGraph])
 
+  // Handle the links emailed for verification / password reset, once on load.
+  // The link is `${APP_BASE_URL}/?action=verify-email|reset-password&token=…`.
+  const didInitActionRef = useRef(false)
+  useEffect(() => {
+    if (didInitActionRef.current) return
+    didInitActionRef.current = true
+    const params = new URLSearchParams(window.location.search)
+    const action = params.get('action')
+    const token  = params.get('token')
+    if (!action || !token) return
+    // strip the query string (keep the hash view) so a refresh doesn't re-fire it
+    window.history.replaceState(null, '', window.location.pathname + window.location.hash)
+    if (action === 'verify-email') {
+      authVerifyEmail(token)
+        .then(() => showToast(t('auth.verifyOk'), 'success'))
+        .catch(() => showToast(t('auth.verifyFail'), 'error'))
+        .finally(() => { setAuthMode('login'); setShowAuth(true) })
+    } else if (action === 'reset-password') {
+      setResetToken(token); setAuthMode('reset'); setShowAuth(true)
+    }
+  }, [showToast, t])
+
   // Restore a deep link once on load (runs before the URL-sync effect below).
   const didInitViewRef = useRef(false)
   useEffect(() => {
@@ -542,7 +566,13 @@ function AppInner() {
   return (
     <div className="app">
       {loading && <div className="loading-bar" />}
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showAuth && (
+        <AuthModal
+          onClose={() => { setShowAuth(false); setResetToken(null); setAuthMode('login') }}
+          initialMode={authMode}
+          resetToken={resetToken ?? undefined}
+        />
+      )}
       {showFlagQueue && canModerate && <ModeratorQueue onClose={() => setShowFlagQueue(false)} />}
       <Toast toast={toast} onClose={() => setToast(null)} />
 

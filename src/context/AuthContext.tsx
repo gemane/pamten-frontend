@@ -7,7 +7,7 @@ interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string) => Promise<{ verificationRequired: boolean }>
   logout: () => void
 }
 
@@ -43,7 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(async (email: string, password: string) => {
     const { data } = await authRegister(email, password)
-    storeAndSetUser(data)
+    // Non-admin sign-ups get no token — they must verify their email first.
+    if ('access_token' in data) {
+      storeAndSetUser(data)
+      return { verificationRequired: false }
+    }
+    return { verificationRequired: true }
   }, [])
 
   const logout = useCallback(() => {

@@ -21,7 +21,22 @@
     "genericError": "Etwas ist schiefgelaufen.",
     "firstAdminNote": "Das erste registrierte Konto wird Administrator. Weitere Konten beginnen als Betrachter.",
     "working": "Wird bearbeitet…",
-    "createAccount": "Konto erstellen"
+    "createAccount": "Konto erstellen",
+    "forgotPassword": "Passwort vergessen?",
+    "forgotTitle": "Passwort zurücksetzen",
+    "forgotSubmit": "Link senden",
+    "resetTitle": "Neues Passwort festlegen",
+    "newPassword": "Neues Passwort",
+    "resetSubmit": "Passwort aktualisieren",
+    "backToLogin": "Zurück zur Anmeldung",
+    "resend": "Bestätigungs-E-Mail erneut senden",
+    "resendSent": "Bestätigungs-E-Mail gesendet. Bitte Posteingang prüfen.",
+    "unverified": "Deine E-Mail ist noch nicht bestätigt. Prüfe den Posteingang oder sende den Link erneut.",
+    "verifyEmailSent": "Wir haben einen Bestätigungslink an {{email}} gesendet. Öffne ihn, um dein Konto zu aktivieren, und melde dich dann an.",
+    "resetSent": "Falls das Konto existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet.",
+    "resetDone": "Passwort aktualisiert. Du kannst dich jetzt anmelden.",
+    "verifyOk": "E-Mail bestätigt — du kannst dich jetzt anmelden.",
+    "verifyFail": "Dieser Bestätigungslink ist ungültig oder abgelaufen."
   },
   "search": {
     "placeholder": "Unternehmen, Marken, Personen suchen…",

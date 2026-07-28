@@ -21,7 +21,22 @@
     "genericError": "Algo salió mal.",
     "firstAdminNote": "La primera cuenta registrada se convierte en administrador. Las cuentas posteriores comienzan como visor.",
     "working": "Procesando…",
-    "createAccount": "Crear cuenta"
+    "createAccount": "Crear cuenta",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotTitle": "Restablecer tu contraseña",
+    "forgotSubmit": "Enviar enlace",
+    "resetTitle": "Establecer una nueva contraseña",
+    "newPassword": "Nueva contraseña",
+    "resetSubmit": "Actualizar contraseña",
+    "backToLogin": "Volver a iniciar sesión",
+    "resend": "Reenviar correo de verificación",
+    "resendSent": "Correo de verificación enviado. Revisa tu bandeja de entrada.",
+    "unverified": "Tu correo aún no está verificado. Revisa tu bandeja de entrada o reenvía el enlace.",
+    "verifyEmailSent": "Enviamos un enlace de verificación a {{email}}. Ábrelo para activar tu cuenta y luego inicia sesión.",
+    "resetSent": "Si esa cuenta existe, hemos enviado un enlace para restablecer la contraseña.",
+    "resetDone": "Contraseña actualizada. Ya puedes iniciar sesión.",
+    "verifyOk": "Correo verificado: ya puedes iniciar sesión.",
+    "verifyFail": "Ese enlace de verificación no es válido o ha caducado."
   },
   "search": {
     "placeholder": "Buscar empresas, marcas, personas…",
