@@ -1,100 +1,192 @@
 import { useState } from 'react'
-import { FiX, FiLogIn, FiUserPlus, FiAlertCircle, FiLoader } from 'react-icons/fi'
+import { FiX, FiLogIn, FiUserPlus, FiAlertCircle, FiLoader, FiCheckCircle, FiMail } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { authResendVerification, authForgotPassword, authResetPassword } from '../services/api'
+
+type Mode = 'login' | 'register' | 'forgot' | 'reset'
 
 interface AuthModalProps {
   onClose: () => void
+  initialMode?: Mode
+  resetToken?: string
 }
 
-export default function AuthModal({ onClose }: AuthModalProps) {
+// `detail` is a string for most errors but an object ({code, message}) for the
+// "email not verified" 403 — normalise both to a message (+ optional code).
+export function extractError(err: unknown, fallback: string): { text: string; code?: string } {
+  const detail = (err as { response?: { data?: { detail?: unknown } } }).response?.data?.detail
+  if (typeof detail === 'string') return { text: detail }
+  if (detail && typeof detail === 'object') {
+    const d = detail as { code?: string; message?: string }
+    return { text: d.message || fallback, code: d.code }
+  }
+  return { text: fallback }
+}
+
+export default function AuthModal({ onClose, initialMode = 'login', resetToken }: AuthModalProps) {
   const { t } = useTranslation()
   const { login, register } = useAuth()
-  const [mode,     setMode]     = useState<'login' | 'register'>('login')
-  const [email,    setEmail]    = useState<string>('')
-  const [password, setPassword] = useState<string>('')
-  const [error,    setError]    = useState<string | null>(null)
-  const [loading,  setLoading]  = useState<boolean>(false)
+  const [mode,       setMode]       = useState<Mode>(initialMode)
+  const [email,      setEmail]      = useState<string>('')
+  const [password,   setPassword]   = useState<string>('')
+  const [error,      setError]      = useState<string | null>(null)
+  const [info,       setInfo]       = useState<string | null>(null)   // success panel
+  const [unverified, setUnverified] = useState<boolean>(false)        // show resend action
+  const [loading,    setLoading]    = useState<boolean>(false)
+
+  const switchMode = (m: Mode) => {
+    setMode(m); setError(null); setInfo(null); setUnverified(false)
+  }
+
+  const handleResend = async () => {
+    setLoading(true); setError(null)
+    try {
+      await authResendVerification(email)
+      setUnverified(false)
+      setInfo(t('auth.resendSent'))
+    } catch (err) {
+      setError(extractError(err, t('auth.genericError')).text)
+    } finally { setLoading(false) }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    setLoading(true)
+    setError(null); setInfo(null); setUnverified(false); setLoading(true)
     try {
       if (mode === 'login') {
-        await login(email, password)
-      } else {
-        await register(email, password)
+        await login(email, password); onClose()
+      } else if (mode === 'register') {
+        const { verificationRequired } = await register(email, password)
+        if (verificationRequired) setInfo(t('auth.verifyEmailSent', { email }))
+        else onClose()
+      } else if (mode === 'forgot') {
+        await authForgotPassword(email); setInfo(t('auth.resetSent'))
+      } else if (mode === 'reset') {
+        await authResetPassword(resetToken || '', password); setInfo(t('auth.resetDone'))
       }
-      onClose()
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detail?: string } } }
-      setError(axiosErr.response?.data?.detail || t('auth.genericError'))
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) {
+      const { text, code } = extractError(err, t('auth.genericError'))
+      if (code === 'email_not_verified') { setUnverified(true); setError(t('auth.unverified')) }
+      else setError(text)
+    } finally { setLoading(false) }
   }
+
+  const showTabs   = mode === 'login' || mode === 'register'
+  const needsEmail = mode !== 'reset'
+  const needsPw    = mode === 'login' || mode === 'register' || mode === 'reset'
+
+  const title =
+    mode === 'forgot' ? t('auth.forgotTitle')
+    : mode === 'reset' ? t('auth.resetTitle')
+    : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <button className="modal__close" onClick={onClose}><FiX /></button>
 
-        <div className="modal__tabs">
-          <button
-            className={`modal__tab ${mode === 'login' ? 'modal__tab--active' : ''}`}
-            onClick={() => { setMode('login'); setError(null) }}
-          >
-            <FiLogIn /> {t('auth.signIn')}
-          </button>
-          <button
-            className={`modal__tab ${mode === 'register' ? 'modal__tab--active' : ''}`}
-            onClick={() => { setMode('register'); setError(null) }}
-          >
-            <FiUserPlus /> {t('auth.register')}
-          </button>
-        </div>
+        {showTabs && (
+          <div className="modal__tabs">
+            <button
+              className={`modal__tab ${mode === 'login' ? 'modal__tab--active' : ''}`}
+              onClick={() => switchMode('login')}
+            >
+              <FiLogIn /> {t('auth.signIn')}
+            </button>
+            <button
+              className={`modal__tab ${mode === 'register' ? 'modal__tab--active' : ''}`}
+              onClick={() => switchMode('register')}
+            >
+              <FiUserPlus /> {t('auth.register')}
+            </button>
+          </div>
+        )}
 
-        <form className="modal__form" onSubmit={handleSubmit}>
-          <label className="modal__label">{t('auth.email')}</label>
-          <input
-            className="modal__input"
-            type="email"
-            placeholder={t('auth.emailPlaceholder')}
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            autoFocus
-          />
+        {!showTabs && <h3 className="modal__title">{title}</h3>}
 
-          <label className="modal__label">{t('auth.password')}</label>
-          <input
-            className="modal__input"
-            type="password"
-            placeholder={mode === 'register' ? t('auth.passwordPlaceholderRegister') : '••••••••'}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
+        {info ? (
+          <div className="modal__success">
+            <FiCheckCircle className="modal__success-icon" />
+            <p>{info}</p>
+            <button className="modal__linkbtn" onClick={() => switchMode('login')}>
+              {t('auth.backToLogin')}
+            </button>
+          </div>
+        ) : (
+          <form className="modal__form" onSubmit={handleSubmit}>
+            {needsEmail && (
+              <>
+                <label className="modal__label">{t('auth.email')}</label>
+                <input
+                  className="modal__input"
+                  type="email"
+                  placeholder={t('auth.emailPlaceholder')}
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </>
+            )}
 
-          {error && (
-            <div className="modal__error">
-              <FiAlertCircle /> {error}
-            </div>
-          )}
+            {needsPw && (
+              <>
+                <label className="modal__label">
+                  {mode === 'reset' ? t('auth.newPassword') : t('auth.password')}
+                </label>
+                <input
+                  className="modal__input"
+                  type="password"
+                  placeholder={mode === 'login' ? '••••••••' : t('auth.passwordPlaceholderRegister')}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  autoFocus={mode === 'reset'}
+                />
+              </>
+            )}
 
-          {mode === 'register' && (
-            <p className="modal__note">
-              {t('auth.firstAdminNote')}
-            </p>
-          )}
+            {error && (
+              <div className="modal__error">
+                <FiAlertCircle /> {error}
+              </div>
+            )}
 
-          <button className="modal__submit" type="submit" disabled={loading}>
-            {loading
-              ? <><FiLoader className="spin" /> {t('auth.working')}</>
-              : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
-          </button>
-        </form>
+            {unverified && (
+              <button type="button" className="modal__linkbtn" onClick={handleResend} disabled={loading}>
+                <FiMail /> {t('auth.resend')}
+              </button>
+            )}
+
+            {mode === 'login' && (
+              <button type="button" className="modal__linkbtn modal__linkbtn--muted"
+                      onClick={() => switchMode('forgot')}>
+                {t('auth.forgotPassword')}
+              </button>
+            )}
+
+            {mode === 'register' && (
+              <p className="modal__note">{t('auth.firstAdminNote')}</p>
+            )}
+
+            <button className="modal__submit" type="submit" disabled={loading}>
+              {loading
+                ? <><FiLoader className="spin" /> {t('auth.working')}</>
+                : mode === 'login'   ? t('auth.signIn')
+                : mode === 'register'? t('auth.createAccount')
+                : mode === 'forgot'  ? t('auth.forgotSubmit')
+                : t('auth.resetSubmit')}
+            </button>
+
+            {(mode === 'forgot' || mode === 'reset') && (
+              <button type="button" className="modal__linkbtn modal__linkbtn--muted"
+                      onClick={() => switchMode('login')}>
+                {t('auth.backToLogin')}
+              </button>
+            )}
+          </form>
+        )}
       </div>
     </div>
   )
