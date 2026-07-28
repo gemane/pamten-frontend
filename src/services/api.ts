@@ -9,7 +9,6 @@ import type {
   ScrapeResult,
   ScrapeRun,
   ScraperSource,
-  BodsImportResult,
   CountryEntityGroup,
   Entity,
   AuthUser,
@@ -235,8 +234,3 @@ export const runScraperOpenCorporates = (company: string): Promise<AxiosResponse
 
 export const runScraperAll = (company: string, depth = 2): Promise<AxiosResponse<unknown>> =>
   client.post('/scraper/run-all', null, { params: { company, depth } })
-
-export const runBodsUkPsc = (
-  params: { limit?: number; local_file?: string }
-): Promise<AxiosResponse<BodsImportResult>> =>
-  client.post('/scraper/bods/uk-psc/run', null, { params })

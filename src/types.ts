@@ -347,16 +347,6 @@ export interface ScrapeRun {
   stale?: boolean
 }
 
-export interface BodsImportResult {
-  status: string
-  source: string
-  entities: number
-  persons: number
-  relationships: number
-  skipped: number
-  errors: number
-}
-
 // Country map types
 export interface CountryEntityGroup {
   country: string
