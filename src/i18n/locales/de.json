@@ -36,7 +36,12 @@
     "resetSent": "Falls das Konto existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet.",
     "resetDone": "Passwort aktualisiert. Du kannst dich jetzt anmelden.",
     "verifyOk": "E-Mail bestätigt — du kannst dich jetzt anmelden.",
-    "verifyFail": "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+    "verifyFail": "Dieser Bestätigungslink ist ungültig oder abgelaufen.",
+    "mfaTitle": "Zwei-Faktor-Authentifizierung",
+    "mfaPrompt": "Gib den 6-stelligen Code aus deiner Authenticator-App oder einen Wiederherstellungscode ein.",
+    "mfaCode": "Authentifizierungscode",
+    "mfaCodePlaceholder": "123456 oder Wiederherstellungscode",
+    "mfaSubmit": "Bestätigen"
   },
   "search": {
     "placeholder": "Unternehmen, Marken, Personen suchen…",
@@ -270,7 +275,25 @@
     "deleteUser": "Benutzer löschen",
     "usersLoadError": "Benutzer konnten nicht geladen werden.",
     "roleUpdateError": "Rolle konnte nicht aktualisiert werden.",
-    "deleteUserError": "Benutzer konnte nicht gelöscht werden."
+    "deleteUserError": "Benutzer konnte nicht gelöscht werden.",
+    "mfa": {
+      "title": "Zwei-Faktor-Authentifizierung",
+      "desc": "Füge beim Anmelden einen zweiten Schritt mit einer Authenticator-App hinzu (Google Authenticator, Authy, …).",
+      "enable": "Zwei-Faktor aktivieren",
+      "enabled": "Zwei-Faktor ist aktiv",
+      "disable": "Zwei-Faktor deaktivieren",
+      "scan": "Scanne diesen QR-Code mit deiner Authenticator-App und gib dann den angezeigten Code ein.",
+      "manualKey": "Oder gib diesen Schlüssel manuell ein:",
+      "enterCode": "Code aus der App",
+      "confirm": "Bestätigen",
+      "cancel": "Abbrechen",
+      "recoveryNote": "Bewahre diese Wiederherstellungscodes sicher auf. Jeder funktioniert einmal, falls du deinen Authenticator verlierst. Sie werden nicht erneut angezeigt.",
+      "copy": "Codes kopieren",
+      "done": "Fertig",
+      "disablePrompt": "Gib einen aktuellen Code (oder einen Wiederherstellungscode) ein, um Zwei-Faktor zu deaktivieren.",
+      "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+      "badCode": "Dieser Code ist ungültig. Bitte erneut versuchen."
+    }
   },
   "scraper": {
     "title": "Scraper",

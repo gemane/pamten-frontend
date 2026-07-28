@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { FiX, FiLogIn, FiUserPlus, FiAlertCircle, FiLoader, FiCheckCircle, FiMail } from 'react-icons/fi'
+import { FiX, FiLogIn, FiUserPlus, FiAlertCircle, FiLoader, FiCheckCircle, FiMail, FiShield } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { authResendVerification, authForgotPassword, authResetPassword } from '../services/api'
 
-type Mode = 'login' | 'register' | 'forgot' | 'reset'
+type Mode = 'login' | 'register' | 'forgot' | 'reset' | 'mfa'
 
 interface AuthModalProps {
   onClose: () => void
@@ -26,17 +26,19 @@ export function extractError(err: unknown, fallback: string): { text: string; co
 
 export default function AuthModal({ onClose, initialMode = 'login', resetToken }: AuthModalProps) {
   const { t } = useTranslation()
-  const { login, register } = useAuth()
+  const { login, verifyMfa, register } = useAuth()
   const [mode,       setMode]       = useState<Mode>(initialMode)
   const [email,      setEmail]      = useState<string>('')
   const [password,   setPassword]   = useState<string>('')
+  const [code,       setCode]       = useState<string>('')            // 2FA code
+  const [mfaToken,   setMfaToken]   = useState<string>('')            // login-issued pending token
   const [error,      setError]      = useState<string | null>(null)
   const [info,       setInfo]       = useState<string | null>(null)   // success panel
   const [unverified, setUnverified] = useState<boolean>(false)        // show resend action
   const [loading,    setLoading]    = useState<boolean>(false)
 
   const switchMode = (m: Mode) => {
-    setMode(m); setError(null); setInfo(null); setUnverified(false)
+    setMode(m); setError(null); setInfo(null); setUnverified(false); setCode('')
   }
 
   const handleResend = async () => {
@@ -55,7 +57,11 @@ export default function AuthModal({ onClose, initialMode = 'login', resetToken }
     setError(null); setInfo(null); setUnverified(false); setLoading(true)
     try {
       if (mode === 'login') {
-        await login(email, password); onClose()
+        const { mfaRequired, mfaToken: tok } = await login(email, password)
+        if (mfaRequired) { setMfaToken(tok || ''); setMode('mfa') }
+        else onClose()
+      } else if (mode === 'mfa') {
+        await verifyMfa(mfaToken, code); onClose()
       } else if (mode === 'register') {
         const { verificationRequired } = await register(email, password)
         if (verificationRequired) setInfo(t('auth.verifyEmailSent', { email }))
@@ -73,12 +79,14 @@ export default function AuthModal({ onClose, initialMode = 'login', resetToken }
   }
 
   const showTabs   = mode === 'login' || mode === 'register'
-  const needsEmail = mode !== 'reset'
+  const needsEmail = mode === 'login' || mode === 'register' || mode === 'forgot'
   const needsPw    = mode === 'login' || mode === 'register' || mode === 'reset'
+  const needsCode  = mode === 'mfa'
 
   const title =
     mode === 'forgot' ? t('auth.forgotTitle')
     : mode === 'reset' ? t('auth.resetTitle')
+    : mode === 'mfa'   ? t('auth.mfaTitle')
     : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')
 
   return (
@@ -103,7 +111,12 @@ export default function AuthModal({ onClose, initialMode = 'login', resetToken }
           </div>
         )}
 
-        {!showTabs && <h3 className="modal__title">{title}</h3>}
+        {!showTabs && (
+          <h3 className="modal__title">
+            {mode === 'mfa' && <FiShield style={{ marginRight: 6, verticalAlign: '-2px' }} />}
+            {title}
+          </h3>
+        )}
 
         {info ? (
           <div className="modal__success">
@@ -147,6 +160,24 @@ export default function AuthModal({ onClose, initialMode = 'login', resetToken }
               </>
             )}
 
+            {needsCode && (
+              <>
+                <p className="modal__note">{t('auth.mfaPrompt')}</p>
+                <label className="modal__label">{t('auth.mfaCode')}</label>
+                <input
+                  className="modal__input"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder={t('auth.mfaCodePlaceholder')}
+                  value={code}
+                  onChange={e => setCode(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </>
+            )}
+
             {error && (
               <div className="modal__error">
                 <FiAlertCircle /> {error}
@@ -176,10 +207,11 @@ export default function AuthModal({ onClose, initialMode = 'login', resetToken }
                 : mode === 'login'   ? t('auth.signIn')
                 : mode === 'register'? t('auth.createAccount')
                 : mode === 'forgot'  ? t('auth.forgotSubmit')
+                : mode === 'mfa'     ? t('auth.mfaSubmit')
                 : t('auth.resetSubmit')}
             </button>
 
-            {(mode === 'forgot' || mode === 'reset') && (
+            {(mode === 'forgot' || mode === 'reset' || mode === 'mfa') && (
               <button type="button" className="modal__linkbtn modal__linkbtn--muted"
                       onClick={() => switchMode('login')}>
                 {t('auth.backToLogin')}

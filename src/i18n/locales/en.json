@@ -36,7 +36,12 @@
     "resetSent": "If that account exists, we've emailed a password-reset link.",
     "resetDone": "Password updated. You can now sign in.",
     "verifyOk": "Email verified — you can now sign in.",
-    "verifyFail": "That verification link is invalid or has expired."
+    "verifyFail": "That verification link is invalid or has expired.",
+    "mfaTitle": "Two-factor authentication",
+    "mfaPrompt": "Enter the 6-digit code from your authenticator app, or a recovery code.",
+    "mfaCode": "Authentication code",
+    "mfaCodePlaceholder": "123456 or recovery code",
+    "mfaSubmit": "Verify"
   },
   "search": {
     "placeholder": "Search companies, brands, people…",
@@ -270,7 +275,25 @@
     "deleteUser": "Delete user",
     "usersLoadError": "Could not load users.",
     "roleUpdateError": "Could not update role.",
-    "deleteUserError": "Could not delete user."
+    "deleteUserError": "Could not delete user.",
+    "mfa": {
+      "title": "Two-factor authentication",
+      "desc": "Add a second step at login using an authenticator app (Google Authenticator, Authy, …).",
+      "enable": "Enable two-factor",
+      "enabled": "Two-factor is on",
+      "disable": "Disable two-factor",
+      "scan": "Scan this QR code with your authenticator app, then enter the code it shows.",
+      "manualKey": "Or enter this key manually:",
+      "enterCode": "Code from the app",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "recoveryNote": "Save these recovery codes somewhere safe. Each works once if you lose your authenticator. They won't be shown again.",
+      "copy": "Copy codes",
+      "done": "Done",
+      "disablePrompt": "Enter a current code (or a recovery code) to turn two-factor off.",
+      "error": "Something went wrong. Try again.",
+      "badCode": "That code isn't valid. Try again."
+    }
   },
   "scraper": {
     "title": "Scraper",
