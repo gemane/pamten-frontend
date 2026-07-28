@@ -150,8 +150,16 @@
     "unpinTip": "Quitar la corrección (la lectura vuelve al valor escrapeado)",
     "emptyPins": "Sin correcciones.",
     "reports": "{{count}} reportes",
-    "status": { "open": "Abiertos", "reviewing": "En revisión", "rejected": "Rechazados", "resolved": "Resueltos" },
-    "reporter": { "user": "Usuario registrado", "anon": "Anónimo" }
+    "status": {
+      "open": "Abiertos",
+      "reviewing": "En revisión",
+      "rejected": "Rechazados",
+      "resolved": "Resueltos"
+    },
+    "reporter": {
+      "user": "Usuario registrado",
+      "anon": "Anónimo"
+    }
   },
   "pin": {
     "title": "Fijar una corrección",
@@ -278,23 +286,9 @@
     "loadIntoGraph": "Cargar en grafo →",
     "failed": "Error en el scraping.",
     "bods": {
-      "title": "Importación masiva BODS",
-      "subtitle": "Importar grandes conjuntos de datos de propiedad publicados bajo CC0",
-      "warning": "Descargas grandes — GLEIF ≈ 1,1 GB · UK PSC ≈ 3,3 GB. Indica una ruta de archivo local para omitir la descarga en reintentos.",
-      "gleifDesc": "Identificadores globales de entidades jurídicas — propiedad corporativa mundial",
-      "gleifCliNote": "GLEIF se importa desde la copia dorada de GLEIF mediante la CLI (entidades, relaciones, sucesión), no por BODS.",
-      "ukPscDesc": "Personas con control significativo — empresas registradas en el Reino Unido",
-      "limit": "Límite",
-      "limitHint": "filas (vacío = conjunto completo)",
-      "jurisdiction": "Filtro de país",
-      "jurisdictionHint": "ISO alfa-2 p. ej. DE",
-      "localFile": "Archivo local",
-      "localFileHint": "/data/gleif.zip",
-      "run": "Importar",
-      "running": "Importando…",
-      "result": "{{entities}} entidades · {{persons}} personas · {{relationships}} aristas",
-      "skipped": "{{count}} omitidos",
-      "errors": "{{count}} errores"
+      "title": "Conjuntos de datos de propiedad masivos",
+      "subtitle": "Grandes registros cargados en el servidor, no desde el navegador",
+      "cliNote": "GLEIF (copia dorada) y los datos del Companies House del Reino Unido (PSC + registro de empresas) se importan de forma masiva desde la CLI del servidor de forma programada — aquí no hay activación manual. Activa o desactiva una fuente arriba."
     }
   },
   "activity": {

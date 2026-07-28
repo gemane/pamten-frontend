@@ -150,8 +150,16 @@
     "unpinTip": "Remove the correction (reads fall back to the scraped value)",
     "emptyPins": "No pins.",
     "reports": "{{count}} reports",
-    "status": { "open": "Open", "reviewing": "Reviewing", "rejected": "Rejected", "resolved": "Resolved" },
-    "reporter": { "user": "Signed-in user", "anon": "Anonymous" }
+    "status": {
+      "open": "Open",
+      "reviewing": "Reviewing",
+      "rejected": "Rejected",
+      "resolved": "Resolved"
+    },
+    "reporter": {
+      "user": "Signed-in user",
+      "anon": "Anonymous"
+    }
   },
   "pin": {
     "title": "Pin a correction",
@@ -278,23 +286,9 @@
     "loadIntoGraph": "Load into graph →",
     "failed": "Scrape failed.",
     "bods": {
-      "title": "BODS Bulk Import",
-      "subtitle": "Import large ownership datasets published under CC0",
-      "warning": "Large downloads — GLEIF ≈ 1.1 GB · UK PSC ≈ 3.3 GB. Provide a local file path to skip the download on retries.",
-      "gleifDesc": "Global legal entity identifiers — corporate ownership worldwide",
-      "gleifCliNote": "GLEIF is imported from the GLEIF golden copy via the CLI (entities, relationships, succession) — not over BODS.",
-      "ukPscDesc": "People with significant control — UK-registered companies",
-      "limit": "Limit",
-      "limitHint": "rows (blank = full dataset)",
-      "jurisdiction": "Country filter",
-      "jurisdictionHint": "ISO alpha-2 e.g. DE",
-      "localFile": "Local file",
-      "localFileHint": "/data/gleif.zip",
-      "run": "Import",
-      "running": "Importing…",
-      "result": "{{entities}} entities · {{persons}} persons · {{relationships}} edges",
-      "skipped": "{{count}} skipped",
-      "errors": "{{count}} errors"
+      "title": "Bulk ownership datasets",
+      "subtitle": "Large registries loaded on the server, not from the browser",
+      "cliNote": "GLEIF (golden copy) and the UK Companies House data (PSC + company register) are imported in bulk from the server CLI on a schedule — there is no manual trigger here. Toggle a source above to enable or disable it."
     }
   },
   "activity": {
