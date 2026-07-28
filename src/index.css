@@ -402,6 +402,49 @@ body {
 
 .settings-logout-btn:hover { border-color: #e87c6e; color: #e87c6e; }
 
+/* ── Two-factor auth section ─────────────────────────────────────────────── */
+.mfa-box { display: flex; flex-direction: column; gap: 10px; }
+.mfa-box__desc { font-size: 12px; color: #8892a4; line-height: 1.5; margin: 0; }
+.mfa-box__desc--warn { color: #e0b050; }
+.mfa-box__manual { font-size: 11px; color: #8892a4; line-height: 1.6; margin: 0; }
+.mfa-box__manual code { color: #cbd5e0; letter-spacing: 1px; word-break: break-all; }
+.mfa-box__status { display: flex; align-items: center; gap: 7px; color: #2ECC71; font-size: 13px; font-weight: 600; margin: 0; }
+.mfa-qr {
+  align-self: center;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+}
+.mfa-recovery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+}
+.mfa-recovery code { font-size: 13px; letter-spacing: 1px; color: #cbd5e0; }
+.mfa-actions { display: flex; align-items: center; gap: 12px; }
+.mfa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  background: #4A90D9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mfa-btn:hover:not(:disabled) { background: #357abd; }
+.mfa-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mfa-btn--danger { background: #c0453b; }
+.mfa-btn--danger:hover:not(:disabled) { background: #a83a31; }
+
 .login-btn {
   display: flex;
   align-items: center;

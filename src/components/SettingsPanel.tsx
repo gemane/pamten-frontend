@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import ThemeToggle from './ThemeToggle'
+import MfaSection from './MfaSection'
 import type { Theme } from '../hooks/useTheme'
 import type { AuthUser } from '../types'
 import { getUsers, updateUserRole, deleteUser } from '../services/api'
@@ -134,6 +135,8 @@ export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onL
           </button>
         )}
       </div>
+
+      {user && <MfaSection />}
 
       {user?.role === 'admin' && (
         <div className="settings-section">
