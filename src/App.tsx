@@ -18,6 +18,8 @@ import AuthModal     from './components/AuthModal'
 import ModeratorQueue from './components/ModeratorQueue'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
+import { useMobile } from './hooks/useMobile'
+import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, setUnauthorizedHandler, authVerifyEmail } from './services/api'
 import type {
@@ -61,17 +63,6 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   }
 }
 
-
-function useMobile() {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 640)
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)')
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return isMobile
-}
 
 function AppInner() {
   const { user, logout } = useAuth()
@@ -498,27 +489,16 @@ function AppInner() {
     }
   }, [handleTabChange, restoreEntity, handleClearGraph])
 
-  // Handle the links emailed for verification / password reset, once on load.
-  // The link is `${APP_BASE_URL}/?action=verify-email|reset-password&token=…`.
-  const didInitActionRef = useRef(false)
-  useEffect(() => {
-    if (didInitActionRef.current) return
-    didInitActionRef.current = true
-    const params = new URLSearchParams(window.location.search)
-    const action = params.get('action')
-    const token  = params.get('token')
-    if (!action || !token) return
-    // strip the query string (keep the hash view) so a refresh doesn't re-fire it
-    window.history.replaceState(null, '', window.location.pathname + window.location.hash)
-    if (action === 'verify-email') {
+  // Handle the emailed verification / password-reset links, once on load.
+  useEmailActionLinks({
+    onVerifyEmail: (token) => {
       authVerifyEmail(token)
         .then(() => showToast(t('auth.verifyOk'), 'success'))
         .catch(() => showToast(t('auth.verifyFail'), 'error'))
         .finally(() => { setAuthMode('login'); setShowAuth(true) })
-    } else if (action === 'reset-password') {
-      setResetToken(token); setAuthMode('reset'); setShowAuth(true)
-    }
-  }, [showToast, t])
+    },
+    onResetPassword: (token) => { setResetToken(token); setAuthMode('reset'); setShowAuth(true) },
+  })
 
   // Restore a deep link once on load (runs before the URL-sync effect below).
   const didInitViewRef = useRef(false)
