@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)   // checking stored token on mount
 
   useEffect(() => {
-    const token = localStorage.getItem('pamten_token')
+    const token = localStorage.getItem('owlgraph_token')
     if (!token) { setLoading(false); return }
     authMe()
       .then(({ data }) => setUser(data))
@@ -27,13 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Only discard the token when the server rejected it — a network
         // blip or 5xx must not log the user out.
         const status = (err as { response?: { status?: number } }).response?.status
-        if (status === 401) localStorage.removeItem('pamten_token')
+        if (status === 401) localStorage.removeItem('owlgraph_token')
       })
       .finally(() => setLoading(false))
   }, [])
 
   const storeAndSetUser = (data: AuthUser & { access_token: string }) => {
-    localStorage.setItem('pamten_token', data.access_token)
+    localStorage.setItem('owlgraph_token', data.access_token)
     setUser({ id: data.id, email: data.email, role: data.role })
   }
 
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem('pamten_token')
+    localStorage.removeItem('owlgraph_token')
     setUser(null)
   }, [])
 
