@@ -252,7 +252,7 @@ function AppInner() {
     const blob = new Blob([csv], { type: 'text/csv' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = 'pamten-graph.csv'
+    a.download = 'owlgraph-graph.csv'
     a.click()
     URL.revokeObjectURL(a.href)
   }, [t])
@@ -566,7 +566,7 @@ function AppInner() {
                 onClick={handleClearGraph}
                 title={t('nav.home')}
               >
-                <span className="logo">Pamten</span>
+                <span className="logo">Owlgraph</span>
                 <span className="logo-sub">Ownership Graph</span>
               </div>
               <div className="tab-toggle">

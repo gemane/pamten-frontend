@@ -36,7 +36,7 @@ const client = axios.create({
 
 // Attach JWT token to every request if present
 client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('pamten_token')
+  const token = localStorage.getItem('owlgraph_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
