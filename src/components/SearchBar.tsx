@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
-import { search, getCountries } from '../services/api'
+import { search } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import type { SearchResult } from '../types'
 
@@ -9,15 +9,17 @@ interface SearchBarProps {
   onSelect: (result: SearchResult) => void
   selectedLabel?: string   // set by parent when navigating programmatically
   placeholder?: string
+  // Fetched once at the App level (tab-independent) so the country filter is available
+  // from the start, not only after the graph-tab SearchBar first mounts.
+  countries: { country: string; count: number }[]
 }
 
-export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
+export default function SearchBar({ onSelect, selectedLabel, countries }: SearchBarProps) {
   const { t, i18n } = useTranslation()
   const [query, setQuery]           = useState<string>('')
   const [results, setResults]       = useState<SearchResult[]>([])
   const [open, setOpen]             = useState<boolean>(false)
   const [loading, setLoading]       = useState<boolean>(false)
-  const [countries, setCountries]   = useState<{ country: string; count: number }[]>([])
   const [country, setCountry]       = useState<string>('')
   const [countryQuery, setCountryQuery] = useState<string>('')
   const [countryOpen, setCountryOpen]   = useState<boolean>(false)
@@ -27,10 +29,6 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
   const countryRef = useRef<HTMLDivElement>(null)
   const skipSearch = useRef<boolean>(false)
   const reqSeq     = useRef<number>(0)
-
-  useEffect(() => {
-    getCountries().then(r => setCountries(r.data)).catch(() => {})
-  }, [])
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -155,7 +153,7 @@ export default function SearchBar({ onSelect, selectedLabel }: SearchBarProps) {
             type="button"
           >
             <span className="country-filter__label">
-              {country || t('search.allCountries')}
+              {country ? countryName(country, i18n.language) : t('search.allCountries')}
             </span>
             {country
               ? <FiX className="country-filter__icon" onMouseDown={e => { e.stopPropagation(); setCountry(''); setCountryOpen(false) }} />

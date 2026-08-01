@@ -21,7 +21,7 @@ import { useTheme } from './hooks/useTheme'
 import { useMobile } from './hooks/useMobile'
 import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, setUnauthorizedHandler, authVerifyEmail } from './services/api'
+import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getCountries, setUnauthorizedHandler, authVerifyEmail } from './services/api'
 import type {
   GraphElement,
   NodeData,
@@ -88,6 +88,9 @@ function AppInner() {
   const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
   const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+  // Country list for the search filter — fetched once here (not in SearchBar) so it's
+  // available whichever tab the app opens on, not only after the graph SearchBar mounts.
+  const [searchCountries, setSearchCountries] = useState<{ country: string; count: number }[]>([])
   const [mapFlyTo,        setMapFlyTo]        = useState<{ center: [number, number]; zoom: number } | null>(null)
   const loadedIds          = useRef<Set<string>>(new Set())
   const elementsRef        = useRef<GraphElement[]>([])
@@ -103,6 +106,11 @@ function AppInner() {
       setShowAuth(true)
     })
   }, [logout])
+
+  // Country list for the search filter — fetched once on load, independent of tab.
+  useEffect(() => {
+    getCountries().then(r => setSearchCountries(r.data)).catch(() => {})
+  }, [])
 
   const showToast = useCallback((message: string, type = 'info') => {
     setToast({ message, type })
@@ -636,7 +644,7 @@ function AppInner() {
             {activeTab === 'graph' && (
               <>
                 <div className="graph-topbar">
-                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
+                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} />
                 </div>
                 <div className="mobile-canvas">
                   {elements.length > 0 && <GraphLegend />}
@@ -723,7 +731,7 @@ function AppInner() {
           <>
             {activeTab === 'graph' && (
               <div className="graph-topbar">
-                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} />
+                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} />
               </div>
             )}
             <div className="graph-area">
