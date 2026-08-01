@@ -47,6 +47,7 @@ export interface Entity {
   registration_authority?: string  // register name, e.g. "Companies Register"
   registration_number?: string     // the entity's id at that authority
   address?: string          // human-readable registered (legal) address
+  founded_date?: string     // full YYYY-MM-DD incorporation/creation date (headline `founded` stays the year)
 }
 
 export interface Person {

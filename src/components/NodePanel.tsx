@@ -233,6 +233,7 @@ export function entityDetailRows(entity: Entity): DetailRow[] {
   const candidates: { icon: React.ElementType; labelKey: string; value?: string | null }[] = [
     { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
     { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
+    { icon: FiCalendar,  labelKey: 'panel.founded',      value: entity.founded_date },
     { icon: FiMapPin,    labelKey: 'panel.regAddress',   value: entity.address },
   ]
   return candidates.filter((r): r is DetailRow => !!r.value)

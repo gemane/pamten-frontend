@@ -223,17 +223,19 @@ describe('entityDetailRows', () => {
     expect(entityDetailRows(base)).toEqual([])
   })
 
-  it('surfaces legal form, registered-at (authority · number) and address in order', () => {
+  it('surfaces legal form, registered-at (authority · number), founded date and address in order', () => {
     const rows = entityDetailRows({
       ...base,
       legal_form: 'Private Limited Company',
       registration_authority: 'Companies Register',
       registration_number: '07428111',
+      founded_date: '2010-11-09',
       address: '1 Example Street, London, EC1A 1BB, GB',
     })
     expect(rows.map(r => [r.labelKey, r.value])).toEqual([
       ['panel.legalForm', 'Private Limited Company'],
       ['panel.registeredAt', 'Companies Register · 07428111'],
+      ['panel.founded', '2010-11-09'],
       ['panel.regAddress', '1 Example Street, London, EC1A 1BB, GB'],
     ])
   })
