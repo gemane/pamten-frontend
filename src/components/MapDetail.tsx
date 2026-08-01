@@ -28,6 +28,17 @@ function InvalidateSize() {
   return null
 }
 
+// MapContainer's `center`/`zoom` are only read on mount, so clicking a different pin
+// (which re-renders this component with new props, without remounting) leaves the map
+// parked on the previous company. Drive the view imperatively whenever the target moves.
+function Recenter({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setView([lat, lng], zoom)
+  }, [map, lat, lng, zoom])
+  return null
+}
+
 // A closeable street-level detail map for one company, over the world map. Pins the HQ
 // at its server-geocoded coordinate — a precise marker when the full address resolved,
 // otherwise a circle at the city to signal the location is approximate.
@@ -64,6 +75,7 @@ export default function MapDetail({ data, onClose }: { data: MapDetailData; onCl
           attribution='&copy; OpenStreetMap contributors &copy; CARTO'
         />
         <InvalidateSize />
+        <Recenter lat={data.lat} lng={data.lng} zoom={precise ? 16 : 12} />
         {precise
           ? <CircleMarker center={[data.lat, data.lng]} radius={9}
               pathOptions={{ color: '#b45309', weight: 2, fillColor: '#fcd34d', fillOpacity: 0.95 }} />

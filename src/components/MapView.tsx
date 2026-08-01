@@ -63,11 +63,12 @@ export interface PlacedMarker {
 
 // Two entities at (nearly) the same coordinate — e.g. a parent and a same-campus
 // subsidiary like Microsoft Corp + Round Island One (~90 m apart) — stack into a single
-// un-clickable pin. Group markers by their coordinate (rounded to ~1 km) and fan any
-// cluster out around its point so each pin stays individually hoverable/clickable.
-// Offsets are returned in screen pixels; the caller divides by zoom so on-screen spacing
-// is constant at every zoom level.
-export function spreadOverlapping(markers: ContextCountry[], radius = 12): PlacedMarker[] {
+// un-clickable pin. Group markers by their coordinate (rounded to ~1 km); for each
+// cluster keep one pin ANCHORED at the true location (the HQ/primary if present) and fan
+// the others out around it, so the HQ stays put and the rest become individually
+// clickable. Offsets are returned in screen pixels; the caller divides by zoom so the
+// on-screen spacing is constant at every zoom level.
+export function spreadOverlapping(markers: ContextCountry[], radius = 14): PlacedMarker[] {
   const groups = new Map<string, ContextCountry[]>()
   for (const c of markers) {
     const key = `${c.lat!.toFixed(2)},${c.lng!.toFixed(2)}`
@@ -81,10 +82,12 @@ export function spreadOverlapping(markers: ContextCountry[], radius = 12): Place
       out.push({ c: g[0], ox: 0, oy: 0, clustered: false })
       continue
     }
-    // Primary first so it takes the top slot; the rest fan around evenly.
+    // Anchor the primary (HQ) at the true point; everything else fans around it.
     const ordered = [...g].sort((a, b) => (a.role === 'primary' ? -1 : b.role === 'primary' ? 1 : 0))
-    ordered.forEach((c, i) => {
-      const angle = (2 * Math.PI * i) / ordered.length - Math.PI / 2
+    const [anchor, ...rest] = ordered
+    out.push({ c: anchor, ox: 0, oy: 0, clustered: true })
+    rest.forEach((c, i) => {
+      const angle = (2 * Math.PI * i) / rest.length - Math.PI / 2
       out.push({ c, ox: radius * Math.cos(angle), oy: radius * Math.sin(angle), clustered: true })
     })
   }
@@ -228,7 +231,7 @@ export default function MapView({
               {/* Fan clustered (near-coincident) pins out so each is clickable; a thin
                   leader line ties them back to their shared location. */}
               <g transform={`translate(${ox / zoom} ${oy / zoom})`}>
-                {clustered && (
+                {clustered && (ox !== 0 || oy !== 0) && (
                   <line x1={-ox / zoom} y1={-oy / zoom} x2={0} y2={0}
                     stroke={theme === 'dark' ? '#6b7280' : '#9ca3af'} strokeWidth={1 / zoom}
                     style={{ pointerEvents: 'none' }} />

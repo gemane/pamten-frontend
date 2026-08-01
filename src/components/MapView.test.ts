@@ -79,24 +79,28 @@ describe('spreadOverlapping — fan out coincident pins', () => {
     expect(out.every(m => !m.clustered && m.ox === 0 && m.oy === 0)).toBe(true)
   })
 
-  it('fans out two near-coincident pins (Microsoft Corp + Round Island One)', () => {
-    // ~90 m apart → same rounded coordinate → must be spread so both stay clickable.
+  it('anchors the HQ (primary) and fans the subsidiary out (Microsoft Corp + Round Island One)', () => {
+    // ~90 m apart → same rounded coordinate. The HQ must stay at its true point; the
+    // subsidiary is nudged out so it stays clickable.
     const out = spreadOverlapping([
       mk('Microsoft Corp', 47.6411813, -122.1266792, 'primary'),
       mk('Round Island One', 47.6419845, -122.1269364),
     ])
     expect(out).toHaveLength(2)
     expect(out.every(m => m.clustered)).toBe(true)
-    // Distinct offsets → not stacked on the same point.
-    expect(out[0].ox !== out[1].ox || out[0].oy !== out[1].oy).toBe(true)
-    // Primary takes the first (top) slot.
-    expect(out[0].c.label).toBe('Microsoft Corp')
+    const corp = out.find(m => m.c.label === 'Microsoft Corp')!
+    const sub = out.find(m => m.c.label === 'Round Island One')!
+    expect(corp.ox).toBe(0)                            // HQ stays put
+    expect(corp.oy).toBe(0)
+    expect(Math.hypot(sub.ox, sub.oy)).toBeGreaterThan(0)  // subsidiary nudged out
   })
 
-  it('places each clustered pin on the offset circle of the given radius', () => {
+  it('anchors one pin at the centre and rings the rest at the given radius', () => {
     const out = spreadOverlapping([mk('A', 1, 1), mk('B', 1, 1), mk('C', 1, 1)], 12)
-    for (const m of out) {
-      expect(Math.hypot(m.ox, m.oy)).toBeCloseTo(12, 5)
-    }
+    const atCentre = out.filter(m => m.ox === 0 && m.oy === 0)
+    const onRing = out.filter(m => Math.hypot(m.ox, m.oy) > 0)
+    expect(atCentre).toHaveLength(1)
+    expect(onRing).toHaveLength(2)
+    onRing.forEach(m => expect(Math.hypot(m.ox, m.oy)).toBeCloseTo(12, 5))
   })
 })
