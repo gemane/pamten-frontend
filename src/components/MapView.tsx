@@ -54,6 +54,43 @@ function buildContextNumericMap(contextCountries: ContextCountry[]): Map<number,
 
 const MAX_COUNT = 20
 
+export interface PlacedMarker {
+  c: ContextCountry
+  ox: number   // screen-pixel offset applied to the pin (before ÷ zoom)
+  oy: number
+  clustered: boolean
+}
+
+// Two entities at (nearly) the same coordinate — e.g. a parent and a same-campus
+// subsidiary like Microsoft Corp + Round Island One (~90 m apart) — stack into a single
+// un-clickable pin. Group markers by their coordinate (rounded to ~1 km) and fan any
+// cluster out around its point so each pin stays individually hoverable/clickable.
+// Offsets are returned in screen pixels; the caller divides by zoom so on-screen spacing
+// is constant at every zoom level.
+export function spreadOverlapping(markers: ContextCountry[], radius = 12): PlacedMarker[] {
+  const groups = new Map<string, ContextCountry[]>()
+  for (const c of markers) {
+    const key = `${c.lat!.toFixed(2)},${c.lng!.toFixed(2)}`
+    const g = groups.get(key)
+    if (g) g.push(c)
+    else groups.set(key, [c])
+  }
+  const out: PlacedMarker[] = []
+  for (const g of groups.values()) {
+    if (g.length === 1) {
+      out.push({ c: g[0], ox: 0, oy: 0, clustered: false })
+      continue
+    }
+    // Primary first so it takes the top slot; the rest fan around evenly.
+    const ordered = [...g].sort((a, b) => (a.role === 'primary' ? -1 : b.role === 'primary' ? 1 : 0))
+    ordered.forEach((c, i) => {
+      const angle = (2 * Math.PI * i) / ordered.length - Math.PI / 2
+      out.push({ c, ox: radius * Math.cos(angle), oy: radius * Math.sin(angle), clustered: true })
+    })
+  }
+  return out
+}
+
 export function countryFill(
   data: CountryEntityGroup | undefined,
   context: 'primary' | 'subsidiary' | undefined,
@@ -100,7 +137,7 @@ export default function MapView({
 
   // Only markers with actual GPS coordinates
   const gpsMarkers = useMemo(() =>
-    contextCountries.filter(c => c.lat != null && c.lng != null),
+    spreadOverlapping(contextCountries.filter(c => c.lat != null && c.lng != null)),
   [contextCountries])
 
   // Guard against NaN coordinates that would corrupt the d3-zoom transform
@@ -180,7 +217,7 @@ export default function MapView({
             }
           </Geographies>
 
-          {gpsMarkers.map((c, i) => (
+          {gpsMarkers.map(({ c, ox, oy, clustered }, i) => (
             <Marker key={i} coordinates={[c.lng!, c.lat!]}
               onClick={() => setDetail({ label: c.label, city: c.city, country: c.country,
                                          lat: c.lat!, lng: c.lng!, hqAddress: c.hqAddress,
@@ -188,15 +225,25 @@ export default function MapView({
               onMouseEnter={() => setTooltip({ x: 0, y: 0, text: c.label })}
               onMouseLeave={() => setTooltip(null)}
             >
-              {/* Invisible larger hit area so the pin is easy to tap on mobile. */}
-              <circle r={14 / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
-              <circle
-                r={(c.role === 'primary' ? 5 : 4) / zoom}
-                fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
-                stroke={theme === 'dark' ? '#111827' : '#fff'}
-                strokeWidth={1.5 / zoom}
-                style={{ cursor: 'pointer', pointerEvents: 'none' }}
-              />
+              {/* Fan clustered (near-coincident) pins out so each is clickable; a thin
+                  leader line ties them back to their shared location. */}
+              <g transform={`translate(${ox / zoom} ${oy / zoom})`}>
+                {clustered && (
+                  <line x1={-ox / zoom} y1={-oy / zoom} x2={0} y2={0}
+                    stroke={theme === 'dark' ? '#6b7280' : '#9ca3af'} strokeWidth={1 / zoom}
+                    style={{ pointerEvents: 'none' }} />
+                )}
+                {/* Invisible larger hit area so the pin is easy to tap on mobile;
+                    shrunk when clustered so neighbouring hit areas don't overlap. */}
+                <circle r={(clustered ? 9 : 14) / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
+                <circle
+                  r={(c.role === 'primary' ? 5 : 4) / zoom}
+                  fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
+                  stroke={theme === 'dark' ? '#111827' : '#fff'}
+                  strokeWidth={1.5 / zoom}
+                  style={{ cursor: 'pointer', pointerEvents: 'none' }}
+                />
+              </g>
             </Marker>
           ))}
         </ZoomableGroup>
