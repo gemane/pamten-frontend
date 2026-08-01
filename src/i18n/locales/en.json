@@ -254,7 +254,7 @@
   },
   "map": {
     "resetView": "Reset view",
-    "hint": "Scroll to zoom · Drag to pan · Click a country",
+    "hint": "Scroll to zoom · Drag to pan · Click a country or a company pin",
     "empty1": "No geographic data yet.",
     "empty2": "Scrape companies to populate the map.",
     "loadingData": "Loading map data…",
@@ -266,7 +266,9 @@
     "panelHint": "Click a highlighted country to see its entities. Click an entity to load it into the graph.",
     "showingFirst": "Showing first {{shown}} of {{total}} entities",
     "entityCount_one": "{{count}} entity",
-    "entityCount_other": "{{count}} entities"
+    "entityCount_other": "{{count}} entities",
+    "viewLarger": "View larger map",
+    "close": "Close"
   },
   "settings": {
     "title": "Settings",

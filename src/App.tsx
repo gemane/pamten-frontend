@@ -359,7 +359,8 @@ function AppInner() {
       if (seen.has(key)) return
       seen.add(key)
       cache.set(id, { country, lat, lng })
-      result.push({ country, role, lat, lng, label: raw.name })
+      result.push({ country, role, lat, lng, label: raw.name,
+                    city: raw.hq_city, address: raw.address ?? raw.registered_address })
     }
 
     addEntity(selectedNode.raw as Entity, selectedNode.id, 'primary')

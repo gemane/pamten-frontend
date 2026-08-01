@@ -254,7 +254,7 @@
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",
-    "hint": "Scrollen zum Zoomen · Ziehen zum Verschieben · Land anklicken",
+    "hint": "Scrollen zum Zoomen · Ziehen zum Verschieben · Land oder Firmen-Pin anklicken",
     "empty1": "Noch keine geografischen Daten.",
     "empty2": "Unternehmen scrapen, um die Karte zu füllen.",
     "loadingData": "Kartendaten werden geladen…",
@@ -266,7 +266,9 @@
     "panelHint": "Klicken Sie auf ein hervorgehobenes Land, um seine Einträge zu sehen. Klicken Sie auf einen Eintrag, um ihn in den Graph zu laden.",
     "showingFirst": "Zeige die ersten {{shown}} von {{total}} Einträgen",
     "entityCount_one": "{{count}} Entität",
-    "entityCount_other": "{{count}} Entitäten"
+    "entityCount_other": "{{count}} Entitäten",
+    "viewLarger": "Größere Karte anzeigen",
+    "close": "Schließen"
   },
   "settings": {
     "title": "Einstellungen",
