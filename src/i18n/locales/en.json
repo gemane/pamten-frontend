@@ -268,7 +268,8 @@
     "entityCount_one": "{{count}} entity",
     "entityCount_other": "{{count}} entities",
     "viewLarger": "View larger map",
-    "close": "Close"
+    "close": "Close",
+    "approxLocation": "Approximate — city only"
   },
   "settings": {
     "title": "Settings",

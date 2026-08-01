@@ -1,31 +1,42 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiExternalLink } from 'react-icons/fi'
+import { MapContainer, TileLayer, CircleMarker, Circle } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import { countryName } from '../utils/isoCountries'
+import { osmLargeUrl, geocodeAddress } from '../utils/osm'
 
 export interface MapDetailData {
   label: string
   city?: string
   address?: string
   country: string
-  lat: number
+  lat: number       // city-level fallback (hq_city geocode)
   lng: number
 }
 
-// OpenStreetMap embed for a point: a small bbox around it + a marker. `d` (degrees)
-// controls the zoom — ~0.01 is roughly a town/neighbourhood view.
-export function osmEmbedUrl(lat: number, lng: number, d = 0.01): string {
-  const bbox = `${lng - d},${lat - d},${lng + d},${lat + d}`
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`
-}
-
-export function osmLargeUrl(lat: number, lng: number): string {
-  return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`
-}
-
-// A closeable street-level detail map for one company, over the world map.
+// A closeable street-level detail map for one company, over the world map. Uses the
+// full address for a precise pin when it geocodes; otherwise shows a circle at the
+// city to signal the location is approximate (city-level only).
 export default function MapDetail({ data, onClose }: { data: MapDetailData; onClose: () => void }) {
   const { t, i18n } = useTranslation()
+  // point starts city-level (approximate) and upgrades to the geocoded address.
+  const [point, setPoint] = useState<{ lat: number; lng: number; precise: boolean }>(
+    { lat: data.lat, lng: data.lng, precise: false })
+
+  useEffect(() => {
+    let active = true
+    setPoint({ lat: data.lat, lng: data.lng, precise: false })
+    if (data.address) {
+      geocodeAddress(data.address).then(hit => {
+        if (active && hit) setPoint({ ...hit, precise: true })
+      })
+    }
+    return () => { active = false }
+  }, [data.address, data.lat, data.lng])
+
   const place = [data.city, countryName(data.country, i18n.language)].filter(Boolean).join(', ')
+
   return (
     <div className="map-detail" role="dialog" aria-label={data.label}>
       <div className="map-detail__header">
@@ -33,18 +44,35 @@ export default function MapDetail({ data, onClose }: { data: MapDetailData; onCl
           <strong className="map-detail__name">{data.label}</strong>
           {place && <span className="map-detail__place">{place}</span>}
           {data.address && <span className="map-detail__addr">{data.address}</span>}
+          {!point.precise && (
+            <span className="map-detail__approx">{t('map.approxLocation')}</span>
+          )}
         </div>
         <button className="map-detail__close" onClick={onClose} title={t('map.close')} type="button">
           <FiX />
         </button>
       </div>
-      <iframe
-        className="map-detail__frame"
-        title={data.label}
-        src={osmEmbedUrl(data.lat, data.lng)}
-        loading="lazy"
-      />
-      <a className="map-detail__link" href={osmLargeUrl(data.lat, data.lng)}
+
+      <MapContainer
+        key={`${point.lat},${point.lng}`}      // recenter by remounting when the point resolves
+        center={[point.lat, point.lng]}
+        zoom={point.precise ? 16 : 12}
+        scrollWheelZoom
+        className="map-detail__map"
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap contributors'
+        />
+        {point.precise
+          ? <CircleMarker center={[point.lat, point.lng]} radius={9}
+              pathOptions={{ color: '#b45309', weight: 2, fillColor: '#fcd34d', fillOpacity: 0.95 }} />
+          : <Circle center={[point.lat, point.lng]} radius={1500}
+              pathOptions={{ color: '#f59e0b', weight: 1, dashArray: '4', fillColor: '#f59e0b', fillOpacity: 0.15 }} />
+        }
+      </MapContainer>
+
+      <a className="map-detail__link" href={osmLargeUrl(point.lat, point.lng, point.precise ? 17 : 13)}
          target="_blank" rel="noopener noreferrer">
         {t('map.viewLarger')} <FiExternalLink size={12} />
       </a>

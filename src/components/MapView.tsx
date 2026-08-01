@@ -1,11 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import worldData from 'world-atlas/countries-110m.json'
 import { ALPHA2_TO_NUMERIC, countryName, toAlpha2 } from '../utils/isoCountries'
 import { FiRotateCcw } from 'react-icons/fi'
-import MapDetail, { type MapDetailData } from './MapDetail'
+import type { MapDetailData } from './MapDetail'   // type only — no Leaflet at import
 import type { CountryEntityGroup, ContextCountry } from '../types'
+
+// Lazy so Leaflet (which needs `window` at import) is only loaded when a pin is clicked.
+const MapDetail = lazy(() => import('./MapDetail'))
 
 interface TooltipState {
   x: number
@@ -196,7 +199,11 @@ export default function MapView({
         </ZoomableGroup>
       </ComposableMap>
 
-      {detail && <MapDetail data={detail} onClose={() => setDetail(null)} />}
+      {detail && (
+        <Suspense fallback={null}>
+          <MapDetail data={detail} onClose={() => setDetail(null)} />
+        </Suspense>
+      )}
 
       {countryData.length === 0 && contextCountries.length === 0 && (
         <div className="map-empty">

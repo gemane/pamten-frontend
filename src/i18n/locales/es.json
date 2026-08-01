@@ -268,7 +268,8 @@
     "entityCount_one": "{{count}} entidad",
     "entityCount_other": "{{count}} entidades",
     "viewLarger": "Ver mapa más grande",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "approxLocation": "Aproximada — solo ciudad"
   },
   "settings": {
     "title": "Ajustes",
