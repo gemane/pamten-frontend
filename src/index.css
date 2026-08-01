@@ -803,6 +803,25 @@ body {
   padding: 0;
 }
 
+/* Roomier search bar in the top bar */
+.graph-topbar .search-box {
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+.graph-topbar .search-icon  { font-size: 19px; }
+.graph-topbar .search-input { font-size: 16px; }
+
+/* Match the roomier size on the country filter so it lines up with the search box */
+.graph-topbar .country-filter__toggle {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+.graph-topbar .country-filter__icon   { font-size: 16px; }
+.graph-topbar .country-filter__search { padding: 10px 14px; font-size: 15px; }
+.graph-topbar .country-filter__item   { padding: 8px 14px; font-size: 14px; }
+.graph-topbar .country-filter__count  { font-size: 12px; }
+
 .mobile-toggle--topbar {
   display: none;
   align-items: center;
