@@ -4,6 +4,7 @@ import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 're
 import worldData from 'world-atlas/countries-110m.json'
 import { ALPHA2_TO_NUMERIC, countryName, toAlpha2 } from '../utils/isoCountries'
 import { FiRotateCcw } from 'react-icons/fi'
+import MapDetail, { type MapDetailData } from './MapDetail'
 import type { CountryEntityGroup, ContextCountry } from '../types'
 
 interface TooltipState {
@@ -83,6 +84,7 @@ export default function MapView({
   const { t, i18n } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
+  const [detail,     setDetail]     = useState<MapDetailData | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
   // Seed from flyTo so pin markers (sized as radius / zoom) are correct on the
   // first paint after an auto-zoom. react-simple-maps bypasses move events for
@@ -176,18 +178,25 @@ export default function MapView({
           </Geographies>
 
           {gpsMarkers.map((c, i) => (
-            <Marker key={i} coordinates={[c.lng!, c.lat!]}>
+            <Marker key={i} coordinates={[c.lng!, c.lat!]}
+              onClick={() => setDetail({ label: c.label, city: c.city, address: c.address,
+                                         country: c.country, lat: c.lat!, lng: c.lng! })}
+              onMouseEnter={() => setTooltip({ x: 0, y: 0, text: c.label })}
+              onMouseLeave={() => setTooltip(null)}
+            >
               <circle
                 r={(c.role === 'primary' ? 5 : 4) / zoom}
                 fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
                 stroke={theme === 'dark' ? '#111827' : '#fff'}
                 strokeWidth={1.5 / zoom}
-                style={{ cursor: 'default', pointerEvents: 'none' }}
+                style={{ cursor: 'pointer' }}
               />
             </Marker>
           ))}
         </ZoomableGroup>
       </ComposableMap>
+
+      {detail && <MapDetail data={detail} onClose={() => setDetail(null)} />}
 
       {countryData.length === 0 && contextCountries.length === 0 && (
         <div className="map-empty">

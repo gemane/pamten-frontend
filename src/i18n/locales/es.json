@@ -254,7 +254,7 @@
   },
   "map": {
     "resetView": "Restablecer vista",
-    "hint": "Desplázate para acercar · Arrastra para mover · Haz clic en un país",
+    "hint": "Desplázate para acercar · Arrastra para mover · Haz clic en un país o un pin de empresa",
     "empty1": "Aún no hay datos geográficos.",
     "empty2": "Extrae empresas para poblar el mapa.",
     "loadingData": "Cargando datos del mapa…",
@@ -266,7 +266,9 @@
     "panelHint": "Haz clic en un país resaltado para ver sus entidades. Haz clic en una entidad para cargarla en el grafo.",
     "showingFirst": "Mostrando las primeras {{shown}} de {{total}} entidades",
     "entityCount_one": "{{count}} entidad",
-    "entityCount_other": "{{count}} entidades"
+    "entityCount_other": "{{count}} entidades",
+    "viewLarger": "Ver mapa más grande",
+    "close": "Cerrar"
   },
   "settings": {
     "title": "Ajustes",

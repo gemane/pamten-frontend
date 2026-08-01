@@ -47,6 +47,7 @@ export interface Entity {
   registration_authority?: string  // register name, e.g. "Companies Register"
   registration_number?: string     // the entity's id at that authority
   address?: string          // human-readable registered (legal) address
+  registered_address?: string  // normalized registered office (PSC/company-data)
   founded_date?: string     // full YYYY-MM-DD incorporation/creation date (headline `founded` stays the year)
 }
 
@@ -366,6 +367,8 @@ export interface ContextCountry {
   lat?: number           // hq_lat if available
   lng?: number           // hq_lng if available
   label: string          // entity name for tooltip
+  city?: string          // hq_city — shown in the location detail popup
+  address?: string       // registered/legal address — shown in the location detail popup
 }
 
 // Toast
