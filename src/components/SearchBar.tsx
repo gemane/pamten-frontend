@@ -14,6 +14,19 @@ interface SearchBarProps {
   countries: { country: string; count: number }[]
 }
 
+// Decide whether the debounced search should run for `query`, given a value we were told
+// to skip — a programmatically-set label (navigation, "view on map", back/forward) or a
+// just-selected result — whose setQuery must NOT trigger a search that reopens the
+// dropdown. Matching by *value* (not a one-shot boolean) is what fixes the remount bug:
+// when the graph tab re-mounts SearchBar with selectedLabel set, a boolean guard was
+// eaten by the initial query='' effect pass, so the later query=label pass searched and
+// popped the list open. The skip is consumed only by the pass whose query actually
+// matches, then cleared.
+export function consumeSkip(query: string, skip: string | null): { run: boolean; skip: string | null } {
+  if (skip !== null && skip === query) return { run: false, skip: null }
+  return { run: true, skip }
+}
+
 export default function SearchBar({ onSelect, selectedLabel, countries }: SearchBarProps) {
   const { t, i18n } = useTranslation()
   const [query, setQuery]           = useState<string>('')
@@ -27,7 +40,7 @@ export default function SearchBar({ onSelect, selectedLabel, countries }: Search
   const wrapRef    = useRef<HTMLDivElement>(null)
   const inputRef   = useRef<HTMLInputElement>(null)
   const countryRef = useRef<HTMLDivElement>(null)
-  const skipSearch = useRef<boolean>(false)
+  const skipQuery  = useRef<string | null>(null)
   const reqSeq     = useRef<number>(0)
 
   useEffect(() => {
@@ -60,14 +73,16 @@ export default function SearchBar({ onSelect, selectedLabel, countries }: Search
 
   useEffect(() => {
     if (selectedLabel == null) return
-    skipSearch.current = true
+    skipQuery.current = selectedLabel
     setQuery(selectedLabel)
     setResults([])
     setOpen(false)
   }, [selectedLabel])
 
   useEffect(() => {
-    if (skipSearch.current) { skipSearch.current = false; return }
+    const decision = consumeSkip(query, skipQuery.current)
+    skipQuery.current = decision.skip
+    if (!decision.run) return
     const q = query.trim()   // keyboard autocomplete can append a space; trim so the exact match still ranks first
     if (q.length < 2) {
       setResults([])
@@ -100,7 +115,7 @@ export default function SearchBar({ onSelect, selectedLabel, countries }: Search
     const nodeName = 'name' in result.node ? result.node.name : ('full_name' in result.node ? result.node.full_name : '')
     // Setting query to the selected name must NOT re-trigger the debounced search
     // (which would reopen the dropdown). Also drop any in-flight request.
-    skipSearch.current = true
+    skipQuery.current = nodeName || ''
     reqSeq.current++
     setQuery(nodeName || '')
     setResults([])
