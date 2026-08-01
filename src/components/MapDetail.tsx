@@ -1,10 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiExternalLink } from 'react-icons/fi'
-import { MapContainer, TileLayer, CircleMarker, Circle } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Circle, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { countryName } from '../utils/isoCountries'
 import { osmLargeUrl, geocodeAddress } from '../utils/osm'
+
+// Leaflet loads no tiles when it inits before its container is sized (a popup that
+// just appeared) — the map shows blank while SVG overlays still render. Recompute the
+// size once mounted so the tiles load.
+function InvalidateSize() {
+  const map = useMap()
+  useEffect(() => {
+    const id = setTimeout(() => map.invalidateSize(), 0)
+    return () => clearTimeout(id)
+  }, [map])
+  return null
+}
 
 export interface MapDetailData {
   label: string
@@ -61,9 +73,10 @@ export default function MapDetail({ data, onClose }: { data: MapDetailData; onCl
         className="map-detail__map"
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; OpenStreetMap contributors'
         />
+        <InvalidateSize />
         {point.precise
           ? <CircleMarker center={[point.lat, point.lng]} radius={9}
               pathOptions={{ color: '#b45309', weight: 2, fillColor: '#fcd34d', fillOpacity: 0.95 }} />
