@@ -269,7 +269,8 @@
     "entityCount_other": "{{count}} entities",
     "viewLarger": "View larger map",
     "close": "Close",
-    "approxLocation": "Approximate — city only"
+    "approxLocation": "Approximate — city only",
+    "registeredAddr": "Registered"
   },
   "settings": {
     "title": "Settings",

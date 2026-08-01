@@ -269,7 +269,8 @@
     "entityCount_other": "{{count}} Entitäten",
     "viewLarger": "Größere Karte anzeigen",
     "close": "Schließen",
-    "approxLocation": "Ungefähr — nur Stadt"
+    "approxLocation": "Ungefähr — nur Stadt",
+    "registeredAddr": "Eingetragen"
   },
   "settings": {
     "title": "Einstellungen",
