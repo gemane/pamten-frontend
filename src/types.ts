@@ -47,6 +47,9 @@ export interface Entity {
   registration_authority?: string  // register name, e.g. "Companies Register"
   registration_number?: string     // the entity's id at that authority
   address?: string          // human-readable registered (legal) address
+  registered_address?: string  // normalized registered office (PSC/company-data)
+  hq_address?: string       // full HQ address (map pin is geocoded from this)
+  hq_geo_precision?: string  // 'exact' | 'approx' — how precisely hq_lat/hq_lng was geocoded
   founded_date?: string     // full YYYY-MM-DD incorporation/creation date (headline `founded` stays the year)
 }
 
@@ -366,6 +369,10 @@ export interface ContextCountry {
   lat?: number           // hq_lat if available
   lng?: number           // hq_lng if available
   label: string          // entity name for tooltip
+  city?: string          // hq_city — shown in the location detail popup
+  hqAddress?: string     // full HQ address (the pinned location)
+  legalAddress?: string  // registered/legal address (shown as info when it differs)
+  precise?: boolean      // hq_geo_precision === 'exact' → pin vs approximate circle
 }
 
 // Toast

@@ -14,7 +14,8 @@ function cspPlugin(apiUrl: string): Plugin {
     "default-src 'self'",
     "script-src 'self' 'sha256-1o6eNdK+q27XKvFZMKWcidtwJHWnJ/s0krkPzTlmgnM='",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org",
+    // commons/upload.wikimedia = entity logos; *.basemaps.cartocdn.com = detail-map tiles
+    "img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org https://*.basemaps.cartocdn.com",
     `connect-src 'self'${apiOrigin ? ' ' + apiOrigin : ''} https://www.wikidata.org https://en.wikipedia.org`,
     "font-src 'self'",
     "object-src 'none'",

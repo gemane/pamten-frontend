@@ -1,10 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import worldData from 'world-atlas/countries-110m.json'
 import { ALPHA2_TO_NUMERIC, countryName, toAlpha2 } from '../utils/isoCountries'
 import { FiRotateCcw } from 'react-icons/fi'
+import type { MapDetailData } from './MapDetail'   // type only — no Leaflet at import
 import type { CountryEntityGroup, ContextCountry } from '../types'
+
+// Lazy so Leaflet (which needs `window` at import) is only loaded when a pin is clicked.
+const MapDetail = lazy(() => import('./MapDetail'))
 
 interface TooltipState {
   x: number
@@ -50,6 +54,46 @@ function buildContextNumericMap(contextCountries: ContextCountry[]): Map<number,
 
 const MAX_COUNT = 20
 
+export interface PlacedMarker {
+  c: ContextCountry
+  ox: number   // screen-pixel offset applied to the pin (before ÷ zoom)
+  oy: number
+  clustered: boolean
+}
+
+// Two entities at (nearly) the same coordinate — e.g. a parent and a same-campus
+// subsidiary like Microsoft Corp + Round Island One (~90 m apart) — stack into a single
+// un-clickable pin. Group markers by their coordinate (rounded to ~1 km); for each
+// cluster keep one pin ANCHORED at the true location (the HQ/primary if present) and fan
+// the others out around it, so the HQ stays put and the rest become individually
+// clickable. Offsets are returned in screen pixels; the caller divides by zoom so the
+// on-screen spacing is constant at every zoom level.
+export function spreadOverlapping(markers: ContextCountry[], radius = 14): PlacedMarker[] {
+  const groups = new Map<string, ContextCountry[]>()
+  for (const c of markers) {
+    const key = `${c.lat!.toFixed(2)},${c.lng!.toFixed(2)}`
+    const g = groups.get(key)
+    if (g) g.push(c)
+    else groups.set(key, [c])
+  }
+  const out: PlacedMarker[] = []
+  for (const g of groups.values()) {
+    if (g.length === 1) {
+      out.push({ c: g[0], ox: 0, oy: 0, clustered: false })
+      continue
+    }
+    // Anchor the primary (HQ) at the true point; everything else fans around it.
+    const ordered = [...g].sort((a, b) => (a.role === 'primary' ? -1 : b.role === 'primary' ? 1 : 0))
+    const [anchor, ...rest] = ordered
+    out.push({ c: anchor, ox: 0, oy: 0, clustered: true })
+    rest.forEach((c, i) => {
+      const angle = (2 * Math.PI * i) / rest.length - Math.PI / 2
+      out.push({ c, ox: radius * Math.cos(angle), oy: radius * Math.sin(angle), clustered: true })
+    })
+  }
+  return out
+}
+
 export function countryFill(
   data: CountryEntityGroup | undefined,
   context: 'primary' | 'subsidiary' | undefined,
@@ -83,6 +127,7 @@ export default function MapView({
   const { t, i18n } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
+  const [detail,     setDetail]     = useState<MapDetailData | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
   // Seed from flyTo so pin markers (sized as radius / zoom) are correct on the
   // first paint after an auto-zoom. react-simple-maps bypasses move events for
@@ -95,7 +140,7 @@ export default function MapView({
 
   // Only markers with actual GPS coordinates
   const gpsMarkers = useMemo(() =>
-    contextCountries.filter(c => c.lat != null && c.lng != null),
+    spreadOverlapping(contextCountries.filter(c => c.lat != null && c.lng != null)),
   [contextCountries])
 
   // Guard against NaN coordinates that would corrupt the d3-zoom transform
@@ -175,19 +220,43 @@ export default function MapView({
             }
           </Geographies>
 
-          {gpsMarkers.map((c, i) => (
-            <Marker key={i} coordinates={[c.lng!, c.lat!]}>
-              <circle
-                r={(c.role === 'primary' ? 5 : 4) / zoom}
-                fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
-                stroke={theme === 'dark' ? '#111827' : '#fff'}
-                strokeWidth={1.5 / zoom}
-                style={{ cursor: 'default', pointerEvents: 'none' }}
-              />
+          {gpsMarkers.map(({ c, ox, oy, clustered }, i) => (
+            <Marker key={i} coordinates={[c.lng!, c.lat!]}
+              onClick={() => setDetail({ label: c.label, city: c.city, country: c.country,
+                                         lat: c.lat!, lng: c.lng!, hqAddress: c.hqAddress,
+                                         legalAddress: c.legalAddress, precise: c.precise })}
+              onMouseEnter={() => setTooltip({ x: 0, y: 0, text: c.label })}
+              onMouseLeave={() => setTooltip(null)}
+            >
+              {/* Fan clustered (near-coincident) pins out so each is clickable; a thin
+                  leader line ties them back to their shared location. */}
+              <g transform={`translate(${ox / zoom} ${oy / zoom})`}>
+                {clustered && (ox !== 0 || oy !== 0) && (
+                  <line x1={-ox / zoom} y1={-oy / zoom} x2={0} y2={0}
+                    stroke={theme === 'dark' ? '#6b7280' : '#9ca3af'} strokeWidth={1 / zoom}
+                    style={{ pointerEvents: 'none' }} />
+                )}
+                {/* Invisible larger hit area so the pin is easy to tap on mobile;
+                    shrunk when clustered so neighbouring hit areas don't overlap. */}
+                <circle r={(clustered ? 9 : 14) / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
+                <circle
+                  r={(c.role === 'primary' ? 5 : 4) / zoom}
+                  fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
+                  stroke={theme === 'dark' ? '#111827' : '#fff'}
+                  strokeWidth={1.5 / zoom}
+                  style={{ cursor: 'pointer', pointerEvents: 'none' }}
+                />
+              </g>
             </Marker>
           ))}
         </ZoomableGroup>
       </ComposableMap>
+
+      {detail && (
+        <Suspense fallback={null}>
+          <MapDetail data={detail} onClose={() => setDetail(null)} />
+        </Suspense>
+      )}
 
       {countryData.length === 0 && contextCountries.length === 0 && (
         <div className="map-empty">
