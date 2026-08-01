@@ -188,12 +188,14 @@ export default function MapView({
               onMouseEnter={() => setTooltip({ x: 0, y: 0, text: c.label })}
               onMouseLeave={() => setTooltip(null)}
             >
+              {/* Invisible larger hit area so the pin is easy to tap on mobile. */}
+              <circle r={14 / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
               <circle
                 r={(c.role === 'primary' ? 5 : 4) / zoom}
                 fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
                 stroke={theme === 'dark' ? '#111827' : '#fff'}
                 strokeWidth={1.5 / zoom}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', pointerEvents: 'none' }}
               />
             </Marker>
           ))}

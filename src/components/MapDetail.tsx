@@ -59,8 +59,9 @@ export default function MapDetail({ data, onClose }: { data: MapDetailData; onCl
       <MapContainer center={[data.lat, data.lng]} zoom={precise ? 16 : 12}
                     scrollWheelZoom className="map-detail__map">
         <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
+          subdomains="abcd"
+          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
         />
         <InvalidateSize />
         {precise
