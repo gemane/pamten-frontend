@@ -182,8 +182,9 @@ export default function MapView({
 
           {gpsMarkers.map((c, i) => (
             <Marker key={i} coordinates={[c.lng!, c.lat!]}
-              onClick={() => setDetail({ label: c.label, city: c.city, address: c.address,
-                                         country: c.country, lat: c.lat!, lng: c.lng! })}
+              onClick={() => setDetail({ label: c.label, city: c.city, country: c.country,
+                                         lat: c.lat!, lng: c.lng!, hqAddress: c.hqAddress,
+                                         legalAddress: c.legalAddress, precise: c.precise })}
               onMouseEnter={() => setTooltip({ x: 0, y: 0, text: c.label })}
               onMouseLeave={() => setTooltip(null)}
             >
