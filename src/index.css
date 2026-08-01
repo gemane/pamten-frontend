@@ -803,6 +803,14 @@ body {
   padding: 0;
 }
 
+/* Roomier search bar in the top bar */
+.graph-topbar .search-box {
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+.graph-topbar .search-icon  { font-size: 19px; }
+.graph-topbar .search-input { font-size: 16px; }
+
 .mobile-toggle--topbar {
   display: none;
   align-items: center;
