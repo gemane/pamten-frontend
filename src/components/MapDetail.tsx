@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiExternalLink } from 'react-icons/fi'
 import { MapContainer, TileLayer, CircleMarker, Circle, useMap } from 'react-leaflet'
-import 'leaflet/dist/leaflet.css'
 import { countryName } from '../utils/isoCountries'
 import { osmLargeUrl } from '../utils/osm'
 
