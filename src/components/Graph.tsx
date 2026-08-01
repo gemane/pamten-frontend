@@ -15,7 +15,7 @@ interface TooltipState {
   lines: string[]
 }
 
-function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
+export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
   const edgeLabelBg = theme === 'dark' ? '#1a1a2e' : '#f0f4f8'
   const edgeColor   = theme === 'dark' ? '#8892a4' : '#4a5568'
   const edgeLine    = theme === 'dark' ? '#3a3a5c' : '#9ca3b8'
@@ -73,6 +73,11 @@ function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
       // Scale padding (= visual size) for owner nodes by their importance
       selector: 'node[importance > 0]',
       style: { padding: 'mapData(importance, 0, 60, 14, 34)' },
+    },
+    {
+      // The focused (centered) corporation — render it the largest so it anchors the view
+      selector: 'node.center',
+      style: { padding: '38px', 'font-size': '16px', 'font-weight': 700 },
     },
     {
       selector: 'node:selected',
@@ -500,6 +505,15 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     })
     layout.run()
   }, [elements, centerId])
+
+  // Mark the focused (centered) node so the stylesheet can render it larger. Runs after
+  // the element-building effect above (source order), so the node is present.
+  useEffect(() => {
+    const cy = cyRef.current
+    if (!cy) return
+    cy.nodes().removeClass('center')
+    if (centerId) cy.$id(centerId).addClass('center')
+  }, [centerId, elements])
 
   // Hide edges below the stake% threshold; hide orphaned nodes.
   useEffect(() => {

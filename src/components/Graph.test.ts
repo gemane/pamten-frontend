@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { computeArcPositions } from './Graph'
+import { computeArcPositions, buildStylesheet } from './Graph'
 import type { GraphElement } from '../types'
+
+const ruleFor = (selector: string) =>
+  buildStylesheet('dark').find(r => (r as { selector: string }).selector === selector)
+const px = (v: unknown) => parseFloat(String(v))
 
 // Helpers to build a minimal center→subsidiary graph.
 const node = (id: string, label: string): GraphElement =>
@@ -45,5 +49,18 @@ describe('computeArcPositions ordering (matches the panel)', () => {
     ]
     const pos = computeArcPositions(els, 'C')
     expect(namesByXDesc(pos, ['n', 's'])).toEqual(['s', 'n'])
+  })
+})
+
+describe('buildStylesheet — centered node sizing', () => {
+  it('renders the centered node the largest', () => {
+    const center = ruleFor('node.center')?.style as Record<string, unknown>
+    const base   = ruleFor('node')?.style as Record<string, unknown>
+    expect(center).toBeTruthy()
+    // Bigger than the base padding (14px) and than the importance-max (34px), so the
+    // focused corporation anchors the graph.
+    expect(px(center.padding)).toBeGreaterThan(px(base.padding))
+    expect(px(center.padding)).toBeGreaterThan(34)
+    expect(px(center['font-size'])).toBeGreaterThan(px(base['font-size']))
   })
 })
