@@ -42,6 +42,11 @@ export interface Entity {
   hq_locations?: string[]   // all HQs as "City|CC" strings
   source_statement_ids?: string[]  // BODS statement ids that declared this entity (>1 ⇒ collapsed from several filings)
   is_nominee?: boolean      // holder of record (nominee/custodian), not a beneficial owner
+  // GLEIF LEI-CDF detail fields (surfaced in the node Details section)
+  legal_form?: string       // resolved ISO 20275 ELF name, e.g. "Private Limited Company"
+  registration_authority?: string  // register name, e.g. "Companies Register"
+  registration_number?: string     // the entity's id at that authority
+  address?: string          // human-readable registered (legal) address
 }
 
 export interface Person {

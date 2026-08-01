@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows } from './NodePanel'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
@@ -213,5 +213,40 @@ describe('roleRank / byRoleImportance', () => {
     expect(out.map(x => `${x.role}:${x.name}`)).toEqual([
       'Board Member:Bob', 'Board Member:Dave', 'Director:Alice', 'Director:Carol',
     ])
+  })
+})
+
+describe('entityDetailRows', () => {
+  const base = { id: 'lei:1', name: 'Co', type: 'company', verified: false } as Entity
+
+  it('returns no rows when the entity has no detail fields', () => {
+    expect(entityDetailRows(base)).toEqual([])
+  })
+
+  it('surfaces legal form, registered-at (authority · number) and address in order', () => {
+    const rows = entityDetailRows({
+      ...base,
+      legal_form: 'Private Limited Company',
+      registration_authority: 'Companies Register',
+      registration_number: '07428111',
+      address: '1 Example Street, London, EC1A 1BB, GB',
+    })
+    expect(rows.map(r => [r.labelKey, r.value])).toEqual([
+      ['panel.legalForm', 'Private Limited Company'],
+      ['panel.registeredAt', 'Companies Register · 07428111'],
+      ['panel.regAddress', '1 Example Street, London, EC1A 1BB, GB'],
+    ])
+  })
+
+  it('shows the registration number alone when the authority is unknown', () => {
+    const rows = entityDetailRows({ ...base, registration_number: '07428111' })
+    expect(rows).toHaveLength(1)
+    expect(rows[0].labelKey).toBe('panel.registeredAt')
+    expect(rows[0].value).toBe('07428111')
+  })
+
+  it('skips fields that are absent', () => {
+    const rows = entityDetailRows({ ...base, legal_form: 'Fund' })
+    expect(rows.map(r => r.labelKey)).toEqual(['panel.legalForm'])
   })
 })

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag } from 'react-icons/fi'
+import { FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import OwnershipBadge from './OwnershipBadge'
@@ -219,6 +219,38 @@ function CollapsibleSection({ title, count, defaultOpen = false, children }: {
       </button>
       {open && children}
     </div>
+  )
+}
+
+// The extra factual rows shown in the collapsible "Details" section, in display
+// order, skipping any the entity doesn't have. Pure (no i18n/React) so it's unit
+// tested directly; `labelKey` maps to a `panel.*` translation. Easy to extend with
+// more detail fields later — add an entry here.
+export interface DetailRow { icon: React.ElementType; labelKey: string; value: string }
+export function entityDetailRows(entity: Entity): DetailRow[] {
+  const registeredAt = [entity.registration_authority, entity.registration_number]
+    .filter(Boolean).join(' · ')
+  const candidates: { icon: React.ElementType; labelKey: string; value?: string | null }[] = [
+    { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
+    { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
+    { icon: FiMapPin,    labelKey: 'panel.regAddress',   value: entity.address },
+  ]
+  return candidates.filter((r): r is DetailRow => !!r.value)
+}
+
+// Collapsible "Details" — a small container for factual fields (legal form, where the
+// entity is registered, its registered address) that aren't part of the primary meta
+// or the relationship sections. Hidden entirely when the entity has none of them.
+function DetailsSection({ entity }: { entity: Entity }) {
+  const { t } = useTranslation()
+  const rows = entityDetailRows(entity)
+  if (!rows.length) return null
+  return (
+    <CollapsibleSection title={t('panel.details')}>
+      <div className="panel-meta">
+        {rows.map((r, i) => <MetaRow key={i} icon={r.icon} label={t(r.labelKey)} value={r.value} />)}
+      </div>
+    </CollapsibleSection>
   )
 }
 
@@ -610,6 +642,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
+      <DetailsSection entity={entity} />
       <SourcesSection sources={sources} />
       <SourceStatements ids={entity.source_statement_ids} />
 
