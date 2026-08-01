@@ -1,10 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import worldData from 'world-atlas/countries-110m.json'
 import { ALPHA2_TO_NUMERIC, countryName, toAlpha2 } from '../utils/isoCountries'
 import { FiRotateCcw } from 'react-icons/fi'
+import type { MapDetailData } from './MapDetail'   // type only — no Leaflet at import
 import type { CountryEntityGroup, ContextCountry } from '../types'
+
+// Lazy so Leaflet (which needs `window` at import) is only loaded when a pin is clicked.
+const MapDetail = lazy(() => import('./MapDetail'))
 
 interface TooltipState {
   x: number
@@ -83,6 +87,7 @@ export default function MapView({
   const { t, i18n } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
+  const [detail,     setDetail]     = useState<MapDetailData | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
   // Seed from flyTo so pin markers (sized as radius / zoom) are correct on the
   // first paint after an auto-zoom. react-simple-maps bypasses move events for
@@ -176,18 +181,32 @@ export default function MapView({
           </Geographies>
 
           {gpsMarkers.map((c, i) => (
-            <Marker key={i} coordinates={[c.lng!, c.lat!]}>
+            <Marker key={i} coordinates={[c.lng!, c.lat!]}
+              onClick={() => setDetail({ label: c.label, city: c.city, country: c.country,
+                                         lat: c.lat!, lng: c.lng!, hqAddress: c.hqAddress,
+                                         legalAddress: c.legalAddress, precise: c.precise })}
+              onMouseEnter={() => setTooltip({ x: 0, y: 0, text: c.label })}
+              onMouseLeave={() => setTooltip(null)}
+            >
+              {/* Invisible larger hit area so the pin is easy to tap on mobile. */}
+              <circle r={14 / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
               <circle
                 r={(c.role === 'primary' ? 5 : 4) / zoom}
                 fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
                 stroke={theme === 'dark' ? '#111827' : '#fff'}
                 strokeWidth={1.5 / zoom}
-                style={{ cursor: 'default', pointerEvents: 'none' }}
+                style={{ cursor: 'pointer', pointerEvents: 'none' }}
               />
             </Marker>
           ))}
         </ZoomableGroup>
       </ComposableMap>
+
+      {detail && (
+        <Suspense fallback={null}>
+          <MapDetail data={detail} onClose={() => setDetail(null)} />
+        </Suspense>
+      )}
 
       {countryData.length === 0 && contextCountries.length === 0 && (
         <div className="map-empty">
