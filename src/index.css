@@ -589,6 +589,8 @@ body {
   z-index: 40;
   padding: 20px;
 }
+/* Mobile: the canvas is only a half-screen split, so cover the whole viewport instead. */
+.scrape-overlay--fullscreen { position: fixed; z-index: 200; }
 .scrape-overlay__card {
   display: flex;
   flex-direction: column;

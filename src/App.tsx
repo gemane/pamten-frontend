@@ -689,6 +689,9 @@ function AppInner() {
   return (
     <div className="app">
       {(loading || scraping) && <div className="loading-bar" />}
+      {/* On mobile the canvas is only a half-screen split, so show the scrape overlay
+          full-screen at the root instead of inside the small canvas. */}
+      {isMobile && scrapingCompany && <ScrapeOverlay company={scrapingCompany} fullscreen />}
       {showAuth && (
         <AuthModal
           onClose={() => { setShowAuth(false); setResetToken(null); setAuthMode('login') }}
@@ -802,7 +805,6 @@ function AppInner() {
                     onToast={showToast}
                     theme={theme}
                   />
-                  {scrapingCompany && <ScrapeOverlay company={scrapingCompany} />}
                 </div>
                 <div className="mobile-panel">
                   <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
