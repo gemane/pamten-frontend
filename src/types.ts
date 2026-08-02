@@ -221,6 +221,17 @@ export interface AuthUser {
   id: string
   email: string
   role: 'admin' | 'moderator' | 'contributor' | 'viewer'
+  email_verified?: boolean
+}
+
+// Result of POST /scraper/ensure (on-demand enrichment).
+export interface EnsureResult {
+  scraped: boolean
+  reason: string          // absent | never_on_demand | stale | deepen | forced | fresh | disabled | in_progress
+  entity_id: string | null
+  depth_reached: number
+  sources_run: string[]
+  profile: FullProfile | null
 }
 
 export interface AuthContextValue {

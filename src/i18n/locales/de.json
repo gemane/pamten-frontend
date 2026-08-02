@@ -46,7 +46,9 @@
   "search": {
     "placeholder": "Unternehmen, Marken, Personen suchen…",
     "allCountries": "Alle Länder",
-    "filterCountries": "Länder filtern…"
+    "filterCountries": "Länder filtern…",
+    "noResultsScrape": "Kein Treffer — \"{{query}}\" scrapen?",
+    "scrapeSignIn": "Melde dich an und bestätige deine E-Mail, um neue Unternehmen zu scrapen."
   },
   "graph": {
     "tagline": "Die globale Unternehmensstruktur kartieren",
@@ -88,6 +90,8 @@
     "empty": "Klicken Sie auf einen Knoten im Graph,\num die Details hier zu sehen",
     "overview": "Übersicht",
     "timeline": "Zeitverlauf",
+    "reScrape": "Neu scrapen",
+    "reScrapeTitle": "Aktuelle Daten für dieses Unternehmen aus den Sofort-Quellen abrufen",
     "nationality": "Nationalität",
     "born": "Geboren",
     "birthPlace": "Geburtsort",
@@ -250,7 +254,10 @@
     "noResults": "Keine Ergebnisse für \"{{query}}\".",
     "entityIntoGraphError": "Eintrag konnte nicht in den Graph geladen werden.",
     "loadedIntoGraph": "{{query}} in den Graph geladen.",
-    "scrapedIntoGraphError": "Gescrapter Eintrag konnte nicht in den Graph geladen werden."
+    "scrapedIntoGraphError": "Gescrapter Eintrag konnte nicht in den Graph geladen werden.",
+    "enriching": "\"{{query}}\" wird angereichert…",
+    "scrapeNoResults": "Nichts zum Scrapen für \"{{query}}\" gefunden.",
+    "scrapeError": "Scrapen fehlgeschlagen. Bitte versuche es erneut."
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",

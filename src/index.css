@@ -942,6 +942,29 @@ body {
 
 .search-item:hover { background: #253454; }
 
+/* No-results "scrape X?" affordance + its sign-in hint */
+.search-item--scrape { color: #6aaae3; font-weight: 600; }
+.search-item--hint { cursor: default; color: #8892a4; font-size: 13px; }
+.search-item--hint:hover { background: transparent; }
+
+/* Node-panel force-rescrape button */
+.panel-rescrape { padding: 10px 16px 0; }
+.panel-rescrape__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #2a3a5a;
+  border-radius: 8px;
+  color: #6aaae3;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.panel-rescrape__btn:hover { border-color: #4A90D9; color: #8fc1ee; }
+
 .search-item__name {
   flex: 1;
   font-size: 13px;

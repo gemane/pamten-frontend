@@ -46,7 +46,9 @@
   "search": {
     "placeholder": "Search companies, brands, people…",
     "allCountries": "All countries",
-    "filterCountries": "Filter countries…"
+    "filterCountries": "Filter countries…",
+    "noResultsScrape": "No match — scrape \"{{query}}\"?",
+    "scrapeSignIn": "Sign in and verify your email to scrape new companies."
   },
   "graph": {
     "tagline": "Map the world's corporate ownership",
@@ -88,6 +90,8 @@
     "empty": "Click any node in the graph\nto see its details here",
     "overview": "Overview",
     "timeline": "Timeline",
+    "reScrape": "Re-scrape",
+    "reScrapeTitle": "Fetch the latest data for this company from the instant sources",
     "nationality": "Nationality",
     "born": "Born",
     "birthPlace": "Place of birth",
@@ -250,7 +254,10 @@
     "noResults": "No results found for \"{{query}}\".",
     "entityIntoGraphError": "Could not load entity into graph.",
     "loadedIntoGraph": "Loaded {{query}} into graph.",
-    "scrapedIntoGraphError": "Could not load scraped entity into graph."
+    "scrapedIntoGraphError": "Could not load scraped entity into graph.",
+    "enriching": "Enriching \"{{query}}\"…",
+    "scrapeNoResults": "Nothing found to scrape for \"{{query}}\".",
+    "scrapeError": "Scrape failed. Please try again."
   },
   "map": {
     "resetView": "Reset view",

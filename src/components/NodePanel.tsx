@@ -168,6 +168,8 @@ interface NodePanelProps {
   onExportCsv?: () => void
   onViewOnMap?: () => void
   onNavigate?: (node: NodeData) => void
+  // Force a fresh scrape of this company (verified users only — App passes undefined otherwise).
+  onReScrape?: (node: NodeData) => void
 }
 
 
@@ -686,7 +688,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onNavigate }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onNavigate, onReScrape }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -738,6 +740,14 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
 
   return (
     <>
+      {onReScrape && (
+        <div className="panel-rescrape">
+          <button type="button" className="panel-rescrape__btn"
+                  title={t('panel.reScrapeTitle')} onClick={() => onReScrape(node)}>
+            {t('panel.reScrape')}
+          </button>
+        </div>
+      )}
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
         ? <EntityOverview profile={profile} sources={sources} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onNavigate={onNavigate} />

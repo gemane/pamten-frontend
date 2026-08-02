@@ -21,7 +21,9 @@ import { useTheme } from './hooks/useTheme'
 import { useMobile } from './hooks/useMobile'
 import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getCountries, setUnauthorizedHandler, authVerifyEmail } from './services/api'
+import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getCountries, setUnauthorizedHandler, authVerifyEmail, ensureScrape } from './services/api'
+import { canScrape } from './utils/scrapeAccess'
+import { scheduleIdle } from './utils/idle'
 import type {
   GraphElement,
   NodeData,
@@ -73,6 +75,7 @@ function AppInner() {
   const [resetToken, setResetToken] = useState<string | null>(null)
   const [showFlagQueue, setShowFlagQueue] = useState<boolean>(false)
   const canModerate = user?.role === 'moderator' || user?.role === 'admin'
+  const userCanScrape = canScrape(user)
   const isMobile = useMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
@@ -93,6 +96,10 @@ function AppInner() {
   const [searchCountries, setSearchCountries] = useState<{ country: string; count: number }[]>([])
   const [mapFlyTo,        setMapFlyTo]        = useState<{ center: [number, number]; zoom: number } | null>(null)
   const loadedIds          = useRef<Set<string>>(new Set())
+  // On-demand enrichment: a monotonically-increasing token invalidates a stale phase-2
+  // (idle) append when the user navigates away; idleCancelRef cancels the pending idle.
+  const enrichSeqRef       = useRef<number>(0)
+  const idleCancelRef      = useRef<null | (() => void)>(null)
   const elementsRef        = useRef<GraphElement[]>([])
   const contextCountriesRef = useRef<ContextCountry[]>([])
   elementsRef.current = elements
@@ -128,7 +135,100 @@ function AppInner() {
     return { els: buildPersonProfileElements(profile, loadedIds.current), person: profile.person }
   }, [])
 
+  // ── On-demand enrichment ──────────────────────────────────────────────────
+  // Append any newly-scraped nodes/edges to the graph without a full reset (mirrors
+  // handleExpand's draft-loadedIds append), so the selected node "fills" in place.
+  const appendProfile = useCallback((profile: FullProfile) => {
+    const draftIds = new Set(loadedIds.current)
+    const newEls = buildElements(profile, draftIds)
+    if (newEls.length > 0) {
+      loadedIds.current = draftIds
+      setElements(prev => [...prev, ...newEls])
+    }
+  }, [])
+
+  const cancelPendingIdle = useCallback(() => {
+    idleCancelRef.current?.()
+    idleCancelRef.current = null
+  }, [])
+
+  // Invalidate any in-flight enrichment (its phase-2 append) — call before a new
+  // search / navigation / clear so a stale idle scrape can't append into a fresh graph.
+  const resetEnrichment = useCallback(() => {
+    enrichSeqRef.current += 1
+    cancelPendingIdle()
+  }, [cancelPendingIdle])
+
+  useEffect(() => () => cancelPendingIdle(), [cancelPendingIdle])  // cancel on unmount
+
+  // Phase 2: when the UI goes idle, deepen to depth 2 and append what's new.
+  const scheduleDepth2Enrich = useCallback((query: string) => {
+    const token = enrichSeqRef.current
+    cancelPendingIdle()
+    idleCancelRef.current = scheduleIdle(async () => {
+      idleCancelRef.current = null
+      try {
+        const { data } = await ensureScrape(query, 2, false)
+        if (token !== enrichSeqRef.current) return       // navigated away — drop it
+        if (data.scraped && data.profile) appendProfile(data.profile)
+      } catch { /* best-effort — enrichment never blocks the UI */ }
+    })
+  }, [appendProfile, cancelPendingIdle])
+
+  // Phase 1: enrich an already-rendered entity (depth 1), then schedule the idle deepen.
+  const enrichExisting = useCallback(async (query: string, entityId: string, force = false) => {
+    if (!canScrape(user)) return
+    const token = enrichSeqRef.current
+    setExpandingId(entityId)
+    try {
+      const { data } = await ensureScrape(query, 1, force)
+      if (token !== enrichSeqRef.current) return
+      if (data.scraped && data.profile) appendProfile(data.profile)
+    } catch { /* best-effort */ }
+    finally { setExpandingId(cur => (cur === entityId ? null : cur)) }
+    if (token === enrichSeqRef.current) scheduleDepth2Enrich(query)
+  }, [user, appendProfile, scheduleDepth2Enrich])
+
+  // A search that found nothing in the DB → scrape the typed query (force, since it's
+  // absent), build the fresh graph, then deepen on idle.
+  // Force a fresh re-scrape of a company already in the graph (the node-panel button).
+  const handleReScrape = useCallback((node: NodeData) => {
+    void enrichExisting(node.label, node.id, true)
+  }, [enrichExisting])
+
+  const handleScrapeQuery = useCallback(async (query: string) => {
+    if (!canScrape(user)) { setShowAuth(true); return }
+    resetEnrichment()
+    setToast(null)
+    setSelectedNode(null)
+    setSearchLabel(query)
+    setLoading(true)
+    loadedIds.current = new Set()
+    try {
+      const { data } = await ensureScrape(query, 1, true)
+      if (data.scraped && data.entity_id && data.profile) {
+        const entity = data.profile.entity
+        const newNode: NodeData = {
+          id: entity.id, label: entity.name, nodeType: 'entity',
+          entitySubtype: entity.type ?? null, raw: entity,
+        }
+        setCenterId(entity.id)
+        setElements(buildElements(data.profile, loadedIds.current))
+        setSelectedNode(newNode)
+        setNavHistory([newNode])
+        scheduleDepth2Enrich(query)
+      } else {
+        showToast(t('toast.scrapeNoResults', { query }), 'info')
+      }
+    } catch {
+      showToast(t('toast.scrapeError'), 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [user, resetEnrichment, scheduleDepth2Enrich, showToast, t])
+
   const handleSearchSelect = useCallback(async (result: SearchResult) => {
+    resetEnrichment()
     setToast(null)
     setSelectedNode(null)
     setSearchLabel(('name' in result.node ? result.node.name : result.node.full_name) || '')
@@ -167,14 +267,18 @@ function AppInner() {
       setElements(els)
       setSelectedNode(newNode)
       setNavHistory([newNode])
+      // Enrich in the background if the company is stale / never on-demand-scraped —
+      // the node is already on screen; this fills it, then deepens on idle.
+      void enrichExisting(newNode.label, result.node.id)
     } catch {
       showToast(t('toast.entityLoadError'), 'error')
     } finally {
       setLoading(false)
     }
-  }, [loadEntity, loadPerson, showToast])
+  }, [loadEntity, loadPerson, showToast, t, resetEnrichment, enrichExisting])
 
   const handleNavigateTo = useCallback(async (nodeData: NodeData) => {
+    resetEnrichment()
     setToast(null)
     setSelectedNode(null)
     setSearchLabel(nodeData.label)
@@ -199,7 +303,7 @@ function AppInner() {
     } finally {
       setLoading(false)
     }
-  }, [loadEntity, loadPerson, showToast])
+  }, [loadEntity, loadPerson, showToast, resetEnrichment])
 
   const handleExpand = useCallback(async (nodeId: string) => {
     setExpandingId(nodeId)
@@ -241,6 +345,7 @@ function AppInner() {
   }, [showToast])
 
   const handleClearGraph = useCallback(() => {
+    resetEnrichment()
     setElements([])
     setCenterId(null)
     setSelectedNode(null)
@@ -249,7 +354,7 @@ function AppInner() {
     setToast(null)
     setSidebarOpen(false)
     loadedIds.current = new Set()
-  }, [])
+  }, [resetEnrichment])
 
   const handleExportPng = useCallback(() => {
     graphRef.current?.exportPng()
@@ -603,6 +708,7 @@ function AppInner() {
                   onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                   onViewOnMap={() => handleTabChange('map')}
                   onNavigate={handleNavigateTo}
+                  onReScrape={userCanScrape ? handleReScrape : undefined}
                 />
               </div>
             </>
@@ -647,7 +753,7 @@ function AppInner() {
             {activeTab === 'graph' && (
               <>
                 <div className="graph-topbar">
-                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} />
+                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} />
                 </div>
                 <div className="mobile-canvas">
                   {elements.length > 0 && <GraphLegend />}
@@ -674,6 +780,7 @@ function AppInner() {
                     onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                     onViewOnMap={() => handleTabChange('map')}
                     onNavigate={handleNavigateTo}
+                    onReScrape={userCanScrape ? handleReScrape : undefined}
                   />
                 </div>
               </>
@@ -734,7 +841,7 @@ function AppInner() {
           <>
             {activeTab === 'graph' && (
               <div className="graph-topbar">
-                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} />
+                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} />
               </div>
             )}
             <div className="graph-area">
