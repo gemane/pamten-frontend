@@ -47,12 +47,12 @@
     "placeholder": "Search companies, brands, people…",
     "allCountries": "All countries",
     "filterCountries": "Filter countries…",
-    "noResultsScrape": "No match — scrape \"{{query}}\"?",
-    "alsoScrape": "Not the one? Scrape \"{{query}}\"",
-    "scrapeSignIn": "Sign in and verify your email to scrape new companies."
+    "noResultsScrape": "No match — search sources for \"{{query}}\"?",
+    "alsoScrape": "Not the one? Search sources for \"{{query}}\"",
+    "scrapeSignIn": "Sign in and verify your email to search external sources."
   },
   "scrape": {
-    "title": "Scraping {{company}}…",
+    "title": "Searching sources for {{company}}…",
     "hint": "Fetching from Wikidata and SEC EDGAR — this can take a moment."
   },
   "graph": {
@@ -95,8 +95,8 @@
     "empty": "Click any node in the graph\nto see its details here",
     "overview": "Overview",
     "timeline": "Timeline",
-    "reScrape": "Re-scrape",
-    "reScrapeTitle": "Fetch the latest data for this company from the instant sources",
+    "reScrape": "Refresh from sources",
+    "reScrapeTitle": "Fetch this company's latest data from the sources",
     "nationality": "Nationality",
     "born": "Born",
     "birthPlace": "Place of birth",
@@ -261,14 +261,14 @@
     "loadedIntoGraph": "Loaded {{query}} into graph.",
     "scrapedIntoGraphError": "Could not load scraped entity into graph.",
     "enriching": "Enriching \"{{query}}\"…",
-    "scrapeNoResults": "Nothing found to scrape for \"{{query}}\".",
-    "scrapeError": "Scrape failed. Please try again."
+    "scrapeNoResults": "Nothing found in the sources for \"{{query}}\".",
+    "scrapeError": "Source search failed. Please try again."
   },
   "map": {
     "resetView": "Reset view",
     "hint": "Scroll to zoom · Drag to pan · Click a country or a company pin",
     "empty1": "No geographic data yet.",
-    "empty2": "Scrape companies to populate the map.",
+    "empty2": "Search sources for companies to populate the map.",
     "loadingData": "Loading map data…",
     "loadingEntities": "Loading entities…",
     "noSubsidiaries": "No subsidiaries in graph.",
