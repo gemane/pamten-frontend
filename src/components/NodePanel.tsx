@@ -368,6 +368,8 @@ interface EntityOverviewProps {
   onExportCsv?: () => void
   onViewOnMap?: () => void
   onNavigate?: (node: NodeData) => void
+  node: NodeData
+  onReScrape?: (node: NodeData) => void
 }
 
 function credibilityColor(score: number): string {
@@ -439,7 +441,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate, node, onReScrape }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, headquarters, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [] } = profile
@@ -646,6 +648,14 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       <DetailsSection entity={entity} />
+      {onReScrape && (
+        <div className="panel-rescrape">
+          <button type="button" className="panel-rescrape__btn"
+                  title={t('panel.reScrapeTitle')} onClick={() => onReScrape(node)}>
+            {t('panel.reScrape')}
+          </button>
+        </div>
+      )}
       <SourcesSection sources={sources} />
       <SourceStatements ids={entity.source_statement_ids} />
 
@@ -740,17 +750,9 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
 
   return (
     <>
-      {onReScrape && (
-        <div className="panel-rescrape">
-          <button type="button" className="panel-rescrape__btn"
-                  title={t('panel.reScrapeTitle')} onClick={() => onReScrape(node)}>
-            {t('panel.reScrape')}
-          </button>
-        </div>
-      )}
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} sources={sources} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onNavigate={onNavigate} />
+        ? <EntityOverview profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onNavigate={onNavigate} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )

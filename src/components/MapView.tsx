@@ -238,9 +238,9 @@ export default function MapView({
                 )}
                 {/* Invisible larger hit area so the pin is easy to tap on mobile;
                     shrunk when clustered so neighbouring hit areas don't overlap. */}
-                <circle r={(clustered ? 9 : 14) / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
+                <circle r={(clustered ? 15 : 24) / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
                 <circle
-                  r={(c.role === 'primary' ? 5 : 4) / zoom}
+                  r={(c.role === 'primary' ? 8 : 7) / zoom}
                   fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
                   stroke={theme === 'dark' ? '#111827' : '#fff'}
                   strokeWidth={1.5 / zoom}
