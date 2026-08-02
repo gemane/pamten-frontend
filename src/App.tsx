@@ -10,6 +10,7 @@ import type { GraphHandle } from './components/Graph'
 import { buildCsvContent } from './utils/exportCsv'
 import GraphLegend   from './components/GraphLegend'
 import NodePanel     from './components/NodePanel'
+import ScrapeOverlay from './components/ScrapeOverlay'
 import ScraperPanel  from './components/ScraperPanel'
 import SettingsPanel from './components/SettingsPanel'
 import MapView       from './components/MapView'
@@ -88,6 +89,7 @@ function AppInner() {
   const [loading,         setLoading]         = useState<boolean>(false)
   const [expandingId,     setExpandingId]     = useState<string | null>(null)
   const [scraping,        setScraping]        = useState<boolean>(false)   // on-demand scrape in flight
+  const [scrapingCompany, setScrapingCompany] = useState<string | null>(null)  // NEW-company scrape (prominent overlay)
   const [toast,           setToast]           = useState<ToastState | null>(null)
   const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
   const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
@@ -171,6 +173,7 @@ function AppInner() {
     enrichSeqRef.current += 1
     cancelPendingIdle()
     stopScrapeBar()
+    setScrapingCompany(null)
   }, [cancelPendingIdle, stopScrapeBar])
 
   useEffect(() => () => { cancelPendingIdle(); stopScrapeBar() }, [cancelPendingIdle, stopScrapeBar])  // unmount
@@ -222,6 +225,7 @@ function AppInner() {
     setToast(null)
     setSelectedNode(null)
     setSearchLabel(query)
+    setScrapingCompany(query)   // prominent centered overlay while the new company is fetched
     setLoading(true)
     loadedIds.current = new Set()
     try {
@@ -244,6 +248,7 @@ function AppInner() {
       showToast(t('toast.scrapeError'), 'error')
     } finally {
       setLoading(false)
+      setScrapingCompany(null)
     }
   }, [user, resetEnrichment, scheduleDepth2Enrich, showToast, t])
 
@@ -791,6 +796,7 @@ function AppInner() {
                     onToast={showToast}
                     theme={theme}
                   />
+                  {scrapingCompany && <ScrapeOverlay company={scrapingCompany} />}
                 </div>
                 <div className="mobile-panel">
                   <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
@@ -890,6 +896,7 @@ function AppInner() {
                     theme={theme}
                   />
               }
+              {activeTab === 'graph' && scrapingCompany && <ScrapeOverlay company={scrapingCompany} />}
             </div>
           </>
         )}

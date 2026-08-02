@@ -51,6 +51,10 @@
     "alsoScrape": "Nicht dabei? \"{{query}}\" scrapen",
     "scrapeSignIn": "Melde dich an und bestätige deine E-Mail, um neue Unternehmen zu scrapen."
   },
+  "scrape": {
+    "title": "{{company}} wird gescrapt…",
+    "hint": "Daten von Wikidata und SEC EDGAR werden geholt — das kann einen Moment dauern."
+  },
   "graph": {
     "tagline": "Die globale Unternehmensstruktur kartieren",
     "tagline2": "Eigentümerschaft suchen",
