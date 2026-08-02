@@ -47,12 +47,12 @@
     "placeholder": "Buscar empresas, marcas, personas…",
     "allCountries": "Todos los países",
     "filterCountries": "Filtrar países…",
-    "noResultsScrape": "Sin coincidencias — ¿scrapear \"{{query}}\"?",
-    "alsoScrape": "¿No está? Scrapear \"{{query}}\"",
-    "scrapeSignIn": "Inicia sesión y verifica tu correo para scrapear nuevas empresas."
+    "noResultsScrape": "Sin coincidencias — ¿buscar \"{{query}}\" en las fuentes?",
+    "alsoScrape": "¿No está? Buscar \"{{query}}\" en las fuentes",
+    "scrapeSignIn": "Inicia sesión y verifica tu correo para buscar en fuentes externas."
   },
   "scrape": {
-    "title": "Scrapeando {{company}}…",
+    "title": "Buscando {{company}} en las fuentes…",
     "hint": "Obteniendo datos de Wikidata y SEC EDGAR — esto puede tardar un momento."
   },
   "graph": {
@@ -95,8 +95,8 @@
     "empty": "Haz clic en cualquier nodo del grafo\npara ver sus detalles aquí",
     "overview": "Resumen",
     "timeline": "Cronología",
-    "reScrape": "Volver a scrapear",
-    "reScrapeTitle": "Obtener los datos más recientes de esta empresa desde las fuentes instantáneas",
+    "reScrape": "Actualizar desde fuentes",
+    "reScrapeTitle": "Obtener los datos más recientes de esta empresa desde las fuentes",
     "nationality": "Nacionalidad",
     "born": "Nacimiento",
     "birthPlace": "Lugar de nacimiento",
@@ -261,14 +261,14 @@
     "loadedIntoGraph": "{{query}} cargado en el grafo.",
     "scrapedIntoGraphError": "No se pudo cargar la entidad extraída en el grafo.",
     "enriching": "Enriqueciendo \"{{query}}\"…",
-    "scrapeNoResults": "No se encontró nada para scrapear de \"{{query}}\".",
-    "scrapeError": "Error al scrapear. Inténtalo de nuevo."
+    "scrapeNoResults": "No se encontró nada en las fuentes para \"{{query}}\".",
+    "scrapeError": "La búsqueda en las fuentes falló. Inténtalo de nuevo."
   },
   "map": {
     "resetView": "Restablecer vista",
     "hint": "Desplázate para acercar · Arrastra para mover · Haz clic en un país o un pin de empresa",
     "empty1": "Aún no hay datos geográficos.",
-    "empty2": "Extrae empresas para poblar el mapa.",
+    "empty2": "Busca empresas en las fuentes para llenar el mapa.",
     "loadingData": "Cargando datos del mapa…",
     "loadingEntities": "Cargando entidades…",
     "noSubsidiaries": "No hay filiales en el grafo.",

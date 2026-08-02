@@ -47,12 +47,12 @@
     "placeholder": "Unternehmen, Marken, Personen suchen…",
     "allCountries": "Alle Länder",
     "filterCountries": "Länder filtern…",
-    "noResultsScrape": "Kein Treffer — \"{{query}}\" scrapen?",
-    "alsoScrape": "Nicht dabei? \"{{query}}\" scrapen",
-    "scrapeSignIn": "Melde dich an und bestätige deine E-Mail, um neue Unternehmen zu scrapen."
+    "noResultsScrape": "Kein Treffer — Quellen nach \"{{query}}\" durchsuchen?",
+    "alsoScrape": "Nicht dabei? Quellen nach \"{{query}}\" durchsuchen",
+    "scrapeSignIn": "Melde dich an und bestätige deine E-Mail, um die Quellen zu durchsuchen."
   },
   "scrape": {
-    "title": "{{company}} wird gescrapt…",
+    "title": "Quellen nach {{company}} durchsuchen…",
     "hint": "Daten von Wikidata und SEC EDGAR werden geholt — das kann einen Moment dauern."
   },
   "graph": {
@@ -95,8 +95,8 @@
     "empty": "Klicken Sie auf einen Knoten im Graph,\num die Details hier zu sehen",
     "overview": "Übersicht",
     "timeline": "Zeitverlauf",
-    "reScrape": "Neu scrapen",
-    "reScrapeTitle": "Aktuelle Daten für dieses Unternehmen aus den Sofort-Quellen abrufen",
+    "reScrape": "Aus Quellen aktualisieren",
+    "reScrapeTitle": "Aktuelle Daten für dieses Unternehmen aus den Quellen holen",
     "nationality": "Nationalität",
     "born": "Geboren",
     "birthPlace": "Geburtsort",
@@ -261,14 +261,14 @@
     "loadedIntoGraph": "{{query}} in den Graph geladen.",
     "scrapedIntoGraphError": "Gescrapter Eintrag konnte nicht in den Graph geladen werden.",
     "enriching": "\"{{query}}\" wird angereichert…",
-    "scrapeNoResults": "Nichts zum Scrapen für \"{{query}}\" gefunden.",
-    "scrapeError": "Scrapen fehlgeschlagen. Bitte versuche es erneut."
+    "scrapeNoResults": "In den Quellen nichts zu \"{{query}}\" gefunden.",
+    "scrapeError": "Quellensuche fehlgeschlagen. Bitte versuche es erneut."
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",
     "hint": "Scrollen zum Zoomen · Ziehen zum Verschieben · Land oder Firmen-Pin anklicken",
     "empty1": "Noch keine geografischen Daten.",
-    "empty2": "Unternehmen scrapen, um die Karte zu füllen.",
+    "empty2": "Quellen nach Unternehmen durchsuchen, um die Karte zu füllen.",
     "loadingData": "Kartendaten werden geladen…",
     "loadingEntities": "Einträge werden geladen…",
     "noSubsidiaries": "Keine Tochtergesellschaften im Graph.",
