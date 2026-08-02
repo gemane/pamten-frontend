@@ -1001,7 +1001,9 @@ body {
 .search-item--hint:hover { background: transparent; }
 
 /* Node-panel force-rescrape button */
-.panel-rescrape { padding: 10px 16px 0; }
+/* Sits between the Details and Sources sections: tighten the gap above (Details already
+   has an 18px bottom margin) and open up the gap below so it isn't glued to Sources. */
+.panel-rescrape { padding: 0 16px 16px; margin-top: -8px; }
 .panel-rescrape__btn {
   display: inline-flex;
   align-items: center;

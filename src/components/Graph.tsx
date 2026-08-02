@@ -75,9 +75,10 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       style: { padding: 'mapData(importance, 0, 60, 14, 34)' },
     },
     {
-      // The focused (centered) corporation — render it the largest so it anchors the view
+      // The focused (centered) corporation — render it the largest so it anchors the view,
+      // with rounder corners so it reads as the hub.
       selector: 'node.center',
-      style: { padding: '38px', 'font-size': '16px', 'font-weight': 700 },
+      style: { padding: '38px', 'font-size': '16px', 'font-weight': 700, 'corner-radius': '34px' },
     },
     {
       selector: 'node:selected',
