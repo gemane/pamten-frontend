@@ -227,7 +227,7 @@ export interface AuthUser {
 // Result of POST /scraper/ensure (on-demand enrichment).
 export interface EnsureResult {
   scraped: boolean
-  reason: string          // absent | never_on_demand | stale | deepen | forced | fresh | disabled | in_progress
+  reason: string          // absent | never_on_demand | stale | deepen | forced | fresh | disabled | in_progress | cooldown
   entity_id: string | null
   depth_reached: number
   sources_run: string[]
