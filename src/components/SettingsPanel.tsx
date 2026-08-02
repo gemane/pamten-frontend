@@ -1,24 +1,32 @@
 import { useState, useEffect, useCallback } from 'react'
 import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
-import ThemeToggle from './ThemeToggle'
 import MfaSection from './MfaSection'
-import type { Theme } from '../hooks/useTheme'
+import type { ThemeMode } from '../hooks/useTheme'
 import type { AuthUser } from '../types'
+import { systemLanguage } from '../utils/systemLanguage'
 import { getUsers, updateUserRole, deleteUser } from '../services/api'
 import type { UserRecord } from '../services/api'
 
-const LANGS = [
+// 'system' follows the OS/browser setting; the rest are explicit choices.
+const LANGS: { code: string; label?: string; labelKey?: string }[] = [
+  { code: 'system', labelKey: 'settings.system' },
   { code: 'en', label: 'EN' },
   { code: 'de', label: 'DE' },
   { code: 'es', label: 'ES' },
 ]
 
+const THEME_MODES: { mode: ThemeMode; labelKey: string }[] = [
+  { mode: 'system', labelKey: 'settings.system' },
+  { mode: 'light',  labelKey: 'settings.light' },
+  { mode: 'dark',   labelKey: 'settings.dark' },
+]
+
 const ROLES = ['admin', 'contributor', 'viewer'] as const
 
 interface SettingsPanelProps {
-  theme: Theme
-  onToggleTheme: () => void
+  themeMode: ThemeMode
+  onSetThemeMode: (mode: ThemeMode) => void
   user: AuthUser | null
   onLogin: () => void
   onLogout: () => void
@@ -55,10 +63,19 @@ function UserRow({ u, currentId, onRoleChange, onDelete }: {
   )
 }
 
-export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onLogout }: SettingsPanelProps) {
+export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin, onLogout }: SettingsPanelProps) {
   const { t, i18n } = useTranslation()
   const [users,    setUsers]    = useState<UserRecord[]>([])
   const [usersErr, setUsersErr] = useState<string | null>(null)
+  // The saved language PREFERENCE ('system' or a code) — distinct from the resolved
+  // i18n.language, so "System" stays highlighted even though the UI shows e.g. German.
+  const [langPref, setLangPref] = useState<string>(() => localStorage.getItem('lang') || 'system')
+
+  const applyLang = (code: string) => {
+    setLangPref(code)
+    localStorage.setItem('lang', code)
+    i18n.changeLanguage(code === 'system' ? systemLanguage() : code)
+  }
 
   const loadUsers = useCallback(() => {
     if (user?.role !== 'admin') return
@@ -97,10 +114,10 @@ export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onL
           {LANGS.map(l => (
             <button
               key={l.code}
-              className={`lang-btn ${i18n.language === l.code ? 'lang-btn--active' : ''}`}
-              onClick={() => { i18n.changeLanguage(l.code); localStorage.setItem('lang', l.code) }}
+              className={`lang-btn ${langPref === l.code ? 'lang-btn--active' : ''}`}
+              onClick={() => applyLang(l.code)}
             >
-              {l.label}
+              {l.label ?? t(l.labelKey!)}
             </button>
           ))}
         </div>
@@ -108,11 +125,16 @@ export default function SettingsPanel({ theme, onToggleTheme, user, onLogin, onL
 
       <div className="settings-section">
         <h4 className="settings-section__title">{t('settings.theme')}</h4>
-        <div className="settings-theme-row">
-          <span className="settings-theme-label">
-            {theme === 'dark' ? t('settings.dark') : t('settings.light')}
-          </span>
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        <div className="lang-switcher">
+          {THEME_MODES.map(m => (
+            <button
+              key={m.mode}
+              className={`lang-btn ${themeMode === m.mode ? 'lang-btn--active' : ''}`}
+              onClick={() => onSetThemeMode(m.mode)}
+            >
+              {t(m.labelKey)}
+            </button>
+          ))}
         </div>
       </div>
 

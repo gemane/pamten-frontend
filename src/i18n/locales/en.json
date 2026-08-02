@@ -290,6 +290,7 @@
     "theme": "Theme",
     "dark": "Dark",
     "light": "Light",
+    "system": "System",
     "account": "Account",
     "users": "Users",
     "deleteUser": "Delete user",

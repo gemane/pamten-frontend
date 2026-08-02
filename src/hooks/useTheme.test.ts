@@ -1,23 +1,28 @@
 import { describe, it, expect } from 'vitest'
-import { resolveInitialTheme } from './useTheme'
+import { resolveTheme, resolveInitialMode } from './useTheme'
 
-describe('resolveInitialTheme', () => {
-  it('honours a valid saved choice over the OS preference', () => {
-    expect(resolveInitialTheme('light', false)).toBe('light')
-    expect(resolveInitialTheme('dark', true)).toBe('dark')
+describe('resolveInitialMode', () => {
+  it('honours an explicit saved mode', () => {
+    expect(resolveInitialMode('light')).toBe('light')
+    expect(resolveInitialMode('dark')).toBe('dark')
+    expect(resolveInitialMode('system')).toBe('system')
   })
 
-  it('falls back to the OS preference when nothing is saved', () => {
-    expect(resolveInitialTheme(null, true)).toBe('light')
-    expect(resolveInitialTheme(null, false)).toBe('dark')
+  it('treats nothing-saved or a legacy/invalid value as "system"', () => {
+    expect(resolveInitialMode(null)).toBe('system')
+    expect(resolveInitialMode('')).toBe('system')
+    expect(resolveInitialMode('purple')).toBe('system')
+  })
+})
+
+describe('resolveTheme', () => {
+  it('returns the explicit mode regardless of the OS preference', () => {
+    expect(resolveTheme('light', false)).toBe('light')
+    expect(resolveTheme('dark', true)).toBe('dark')
   })
 
-  it('ignores an invalid saved value and uses the OS preference', () => {
-    expect(resolveInitialTheme('purple', true)).toBe('light')
-    expect(resolveInitialTheme('', false)).toBe('dark')
-  })
-
-  it('defaults to dark', () => {
-    expect(resolveInitialTheme(null, false)).toBe('dark')
+  it('follows the OS preference in system mode (defaulting to dark)', () => {
+    expect(resolveTheme('system', true)).toBe('light')
+    expect(resolveTheme('system', false)).toBe('dark')
   })
 })
