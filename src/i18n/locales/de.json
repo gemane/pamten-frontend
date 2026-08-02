@@ -48,6 +48,7 @@
     "allCountries": "Alle Länder",
     "filterCountries": "Länder filtern…",
     "noResultsScrape": "Kein Treffer — \"{{query}}\" scrapen?",
+    "alsoScrape": "Nicht dabei? \"{{query}}\" scrapen",
     "scrapeSignIn": "Melde dich an und bestätige deine E-Mail, um neue Unternehmen zu scrapen."
   },
   "graph": {

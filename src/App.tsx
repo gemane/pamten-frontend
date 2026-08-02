@@ -87,6 +87,7 @@ function AppInner() {
   const [navHistory,      setNavHistory]      = useState<NodeData[]>([])
   const [loading,         setLoading]         = useState<boolean>(false)
   const [expandingId,     setExpandingId]     = useState<string | null>(null)
+  const [scraping,        setScraping]        = useState<boolean>(false)   // on-demand scrape in flight
   const [toast,           setToast]           = useState<ToastState | null>(null)
   const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
   const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
@@ -100,6 +101,7 @@ function AppInner() {
   // (idle) append when the user navigates away; idleCancelRef cancels the pending idle.
   const enrichSeqRef       = useRef<number>(0)
   const idleCancelRef      = useRef<null | (() => void)>(null)
+  const scrapeBarTimer     = useRef<ReturnType<typeof setTimeout> | null>(null)
   const elementsRef        = useRef<GraphElement[]>([])
   const contextCountriesRef = useRef<ContextCountry[]>([])
   elementsRef.current = elements
@@ -152,14 +154,26 @@ function AppInner() {
     idleCancelRef.current = null
   }, [])
 
+  // Show the top progress bar for an in-flight scrape — but only after a short delay, so
+  // a fresh company (the backend answers instantly, no scrape) doesn't flash the bar.
+  const startScrapeBar = useCallback(() => {
+    if (scrapeBarTimer.current) return
+    scrapeBarTimer.current = setTimeout(() => setScraping(true), 250)
+  }, [])
+  const stopScrapeBar = useCallback(() => {
+    if (scrapeBarTimer.current) { clearTimeout(scrapeBarTimer.current); scrapeBarTimer.current = null }
+    setScraping(false)
+  }, [])
+
   // Invalidate any in-flight enrichment (its phase-2 append) — call before a new
   // search / navigation / clear so a stale idle scrape can't append into a fresh graph.
   const resetEnrichment = useCallback(() => {
     enrichSeqRef.current += 1
     cancelPendingIdle()
-  }, [cancelPendingIdle])
+    stopScrapeBar()
+  }, [cancelPendingIdle, stopScrapeBar])
 
-  useEffect(() => () => cancelPendingIdle(), [cancelPendingIdle])  // cancel on unmount
+  useEffect(() => () => { cancelPendingIdle(); stopScrapeBar() }, [cancelPendingIdle, stopScrapeBar])  // unmount
 
   // Phase 2: when the UI goes idle, deepen to depth 2 and append what's new.
   const scheduleDepth2Enrich = useCallback((query: string) => {
@@ -167,27 +181,33 @@ function AppInner() {
     cancelPendingIdle()
     idleCancelRef.current = scheduleIdle(async () => {
       idleCancelRef.current = null
+      startScrapeBar()
       try {
         const { data } = await ensureScrape(query, 2, false)
         if (token !== enrichSeqRef.current) return       // navigated away — drop it
         if (data.scraped && data.profile) appendProfile(data.profile)
       } catch { /* best-effort — enrichment never blocks the UI */ }
+      finally { stopScrapeBar() }
     })
-  }, [appendProfile, cancelPendingIdle])
+  }, [appendProfile, cancelPendingIdle, startScrapeBar, stopScrapeBar])
 
   // Phase 1: enrich an already-rendered entity (depth 1), then schedule the idle deepen.
   const enrichExisting = useCallback(async (query: string, entityId: string, force = false) => {
     if (!canScrape(user)) return
     const token = enrichSeqRef.current
     setExpandingId(entityId)
+    startScrapeBar()
     try {
       const { data } = await ensureScrape(query, 1, force)
       if (token !== enrichSeqRef.current) return
       if (data.scraped && data.profile) appendProfile(data.profile)
     } catch { /* best-effort */ }
-    finally { setExpandingId(cur => (cur === entityId ? null : cur)) }
+    finally {
+      setExpandingId(cur => (cur === entityId ? null : cur))
+      stopScrapeBar()
+    }
     if (token === enrichSeqRef.current) scheduleDepth2Enrich(query)
-  }, [user, appendProfile, scheduleDepth2Enrich])
+  }, [user, appendProfile, scheduleDepth2Enrich, startScrapeBar, stopScrapeBar])
 
   // A search that found nothing in the DB → scrape the typed query (force, since it's
   // absent), build the fresh graph, then deepen on idle.
@@ -661,7 +681,7 @@ function AppInner() {
 
   return (
     <div className="app">
-      {loading && <div className="loading-bar" />}
+      {(loading || scraping) && <div className="loading-bar" />}
       {showAuth && (
         <AuthModal
           onClose={() => { setShowAuth(false); setResetToken(null); setAuthMode('login') }}
