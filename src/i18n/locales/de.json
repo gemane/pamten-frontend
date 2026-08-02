@@ -290,6 +290,7 @@
     "theme": "Design",
     "dark": "Dunkel",
     "light": "Hell",
+    "system": "System",
     "account": "Konto",
     "users": "Benutzer",
     "deleteUser": "Benutzer löschen",

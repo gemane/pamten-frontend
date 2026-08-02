@@ -70,7 +70,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 function AppInner() {
   const { user, logout } = useAuth()
   const { t } = useTranslation()
-  const [theme, toggleTheme] = useTheme()
+  const [theme, themeMode, setThemeMode] = useTheme()
   const [showAuth, setShowAuth] = useState<boolean>(false)
   const [authMode, setAuthMode] = useState<'login' | 'reset'>('login')
   const [resetToken, setResetToken] = useState<string | null>(null)
@@ -760,8 +760,8 @@ function AppInner() {
           {activeTab === 'settings' && (
             <div className="left-panel__detail">
               <SettingsPanel
-                theme={theme}
-                onToggleTheme={toggleTheme}
+                themeMode={themeMode}
+                onSetThemeMode={setThemeMode}
                 user={user}
                 onLogin={() => setShowAuth(true)}
                 onLogout={logout}
@@ -845,8 +845,8 @@ function AppInner() {
             {activeTab === 'settings' && (
               <div className="mobile-full-panel">
                 <SettingsPanel
-                  theme={theme}
-                  onToggleTheme={toggleTheme}
+                  themeMode={themeMode}
+                  onSetThemeMode={setThemeMode}
                   user={user}
                   onLogin={() => setShowAuth(true)}
                   onLogout={logout}
