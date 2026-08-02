@@ -262,7 +262,8 @@
     "scrapedIntoGraphError": "Gescrapter Eintrag konnte nicht in den Graph geladen werden.",
     "enriching": "\"{{query}}\" wird angereichert…",
     "scrapeNoResults": "In den Quellen nichts zu \"{{query}}\" gefunden.",
-    "scrapeError": "Quellensuche fehlgeschlagen. Bitte versuche es erneut."
+    "scrapeError": "Quellensuche fehlgeschlagen. Bitte versuche es erneut.",
+    "scrapeCooldown": "Dieses Unternehmen wurde kürzlich aktualisiert. Du kannst die Quellen später erneut aktualisieren."
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",

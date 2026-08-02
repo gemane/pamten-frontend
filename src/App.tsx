@@ -206,13 +206,15 @@ function AppInner() {
       const { data } = await ensureScrape(query, 1, force)
       if (token !== enrichSeqRef.current) return
       if (data.scraped && data.profile) appendProfile(data.profile)
+      // A forced refresh is denied within the 24h cooldown — tell the user why nothing changed.
+      else if (force && data.reason === 'cooldown') showToast(t('toast.scrapeCooldown'), 'info')
     } catch { /* best-effort */ }
     finally {
       setExpandingId(cur => (cur === entityId ? null : cur))
       stopScrapeBar()
     }
     if (token === enrichSeqRef.current) scheduleDepth2Enrich(query)
-  }, [user, appendProfile, scheduleDepth2Enrich, startScrapeBar, stopScrapeBar])
+  }, [user, appendProfile, scheduleDepth2Enrich, startScrapeBar, stopScrapeBar, showToast, t])
 
   // A search that found nothing in the DB → scrape the typed query (force, since it's
   // absent), build the fresh graph, then deepen on idle.

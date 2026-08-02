@@ -262,7 +262,8 @@
     "scrapedIntoGraphError": "Could not load scraped entity into graph.",
     "enriching": "Enriching \"{{query}}\"…",
     "scrapeNoResults": "Nothing found in the sources for \"{{query}}\".",
-    "scrapeError": "Source search failed. Please try again."
+    "scrapeError": "Source search failed. Please try again.",
+    "scrapeCooldown": "This company was updated recently. You can refresh its sources again later."
   },
   "map": {
     "resetView": "Reset view",
