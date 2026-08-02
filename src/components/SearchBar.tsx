@@ -12,6 +12,9 @@ interface SearchBarProps {
   // Fetched once at the App level (tab-independent) so the country filter is available
   // from the start, not only after the graph-tab SearchBar first mounts.
   countries: { country: string; count: number }[]
+  // When a search finds nothing in the DB, verified users can scrape the typed query.
+  onScrapeQuery?: (query: string) => void
+  canScrape?: boolean
 }
 
 // Decide whether the debounced search should run for `query`, given a value we were told
@@ -27,7 +30,7 @@ export function consumeSkip(query: string, skip: string | null): { run: boolean;
   return { run: true, skip }
 }
 
-export default function SearchBar({ onSelect, selectedLabel, countries }: SearchBarProps) {
+export default function SearchBar({ onSelect, selectedLabel, countries, onScrapeQuery, canScrape }: SearchBarProps) {
   const { t, i18n } = useTranslation()
   const [query, setQuery]           = useState<string>('')
   const [results, setResults]       = useState<SearchResult[]>([])
@@ -226,6 +229,29 @@ export default function SearchBar({ onSelect, selectedLabel, countries }: Search
               )}
             </li>
           ))}
+        </ul>
+      )}
+
+      {/* Nothing in the DB → offer to scrape the typed query (verified users only). */}
+      {open && !loading && results.length === 0 && query.trim().length >= 2 && (
+        <ul className="search-dropdown">
+          {canScrape && onScrapeQuery ? (
+            <li
+              className="search-item search-item--scrape"
+              onMouseDown={() => {
+                const q = query.trim()
+                setOpen(false)
+                inputRef.current?.blur()
+                onScrapeQuery(q)
+              }}
+            >
+              <span className="search-item__name">{t('search.noResultsScrape', { query: query.trim() })}</span>
+            </li>
+          ) : (
+            <li className="search-item search-item--hint">
+              <span className="search-item__name">{t('search.scrapeSignIn')}</span>
+            </li>
+          )}
         </ul>
       )}
     </div>

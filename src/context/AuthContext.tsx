@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const storeAndSetUser = (data: AuthUser & { access_token: string }) => {
     localStorage.setItem('owlgraph_token', data.access_token)
-    setUser({ id: data.id, email: data.email, role: data.role })
+    setUser({ id: data.id, email: data.email, role: data.role, email_verified: data.email_verified })
   }
 
   const login = useCallback(async (email: string, password: string) => {

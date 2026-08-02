@@ -9,6 +9,7 @@ import type {
   ScrapeResult,
   ScrapeRun,
   ScraperSource,
+  EnsureResult,
   CountryEntityGroup,
   Entity,
   AuthUser,
@@ -273,3 +274,8 @@ export const runScraperOpenCorporates = (company: string): Promise<AxiosResponse
 
 export const runScraperAll = (company: string, depth = 2): Promise<AxiosResponse<unknown>> =>
   client.post('/scraper/run-all', null, { params: { company, depth } })
+
+// On-demand enrichment for any verified user: ensure a company is present + fresh,
+// scraping the instant sources only when needed (see backend app/scraper/ondemand.py).
+export const ensureScrape = (query: string, depth = 1, force = false): Promise<AxiosResponse<EnsureResult>> =>
+  client.post('/scraper/ensure', { query, depth, force })
