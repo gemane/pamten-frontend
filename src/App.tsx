@@ -80,6 +80,8 @@ function AppInner() {
   const isMobile = useMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
+  // Share + report (flag) tools belong to the data views, not the scraper/settings panels.
+  const showShareTools = activeTab === 'graph' || activeTab === 'map'
 
   const [elements,        setElements]        = useState<GraphElement[]>([])
   const [centerId,        setCenterId]        = useState<string | null>(null)
@@ -716,10 +718,14 @@ function AppInner() {
                 <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
               </div>
-              {canModerate && (
-                <button className="tab-btn" onClick={() => setShowFlagQueue(true)} title={t('modQueue.title')}><FiFlag /></button>
+              {showShareTools && (
+                <>
+                  {canModerate && (
+                    <button className="tab-btn" onClick={() => setShowFlagQueue(true)} title={t('modQueue.title')}><FiFlag /></button>
+                  )}
+                  <button className="tab-btn share-btn" onClick={handleShare} title={t('share.title')}><FiShare2 /></button>
+                </>
               )}
-              <button className="tab-btn share-btn" onClick={handleShare} title={t('share.title')}><FiShare2 /></button>
             </div>
           </div>
 
@@ -853,14 +859,18 @@ function AppInner() {
                 />
               </div>
             )}
-            {canModerate && (
-              <button className="mobile-share-fab mobile-flag-fab" onClick={() => setShowFlagQueue(true)} title={t('modQueue.title')}>
-                <FiFlag />
-              </button>
+            {showShareTools && (
+              <>
+                {canModerate && (
+                  <button className="mobile-share-fab mobile-flag-fab" onClick={() => setShowFlagQueue(true)} title={t('modQueue.title')}>
+                    <FiFlag />
+                  </button>
+                )}
+                <button className="mobile-share-fab" onClick={handleShare} title={t('share.title')}>
+                  <FiShare2 />
+                </button>
+              </>
             )}
-            <button className="mobile-share-fab" onClick={handleShare} title={t('share.title')}>
-              <FiShare2 />
-            </button>
           </>
         ) : (
           /* ── Desktop layout ── */
