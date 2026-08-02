@@ -48,7 +48,12 @@
     "allCountries": "All countries",
     "filterCountries": "Filter countries…",
     "noResultsScrape": "No match — scrape \"{{query}}\"?",
+    "alsoScrape": "Not the one? Scrape \"{{query}}\"",
     "scrapeSignIn": "Sign in and verify your email to scrape new companies."
+  },
+  "scrape": {
+    "title": "Scraping {{company}}…",
+    "hint": "Fetching from Wikidata and SEC EDGAR — this can take a moment."
   },
   "graph": {
     "tagline": "Map the world's corporate ownership",

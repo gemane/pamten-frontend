@@ -577,6 +577,59 @@ body {
   100% { background-position: -100% 0; }
 }
 
+/* Prominent centered overlay while scraping a NEW company into an empty graph */
+.scrape-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 16, 30, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 40;
+  padding: 20px;
+}
+.scrape-overlay__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(420px, 90%);
+  padding: 28px 32px;
+  background: #16223c;
+  border: 1px solid #2a3a5a;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  text-align: center;
+}
+.scrape-overlay__title { font-size: 18px; font-weight: 700; color: #eaeaea; }
+.scrape-overlay__hint  { font-size: 13px; color: #8892a4; }
+.scrape-overlay__bar {
+  position: relative;
+  width: 100%;
+  height: 5px;
+  margin-top: 6px;
+  border-radius: 3px;
+  background: #22314f;
+  overflow: hidden;
+}
+.scrape-overlay__bar span {
+  position: absolute;
+  top: 0; left: 0; height: 100%;
+  width: 40%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #4A90D9, #8E44AD);
+  animation: scrape-bar 1.2s ease-in-out infinite;
+}
+@keyframes scrape-bar {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}
+[data-theme="light"] .scrape-overlay { background: rgba(230, 236, 245, 0.6); }
+[data-theme="light"] .scrape-overlay__card { background: #ffffff; border-color: #b8c4d4; }
+[data-theme="light"] .scrape-overlay__title { color: #1a202c; }
+[data-theme="light"] .scrape-overlay__bar { background: #dbe3ef; }
+
 /* ── Left panel ────────────────────────────────────────── */
 .left-panel {
   width: 30%;

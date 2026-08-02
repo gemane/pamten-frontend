@@ -229,6 +229,21 @@ export default function SearchBar({ onSelect, selectedLabel, countries, onScrape
               )}
             </li>
           ))}
+          {/* Even with results, the top hits often aren't the exact company — always
+              let verified users scrape the typed query. */}
+          {canScrape && onScrapeQuery && query.trim().length >= 2 && (
+            <li
+              className="search-item search-item--scrape"
+              onMouseDown={() => {
+                const q = query.trim()
+                setOpen(false)
+                inputRef.current?.blur()
+                onScrapeQuery(q)
+              }}
+            >
+              <span className="search-item__name">{t('search.alsoScrape', { query: query.trim() })}</span>
+            </li>
+          )}
         </ul>
       )}
 

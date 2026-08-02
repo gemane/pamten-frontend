@@ -48,7 +48,12 @@
     "allCountries": "Todos los países",
     "filterCountries": "Filtrar países…",
     "noResultsScrape": "Sin coincidencias — ¿scrapear \"{{query}}\"?",
+    "alsoScrape": "¿No está? Scrapear \"{{query}}\"",
     "scrapeSignIn": "Inicia sesión y verifica tu correo para scrapear nuevas empresas."
+  },
+  "scrape": {
+    "title": "Scrapeando {{company}}…",
+    "hint": "Obteniendo datos de Wikidata y SEC EDGAR — esto puede tardar un momento."
   },
   "graph": {
     "tagline": "Mapea la propiedad corporativa mundial",
