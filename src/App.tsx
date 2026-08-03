@@ -91,7 +91,8 @@ function AppInner() {
   const [loading,         setLoading]         = useState<boolean>(false)
   const [expandingId,     setExpandingId]     = useState<string | null>(null)
   const [scraping,        setScraping]        = useState<boolean>(false)   // on-demand scrape in flight
-  const [scrapingCompany, setScrapingCompany] = useState<string | null>(null)  // NEW-company scrape (prominent overlay)
+  const [scrapingCompany, setScrapingCompany] = useState<string | null>(null)  // scrape in flight (prominent overlay)
+  const [enrichNonce,     setEnrichNonce]     = useState<number>(0)   // bumps when a scrape appends data → NodePanel refetches
   const [toast,           setToast]           = useState<ToastState | null>(null)
   const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
   const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
@@ -106,6 +107,7 @@ function AppInner() {
   const enrichSeqRef       = useRef<number>(0)
   const idleCancelRef      = useRef<null | (() => void)>(null)
   const scrapeBarTimer     = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scrapeOverlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const elementsRef        = useRef<GraphElement[]>([])
   const contextCountriesRef = useRef<ContextCountry[]>([])
   elementsRef.current = elements
@@ -151,6 +153,9 @@ function AppInner() {
       loadedIds.current = draftIds
       setElements(prev => [...prev, ...newEls])
     }
+    // A scrape just wrote new data — nudge the open NodePanel to refetch its profile so
+    // the panel reflects the enrichment (it's keyed on node.id, which didn't change).
+    setEnrichNonce(n => n + 1)
   }, [])
 
   const cancelPendingIdle = useCallback(() => {
@@ -169,16 +174,29 @@ function AppInner() {
     setScraping(false)
   }, [])
 
+  // The prominent full-screen "Searching sources for X…" overlay for a user-initiated
+  // scrape. Shown after a short delay so a fresh company (backend answers instantly, no
+  // scrape) doesn't flash it — same anti-flash guard as the top bar.
+  const startScrapeOverlay = useCallback((company: string) => {
+    if (scrapeOverlayTimer.current) return
+    scrapeOverlayTimer.current = setTimeout(() => setScrapingCompany(company), 250)
+  }, [])
+  const stopScrapeOverlay = useCallback(() => {
+    if (scrapeOverlayTimer.current) { clearTimeout(scrapeOverlayTimer.current); scrapeOverlayTimer.current = null }
+    setScrapingCompany(null)
+  }, [])
+
   // Invalidate any in-flight enrichment (its phase-2 append) — call before a new
   // search / navigation / clear so a stale idle scrape can't append into a fresh graph.
   const resetEnrichment = useCallback(() => {
     enrichSeqRef.current += 1
     cancelPendingIdle()
     stopScrapeBar()
-    setScrapingCompany(null)
-  }, [cancelPendingIdle, stopScrapeBar])
+    stopScrapeOverlay()
+  }, [cancelPendingIdle, stopScrapeBar, stopScrapeOverlay])
 
-  useEffect(() => () => { cancelPendingIdle(); stopScrapeBar() }, [cancelPendingIdle, stopScrapeBar])  // unmount
+  useEffect(() => () => { cancelPendingIdle(); stopScrapeBar(); stopScrapeOverlay() },
+    [cancelPendingIdle, stopScrapeBar, stopScrapeOverlay])  // unmount
 
   // Phase 2: when the UI goes idle, deepen to depth 2 and append what's new.
   const scheduleDepth2Enrich = useCallback((query: string) => {
@@ -201,7 +219,10 @@ function AppInner() {
     if (!canScrape(user)) return
     const token = enrichSeqRef.current
     setExpandingId(entityId)
-    startScrapeBar()
+    // User-initiated (clicked a result / pressed Refresh): show the prominent overlay so
+    // the scrape is visible, not just the easy-to-miss top bar. Delayed, so a fresh company
+    // that needs no scrape doesn't flash it.
+    startScrapeOverlay(query)
     try {
       const { data } = await ensureScrape(query, 1, force)
       if (token !== enrichSeqRef.current) return
@@ -211,10 +232,10 @@ function AppInner() {
     } catch { /* best-effort */ }
     finally {
       setExpandingId(cur => (cur === entityId ? null : cur))
-      stopScrapeBar()
+      stopScrapeOverlay()
     }
     if (token === enrichSeqRef.current) scheduleDepth2Enrich(query)
-  }, [user, appendProfile, scheduleDepth2Enrich, startScrapeBar, stopScrapeBar, showToast, t])
+  }, [user, appendProfile, scheduleDepth2Enrich, startScrapeOverlay, stopScrapeOverlay, showToast, t])
 
   // A search that found nothing in the DB → scrape the typed query (force, since it's
   // absent), build the fresh graph, then deepen on idle.
@@ -740,6 +761,7 @@ function AppInner() {
               <div className="left-panel__detail">
                 <NodePanel
                   node={selectedNode}
+                  refreshKey={enrichNonce}
                   onExportPng={elements.length > 0 ? handleExportPng : undefined}
                   onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                   onViewOnMap={() => handleTabChange('map')}
@@ -812,6 +834,7 @@ function AppInner() {
                   <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
                   <NodePanel
                     node={selectedNode}
+                    refreshKey={enrichNonce}
                     onExportPng={elements.length > 0 ? handleExportPng : undefined}
                     onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                     onViewOnMap={() => handleTabChange('map')}

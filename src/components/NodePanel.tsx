@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
@@ -170,6 +170,9 @@ interface NodePanelProps {
   onNavigate?: (node: NodeData) => void
   // Force a fresh scrape of this company (verified users only — App passes undefined otherwise).
   onReScrape?: (node: NodeData) => void
+  // Bumped by App when an on-demand scrape appends data → refetch this node's profile in
+  // place (the effect is keyed on node.id, which doesn't change when the same node is enriched).
+  refreshKey?: number
 }
 
 
@@ -698,34 +701,45 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onNavigate, onReScrape }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onNavigate, onReScrape, refreshKey }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
   const [loading,    setLoading]    = useState<boolean>(false)
   const [activeView, setActiveView] = useState<string>('overview')
+  const prevIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {
+      prevIdRef.current = null
       setProfile(null)
       setSources([])
       return
     }
-    setActiveView('overview')
-    setLoading(true)
-    setProfile(null)
-    setSources([])
+    // Selecting a different node clears + shows the spinner; a refreshKey bump for the SAME
+    // node is a silent in-place refetch (keeps the current data visible, no spinner flash).
+    const idChanged = prevIdRef.current !== node.id
+    prevIdRef.current = node.id
+    if (idChanged) {
+      setActiveView('overview')
+      setLoading(true)
+      setProfile(null)
+      setSources([])
+    }
+    let active = true
     Promise.all([
       getFullProfile(node.id),
       getEntitySources(node.id).catch(() => ({ data: [] as Source[] })),
     ])
       .then(([{ data: prof }, { data: srcs }]) => {
+        if (!active) return
         setProfile(prof)
         setSources(srcs)
       })
-      .catch(() => setProfile(null))
-      .finally(() => setLoading(false))
-  }, [node?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+      .catch(() => { if (active && idChanged) setProfile(null) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [node?.id, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!node) {
     return (
