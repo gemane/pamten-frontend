@@ -130,7 +130,20 @@ Inside the Scraper tab — sync ownership data with **trusted peer** instances (
 
 ## Deployment
 
-The app is deployed on Render as a static site built from this repo. Render runs `npm run build` and serves `dist/`. Any push to `main` triggers a redeploy.
+The app is deployed on Render as a static site built from this repo. Render runs `npm run build` and serves `dist/`. Any push to **`develop`** triggers a redeploy.
+
+### Branch model
+
+Two long-lived branches, matching [pamten-backend](https://github.com/gemane/pamten-backend):
+
+| Branch | Deploys to | Purpose |
+|---|---|---|
+| `develop` | Render (dev) — auto-deploy on push | Integration branch; everything lands here first |
+| `main` | nothing yet (production, once it exists) | Only code verified running on the dev deploy |
+
+The flow is **feature branch → PR into `develop` → verify on the dev deploy → PR `develop` → `main`**. A repository ruleset protects both: direct pushes are rejected, and the `Test & Build` check must pass before merge (no approving review required, so a solo maintainer can self-merge). `main` has no bypass actors; `develop` lets an admin force-merge a red PR when a dev-only experiment warrants it. CI runs on pushes and PRs to both branches.
+
+Keep the two repos in step — a frontend change that needs a backend change should reach `main` in the same promotion round, since both deploy from the same branch names.
 
 ---
 
