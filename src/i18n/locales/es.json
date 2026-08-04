@@ -298,6 +298,20 @@
     "usersLoadError": "No se pudieron cargar los usuarios.",
     "roleUpdateError": "No se pudo actualizar el rol.",
     "deleteUserError": "No se pudo eliminar el usuario.",
+    "password": {
+      "title": "Contraseña",
+      "desc": "Cambia la contraseña que usas para iniciar sesión.",
+      "change": "Cambiar contraseña",
+      "current": "Contraseña actual",
+      "new": "Nueva contraseña",
+      "repeat": "Repite la nueva contraseña",
+      "hint": "Al menos 8 caracteres. No se aceptan contraseñas muy comunes.",
+      "save": "Actualizar contraseña",
+      "cancel": "Cancelar",
+      "changed": "Contraseña actualizada.",
+      "mismatch": "Las nuevas contraseñas no coinciden.",
+      "error": "No se pudo cambiar la contraseña. Inténtalo de nuevo."
+    },
     "mfa": {
       "title": "Autenticación de dos factores",
       "desc": "Añade un segundo paso al iniciar sesión con una app de autenticación (Google Authenticator, Authy, …).",

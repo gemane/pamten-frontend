@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import MfaSection from './MfaSection'
+import ChangePasswordSection from './ChangePasswordSection'
 import type { ThemeMode } from '../hooks/useTheme'
 import type { AuthUser } from '../types'
 import { systemLanguage } from '../utils/systemLanguage'
@@ -157,6 +158,8 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
           </button>
         )}
       </div>
+
+      {user && <ChangePasswordSection />}
 
       {user && <MfaSection />}
 

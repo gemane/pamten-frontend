@@ -298,6 +298,20 @@
     "usersLoadError": "Benutzer konnten nicht geladen werden.",
     "roleUpdateError": "Rolle konnte nicht aktualisiert werden.",
     "deleteUserError": "Benutzer konnte nicht gelöscht werden.",
+    "password": {
+      "title": "Passwort",
+      "desc": "Ändern Sie das Passwort, mit dem Sie sich anmelden.",
+      "change": "Passwort ändern",
+      "current": "Aktuelles Passwort",
+      "new": "Neues Passwort",
+      "repeat": "Neues Passwort wiederholen",
+      "hint": "Mindestens 8 Zeichen. Sehr häufige Passwörter werden nicht akzeptiert.",
+      "save": "Passwort aktualisieren",
+      "cancel": "Abbrechen",
+      "changed": "Passwort aktualisiert.",
+      "mismatch": "Die neuen Passwörter stimmen nicht überein.",
+      "error": "Passwort konnte nicht geändert werden. Bitte erneut versuchen."
+    },
     "mfa": {
       "title": "Zwei-Faktor-Authentifizierung",
       "desc": "Füge beim Anmelden einen zweiten Schritt mit einer Authenticator-App hinzu (Google Authenticator, Authy, …).",
