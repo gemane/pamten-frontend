@@ -814,7 +814,7 @@ function AppInner() {
             {activeTab === 'graph' && (
               <>
                 <div className="graph-topbar">
-                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} />
+                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
                 </div>
                 <div className="mobile-canvas">
                   {elements.length > 0 && <GraphLegend />}
@@ -907,7 +907,7 @@ function AppInner() {
           <>
             {activeTab === 'graph' && (
               <div className="graph-topbar">
-                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} />
+                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
               </div>
             )}
             <div className="graph-area">

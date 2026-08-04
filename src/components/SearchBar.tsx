@@ -15,6 +15,8 @@ interface SearchBarProps {
   // When a search finds nothing in the DB, verified users can scrape the typed query.
   onScrapeQuery?: (query: string) => void
   canScrape?: boolean
+  // Open the login modal — makes the "sign in to search sources" hint actionable.
+  onRequestLogin?: () => void
 }
 
 // Decide whether the debounced search should run for `query`, given a value we were told
@@ -30,7 +32,7 @@ export function consumeSkip(query: string, skip: string | null): { run: boolean;
   return { run: true, skip }
 }
 
-export default function SearchBar({ onSelect, selectedLabel, countries, onScrapeQuery, canScrape }: SearchBarProps) {
+export default function SearchBar({ onSelect, selectedLabel, countries, onScrapeQuery, canScrape, onRequestLogin }: SearchBarProps) {
   const { t, i18n } = useTranslation()
   const [query, setQuery]           = useState<string>('')
   const [results, setResults]       = useState<SearchResult[]>([])
@@ -261,6 +263,17 @@ export default function SearchBar({ onSelect, selectedLabel, countries, onScrape
               }}
             >
               <span className="search-item__name">{t('search.noResultsScrape', { query: query.trim() })}</span>
+            </li>
+          ) : onRequestLogin ? (
+            <li
+              className="search-item search-item--scrape"
+              onMouseDown={() => {
+                setOpen(false)
+                inputRef.current?.blur()
+                onRequestLogin()
+              }}
+            >
+              <span className="search-item__name">{t('search.scrapeSignIn')}</span>
             </li>
           ) : (
             <li className="search-item search-item--hint">

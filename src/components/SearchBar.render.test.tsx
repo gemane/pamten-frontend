@@ -80,4 +80,16 @@ describe('SearchBar (render)', () => {
     expect(screen.queryByText(/search sources for/i)).not.toBeInTheDocument()
     expect(onScrapeQuery).not.toHaveBeenCalled()
   })
+
+  it('makes the sign-in hint clickable to open login when a login handler is given', async () => {
+    resolveSearch([])
+    const onRequestLogin = vi.fn()
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} onRequestLogin={onRequestLogin}
+                      countries={[]} canScrape={false} />)
+
+    await type('nonesuchco')
+    const hint = await screen.findByText(/sign in/i)
+    await userEvent.click(hint)
+    expect(onRequestLogin).toHaveBeenCalledTimes(1)
+  })
 })
