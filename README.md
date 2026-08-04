@@ -117,6 +117,8 @@ Inside the Scraper tab — sync ownership data with **trusted peer** instances (
 - First registered account becomes **admin**; subsequent accounts start as **viewer**
 - Roles: `admin` (full access), `contributor` (scraping, dedup, federation), `viewer` (read-only)
 - Login / register modal accessible from the header
+- **Settings → Password** changes your own password (current password required). This is the route that works when email delivery doesn't — the reset-by-email flow needs SMTP, which Render blocks. Other sessions stay signed in, since tokens are stateless.
+- **Settings → Two-factor authentication** enrols a TOTP authenticator app
 
 ---
 

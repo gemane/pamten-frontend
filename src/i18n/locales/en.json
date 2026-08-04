@@ -298,6 +298,20 @@
     "usersLoadError": "Could not load users.",
     "roleUpdateError": "Could not update role.",
     "deleteUserError": "Could not delete user.",
+    "password": {
+      "title": "Password",
+      "desc": "Change the password you use to sign in.",
+      "change": "Change password",
+      "current": "Current password",
+      "new": "New password",
+      "repeat": "Repeat new password",
+      "hint": "At least 8 characters. Very common passwords are not accepted.",
+      "save": "Update password",
+      "cancel": "Cancel",
+      "changed": "Password updated.",
+      "mismatch": "The new passwords don't match.",
+      "error": "Could not change the password. Try again."
+    },
     "mfa": {
       "title": "Two-factor authentication",
       "desc": "Add a second step at login using an authenticator app (Google Authenticator, Authy, …).",

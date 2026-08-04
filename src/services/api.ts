@@ -250,6 +250,11 @@ export const authForgotPassword = (email: string): Promise<AxiosResponse<{ messa
 export const authResetPassword = (token: string, new_password: string): Promise<AxiosResponse<{ message: string }>> =>
   client.post('/auth/reset-password', { token, new_password })
 
+// Self-service rotation for a signed-in user — no email round-trip, so it works
+// where outbound SMTP is blocked. Other sessions stay signed in (tokens are stateless).
+export const authChangePassword = (current_password: string, new_password: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.post('/auth/change-password', { current_password, new_password })
+
 export interface UserRecord { id: string; email: string; role: string; email_verified?: boolean; created_at?: string }
 export const getUsers       = (): Promise<AxiosResponse<UserRecord[]>> => client.get('/auth/users')
 export const updateUserRole = (id: string, role: string): Promise<AxiosResponse<{ message: string }>> =>
