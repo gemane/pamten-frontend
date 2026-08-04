@@ -41,8 +41,13 @@ export default defineConfig(({ mode }) => {
 
   return {
     test: {
-      environment: 'node',
-      include: ['src/**/*.test.ts'],
+      // jsdom so component render tests (@testing-library/react) have a DOM; the pure-logic
+      // *.test.ts suites run fine under it too. `globals` enables RTL's afterEach cleanup +
+      // jest-dom matchers without importing them per file.
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: ['./src/test/setup.ts'],
+      include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     },
     plugins: [react(), cspPlugin(apiUrl)],
     build: {
