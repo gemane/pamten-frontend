@@ -32,7 +32,8 @@
     "d3-transition": "^3.0.0",
     "d3-zoom": "^3.0.0",
     "d3-drag": "^3.0.0",
-    "d3-interpolate": "^3.0.0"
+    "d3-interpolate": "^3.0.0",
+    "postcss": "^8.5.25"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
