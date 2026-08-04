@@ -219,10 +219,12 @@ function AppInner() {
     if (!canScrape(user)) return
     const token = enrichSeqRef.current
     setExpandingId(entityId)
-    // User-initiated (clicked a result / pressed Refresh): show the prominent overlay so
-    // the scrape is visible, not just the easy-to-miss top bar. Delayed, so a fresh company
-    // that needs no scrape doesn't flash it.
-    startScrapeOverlay(query)
+    // Only an explicit refresh (force) shows the prominent "Searching sources for X…"
+    // overlay — that's a deliberate re-scrape. A passive enrich-on-select mostly hits
+    // already-fresh companies where the backend does NO scrape (just a DB read), so it uses
+    // the subtle top bar and never flashes a misleading full-screen "fetching from Wikidata
+    // / SEC" overlay for data that's already in the DB.
+    if (force) startScrapeOverlay(query); else startScrapeBar()
     try {
       const { data } = await ensureScrape(query, 1, force)
       if (token !== enrichSeqRef.current) return
@@ -232,10 +234,11 @@ function AppInner() {
     } catch { /* best-effort */ }
     finally {
       setExpandingId(cur => (cur === entityId ? null : cur))
-      stopScrapeOverlay()
+      if (force) stopScrapeOverlay(); else stopScrapeBar()
     }
     if (token === enrichSeqRef.current) scheduleDepth2Enrich(query)
-  }, [user, appendProfile, scheduleDepth2Enrich, startScrapeOverlay, stopScrapeOverlay, showToast, t])
+  }, [user, appendProfile, scheduleDepth2Enrich, startScrapeOverlay, stopScrapeOverlay,
+      startScrapeBar, stopScrapeBar, showToast, t])
 
   // A search that found nothing in the DB → scrape the typed query (force, since it's
   // absent), build the fresh graph, then deepen on idle.
