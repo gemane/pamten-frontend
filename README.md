@@ -141,7 +141,7 @@ Two long-lived branches, matching [pamten-backend](https://github.com/gemane/pam
 | `develop` | Render (dev) — auto-deploy on push | Integration branch; everything lands here first |
 | `main` | nothing yet (production, once it exists) | Only code verified running on the dev deploy |
 
-The flow is **feature branch → PR into `develop` → verify on the dev deploy → PR `develop` → `main`**. A repository ruleset protects both: direct pushes are rejected, and the `Test & Build` check must pass before merge (no approving review required, so a solo maintainer can self-merge). `main` has no bypass actors; `develop` lets an admin force-merge a red PR when a dev-only experiment warrants it. CI runs on pushes and PRs to both branches.
+The flow is **feature branch → PR into `develop` → verify on the dev deploy → PR `develop` → `main`**. `develop` is the default branch, so new PRs target it automatically; promotion PRs to `main` are merged with a merge commit rather than a squash, so the two histories don't drift apart. A repository ruleset protects both: direct pushes are rejected, and the `Test & Build` check must pass before merge (no approving review required, so a solo maintainer can self-merge). `main` has no bypass actors; `develop` lets an admin force-merge a red PR when a dev-only experiment warrants it. CI runs on pushes and PRs to both branches.
 
 Keep the two repos in step — a frontend change that needs a backend change should reach `main` in the same promotion round, since both deploy from the same branch names.
 
