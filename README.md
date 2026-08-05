@@ -113,7 +113,7 @@ Inside the Scraper tab — sync ownership data with **trusted peer** instances (
 - Requires `FEDERATION_ENABLED` (and, for signing, `FEDERATION_SIGNING_KEY`) on the backend
 
 ### Authentication
-- JWT-based, 7-day tokens stored in `localStorage`
+- JWT-based, **12-hour** tokens stored in `localStorage`. There is no refresh token and no server-side revocation, so an expired token means logging in again, and a token stays valid for its full lifetime even after a password change.
 - First registered account becomes **admin**; subsequent accounts start as **viewer**
 - Roles: `admin` (full access), `contributor` (scraping, dedup, federation), `viewer` (read-only)
 - Login / register modal accessible from the header
@@ -126,7 +126,7 @@ Inside the Scraper tab — sync ownership data with **trusted peer** instances (
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_API_URL` | `https://pamten-backend-yrbh.onrender.com` | Backend base URL |
+| `VITE_API_URL` | `https://pamten-backend-yrbh.onrender.com` | Backend **origin** — the `/v1` API prefix is appended in `services/api.ts`, so don't include it here or requests go to `/v1/v1` |
 
 ---
 
