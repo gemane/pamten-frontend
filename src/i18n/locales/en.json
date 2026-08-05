@@ -312,6 +312,16 @@
       "mismatch": "The new passwords don't match.",
       "error": "Could not change the password. Try again."
     },
+    "deleteAccount": {
+      "title": "Delete account",
+      "desc": "Permanently delete your account and sign out. This cannot be undone.",
+      "start": "Delete account",
+      "warning": "This permanently deletes your account, including your password and any two-factor setup. Reports you filed stay, but are no longer linked to you. This cannot be undone.",
+      "password": "Confirm with your password",
+      "confirm": "Permanently delete my account",
+      "cancel": "Cancel",
+      "error": "Could not delete the account. Try again."
+    },
     "mfa": {
       "title": "Two-factor authentication",
       "desc": "Add a second step at login using an authenticator app (Google Authenticator, Authy, …).",

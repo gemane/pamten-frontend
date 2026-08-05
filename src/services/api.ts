@@ -261,6 +261,12 @@ export const authResetPassword = (token: string, new_password: string): Promise<
 export const authChangePassword = (current_password: string, new_password: string): Promise<AxiosResponse<{ message: string }>> =>
   client.post('/auth/change-password', { current_password, new_password })
 
+// Permanent, and re-authenticated with the password so a stolen token isn't enough.
+// The password travels in a DELETE body — supported here and already used elsewhere
+// in this file (see keep-separate).
+export const authDeleteAccount = (password: string): Promise<AxiosResponse<{ message: string }>> =>
+  client.delete('/auth/me', { data: { password } })
+
 export interface UserRecord { id: string; email: string; role: string; email_verified?: boolean; created_at?: string }
 export const getUsers       = (): Promise<AxiosResponse<UserRecord[]>> => client.get('/auth/users')
 export const updateUserRole = (id: string, role: string): Promise<AxiosResponse<{ message: string }>> =>

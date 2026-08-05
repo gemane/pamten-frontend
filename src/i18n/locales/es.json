@@ -312,6 +312,16 @@
       "mismatch": "Las nuevas contraseñas no coinciden.",
       "error": "No se pudo cambiar la contraseña. Inténtalo de nuevo."
     },
+    "deleteAccount": {
+      "title": "Eliminar cuenta",
+      "desc": "Elimina tu cuenta de forma permanente y cierra la sesión. Esta acción no se puede deshacer.",
+      "start": "Eliminar cuenta",
+      "warning": "Esto elimina tu cuenta de forma permanente, incluida la contraseña y la configuración de doble factor. Los informes que enviaste se conservan, pero dejan de estar vinculados a ti. Esta acción no se puede deshacer.",
+      "password": "Confirma con tu contraseña",
+      "confirm": "Eliminar mi cuenta permanentemente",
+      "cancel": "Cancelar",
+      "error": "No se pudo eliminar la cuenta. Inténtalo de nuevo."
+    },
     "mfa": {
       "title": "Autenticación de dos factores",
       "desc": "Añade un segundo paso al iniciar sesión con una app de autenticación (Google Authenticator, Authy, …).",

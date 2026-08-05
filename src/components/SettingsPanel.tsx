@@ -3,6 +3,7 @@ import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown } from 'react-icons/
 import { useTranslation } from 'react-i18next'
 import MfaSection from './MfaSection'
 import ChangePasswordSection from './ChangePasswordSection'
+import DeleteAccountSection from './DeleteAccountSection'
 import type { ThemeMode } from '../hooks/useTheme'
 import type { AuthUser } from '../types'
 import { systemLanguage } from '../utils/systemLanguage'
@@ -180,6 +181,9 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
           </div>
         </div>
       )}
+
+      {/* Last, and after the admin panel: destructive and irreversible. */}
+      {user && <DeleteAccountSection onDeleted={onLogout} />}
     </div>
   )
 }

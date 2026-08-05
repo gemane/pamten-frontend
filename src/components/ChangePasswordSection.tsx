@@ -2,14 +2,7 @@ import { useState } from 'react'
 import { FiKey, FiCheckCircle, FiAlertCircle, FiLoader } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import { authChangePassword } from '../services/api'
-
-// Exported for unit testing: the backend's `detail` is the useful message ("Current
-// password is incorrect", the specific policy rule that failed), so prefer it and fall
-// back only when the failure carries none (a network error, say).
-export function errText(err: unknown, fallback: string): string {
-  const d = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-  return typeof d === 'string' ? d : fallback
-}
+import { errText } from '../utils/apiError'
 
 export default function ChangePasswordSection() {
   const { t } = useTranslation()
