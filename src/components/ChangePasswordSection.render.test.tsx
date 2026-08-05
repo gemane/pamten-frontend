@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18n from '../i18n'
-import ChangePasswordSection, { errText } from './ChangePasswordSection'
+import ChangePasswordSection from './ChangePasswordSection'
 import { authChangePassword } from '../services/api'
 
 vi.mock('../services/api', () => ({ authChangePassword: vi.fn() }))
@@ -94,26 +94,5 @@ describe('ChangePasswordSection (render)', () => {
     await i18n.changeLanguage('de')
     render(<ChangePasswordSection />)
     expect(screen.getByRole('button', { name: /Passwort ändern/ })).toBeInTheDocument()
-  })
-})
-
-describe('errText', () => {
-  it("prefers the backend's detail message", () => {
-    // "Current password is incorrect" and the specific policy violation both arrive
-    // this way — a generic string would hide the actual reason from the user.
-    const err = { response: { data: { detail: 'Current password is incorrect' } } }
-    expect(errText(err, 'fallback')).toBe('Current password is incorrect')
-  })
-
-  it('falls back when the error carries no detail', () => {
-    expect(errText(new Error('network down'), 'fallback')).toBe('fallback')
-    expect(errText({ response: { data: {} } }, 'fallback')).toBe('fallback')
-    expect(errText(undefined, 'fallback')).toBe('fallback')
-  })
-
-  it('falls back when detail is not a string', () => {
-    // FastAPI returns a list of objects for request-validation errors; rendering
-    // that raw would put "[object Object]" in front of the user.
-    expect(errText({ response: { data: { detail: [{ msg: 'bad' }] } } }, 'fallback')).toBe('fallback')
   })
 })

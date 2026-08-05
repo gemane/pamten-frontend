@@ -312,6 +312,16 @@
       "mismatch": "Die neuen Passwörter stimmen nicht überein.",
       "error": "Passwort konnte nicht geändert werden. Bitte erneut versuchen."
     },
+    "deleteAccount": {
+      "title": "Konto löschen",
+      "desc": "Konto endgültig löschen und abmelden. Dies kann nicht rückgängig gemacht werden.",
+      "start": "Konto löschen",
+      "warning": "Dies löscht Ihr Konto endgültig, einschließlich Passwort und Zwei-Faktor-Einrichtung. Von Ihnen gemeldete Hinweise bleiben erhalten, sind aber nicht mehr mit Ihnen verknüpft. Dies kann nicht rückgängig gemacht werden.",
+      "password": "Mit Ihrem Passwort bestätigen",
+      "confirm": "Mein Konto endgültig löschen",
+      "cancel": "Abbrechen",
+      "error": "Konto konnte nicht gelöscht werden. Bitte erneut versuchen."
+    },
     "mfa": {
       "title": "Zwei-Faktor-Authentifizierung",
       "desc": "Füge beim Anmelden einen zweiten Schritt mit einer Authenticator-App hinzu (Google Authenticator, Authy, …).",

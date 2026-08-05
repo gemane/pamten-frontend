@@ -119,6 +119,7 @@ Inside the Scraper tab — sync ownership data with **trusted peer** instances (
 - Login / register modal accessible from the header
 - **Settings → Password** changes your own password (current password required). This is the route that works when email delivery doesn't — the reset-by-email flow needs SMTP, which Render blocks. Other sessions stay signed in, since tokens are stateless.
 - **Settings → Two-factor authentication** enrols a TOTP authenticator app
+- **Settings → Delete account** permanently deletes your own account (password required, two-step confirm) and signs you out. Required by both app stores for any app with account creation, and the route for a GDPR erasure request. Reports you filed are kept but anonymised; the backend refuses for the `ADMIN_EMAIL` bootstrap account and for the last remaining admin, and shows its reason.
 
 ---
 
