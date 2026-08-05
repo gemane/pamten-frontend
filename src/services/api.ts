@@ -31,8 +31,14 @@ import type {
   Pin,
 } from '../types'
 
+// The backend serves everything under /v1. It still answers on the unversioned
+// paths, but those are deprecated and hidden from the schema, so the prefix is
+// appended here once rather than on ~50 call sites. VITE_API_URL stays the bare
+// origin — don't put /v1 in the env var too, or requests go to /v1/v1.
+export const API_BASE = import.meta.env.VITE_API_URL || 'https://pamten-backend-yrbh.onrender.com'
+
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://pamten-backend-yrbh.onrender.com',
+  baseURL: `${API_BASE.replace(/\/+$/, '')}/v1`,
 })
 
 // Attach JWT token to every request if present
