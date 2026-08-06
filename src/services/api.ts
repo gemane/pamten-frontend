@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AxiosResponse } from 'axios'
+import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import type {
   SearchResult,
   FullProfile,
@@ -59,14 +59,36 @@ export function resolveApiBase(configured: string | undefined, isProd: boolean):
 
 export const API_BASE = resolveApiBase(import.meta.env.VITE_API_URL, import.meta.env.PROD)
 
-const client = axios.create({
+/**
+ * Exported so tests can install a mock `adapter` and drive the real interceptor
+ * chain (token attachment, refresh-and-retry) rather than a re-implementation of
+ * it. Application code should use the named request helpers below.
+ */
+export const client = axios.create({
   baseURL: `${API_BASE.replace(/\/+$/, '')}/v1`,
+  // Send the httpOnly refresh cookie. Required for /auth/refresh and /auth/logout;
+  // harmless elsewhere. The API must answer with Access-Control-Allow-Credentials,
+  // which it does (an explicit CORS_ORIGINS list, since credentialed requests
+  // cannot use a wildcard origin).
+  withCredentials: true,
 })
 
-// Attach JWT token to every request if present
+/**
+ * The access token lives in memory, not localStorage.
+ *
+ * localStorage is readable by any script on the page, so an XSS bug there hands
+ * over a working credential. In memory it dies with the tab, and the session is
+ * carried instead by an httpOnly refresh cookie that JavaScript cannot read at
+ * all. The cost is that a page reload has no token — see restoreSession(), which
+ * trades the cookie for a fresh one on startup.
+ */
+let accessToken: string | null = null
+
+export const setAccessToken = (token: string | null): void => { accessToken = token }
+export const getAccessToken = (): string | null => accessToken
+
 client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('owlgraph_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`
   return config
 })
 
@@ -82,10 +104,64 @@ export function shouldNotifyUnauthorized(status: number | undefined, url: string
   return status === 401 && !(url ?? '').includes('/auth/')
 }
 
+/**
+ * A bare client for /auth/refresh.
+ *
+ * It must not go through `client`'s response interceptor: that interceptor
+ * reacts to a 401 by calling refresh, so refreshing through it would recurse.
+ */
+export const refreshClient = axios.create({
+  baseURL: `${API_BASE.replace(/\/+$/, '')}/v1`,
+  withCredentials: true,
+})
+
+/** What the API returns when it hands out an access token. */
+export interface SessionPayload extends AuthUser {
+  access_token: string
+  expires_in?: number
+}
+
+let refreshInFlight: Promise<SessionPayload | null> | null = null
+
+/**
+ * Trade the refresh cookie for a new access token, or `null` if the session is
+ * over. Never rejects — an expired session is an expected outcome, not an error.
+ *
+ * Concurrent callers share one in-flight request. Without that, a page issuing
+ * six requests at once would fire six refreshes on a stale token, and rotation
+ * would treat the five that arrive second as replays and burn the session.
+ */
+export function refreshSession(): Promise<SessionPayload | null> {
+  if (!refreshInFlight) {
+    refreshInFlight = refreshClient.post<SessionPayload>('/auth/refresh')
+      .then(({ data }) => { setAccessToken(data.access_token); return data })
+      .catch(() => { setAccessToken(null); return null })
+      .finally(() => { refreshInFlight = null })
+  }
+  return refreshInFlight
+}
+
+/** Marker for the one retry a request gets after a refresh. */
+type RetriableConfig = InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean }
+
 client.interceptors.response.use(
   res => res,
-  err => {
-    if (_onUnauthorized && shouldNotifyUnauthorized(err.response?.status, err.config?.url)) {
+  async err => {
+    const status = err.response?.status as number | undefined
+    const config = err.config as RetriableConfig | undefined
+    const url = config?.url ?? ''
+
+    // An expired access token is now the common case, not an exceptional one:
+    // they last 15 minutes. Refresh once and replay the request, so the user
+    // never sees it. Auth routes are excluded — /auth/refresh is what we would
+    // be calling, and login/register surface their own 401s inline.
+    if (status === 401 && config && !config._retriedAfterRefresh && !url.includes('/auth/')) {
+      config._retriedAfterRefresh = true
+      const session = await refreshSession()
+      if (session) return client(config)
+    }
+
+    if (_onUnauthorized && shouldNotifyUnauthorized(status, url)) {
       _onUnauthorized()
     }
     return Promise.reject(err)
@@ -250,6 +326,15 @@ export const authLogin = (email: string, password: string): Promise<AxiosRespons
 export const authMe = (): Promise<AxiosResponse<AuthUser>> =>
   client.get('/auth/me')
 
+/**
+ * End the session server-side, revoking the refresh token and clearing the cookie.
+ *
+ * Dropping the in-memory token alone would only log this tab out: the cookie
+ * would still buy a new access token on the next reload.
+ */
+export const authLogout = (): Promise<AxiosResponse<{ message: string }>> =>
+  client.post('/auth/logout')
+
 // ── Two-factor auth (TOTP) ──────────────────────────────────────────────────
 export const authMfaVerify = (mfa_token: string, code: string): Promise<AxiosResponse<AuthUser & { access_token: string }>> =>
   client.post('/auth/mfa/verify', { mfa_token, code })
@@ -279,7 +364,8 @@ export const authResetPassword = (token: string, new_password: string): Promise<
   client.post('/auth/reset-password', { token, new_password })
 
 // Self-service rotation for a signed-in user — no email round-trip, so it works
-// where outbound SMTP is blocked. Other sessions stay signed in (tokens are stateless).
+// where outbound SMTP is blocked. Other sessions are revoked; this one is
+// re-issued by the server, so the caller stays signed in.
 export const authChangePassword = (current_password: string, new_password: string): Promise<AxiosResponse<{ message: string }>> =>
   client.post('/auth/change-password', { current_password, new_password })
 
