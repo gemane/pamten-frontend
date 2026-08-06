@@ -92,4 +92,47 @@ describe('SearchBar (render)', () => {
     await userEvent.click(hint)
     expect(onRequestLogin).toHaveBeenCalledTimes(1)
   })
+
+  // ── The affordance must exist even when a result matched ────────────────────
+  //
+  // Reported: searching "Alphabet" returned an unrelated "SCI LF ALPHABET" and
+  // offered no way to look up the real company. The scrape row was rendered only
+  // when the user could scrape, so a signed-out or unverified visitor with *some*
+  // result saw nothing at all — while the empty-result branch had always shown a
+  // sign-in prompt.
+
+  it('offers to search the sources even when a result already matched', async () => {
+    resolveSearch([entityResult('e1', 'SCI LF ALPHABET')])
+    const onScrapeQuery = vi.fn()
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} countries={[]} canScrape />)
+
+    await type('Alphabet')
+    const row = await screen.findByText(/alphabet/i, { selector: '.search-item--scrape .search-item__name' })
+    await userEvent.click(row)
+    expect(onScrapeQuery).toHaveBeenCalledWith('Alphabet')
+  })
+
+  it('prompts an unverified user to sign in when a result matched', async () => {
+    resolveSearch([entityResult('e1', 'SCI LF ALPHABET')])
+    const onRequestLogin = vi.fn()
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} onRequestLogin={onRequestLogin}
+                      countries={[]} canScrape={false} />)
+
+    await type('Alphabet')
+    // Previously this branch rendered nothing — the dead end being fixed.
+    const hint = await screen.findByText(/sign in/i)
+    await userEvent.click(hint)
+    expect(onRequestLogin).toHaveBeenCalledTimes(1)
+  })
+
+  it('never starts a scrape for a user who cannot scrape, results or not', async () => {
+    resolveSearch([entityResult('e1', 'SCI LF ALPHABET')])
+    const onScrapeQuery = vi.fn()
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} onRequestLogin={vi.fn()}
+                      countries={[]} canScrape={false} />)
+
+    await type('Alphabet')
+    await screen.findByText(/sign in/i)
+    expect(onScrapeQuery).not.toHaveBeenCalled()
+  })
 })
