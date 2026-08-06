@@ -144,6 +144,53 @@ export default function SearchBar({ onSelect, selectedLabel, countries, onScrape
     countryName(c.country, i18n.language).toLowerCase().includes(countryQuery.toLowerCase())
   )
 
+  /**
+   * The row that lets a user start a fresh source search for what they typed.
+   *
+   * Rendered under BOTH an empty and a non-empty result list. It used to appear
+   * only when the user could scrape, so anyone signed out or unverified who got
+   * *some* result — searching "Alphabet" and matching an unrelated "SCI LF
+   * ALPHABET" — saw no way to look the real company up, and no hint that the
+   * option existed at all. The empty-result branch had always offered a sign-in
+   * prompt; this makes the two consistent.
+   */
+  const scrapeRow = (labelKey: 'search.alsoScrape' | 'search.noResultsScrape') => {
+    if (canScrape && onScrapeQuery) {
+      return (
+        <li
+          className="search-item search-item--scrape"
+          onMouseDown={() => {
+            const q = query.trim()
+            setOpen(false)
+            inputRef.current?.blur()
+            onScrapeQuery(q)
+          }}
+        >
+          <span className="search-item__name">{t(labelKey, { query: query.trim() })}</span>
+        </li>
+      )
+    }
+    if (onRequestLogin) {
+      return (
+        <li
+          className="search-item search-item--scrape"
+          onMouseDown={() => {
+            setOpen(false)
+            inputRef.current?.blur()
+            onRequestLogin()
+          }}
+        >
+          <span className="search-item__name">{t('search.scrapeSignIn')}</span>
+        </li>
+      )
+    }
+    return (
+      <li className="search-item search-item--hint">
+        <span className="search-item__name">{t('search.scrapeSignIn')}</span>
+      </li>
+    )
+  }
+
   return (
     <div className="search-wrap" ref={wrapRef}>
       <div className={`search-box ${loading ? 'search-box--loading' : ''}`}>
@@ -231,55 +278,17 @@ export default function SearchBar({ onSelect, selectedLabel, countries, onScrape
               )}
             </li>
           ))}
-          {/* Even with results, the top hits often aren't the exact company — always
-              let verified users scrape the typed query. */}
-          {canScrape && onScrapeQuery && query.trim().length >= 2 && (
-            <li
-              className="search-item search-item--scrape"
-              onMouseDown={() => {
-                const q = query.trim()
-                setOpen(false)
-                inputRef.current?.blur()
-                onScrapeQuery(q)
-              }}
-            >
-              <span className="search-item__name">{t('search.alsoScrape', { query: query.trim() })}</span>
-            </li>
-          )}
+          {/* The top hits often aren't the company meant — "Alphabet" matching an
+              unrelated "SCI LF ALPHABET" — so always offer the typed query, and
+              prompt to sign in when the user can't run one. */}
+          {query.trim().length >= 2 && scrapeRow('search.alsoScrape')}
         </ul>
       )}
 
-      {/* Nothing in the DB → offer to scrape the typed query (verified users only). */}
+      {/* Nothing in the DB → offer to search the sources for what was typed. */}
       {open && !loading && results.length === 0 && query.trim().length >= 2 && (
         <ul className="search-dropdown">
-          {canScrape && onScrapeQuery ? (
-            <li
-              className="search-item search-item--scrape"
-              onMouseDown={() => {
-                const q = query.trim()
-                setOpen(false)
-                inputRef.current?.blur()
-                onScrapeQuery(q)
-              }}
-            >
-              <span className="search-item__name">{t('search.noResultsScrape', { query: query.trim() })}</span>
-            </li>
-          ) : onRequestLogin ? (
-            <li
-              className="search-item search-item--scrape"
-              onMouseDown={() => {
-                setOpen(false)
-                inputRef.current?.blur()
-                onRequestLogin()
-              }}
-            >
-              <span className="search-item__name">{t('search.scrapeSignIn')}</span>
-            </li>
-          ) : (
-            <li className="search-item search-item--hint">
-              <span className="search-item__name">{t('search.scrapeSignIn')}</span>
-            </li>
-          )}
+          {scrapeRow('search.noResultsScrape')}
         </ul>
       )}
     </div>
