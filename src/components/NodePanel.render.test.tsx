@@ -24,7 +24,7 @@ const entityNode = (id: string, label: string): NodeData => ({ id, label, nodeTy
 
 const profile = (id: string, name: string): FullProfile => ({
   entity: { id, name, type: 'company', verified: false } as Entity,
-  operations: [], owners: [], subsidiaries: [], executives: [],
+  owners: [], subsidiaries: [], executives: [],
 })
 
 beforeEach(() => {
@@ -79,5 +79,38 @@ describe('NodePanel (render)', () => {
 
     expect(await screen.findByText('Second Co')).toBeInTheDocument()
     expect(mockProfile).toHaveBeenCalledWith('e2')
+  })
+})
+
+// The profile used to carry a `headquarters` Location node, preferred over these
+// fields with them as a fallback. The node is gone and the entity's own values
+// are the only path, so they had better actually render.
+
+describe('NodePanel HQ from the entity itself', () => {
+  const withHq = (over: Partial<Entity>): FullProfile => ({
+    entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false, ...over } as Entity,
+    owners: [], subsidiaries: [], executives: [],
+  })
+
+  const show = async (over: Partial<Entity>) => {
+    mockProfile.mockResolvedValue({ data: withHq(over) } as Awaited<ReturnType<typeof getFullProfile>>)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+  }
+
+  it('shows the city and country from the entity', async () => {
+    await show({ hq_city: 'Vienna', hq_country: 'AT' })
+    expect(screen.getByText(/Vienna/)).toBeInTheDocument()
+  })
+
+  it('shows the full address from hq_address', async () => {
+    await show({ hq_city: 'Vienna', hq_country: 'AT', hq_address: '1 Ringstrasse, 1010 Vienna, AT' })
+    expect(screen.getByText('1 Ringstrasse, 1010 Vienna, AT')).toBeInTheDocument()
+  })
+
+  it('renders without an address at all', async () => {
+    // Most entities have no HQ recorded; the panel must not break on it.
+    await show({})
+    expect(screen.getByText('Acme Corp')).toBeInTheDocument()
   })
 })

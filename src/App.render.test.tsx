@@ -46,7 +46,7 @@ const mockProfile = vi.mocked(getFullProfile)
 
 const entity = (id: string, name: string): Entity => ({ id, name, type: 'company', verified: false } as Entity)
 const fullProfile = (id: string, name: string): FullProfile => ({
-  entity: entity(id, name), operations: [], owners: [], subsidiaries: [], executives: [],
+  entity: entity(id, name), owners: [], subsidiaries: [], executives: [],
 })
 const result = (id: string, name: string): SearchResult => ({ type: 'Entity', score: 1, node: entity(id, name) })
 

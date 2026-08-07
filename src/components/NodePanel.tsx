@@ -446,7 +446,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
 
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate, node, onReScrape }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
-  const { entity, headquarters, owners = [], subsidiaries = [], executives = [], dual_listed = [],
+  const { entity, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
@@ -469,10 +469,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       (entity.employees_as_of ? ` (${entity.employees_as_of})` : '')
     : null
 
-  // HQ location: prefer a linked headquarters Location, fall back to the
-  // coordinates/city denormalized onto the entity by the scrapers.
-  const hqCity    = headquarters?.city    || entity.hq_city
-  const hqCountry = headquarters?.country || entity.hq_country
+  // HQ location comes from the entity itself. It used to prefer a linked
+  // Location node and fall back to these; the node is gone, so the fallback is
+  // now the only path — one place the address lives, one place to keep right.
+  const hqCity    = entity.hq_city
+  const hqCountry = entity.hq_country
   const hqText    = [hqCity, hqCountry && countryName(hqCountry, i18n.language)].filter(Boolean).join(', ')
 
   // Dual-listed companies have multiple domiciles / HQs.
@@ -485,10 +486,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       })
     : (hqText ? [hqText] : []))
 
-  const address   = headquarters
-    ? [headquarters.street, headquarters.city, headquarters.state, headquarters.zip, headquarters.country]
-        .filter(Boolean).join(', ')
-    : ''
+  // The full HQ address the map pin is geocoded from — previously assembled
+  // from the Location node's street/city/state/zip/country.
+  const address   = entity.hq_address || ''
   const hasCoords = entity.hq_lat != null && entity.hq_lng != null
 
   return (
