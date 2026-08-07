@@ -115,11 +115,14 @@ Inside the Scraper tab — sync ownership data with **trusted peer** instances (
 - Requires `FEDERATION_ENABLED` (and, for signing, `FEDERATION_SIGNING_KEY`) on the backend
 
 ### Authentication
-- JWT-based, **12-hour** tokens stored in `localStorage`. There is no refresh token and no server-side revocation, so an expired token means logging in again, and a token stays valid for its full lifetime even after a password change.
+- **15-minute** JWT access tokens held **in memory only** — never `localStorage`, which any script on the page can read. An XSS bug therefore cannot walk off with a durable credential.
+- The session itself is carried by an `httpOnly` refresh cookie that JavaScript cannot read at all. On load the app trades it for a fresh access token (`AuthContext` calls `refreshSession()`); when a request 401s, the client refreshes once and replays it, so the short token lifetime is invisible. Concurrent refreshes are coalesced into one request — the server rotates the token on use and treats a second presentation as a replay.
+- Logging out calls `POST /auth/logout` so the cookie is revoked server-side. Clearing the token locally alone would not end the session: the next reload would trade the cookie for a new one.
+- Because the cookie is `SameSite=Lax`, the frontend and API must share a registrable domain (`dev.owlgraph.org` + `api-dev.owlgraph.org`). Running `npm run dev` on `localhost` against the deployed API is *not* same-site, so no cookie is sent and the session ends after 15 minutes — run the backend locally to avoid that.
 - First registered account becomes **admin**; subsequent accounts start as **viewer**
 - Roles: `admin` (full access), `contributor` (scraping, dedup, federation), `viewer` (read-only)
 - Login / register modal accessible from the header
-- **Settings → Password** changes your own password (current password required). This is the route that works when email delivery doesn't — the reset-by-email flow needs SMTP, which Render blocks. Other sessions stay signed in, since tokens are stateless.
+- **Settings → Password** changes your own password (current password required). This is the route that works when email delivery doesn't — the reset-by-email flow needs SMTP, which Render blocks. Other sessions are signed out; yours is re-issued, so you stay logged in where you are.
 - **Settings → Two-factor authentication** enrols a TOTP authenticator app
 - **Settings → Delete account** permanently deletes your own account (password required, two-step confirm) and signs you out. Required by both app stores for any app with account creation, and the route for a GDPR erasure request. Reports you filed are kept but anonymised; the backend refuses for the `ADMIN_EMAIL` bootstrap account and for the last remaining admin, and shows its reason.
 

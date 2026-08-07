@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import { authLogin, authRegister, authMe, authMfaVerify } from '../services/api'
+import {
+  authLogin, authRegister, authMfaVerify, authLogout,
+  refreshSession, setAccessToken,
+} from '../services/api'
 import type { AuthUser } from '../types'
 
 interface AuthContextValue {
@@ -16,24 +19,31 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,    setUser]    = useState<AuthUser | null>(null)   // { email, role, id }
-  const [loading, setLoading] = useState(true)   // checking stored token on mount
+  const [loading, setLoading] = useState(true)   // restoring the session on mount
 
+  // Restore the session on load. The access token lives in memory, so a reload
+  // starts with none; the httpOnly refresh cookie is what survives, and trading
+  // it for a token is the whole startup check. refreshSession() resolves to null
+  // rather than throwing when there is no session — the ordinary logged-out case.
   useEffect(() => {
-    const token = localStorage.getItem('owlgraph_token')
-    if (!token) { setLoading(false); return }
-    authMe()
-      .then(({ data }) => setUser(data))
-      .catch((err: unknown) => {
-        // Only discard the token when the server rejected it — a network
-        // blip or 5xx must not log the user out.
-        const status = (err as { response?: { status?: number } }).response?.status
-        if (status === 401) localStorage.removeItem('owlgraph_token')
+    refreshSession()
+      .then((session) => {
+        if (session) {
+          setUser({
+            id: session.id, email: session.email, role: session.role,
+            email_verified: session.email_verified,
+          })
+        }
       })
+      // refreshSession() is contracted not to reject, but an unhandled rejection
+      // here would leave the app stuck behind the loading state forever. Staying
+      // signed out is the safe reading of "we could not establish a session".
+      .catch(() => setUser(null))
       .finally(() => setLoading(false))
   }, [])
 
   const storeAndSetUser = (data: AuthUser & { access_token: string }) => {
-    localStorage.setItem('owlgraph_token', data.access_token)
+    setAccessToken(data.access_token)
     setUser({ id: data.id, email: data.email, role: data.role, email_verified: data.email_verified })
   }
 
@@ -59,9 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { verificationRequired: true }
   }, [])
 
+  // Clear locally first, then tell the server. The UI must reflect the logout
+  // even if the request fails; the risk of skipping the call is the opposite —
+  // the cookie would survive and buy a new token on the next reload.
   const logout = useCallback(() => {
-    localStorage.removeItem('owlgraph_token')
+    setAccessToken(null)
     setUser(null)
+    void authLogout().catch(() => { /* already logged out locally */ })
   }, [])
 
   return (
