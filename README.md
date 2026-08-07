@@ -106,7 +106,9 @@ The tab is visible to everyone, but each section only appears for roles the API 
 | Run form, source selector, per-source toggles, **Review duplicate persons** | contributor, admin |
 | **BODS bulk import** notes, **Federation panel** | admin |
 
-The run form is hidden rather than disabled for those who can't use it. Federation reads are `require_contributor` server-side, but the panel exists to add, remove and pull peers — all admin-only — so it's admin-gated here.
+Order top to bottom: status header → recent activity → run controls → bulk datasets → federation, so the read-only content everyone can use comes before the controls most visitors can't.
+
+The run form is hidden rather than disabled for those who can't use it, and no sign-in prompt is shown — for a visitor the tab is simply a read-only activity view, not a broken scraper. Federation reads are `require_contributor` server-side, but the panel exists to add, remove and pull peers — all admin-only — so it's admin-gated here.
 
 - Triggers scrapes across all enabled data sources simultaneously via `/scraper/run-all`
 - Sources: **Wikidata** (SPARQL), **SEC EDGAR** (SC 13D/13G ownership filings + Form 3/4 executives), **OpenCorporates** (requires API key)

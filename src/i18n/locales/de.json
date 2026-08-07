@@ -348,7 +348,6 @@
     "geocodingOn": "Geocoding an",
     "geocodingOff": "Geocoding aus",
     "description": "Unternehmensdaten aus externen Quellen in den Graph importieren.",
-    "signInRequired": "Als Contributor oder Admin anmelden, um den Scraper zu nutzen.",
     "adminRequired": "Nur Contributors und Admins können den Scraper nutzen. Ihre Rolle ist {{role}}.",
     "enableRequired": "Setzen Sie SCRAPER_ENABLED=true in Render, um den Scraper zu aktivieren.",
     "sourceDisabledEnv": "{{source}} ist deaktiviert. Setzen Sie {{envVar}}=true in Render, um es zu aktivieren.",

@@ -348,7 +348,6 @@
     "geocodingOn": "Geocodificación activada",
     "geocodingOff": "Geocodificación desactivada",
     "description": "Importar datos de propiedad corporativa de fuentes externas al grafo.",
-    "signInRequired": "Inicia sesión como colaborador o administrador para usar el scraper.",
     "adminRequired": "Solo los colaboradores y administradores pueden usar el scraper. Tu rol es {{role}}.",
     "enableRequired": "Establece SCRAPER_ENABLED=true en Render para activarlo.",
     "sourceDisabledEnv": "{{source}} está deshabilitado. Establece {{envVar}}=true en Render para habilitarlo.",
