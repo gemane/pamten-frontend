@@ -2,8 +2,10 @@
 
 React + Vite frontend for the Pamten ownership mapping platform. Visualises corporate ownership hierarchies as an interactive graph.
 
-**Live:** https://pamten-frontend.onrender.com  
-**Backend API:** https://pamten-backend-yrbh.onrender.com/docs
+**Live (dev):** https://dev.owlgraph.org  
+**Backend API:** https://api-dev.owlgraph.org/docs
+
+The `*.onrender.com` URLs still serve the same deployments, but the owlgraph.org domains are canonical — and only those are listed in the backend's `CORS_ORIGINS`, so the frontend must be reached at `dev.owlgraph.org` for API calls to work.
 
 ---
 
@@ -127,7 +129,7 @@ Inside the Scraper tab — sync ownership data with **trusted peer** instances (
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_API_URL` | `https://pamten-backend-yrbh.onrender.com` | Backend **origin** — the `/v1` API prefix is appended in `services/api.ts`, so don't include it here or requests go to `/v1/v1` |
+| `VITE_API_URL` | *(required in a production build)* | Backend **origin**, e.g. `https://api-dev.owlgraph.org`. The `/v1` prefix is appended in `services/api.ts`, so don't include it here or requests go to `/v1/v1`. A production build with this unset **throws at startup** rather than falling back — a silent fallback once meant a build could read and write the wrong environment. `npm run dev` falls back to the dev API. |
 
 ---
 

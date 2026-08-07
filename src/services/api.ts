@@ -35,7 +35,29 @@ import type {
 // paths, but those are deprecated and hidden from the schema, so the prefix is
 // appended here once rather than on ~50 call sites. VITE_API_URL stays the bare
 // origin — don't put /v1 in the env var too, or requests go to /v1/v1.
-export const API_BASE = import.meta.env.VITE_API_URL || 'https://pamten-backend-yrbh.onrender.com'
+/** Fallback for `npm run dev` only — never used by a built bundle. */
+export const DEV_API_FALLBACK = 'https://api-dev.owlgraph.org'
+
+/**
+ * Resolve the backend origin, refusing to guess in a production build.
+ *
+ * The old fallback was a hardcoded deployment, so a build with VITE_API_URL
+ * unset came up looking healthy while quietly reading and writing another
+ * environment's data. Throwing is the lesser problem: it surfaces at startup,
+ * and only in a build that was already misconfigured.
+ */
+export function resolveApiBase(configured: string | undefined, isProd: boolean): string {
+  if (configured) return configured
+  if (isProd) {
+    throw new Error(
+      'VITE_API_URL is not set. A production build must be given its backend origin ' +
+      `(e.g. ${DEV_API_FALLBACK}) — refusing to guess.`,
+    )
+  }
+  return DEV_API_FALLBACK
+}
+
+export const API_BASE = resolveApiBase(import.meta.env.VITE_API_URL, import.meta.env.PROD)
 
 const client = axios.create({
   baseURL: `${API_BASE.replace(/\/+$/, '')}/v1`,
