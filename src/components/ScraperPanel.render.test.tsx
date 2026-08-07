@@ -30,9 +30,21 @@ beforeEach(() => {
 })
 
 describe('ScraperPanel (render)', () => {
-  it('prompts to sign in when there is no user', () => {
+  it('does not nag an anonymous visitor to sign in', () => {
+    // For a visitor the tab is a read-only activity view, not a broken scraper —
+    // there is nothing missing to explain, so there is no notice.
     render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} />)
-    expect(screen.getByText(/Sign in as a contributor or admin/i)).toBeInTheDocument()
+    expect(screen.queryByText(/sign in/i)).toBeNull()
+  })
+
+  it('omits the "import ownership data" blurb for those who cannot import', () => {
+    render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} />)
+    expect(screen.queryByText(/Import corporate ownership data/i)).toBeNull()
+  })
+
+  it('keeps the blurb for a contributor', async () => {
+    render(<ScraperPanel user={contributor} onLoadIntoGraph={vi.fn()} />)
+    expect(await screen.findByText(/Import corporate ownership data/i)).toBeInTheDocument()
   })
 
   it('tells a non-contributor they lack access', () => {
@@ -96,6 +108,22 @@ describe('ScraperPanel visibility by role', () => {
     render(<ScraperPanel user={contributor} onLoadIntoGraph={vi.fn()} />)
     await screen.findByPlaceholderText(/Company name/i)
     expect(federation()).toBeNull()
+  })
+
+  it('puts recent activity above the run controls', async () => {
+    // Read-only content the whole audience can use comes first; the controls
+    // follow. DOCUMENT_POSITION_FOLLOWING = the form comes after the feed.
+    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
+    const form = await screen.findByPlaceholderText(/Company name/i)
+    const feed = screen.getByTestId('activity')
+    expect(feed.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('puts the run controls above the admin-only bulk datasets', async () => {
+    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
+    const form = await screen.findByPlaceholderText(/Company name/i)
+    const bulk = screen.getByText(/Bulk ownership datasets/i)
+    expect(form.compareDocumentPosition(bulk) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('gives an admin everything', async () => {

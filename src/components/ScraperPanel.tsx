@@ -256,7 +256,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         )}
       </div>
 
-      <p className="scraper-panel__desc">{t('scraper.description')}</p>
+      {/* Describes an action only these roles can take — for everyone else the
+          tab is a read-only activity view, and the blurb is a non-sequitur. */}
+      {canManage && <p className="scraper-panel__desc">{t('scraper.description')}</p>}
 
       {canManage && (
         <button className="scraper-dup-link" onClick={() => setShowDuplicates(true)}>
@@ -269,12 +271,15 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
 
       {showDuplicates && <DuplicatesModal onClose={() => setShowDuplicates(false)} />}
 
-      {!user && (
-        <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.signInRequired')}</div>
-      )}
       {user && !canManage && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.adminRequired', { role: user.role })}</div>
       )}
+      {/* ── Recent scrape activity (live) ─────────────────────────────────────
+          Public: what the platform ingests is the sort of thing an ownership
+          transparency project should be open about. The backend redacts the
+          exception text for non-contributors, so this renders for everyone. */}
+      <ScraperActivity />
+
       {canManage && !masterOn && masterStatus && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.enableRequired')}</div>
       )}
@@ -325,9 +330,8 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
 
       {/* Query run form — hidden outright rather than rendered disabled for those
           who cannot run it. A greyed-out form advertises a capability the API
-          would refuse; the signInRequired / adminRequired notice above says why
-          instead. `canRun` still gates it for those who *can*, since the master
-          switch or the selected source may be off. */}
+          would refuse. `canRun` still gates it for those who *can*, since the
+          master switch or the selected source may be off. */}
       {canManage && (
       <div className="scraper-form">
         <input
@@ -375,12 +379,6 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
           </button>
         </>
       )}
-
-      {/* ── Recent scrape activity (live) ─────────────────────────────────────
-          Public: what the platform ingests is the sort of thing an ownership
-          transparency project should be open about. The backend redacts the
-          exception text for non-contributors, so this renders for everyone. */}
-      <ScraperActivity />
 
       {/* ── Bulk ownership datasets (imported server-side, not from the UI) ──── */}
       {canAdminister && (

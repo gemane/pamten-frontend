@@ -348,7 +348,6 @@
     "geocodingOn": "Geocoding on",
     "geocodingOff": "Geocoding off",
     "description": "Import corporate ownership data from external sources into the graph.",
-    "signInRequired": "Sign in as a contributor or admin to run the scraper.",
     "adminRequired": "Only contributors and admins can run the scraper. Your role is {{role}}.",
     "enableRequired": "Set SCRAPER_ENABLED=true in Render to activate.",
     "sourceDisabledEnv": "{{source}} is disabled. Set {{envVar}}=true in Render to enable it.",
