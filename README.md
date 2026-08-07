@@ -96,7 +96,18 @@ src/
 - Scroll to zoom, drag to pan, reset button top-right
 - Click a country → left panel shows its entity list; click an entity to load it into the graph
 
-### Scraper panel (admin only)
+### Scraper panel (graduated by role)
+
+The tab is visible to everyone, but each section only appears for roles the API would actually let act on it — the predicates live in `src/utils/scrapeAccess.ts` and mirror the backend's guards. A section that 403s is worse than one that isn't shown.
+
+| Section | Who sees it |
+|---|---|
+| Status header, **Recent activity** | everyone, including logged-out visitors |
+| Run form, source selector, per-source toggles, **Review duplicate persons** | contributor, admin |
+| **BODS bulk import** notes, **Federation panel** | admin |
+
+The run form is hidden rather than disabled for those who can't use it. Federation reads are `require_contributor` server-side, but the panel exists to add, remove and pull peers — all admin-only — so it's admin-gated here.
+
 - Triggers scrapes across all enabled data sources simultaneously via `/scraper/run-all`
 - Sources: **Wikidata** (SPARQL), **SEC EDGAR** (SC 13D/13G ownership filings + Form 3/4 executives), **OpenCorporates** (requires API key)
 - Depth selector 1–3 (levels of subsidiaries to follow)
@@ -104,11 +115,11 @@ src/
 - Master switches are controlled by env vars on the backend (`SCRAPER_ENABLED`, `SCRAPER_SEC_EDGAR_ENABLED`)
 - After a scrape, **Load into graph →** button jumps straight to the graph view with results
 - **BODS bulk import** — a separate card for the **GLEIF** and **UK PSC** beneficial-ownership datasets (bulk file import with jurisdiction / limit filters), distinct from the per-company scrapers above
-- **Recent activity** — a live run log (polls every 6s) showing each scrape's status (running / ok / failed / stale), node count, and errors; covers UI *and* `update.sh` runs (backed by `/scraper/runs`)
+- **Recent activity** — a live run log (polls every 6s) showing each scrape's status (running / ok / failed / stale) and node count; covers UI *and* `update.sh` runs (backed by `/scraper/runs`). Public, but the error text is served only to contributors and admins
 - **Review duplicate persons** opens a modal (tabs: To review / Merged / Kept separate) to merge duplicate people, keep confirmed-different ones separate, or run an auto-dedupe — backed by the backend duplicate scan
 
 ### Federation panel (admin only)
-Inside the Scraper tab — sync ownership data with **trusted peer** instances (see the backend README's *Federation* section for setup):
+Inside the Scraper tab, and shown only to admins — sync ownership data with **trusted peer** instances (see the backend README's *Federation* section for setup):
 - Shows whether federation is enabled and what this instance publishes (entity / person / ownership counts), plus your signing `key_id` (or an "unsigned" note)
 - Register a trusted peer (name, base URL, optional access token, and their public key), then **Pull** to import and reconcile their data
 - Pulled peers show a **verified / unverified** badge, and each pull reports whether the peer's signature was cryptographically verified

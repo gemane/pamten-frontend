@@ -9,6 +9,7 @@ import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser } from '../ty
 import DuplicatesModal from './DuplicatesModal'
 import FederationPanel from './FederationPanel'
 import ScraperActivity from './ScraperActivity'
+import { canManageScrapes, canAdministerScrapes } from '../utils/scrapeAccess'
 
 interface ScraperPanelProps {
   onLoadIntoGraph: (query: string) => void
@@ -140,7 +141,12 @@ function AllResultList({ result }: { result: AllResultData }) {
 
 export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProps) {
   const { t } = useTranslation()
-  const isAdmin = user?.role === 'admin' || user?.role === 'contributor'
+  // The panel is graduated rather than all-or-nothing: the status header and the
+  // activity feed are public, `canManage` gates the things that write data, and
+  // `canAdminister` gates the admin-only corners. See utils/scrapeAccess.ts for
+  // which backend guard each one mirrors.
+  const canManage     = canManageScrapes(user)
+  const canAdminister = canAdministerScrapes(user)
 
   const [masterStatus,   setMasterStatus]   = useState<ScraperStatus | null>(null)
   const [sources,        setSources]        = useState<ScraperSource[]>([])
@@ -171,10 +177,10 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
   const secEdgarOn            = secEdgarSource?.enabled !== false && masterStatus?.sec_edgar_enabled !== false
   const openCorporatesOn      = openCorporatesSource?.enabled !== false && masterStatus?.open_corporates_enabled !== false
 
-  const canRunWikidata        = isAdmin && masterOn && wikidataOn
-  const canRunSecEdgar        = isAdmin && masterOn && secEdgarOn
-  const canRunOpenCorporates  = isAdmin && masterOn && openCorporatesOn
-  const canRunAll             = isAdmin && masterOn
+  const canRunWikidata        = canManage && masterOn && wikidataOn
+  const canRunSecEdgar        = canManage && masterOn && secEdgarOn
+  const canRunOpenCorporates  = canManage && masterOn && openCorporatesOn
+  const canRunAll             = canManage && masterOn
   const canRun = selectedSource === 'wikidata'          ? canRunWikidata
                : selectedSource === 'sec_edgar'         ? canRunSecEdgar
                : selectedSource === 'open_corporates'   ? canRunOpenCorporates
@@ -189,7 +195,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
     : selectedSource === 'wikidata'        ? masterStatus?.wikidata_enabled === false
     : false
   const disabledReason =
-    !isAdmin || !masterOn || canRun || selectedSource === 'all'
+    !canManage || !masterOn || canRun || selectedSource === 'all'
       ? null
       : selectedEnvOff
         ? t('scraper.sourceDisabledEnv', {
@@ -252,7 +258,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
 
       <p className="scraper-panel__desc">{t('scraper.description')}</p>
 
-      {isAdmin && (
+      {canManage && (
         <button className="scraper-dup-link" onClick={() => setShowDuplicates(true)}>
           <FiUsers /> {t('duplicates.open')}
           {masterStatus?.autodedup_enabled && (
@@ -266,15 +272,15 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       {!user && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.signInRequired')}</div>
       )}
-      {user && !isAdmin && (
+      {user && !canManage && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.adminRequired', { role: user.role })}</div>
       )}
-      {isAdmin && !masterOn && masterStatus && (
+      {canManage && !masterOn && masterStatus && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.enableRequired')}</div>
       )}
 
       {/* Source selector */}
-      {isAdmin && (
+      {canManage && (
         <div className="scraper-source-selector">
           <div className="scraper-sources__label">{t('scraper.runSource')}</div>
           <div className="scraper-source-btns">
@@ -303,7 +309,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       )}
 
       {/* Per-source toggles */}
-      {isAdmin && sources.length > 0 && (
+      {canManage && sources.length > 0 && (
         <div className="scraper-sources">
           <div className="scraper-sources__label">{t('scraper.sourceToggles')}</div>
           {sources.map(s => (
@@ -317,7 +323,12 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         </div>
       )}
 
-      {/* Query run form */}
+      {/* Query run form — hidden outright rather than rendered disabled for those
+          who cannot run it. A greyed-out form advertises a capability the API
+          would refuse; the signInRequired / adminRequired notice above says why
+          instead. `canRun` still gates it for those who *can*, since the master
+          switch or the selected source may be off. */}
+      {canManage && (
       <div className="scraper-form">
         <input
           className="scraper-input"
@@ -350,6 +361,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
             : <><FiPlay /> {t('scraper.run')}</>}
         </button>
       </div>
+      )}
 
       {error && <div className="scraper-error"><FiAlertCircle /> {error}</div>}
 
@@ -364,11 +376,14 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         </>
       )}
 
-      {/* ── Recent scrape activity (live) ────────────────────────────────────── */}
-      {isAdmin && <ScraperActivity />}
+      {/* ── Recent scrape activity (live) ─────────────────────────────────────
+          Public: what the platform ingests is the sort of thing an ownership
+          transparency project should be open about. The backend redacts the
+          exception text for non-contributors, so this renders for everyone. */}
+      <ScraperActivity />
 
       {/* ── Bulk ownership datasets (imported server-side, not from the UI) ──── */}
-      {isAdmin && (
+      {canAdminister && (
         <div className="scraper-bods">
           <div className="scraper-bods__divider" />
 
@@ -382,7 +397,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       )}
 
       {/* ── Trusted-peer federation ──────────────────────────────────────────── */}
-      {isAdmin && (
+      {canAdminister && (
         <div className="scraper-bods">
           <div className="scraper-bods__divider" />
           <FederationPanel />
