@@ -69,20 +69,6 @@ export interface Person {
   verified: boolean
 }
 
-export interface Location {
-  id: string
-  street?: string
-  city?: string
-  state?: string
-  zip?: string
-  country: string
-  country_full?: string
-  region?: string
-  latitude?: number
-  longitude?: number
-  verified: boolean
-}
-
 export interface Source {
   id: string
   name: string
@@ -138,8 +124,6 @@ export interface ExecutiveEntry {
 
 export interface FullProfile {
   entity: Entity
-  headquarters?: Location | null
-  operations: Location[]
   owners: OwnerEntry[]
   subsidiaries: SubsidiaryEntry[]
   executives: ExecutiveEntry[]

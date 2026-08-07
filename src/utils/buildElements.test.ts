@@ -26,8 +26,6 @@ function makeProfile(
 ): FullProfile {
   return {
     entity: center,
-    headquarters: null,
-    operations: [],
     owners: opts.owners ?? [],
     subsidiaries: opts.subsidiaries ?? [],
     executives: opts.executives ?? [],
