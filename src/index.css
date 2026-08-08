@@ -1317,7 +1317,27 @@ button.rel-item--clickable:hover { background: #253454; }
   font-size: 13px;
   color: #e2e8f0;
   font-weight: 500;
+  /* Absorb the row's free space so the marker stays tucked against the name and
+     the stake badge is what gets pushed to the right edge. Without this, the
+     row's `justify-content: space-between` spreads all three apart. */
+  flex: 1;
+  min-width: 0;
 }
+
+/* Node-type marker: same palette as the graph (see utils/entityColors.ts), and
+   the same shape language — round for a person, rounded-square for an entity.
+   Shape as well as colour, because person-green vs government-red is the
+   classic red/green confusion pair. */
+.rel-item__marker {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-right: 8px;
+  border-radius: 2px;
+  border: 1px solid;
+}
+
+.rel-item__marker--person { border-radius: 50%; }
 
 .ownership-badge {
   font-size: 11px;

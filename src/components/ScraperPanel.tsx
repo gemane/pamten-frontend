@@ -10,13 +10,16 @@ import DuplicatesModal from './DuplicatesModal'
 import FederationPanel from './FederationPanel'
 import ScraperActivity from './ScraperActivity'
 import { canManageScrapes, canAdministerScrapes } from '../utils/scrapeAccess'
+import { colorFor } from '../utils/entityColors'
 
 interface ScraperPanelProps {
   onLoadIntoGraph: (query: string) => void
   user: AuthUser | null
 }
 
-const TYPE_COLOR: Record<string, string> = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
+// Was a three-entry copy of the palette, so funds, foundations, governments
+// and nonprofits all rendered neutral grey. colorFor knows all eight.
+const typeColor = (type?: string | null) => colorFor('entity', type).fill
 
 const SOURCE_LABEL: Record<string, string> = {
   wikidata:       'Wikidata',
@@ -90,7 +93,7 @@ function ResultList({ result }: { result: ResultData }) {
       <div className="scraper-result__types">
         {Object.entries(byType).map(([type, count]) => (
           <span key={type} className="scraper-type-pill"
-            style={{ borderColor: TYPE_COLOR[type] || '#8892a4', color: TYPE_COLOR[type] || '#8892a4' }}>
+            style={{ borderColor: typeColor(type), color: typeColor(type) }}>
             {count} {type}
           </span>
         ))}
@@ -98,7 +101,7 @@ function ResultList({ result }: { result: ResultData }) {
       <ul className="scraper-result__list">
         {result.scraped.map((e, i) => (
           <li key={`${'qid' in e ? (e as { qid?: string }).qid || e.name : e.name}-${i}`} className="scraper-result__item">
-            <span className="scraper-result__dot" style={{ background: TYPE_COLOR[e.type] || '#8892a4' }} />
+            <span className="scraper-result__dot" style={{ background: typeColor(e.type) }} />
             <span className="scraper-result__name">{e.name || ('qid' in e ? (e as { qid?: string }).qid : '')}</span>
           </li>
         ))}
