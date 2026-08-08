@@ -109,6 +109,8 @@ The tab is visible to everyone, but each section only appears for roles the API 
 
 Order top to bottom: status header → recent activity → run controls → bulk datasets → federation, so the read-only content everyone can use comes before the controls most visitors can't.
 
+Visitors get a plain description of what the project is (the signed-in blurb describes importing, which they cannot do), plus a **source catalogue**: every source the platform draws on, with its own link, a short description, and a reliability band with its ranking score. The catalogue is public — where the data comes from is the case for the whole platform.
+
 The run form is hidden rather than disabled for those who can't use it, and no sign-in prompt is shown — for a visitor the tab is simply a read-only activity view, not a broken scraper. Federation reads are `require_contributor` server-side, but the panel exists to add, remove and pull peers — all admin-only — so it's admin-gated here.
 
 - Triggers scrapes across all enabled data sources simultaneously via `/scraper/run-all`

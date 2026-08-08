@@ -9,6 +9,7 @@ import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser } from '../ty
 import DuplicatesModal from './DuplicatesModal'
 import FederationPanel from './FederationPanel'
 import ScraperActivity from './ScraperActivity'
+import SourceCatalogue from './SourceCatalogue'
 import { canManageScrapes, canAdministerScrapes } from '../utils/scrapeAccess'
 import { colorFor } from '../utils/entityColors'
 
@@ -259,9 +260,13 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         )}
       </div>
 
-      {/* Describes an action only these roles can take — for everyone else the
-          tab is a read-only activity view, and the blurb is a non-sequitur. */}
-      {canManage && <p className="scraper-panel__desc">{t('scraper.description')}</p>}
+      {/* Two different intros for two different readers. The signed-in one
+          describes an action ("import data into the graph") that only these
+          roles can take; to a visitor that is a non-sequitur, so they get a
+          plain description of what the project is instead. */}
+      {canManage
+        ? <p className="scraper-panel__desc">{t('scraper.description')}</p>
+        : <p className="scraper-panel__desc">{t('scraper.publicIntro')}</p>}
 
       {canManage && (
         <button className="scraper-dup-link" onClick={() => setShowDuplicates(true)}>
@@ -282,6 +287,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
           transparency project should be open about. The backend redacts the
           exception text for non-contributors, so this renders for everyone. */}
       <ScraperActivity />
+
+      {/* Public: what the platform draws on and how far to trust it. */}
+      <SourceCatalogue sources={sources} />
 
       {canManage && !masterOn && masterStatus && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.enableRequired')}</div>

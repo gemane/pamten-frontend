@@ -3336,6 +3336,40 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .scraper-bods__title { color: #1a202c; }
 [data-theme="light"] .scraper-bods__subtitle { color: #4a5568; }
 
+/* ── Source catalogue (public: what the platform draws on) ──────────────────── */
+.source-cat { margin: 14px 0; }
+.source-cat__title { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #eaeaea; }
+.source-cat__intro { margin: 0 0 10px; font-size: 12px; color: #8892a4; line-height: 1.45; }
+.source-cat__item {
+  padding: 9px 11px; margin-bottom: 6px;
+  background: #12203c; border: 1px solid #2a3a5a; border-radius: 9px;
+}
+.source-cat__head { display: flex; align-items: center; gap: 6px; }
+.source-cat__name { font-size: 13px; font-weight: 600; color: #eaeaea; }
+.source-cat__link { display: inline-flex; color: #7aa2e0; }
+.source-cat__link:hover { color: #a8c4ee; }
+.source-cat__desc { margin: 3px 0 7px; font-size: 12px; color: #c3ccda; line-height: 1.45; }
+.source-cat__meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.source-cat__quality,
+.source-cat__kind,
+.source-cat__paused {
+  font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 5px; white-space: nowrap;
+}
+.source-cat__quality { color: #7ee29b; background: #16351f; }
+.source-cat__score   { opacity: 0.7; font-weight: 500; }
+.source-cat__kind    { color: #9db0d0; background: #22304a; }
+.source-cat__paused  { color: #d0a24a; background: #2c2410; }
+
+[data-theme="light"] .source-cat__title { color: #1a202c; }
+[data-theme="light"] .source-cat__intro { color: #4a5568; }
+[data-theme="light"] .source-cat__item { background: #eef2f7; border-color: #d1d9e6; }
+[data-theme="light"] .source-cat__name { color: #1a202c; }
+[data-theme="light"] .source-cat__desc { color: #2d3748; }
+[data-theme="light"] .source-cat__link { color: #2d6cdf; }
+[data-theme="light"] .source-cat__quality { color: #1e8449; background: #d7f0e0; }
+[data-theme="light"] .source-cat__kind    { color: #4a5568; background: #e2e8f4; }
+[data-theme="light"] .source-cat__paused  { color: #9a6a10; background: #faf0d7; }
+
 /* Recent scrape activity. Both this and the federation block below were written
    dark-only — near-white text on a near-white surface in light mode. The activity
    feed is now shown to every visitor, so it is the first thing an anonymous user
