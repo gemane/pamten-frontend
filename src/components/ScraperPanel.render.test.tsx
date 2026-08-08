@@ -134,3 +134,38 @@ describe('ScraperPanel visibility by role', () => {
     expect(activity()).toBeInTheDocument()
   })
 })
+
+
+// ── The visitor's view ────────────────────────────────────────────────────────
+//
+// The signed-in blurb describes an action ("import ownership data into the
+// graph") that a visitor cannot take, so it read as a non-sequitur to them.
+// They get a description of the project instead, plus the source catalogue —
+// where the data comes from is the case for the whole platform.
+
+describe('ScraperPanel intro and sources', () => {
+  it('gives a visitor a description of the project, not of the importer', async () => {
+    render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} />)
+    expect(await screen.findByText(/maps who ultimately owns and controls/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Import corporate ownership data/i)).toBeNull()
+  })
+
+  it('keeps the importer blurb for someone who can import', async () => {
+    render(<ScraperPanel user={contributor} onLoadIntoGraph={vi.fn()} />)
+    expect(await screen.findByText(/Import corporate ownership data/i)).toBeInTheDocument()
+    expect(screen.queryByText(/maps who ultimately owns and controls/i)).toBeNull()
+  })
+
+  it('shows the source catalogue to a visitor', async () => {
+    render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} />)
+    expect(await screen.findByText(/Where the data comes from/i)).toBeInTheDocument()
+    // The fixture carries no `label`, so the catalogue falls back to the raw
+    // name — which is itself the behaviour worth pinning for older rows.
+    expect(await screen.findByText('wikidata')).toBeInTheDocument()
+  })
+
+  it('shows it to an admin too', async () => {
+    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
+    expect(await screen.findByText(/Where the data comes from/i)).toBeInTheDocument()
+  })
+})

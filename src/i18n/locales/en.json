@@ -372,7 +372,22 @@
       "title": "Bulk ownership datasets",
       "subtitle": "Large registries loaded on the server, not from the browser",
       "cliNote": "GLEIF (golden copy) and the UK Companies House data (PSC + company register) are imported in bulk from the server CLI on a schedule — there is no manual trigger here. Toggle a source above to enable or disable it."
-    }
+    },
+    "publicIntro": "Owlgraph maps who ultimately owns and controls companies. It reads public registers and filings, links what they say into one graph, and records which source each fact came from so you can check it yourself.",
+    "sourcesTitle": "Where the data comes from",
+    "sourcesIntro": "Every fact in the graph is attributed to one of these. When two disagree, the more authoritative one is shown and both are kept.",
+    "qualityLabel": "Reliability",
+    "quality": {
+      "statutory": "Legally mandated filings",
+      "official": "Official register",
+      "aggregated": "Aggregated official registers",
+      "community": "Community-maintained"
+    },
+    "sourceKind": {
+      "instant": "Queried per company",
+      "bulk": "Bulk dataset import"
+    },
+    "sourcePaused": "on-demand lookups paused"
   },
   "activity": {
     "title": "Recent activity",

@@ -231,6 +231,14 @@ export interface ScraperSource {
   name: string
   description: string
   enabled: boolean
+  /** "instant" = queried per company on demand; "bulk" = whole-dataset import. */
+  kind?: 'instant' | 'bulk'
+  label?: string          // display name, e.g. "SEC EDGAR"
+  url?: string | null     // the source's own site
+  /** 0-100 tie-breaker used to rank conflicting claims (see backend app/claims.py). */
+  credibility?: number | null
+  /** Band the credibility belongs to — what the UI shows alongside the number. */
+  quality?: 'statutory' | 'official' | 'aggregated' | 'community' | null
 }
 
 export interface ScraperStatus {

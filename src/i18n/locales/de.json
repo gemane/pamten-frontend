@@ -372,7 +372,22 @@
       "title": "Massendatensätze zu Eigentümerschaft",
       "subtitle": "Große Register werden serverseitig geladen, nicht über den Browser",
       "cliNote": "GLEIF (Golden Copy) und die Daten des UK Companies House (PSC + Unternehmensregister) werden per Server-CLI planmäßig als Massenimport geladen — hier gibt es keinen manuellen Auslöser. Eine Quelle oben umschalten, um sie zu aktivieren oder zu deaktivieren."
-    }
+    },
+    "publicIntro": "Owlgraph zeigt, wem Unternehmen letztlich gehören und wer sie kontrolliert. Es liest öffentliche Register und Meldungen, verknüpft deren Angaben zu einem Graphen und hält fest, aus welcher Quelle jede Angabe stammt — nachprüfbar.",
+    "sourcesTitle": "Woher die Daten stammen",
+    "sourcesIntro": "Jede Angabe im Graphen ist einer dieser Quellen zugeordnet. Widersprechen sich zwei, wird die verlässlichere angezeigt und beide werden gespeichert.",
+    "qualityLabel": "Verlässlichkeit",
+    "quality": {
+      "statutory": "Gesetzlich vorgeschriebene Meldungen",
+      "official": "Amtliches Register",
+      "aggregated": "Aggregierte amtliche Register",
+      "community": "Von der Community gepflegt"
+    },
+    "sourceKind": {
+      "instant": "Pro Unternehmen abgefragt",
+      "bulk": "Massendaten-Import"
+    },
+    "sourcePaused": "Abfragen auf Anfrage pausiert"
   },
   "activity": {
     "title": "Letzte Aktivität",

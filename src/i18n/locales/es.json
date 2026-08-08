@@ -372,7 +372,22 @@
       "title": "Conjuntos de datos de propiedad masivos",
       "subtitle": "Grandes registros cargados en el servidor, no desde el navegador",
       "cliNote": "GLEIF (copia dorada) y los datos del Companies House del Reino Unido (PSC + registro de empresas) se importan de forma masiva desde la CLI del servidor de forma programada — aquí no hay activación manual. Activa o desactiva una fuente arriba."
-    }
+    },
+    "publicIntro": "Owlgraph muestra quién posee y controla en última instancia las empresas. Lee registros y presentaciones públicas, enlaza lo que dicen en un único grafo y anota de qué fuente procede cada dato para que puedas comprobarlo.",
+    "sourcesTitle": "De dónde vienen los datos",
+    "sourcesIntro": "Cada dato del grafo se atribuye a una de estas fuentes. Cuando dos discrepan, se muestra la más fiable y se conservan ambas.",
+    "qualityLabel": "Fiabilidad",
+    "quality": {
+      "statutory": "Presentaciones exigidas por ley",
+      "official": "Registro oficial",
+      "aggregated": "Registros oficiales agregados",
+      "community": "Mantenido por la comunidad"
+    },
+    "sourceKind": {
+      "instant": "Consultada por empresa",
+      "bulk": "Importación masiva"
+    },
+    "sourcePaused": "consultas bajo demanda en pausa"
   },
   "activity": {
     "title": "Actividad reciente",
