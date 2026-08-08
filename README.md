@@ -84,6 +84,7 @@ src/
 ### Node detail panel
 - **Entity panel**: shows company logo (fetched from Wikidata via P154/P18 → Wikimedia Commons), ownership badges, subsidiaries, executives, **succession** links (*Succeeded by* / *Formerly*, e.g. Twitter → X Corp.), and a link to Wikipedia. Entities collapsed from several BODS filings (an id-less party re-declared per controlled company) list every declaring **source statement** id, so per-statement provenance stays visible after the merge
 - **Person panel**: shows person photo (fetched from Wikipedia REST API, falls back to name search), nationality, **place of birth**, the **positions** they hold and **ownership stakes** they own, the **sources** behind those facts, and a Wikipedia link
+- **Type markers**: every row in the relationship lists (owners, subsidiaries, executives, dual-listed, succession) carries a small coloured marker matching the node's colour in the graph — round for a person, rounded-square for an entity. The palette lives once in `src/utils/entityColors.ts` and is read by the graph, the legend, the map panel and the scraper results, so they cannot drift.
 - **Overview / Timeline tabs** for entities
 
 ### Timeline view

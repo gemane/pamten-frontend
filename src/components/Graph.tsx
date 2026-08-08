@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import type { GraphElement, NodeData } from '../types'
+import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
 
 export interface GraphHandle {
@@ -38,36 +39,30 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       },
     },
     {
+      // Base entity style; the subtype rules below override only the colours, so
+      // an unrecognised subtype keeps this one. All of it comes from the shared
+      // palette in utils/entityColors.ts, which the node panel's row markers and
+      // the legend read too — one definition, so they cannot drift apart.
       selector: 'node[nodeType = "entity"]',
-      style: { 'background-color': '#4A90D9', shape: 'roundrectangle', 'border-width': 2, 'border-color': '#2d6aa8' },
+      style: {
+        'background-color': ENTITY_COLORS.company.fill, shape: 'roundrectangle',
+        'border-width': 2, 'border-color': ENTITY_COLORS.company.border,
+      },
     },
+    ...ENTITY_SUBTYPES.map(subtype => ({
+      selector: `node[entitySubtype = "${subtype}"]`,
+      style: {
+        'background-color': ENTITY_COLORS[subtype].fill,
+        'border-color': ENTITY_COLORS[subtype].border,
+      },
+    })),
     {
-      selector: 'node[entitySubtype = "brand"]',
-      style: { 'background-color': '#E67E22', 'border-color': '#b05a0d' },
-    },
-    {
-      selector: 'node[entitySubtype = "holding"]',
-      style: { 'background-color': '#8E44AD', 'border-color': '#622d7a' },
-    },
-    {
-      selector: 'node[entitySubtype = "government"]',
-      style: { 'background-color': '#B03A2E', 'border-color': '#7a2820' },
-    },
-    {
-      selector: 'node[entitySubtype = "foundation"]',
-      style: { 'background-color': '#16A085', 'border-color': '#0e6b59' },
-    },
-    {
-      selector: 'node[entitySubtype = "fund"]',
-      style: { 'background-color': '#B7950B', 'border-color': '#7d6608' },
-    },
-    {
-      selector: 'node[entitySubtype = "nonprofit"]',
-      style: { 'background-color': '#C0398B', 'border-color': '#84265f' },
-    },
-    {
+      // Last, so a person wins over any subtype that happens to be set on it.
       selector: 'node[nodeType = "person"]',
-      style: { 'background-color': '#27AE60', shape: 'ellipse', 'border-width': 2, 'border-color': '#1a7a42' },
+      style: {
+        'background-color': ENTITY_COLORS.person.fill, shape: 'ellipse',
+        'border-width': 2, 'border-color': ENTITY_COLORS.person.border,
+      },
     },
     {
       // Scale padding (= visual size) for owner nodes by their importance

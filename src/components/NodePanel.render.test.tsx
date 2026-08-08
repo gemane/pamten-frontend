@@ -114,3 +114,62 @@ describe('NodePanel HQ from the entity itself', () => {
     expect(screen.getByText('Acme Corp')).toBeInTheDocument()
   })
 })
+
+// ── Type markers in the relationship lists ────────────────────────────────────
+//
+// The graph tells a fund from a holding from a person by colour; the panel's
+// lists used to render every row as a bare name. These pin the marker's colour
+// against the shared palette, and its shape — round for a person — which is what
+// carries the distinction for anyone who cannot separate the person-green from
+// the government-red.
+
+describe('NodePanel type markers', () => {
+  const withOwners = (owners: unknown[]): FullProfile => ({
+    entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+    owners: owners as never, subsidiaries: [], executives: [],
+  })
+
+  const show = async (owners: unknown[]) => {
+    mockProfile.mockResolvedValue({ data: withOwners(owners) } as Awaited<ReturnType<typeof getFullProfile>>)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+  }
+
+  const owner = (o: Record<string, unknown>) => ({ owner: o, relationship: {} })
+
+  it('marks a person row with the person colour, round', async () => {
+    await show([owner({ id: 'p1', full_name: 'Satya Nadella' })])
+    const marker = screen.getByTestId('type-marker')
+    expect(marker).toHaveStyle({ background: '#27AE60' })
+    expect(marker.className).toContain('rel-item__marker--person')
+  })
+
+  it('marks a company row with the company colour, not round', async () => {
+    await show([owner({ id: 'c1', name: 'BlackRock Inc', type: 'company' })])
+    const marker = screen.getByTestId('type-marker')
+    expect(marker).toHaveStyle({ background: '#4A90D9' })
+    expect(marker.className).not.toContain('rel-item__marker--person')
+  })
+
+  it('colours a fund distinctly', async () => {
+    // The type class ScraperPanel and MapPanel used to miss entirely — their
+    // three-entry palettes rendered anything beyond company/brand/holding grey.
+    await show([owner({ id: 'f1', name: 'Norges Bank', type: 'fund' })])
+    expect(screen.getByTestId('type-marker')).toHaveStyle({ background: '#B7950B' })
+  })
+
+  it('gives each marker a readable label, not colour alone', async () => {
+    await show([owner({ id: 'f1', name: 'Norges Bank', type: 'fund' })])
+    expect(screen.getByTestId('type-marker')).toHaveAttribute('title', 'Fund')
+  })
+
+  it('distinguishes a person from a company in the same list', async () => {
+    await show([
+      owner({ id: 'p1', full_name: 'Satya Nadella' }),
+      owner({ id: 'c1', name: 'BlackRock Inc', type: 'company' }),
+    ])
+    const markers = screen.getAllByTestId('type-marker')
+    expect(markers).toHaveLength(2)
+    expect(markers[0].className).not.toBe(markers[1].className)
+  })
+})

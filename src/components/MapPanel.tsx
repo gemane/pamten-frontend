@@ -4,8 +4,10 @@ import { FiArrowLeft, FiMapPin, FiLoader } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
 import { sortCountries, type CountrySort } from '../utils/sortCountries'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
+import { colorFor } from '../utils/entityColors'
 
-const TYPE_COLOR: Record<string, string> = { company: '#4A90D9', brand: '#E67E22', holding: '#8E44AD' }
+// Was a three-entry copy of the palette — see ScraperPanel for the same fix.
+const typeColor = (type?: string | null) => colorFor('entity', type).fill
 
 interface EntityItemProps {
   entity: Entity
@@ -17,7 +19,7 @@ function EntityItem({ entity, onLoad }: EntityItemProps) {
     <button className="map-entity-item" onClick={() => onLoad(entity.id)}>
       <span
         className="map-entity-dot"
-        style={{ background: TYPE_COLOR[entity.type] || '#8892a4' }}
+        style={{ background: typeColor(entity.type) }}
       />
       <span className="map-entity-name">{entity.name}</span>
       <span className="map-entity-type">{entity.type}</span>

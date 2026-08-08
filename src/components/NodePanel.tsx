@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
+import { colorFor, typeLabelKey } from '../utils/entityColors'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
@@ -351,15 +352,41 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
 // and a resolvable target node are provided; otherwise a plain row. An optional
 // `action` (e.g. the edge report button) is rendered beside the row — a sibling,
 // not nested inside the clickable <button>, so the markup stays valid.
+/** The coloured type marker shown before a related node's name.
+ *
+ *  Same palette as the graph, so a fund is the same gold in both. Round for a
+ *  person, rounded-square for an entity, mirroring the graph's ellipse vs
+ *  roundrectangle — the shape matters because person-green against
+ *  government-red is the classic red/green confusion pair, and colour alone
+ *  would leave those readers with no distinction at all. The title gives the
+ *  same information as text. */
+function TypeMarker({ node }: { node: NodeData }) {
+  const { t } = useTranslation()
+  const { fill, border } = colorFor(node.nodeType, node.entitySubtype)
+  const label = t(typeLabelKey(node.nodeType, node.entitySubtype))
+  return (
+    <span
+      className={`rel-item__marker${node.nodeType === 'person' ? ' rel-item__marker--person' : ''}`}
+      style={{ background: fill, borderColor: border }}
+      title={label}
+      aria-label={label}
+      data-testid="type-marker"
+    />
+  )
+}
+
 function RelRow({ node, onNavigate, action, children }: {
   node: NodeData | null
   onNavigate?: (n: NodeData) => void
   action?: React.ReactNode
   children: React.ReactNode
 }) {
+  // No node means there is no entity to describe (free float, a missing owner),
+  // so no marker rather than a meaningless grey one.
+  const body = <>{node ? <TypeMarker node={node} /> : null}{children}</>
   const row = (node && node.id && onNavigate)
-    ? <button type="button" className="rel-item rel-item--clickable" onClick={() => onNavigate(node)}>{children}</button>
-    : <div className="rel-item">{children}</div>
+    ? <button type="button" className="rel-item rel-item--clickable" onClick={() => onNavigate(node)}>{body}</button>
+    : <div className="rel-item">{body}</div>
   if (!action) return row
   return <div className="rel-row">{row}{action}</div>
 }
