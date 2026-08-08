@@ -8,7 +8,7 @@ import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
 import EdgeReportButton from './EdgeReportButton'
-import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry } from '../types'
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
 // otherwise render in arbitrary backend order.
@@ -195,14 +195,26 @@ function MetaRow({ icon: Icon, label, value }: MetaRowProps) {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, count, children }: {
+  title: string
+  /** True total from the server. Not the child count: sections are capped, so what
+   *  is rendered can be fewer than what exists. */
+  count?: number | null
+  children: React.ReactNode
+}) {
   return (
     <div className="panel-section">
-      <h4 className="panel-section__title">{title}</h4>
+      <h4 className="panel-section__title">
+        {title}{count != null && <span className="panel-section__count">{count}</span>}
+      </h4>
       {children}
     </div>
   )
 }
+
+/** Below this, grouping costs more than it gives — three subsidiaries do not need
+ *  three headings. Barclays (118) and Unilever (112) are the cases it exists for. */
+const GROUPING_THRESHOLD = 12
 
 function CollapsibleSection({ title, count, defaultOpen = false, children }: {
   title: string
@@ -473,7 +485,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
 
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate, node, onReScrape }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
-  const { entity, owners = [], subsidiaries = [], executives = [], dual_listed = [],
+  const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
@@ -652,20 +664,57 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {subsidiaries.length > 0 && (
-        <Section title={t('panel.subsidiaries')}>
-          {[...subsidiaries].sort(byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? '')).map((s, i) => (
-            <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
-              action={<EdgeReportButton targetKind="owns" fromId={entity.id} toId={s.entity.id}
-                        label={s.entity.name} />}>
-              <span className="rel-item__name">{s.entity.name}</span>
-              <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
-            </RelRow>
-          ))}
+        <Section title={t('panel.subsidiaries')} count={counts?.subsidiaries}>
+          {(() => {
+            const sorted = [...subsidiaries].sort(
+              byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? ''))
+            const row = (s: SubsidiaryEntry, i: number) => (
+              <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
+                action={<EdgeReportButton targetKind="owns" fromId={entity.id} toId={s.entity.id}
+                          label={s.entity.name} />}>
+                <span className="rel-item__name">{s.entity.name}</span>
+                <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
+              </RelRow>
+            )
+
+            const direct = sorted.filter(s => s.relationship?.direct_or_indirect === 'direct')
+            const indirect = sorted.filter(s => s.relationship?.direct_or_indirect === 'indirect')
+            // Neither stated: Wikidata and SEC never record the distinction. Its own
+            // group rather than folded into direct — guessing would invent structure
+            // the source never claimed.
+            const unstated = sorted.filter(s => !s.relationship?.direct_or_indirect)
+
+            // Grouping earns its keep only on a long list that actually splits.
+            const worthGrouping =
+              sorted.length > GROUPING_THRESHOLD &&
+              [direct, indirect, unstated].filter(g => g.length > 0).length > 1
+            if (!worthGrouping) return sorted.map(row)
+
+            return (
+              <>
+                {direct.length > 0 && (
+                  <CollapsibleSection title={t('panel.directHoldings')} count={direct.length} defaultOpen>
+                    {direct.map(row)}
+                  </CollapsibleSection>
+                )}
+                {indirect.length > 0 && (
+                  <CollapsibleSection title={t('panel.indirectHoldings')} count={indirect.length}>
+                    {indirect.map(row)}
+                  </CollapsibleSection>
+                )}
+                {unstated.length > 0 && (
+                  <CollapsibleSection title={t('panel.unstatedHoldings')} count={unstated.length}>
+                    {unstated.map(row)}
+                  </CollapsibleSection>
+                )}
+              </>
+            )
+          })()}
         </Section>
       )}
 
       {otherExecutives.length > 0 && (
-        <Section title={t('panel.executives')}>
+        <Section title={t('panel.executives')} count={counts?.executives}>
           {[...otherExecutives].sort(byRoleImportance(e => e.role?.role, e => e.person?.full_name ?? '')).map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
               action={<EdgeReportButton targetKind="role" fromId={e.person.id} toId={entity.id}

@@ -137,7 +137,10 @@
     "nominee": "Treuhänder",
     "nomineeHint": "Nominee / Depotverwalter — nur eingetragener Halter, kein wirtschaftlicher Eigentümer",
     "crossHoldings": "Überkreuzbeteiligung",
-    "crossHoldingsHint": "Dieses Unternehmen und die unten genannten besitzen sich gegenseitig (wechselseitige Beteiligung)"
+    "crossHoldingsHint": "Dieses Unternehmen und die unten genannten besitzen sich gegenseitig (wechselseitige Beteiligung)",
+    "directHoldings": "Direkte Beteiligungen",
+    "indirectHoldings": "Indirekt gehalten",
+    "unstatedHoldings": "Beziehung nicht angegeben"
   },
   "report": {
     "button": "Melden",
