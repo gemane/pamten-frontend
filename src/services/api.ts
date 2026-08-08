@@ -1,4 +1,5 @@
 import axios from 'axios'
+import i18n from '../i18n'
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import type {
   SearchResult,
@@ -87,8 +88,23 @@ let accessToken: string | null = null
 export const setAccessToken = (token: string | null): void => { accessToken = token }
 export const getAccessToken = (): string | null => accessToken
 
+/**
+ * The header telling the backend which language to write emails in.
+ *
+ * Deliberately not `Accept-Language`: that reflects the languages configured in
+ * the browser, which say nothing about the in-app language switcher — a German
+ * UI in an English browser would otherwise produce English email.
+ */
+export const LANGUAGE_HEADER = 'X-Owlgraph-Language'
+
+/** Read at request time, not module load, so switching language takes effect at once. */
+export function currentLanguage(): string {
+  return i18n.language || 'en'
+}
+
 client.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`
+  config.headers[LANGUAGE_HEADER] = currentLanguage()
   return config
 })
 

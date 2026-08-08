@@ -11,6 +11,7 @@ import type { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from 'ax
 
 import {
   client, refreshClient, setAccessToken, getAccessToken, refreshSession,
+  LANGUAGE_HEADER, currentLanguage,
 } from './api'
 
 /** Minimal successful axios response for a stub adapter. */
@@ -183,5 +184,32 @@ describe('recovering from an expired access token', () => {
 
     await expect(client.get('/scraper/run', { adapter })).rejects.toBeTruthy()
     expect(refreshAdapter).not.toHaveBeenCalled()
+  })
+})
+
+// ── The UI language, for server-composed email ────────────────────────────────
+//
+// The site is localized but emails are written on the server, so it has to be
+// told which language the reader is actually using. Not Accept-Language: that
+// is the browser's setting, not the app's switcher.
+
+describe('language header', () => {
+  it('sends the current UI language on every request', async () => {
+    const adapter = vi.fn<AxiosAdapter>(async (config) => ok({}, config))
+    await client.get('/entities/x', { adapter })
+    expect(adapter.mock.calls[0][0].headers[LANGUAGE_HEADER]).toBe(currentLanguage())
+  })
+
+  it('follows a language switch rather than caching the value at startup', async () => {
+    const i18n = (await import('../i18n')).default
+    const original = i18n.language
+    try {
+      await i18n.changeLanguage('de')
+      const adapter = vi.fn<AxiosAdapter>(async (config) => ok({}, config))
+      await client.post('/auth/forgot-password', {}, { adapter })
+      expect(adapter.mock.calls[0][0].headers[LANGUAGE_HEADER]).toBe('de')
+    } finally {
+      await i18n.changeLanguage(original)
+    }
   })
 })
