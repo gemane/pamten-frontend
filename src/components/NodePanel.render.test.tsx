@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import NodePanel from './NodePanel'
 import type { NodeData, FullProfile, Entity } from '../types'
 
@@ -171,5 +172,76 @@ describe('NodePanel type markers', () => {
     const markers = screen.getAllByTestId('type-marker')
     expect(markers).toHaveLength(2)
     expect(markers[0].className).not.toBe(markers[1].className)
+  })
+})
+
+// ── Long subsidiary lists ─────────────────────────────────────────────────────
+//
+// Barclays has 118 subsidiaries and Unilever 112 in the test subset alone, all
+// rendered as one flat unlabelled list with no count. Grouping by the structural
+// relationship the data records makes them readable; the count comes from the
+// server because the section is capped and an array length is a lower bound.
+
+describe('NodePanel subsidiary grouping', () => {
+  const sub = (id: string, doi?: string) => ({
+    entity: { id, name: `Sub ${id}`, type: 'company' },
+    relationship: doi ? { direct_or_indirect: doi } : {},
+  })
+
+  const show = async (subsidiaries: unknown[], counts?: Record<string, number>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      owners: [], executives: [], subsidiaries, ...(counts ? { counts } : {}),
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+  }
+
+  const many = (n: number, doi: string) =>
+    Array.from({ length: n }, (_, i) => sub(`${doi}${i}`, doi))
+
+  it('shows the true count from the server, not the number of rows', async () => {
+    // The list is capped at 200; the count must survive that.
+    await show(many(3, 'direct'), { subsidiaries: 118 })
+    expect(screen.getByText('118')).toBeInTheDocument()
+  })
+
+  it('groups a long mixed list by direct and indirect', async () => {
+    await show([...many(10, 'direct'), ...many(10, 'indirect')])
+    expect(screen.getByText(/Direct holdings/i)).toBeInTheDocument()
+    expect(screen.getByText(/Held indirectly/i)).toBeInTheDocument()
+  })
+
+  it('starts with the indirect group collapsed', async () => {
+    await show([...many(10, 'direct'), ...many(10, 'indirect')])
+    expect(screen.getByText('Sub direct0')).toBeInTheDocument()   // direct is open
+    expect(screen.queryByText('Sub indirect0')).toBeNull()        // indirect is not
+  })
+
+  it('expands the indirect group on request', async () => {
+    await show([...many(10, 'direct'), ...many(10, 'indirect')])
+    await userEvent.click(screen.getByText(/Held indirectly/i))
+    expect(screen.getByText('Sub indirect0')).toBeInTheDocument()
+  })
+
+  it('leaves a short list flat', async () => {
+    // Three subsidiaries do not need three headings.
+    await show([sub('a', 'direct'), sub('b', 'indirect')])
+    expect(screen.queryByText(/Direct holdings/i)).toBeNull()
+    expect(screen.getByText('Sub a')).toBeInTheDocument()
+    expect(screen.getByText('Sub b')).toBeInTheDocument()
+  })
+
+  it('leaves a long single-kind list flat', async () => {
+    // Nothing to compare it against, so a lone heading is pure noise.
+    await show(many(20, 'direct'))
+    expect(screen.queryByText(/Direct holdings/i)).toBeNull()
+  })
+
+  it('gives unstated relationships their own group rather than hiding them', async () => {
+    // Wikidata and SEC never state the distinction; folding them into "direct"
+    // would invent structure the source never claimed.
+    await show([...many(10, 'direct'), sub('u1'), sub('u2'), sub('u3')])
+    expect(screen.getByText(/Relationship not stated/i)).toBeInTheDocument()
   })
 })

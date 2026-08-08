@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  buildElements,
-  buildElementsUpward,
-  buildElementsDownward,
-  buildPersonElements,
-  buildPersonProfileElements,
-} from './buildElements'
+import { buildElements, buildElementsUpward, buildElementsDownward, buildPersonElements, buildPersonProfileElements, isDrawableOwnership } from './buildElements'
 import type {
   Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, ExecutiveEntry, OwnsRelationship,
 } from '../types'
@@ -194,5 +188,76 @@ describe('buildPersonProfileElements', () => {
     const els = buildPersonProfileElements(twoHoldings, seen)
     expect(nodes(els).map(e => e.data.id)).toEqual(['spacex'])
     expect(ids(edges(els))).toEqual(['musk__owns__spacex'])
+  })
+})
+
+// ── Indirect ownership edges ──────────────────────────────────────────────────
+//
+// GLEIF records "X is the ultimate parent of Y" as well as the chain that already
+// links them. Drawn in a graph, that shortcut is indistinguishable from a real
+// holding — Barclays appears to own 118 companies outright when it directly owns
+// 20 — and it is redundant: measured across the whole database, all 263 such
+// edges point at something already reachable by walking direct edges.
+
+describe('isDrawableOwnership', () => {
+  it('hides an indirect edge by default', () => {
+    expect(isDrawableOwnership({ direct_or_indirect: 'indirect' }, false)).toBe(false)
+  })
+
+  it('draws a direct edge', () => {
+    expect(isDrawableOwnership({ direct_or_indirect: 'direct' }, false)).toBe(true)
+  })
+
+  it('draws an edge that states nothing', () => {
+    // Wikidata and SEC never record the distinction; absent is not indirect, and
+    // dropping these would lose the only ownership those sources give us.
+    expect(isDrawableOwnership({}, false)).toBe(true)
+    expect(isDrawableOwnership({ direct_or_indirect: null }, false)).toBe(true)
+    expect(isDrawableOwnership(null, false)).toBe(true)
+    expect(isDrawableOwnership(undefined, false)).toBe(true)
+  })
+
+  it('draws everything when indirect is requested', () => {
+    expect(isDrawableOwnership({ direct_or_indirect: 'indirect' }, true)).toBe(true)
+  })
+})
+
+describe('buildElements with indirect edges', () => {
+  const profile = (): FullProfile => ({
+    entity: { id: 'p', name: 'Parent', type: 'company', verified: false } as Entity,
+    owners: [], executives: [],
+    subsidiaries: [
+      { entity: { id: 'd', name: 'Direct Co', type: 'company' } as Entity,
+        relationship: { direct_or_indirect: 'direct' } },
+      { entity: { id: 'i', name: 'Indirect Co', type: 'company' } as Entity,
+        relationship: { direct_or_indirect: 'indirect' } },
+      { entity: { id: 'u', name: 'Unstated Co', type: 'company' } as Entity,
+        relationship: {} },
+    ],
+  } as FullProfile)
+
+  const ids = (els: ReturnType<typeof buildElements>) =>
+    els.filter(e => !('source' in e.data)).map(e => e.data.id)
+
+  it('leaves the shortcut node out by default', () => {
+    const els = buildElements(profile(), new Set())
+    expect(ids(els)).toEqual(['p', 'd', 'u'])
+  })
+
+  it('includes it when asked', () => {
+    const els = buildElements(profile(), new Set(), true)
+    expect(ids(els)).toContain('i')
+  })
+
+  it('omits the shortcut edge, not just the node', () => {
+    const els = buildElements(profile(), new Set())
+    const edges = els.filter(e => 'source' in e.data).map(e => e.data.id)
+    expect(edges.some(id => String(id).includes('__owns__i'))).toBe(false)
+  })
+
+  it('applies the same rule when expanding a node', () => {
+    // Otherwise expanding would quietly reintroduce what the first render omitted.
+    const els = buildElementsDownward(profile(), new Set())
+    expect(ids(els)).toEqual(['d', 'u'])
   })
 })

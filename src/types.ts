@@ -82,6 +82,10 @@ export interface Source {
 
 // Relationship types
 export interface OwnsRelationship {
+  /** GLEIF RR: 'direct' = the immediate parent, 'indirect' = the ultimate parent
+   *  (a shortcut edge duplicating a path the graph already contains). Absent on
+   *  Wikidata and SEC edges, which never state the distinction. */
+  direct_or_indirect?: 'direct' | 'indirect' | null
   stake_percent?: number | null
   voting_power_pct?: number | null
   ownership_type?: OwnershipType | null
@@ -122,8 +126,19 @@ export interface ExecutiveEntry {
   role: RoleRelationship
 }
 
+/** True section sizes, independent of the per-section row limit. */
+export interface ProfileCounts {
+  owners?: number | null
+  subsidiaries?: number | null
+  executives?: number | null
+  dual_listed?: number | null
+  succeeded_by?: number | null
+  replaces?: number | null
+}
+
 export interface FullProfile {
   entity: Entity
+  counts?: ProfileCounts
   owners: OwnerEntry[]
   subsidiaries: SubsidiaryEntry[]
   executives: ExecutiveEntry[]

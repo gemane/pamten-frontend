@@ -4,7 +4,33 @@ import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person
 // emits nodes/edges whose id isn't already present, so a graph can be grown
 // incrementally without duplicating elements.
 
-export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
+/**
+ * Should this ownership edge be drawn?
+ *
+ * GLEIF records "X is the *ultimate* parent of Y" alongside the chain that
+ * already links them, so an `indirect` edge is a shortcut for a path the graph
+ * draws anyway. Measured across the whole database: all 263 of them point at
+ * something already reachable by walking direct edges. Drawn, they are
+ * indistinguishable from a real holding — Barclays looks like it owns 118
+ * companies outright when it directly owns 20.
+ *
+ * A list can label a row "held indirectly"; an edge cannot. So the graph hides
+ * them unless asked, and the node panel keeps them behind a disclosure.
+ *
+ * Edges with no value are always drawn: Wikidata and SEC never state the
+ * distinction, and absent is not indirect.
+ */
+export function isDrawableOwnership(
+  rel: { direct_or_indirect?: string | null } | null | undefined,
+  includeIndirect: boolean,
+): boolean {
+  if (includeIndirect) return true
+  return rel?.direct_or_indirect !== 'indirect'
+}
+
+export function buildElements(
+  profile: FullProfile, loadedIds: Set<string>, includeIndirect = false,
+): GraphElement[] {
   const els: GraphElement[] = []
 
   const addNode = (data: NodeData) => {
@@ -32,6 +58,7 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
   })
 
   for (const sub of subsidiaries) {
+    if (!isDrawableOwnership(sub.relationship, includeIndirect)) continue
     addNode({
       id:            sub.entity.id,
       label:         sub.entity.name,
@@ -129,10 +156,15 @@ export function buildElementsUpward(profile: FullProfile, loadedIds: Set<string>
   return els
 }
 
-export function buildElementsDownward(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
+export function buildElementsDownward(
+  profile: FullProfile, loadedIds: Set<string>, includeIndirect = false,
+): GraphElement[] {
   const els: GraphElement[] = []
   const { entity, subsidiaries = [] } = profile
   for (const sub of subsidiaries) {
+    // Same rule as buildElements — expanding a node must not reintroduce the
+    // shortcut edges the initial render left out.
+    if (!isDrawableOwnership(sub.relationship, includeIndirect)) continue
     if (!loadedIds.has(sub.entity.id)) {
       loadedIds.add(sub.entity.id)
       els.push({ data: { id: sub.entity.id, label: sub.entity.name, nodeType: 'entity', entitySubtype: sub.entity.type, raw: sub.entity } })
