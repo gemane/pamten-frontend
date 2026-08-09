@@ -20,6 +20,8 @@ export default function FederationPanel() {
   const [busy,    setBusy]    = useState<string | null>(null)   // peer id being pulled/deleted
   const [pullRes, setPullRes] = useState<Record<string, PeerPullResult>>({})
   const [adding,  setAdding]  = useState<boolean>(false)
+  // false once the backend tells us the feature is not deployed (routes 404).
+  const [available, setAvailable] = useState<boolean>(true)
 
   // add-peer form
   const [name,   setName]   = useState<string>('')
@@ -37,8 +39,16 @@ export default function FederationPanel() {
         setPubkey(pk.data)
         setPeers(pr.data.peers)
       }
-    } catch {
-      setError(t('federation.loadError'))
+    } catch (err) {
+      // 404 means the routes are not mounted at all — federation is on hold in
+      // this build (see routers/federation.py), not broken. Absent and failed
+      // deserve different answers: an admin should see nothing here, rather than
+      // a red error box that never goes away and that no action can clear.
+      if ((err as { response?: { status?: number } })?.response?.status === 404) {
+        setAvailable(false)
+      } else {
+        setError(t('federation.loadError'))
+      }
     } finally {
       setLoading(false)
     }
@@ -88,6 +98,9 @@ export default function FederationPanel() {
       setBusy(null)
     }
   }
+
+  // Nothing to show and nothing to fix: render nothing at all.
+  if (!available) return null
 
   return (
     <div className="fed-panel">

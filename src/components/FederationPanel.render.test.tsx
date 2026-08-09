@@ -42,4 +42,32 @@ describe('FederationPanel (render)', () => {
     render(<FederationPanel />)
     await waitFor(() => expect(screen.getByText(/No trusted peers yet/i)).toBeInTheDocument())
   })
+
+  // Federation is on hold in the backend: routers/federation.py keeps the routes
+  // unmounted, so they 404. That is "not deployed", not "broken", and the two
+  // must look different to an admin — a red error box no action can clear is
+  // worse than showing nothing.
+
+  it('renders nothing at all when the routes are not mounted (404)', async () => {
+    vi.mocked(getFederationStatus).mockRejectedValue({ response: { status: 404 } })
+    const { container } = render(<FederationPanel />)
+    await waitFor(() => expect(container).toBeEmptyDOMElement())
+    expect(screen.queryByText(/could not/i)).toBeNull()
+  })
+
+  it('still reports a real failure as an error', async () => {
+    // A 500 or a dropped connection is a genuine fault and must stay visible.
+    vi.mocked(getFederationStatus).mockRejectedValue({ response: { status: 500 } })
+    const { container } = render(<FederationPanel />)
+    await waitFor(() =>
+      expect(document.querySelector('.scraper-error')).toBeInTheDocument())
+    expect(container).not.toBeEmptyDOMElement()   // the panel is shown, with the error
+  })
+
+  it('treats a network error with no response as a failure, not an absence', async () => {
+    vi.mocked(getFederationStatus).mockRejectedValue(new Error('Network Error'))
+    render(<FederationPanel />)
+    await waitFor(() =>
+      expect(document.querySelector('.scraper-error')).toBeInTheDocument())
+  })
 })
