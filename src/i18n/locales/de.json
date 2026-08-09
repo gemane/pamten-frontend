@@ -371,7 +371,12 @@
       "disablePrompt": "Gib einen aktuellen Code (oder einen Wiederherstellungscode) ein, um Zwei-Faktor zu deaktivieren.",
       "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
       "badCode": "Dieser Code ist ungültig. Bitte erneut versuchen."
-    }
+    },
+    "legal": "Rechtliches",
+    "legalPrivacy": "Datenschutzerklärung",
+    "legalImprint": "Impressum",
+    "legalTerms": "Nutzungsbedingungen",
+    "legalSources": "Datenquellen"
   },
   "scraper": {
     "title": "Scraper",
