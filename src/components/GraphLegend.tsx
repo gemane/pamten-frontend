@@ -52,6 +52,7 @@ export default function GraphLegend() {
           <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: '#F39C12' }} />{t('legend.minority')}</div>
           <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: '#E74C3C' }} />{t('legend.controlling')}</div>
           <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: 'none', borderTop: '2px dashed #9B59B6' }} />{t('legend.votingPower')}</div>
+          <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: 'none', borderTop: '2px dashed #8892a4' }} />{t('legend.ultimateParent')}</div>
           <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: 'none', borderTop: '2px dashed #6c7ae0' }} />{t('legend.role')}</div>
 
           <div className="graph-legend__section" style={{ marginTop: 10 }}>{t('legend.edgeWidth')}</div>

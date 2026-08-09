@@ -89,7 +89,8 @@
     "role": "Rolle",
     "edgeWidth": "Kantenbreite",
     "lowPct": "Niedriger %",
-    "highPct": "Hoher %"
+    "highPct": "Hoher %",
+    "ultimateParent": "Oberste Muttergesellschaft (keine direkte Kette)"
   },
   "panel": {
     "empty": "Klicken Sie auf einen Knoten im Graph,\num die Details hier zu sehen",

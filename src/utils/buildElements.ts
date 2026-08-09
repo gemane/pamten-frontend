@@ -8,29 +8,32 @@ import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person
  * Should this ownership edge be drawn?
  *
  * GLEIF records "X is the *ultimate* parent of Y" alongside the chain that
- * already links them, so an `indirect` edge is a shortcut for a path the graph
- * draws anyway. Measured across the whole database: all 263 of them point at
- * something already reachable by walking direct edges. Drawn, they are
- * indistinguishable from a real holding — Barclays looks like it owns 118
- * companies outright when it directly owns 20.
+ * already links them, so many `indirect` edges are shortcuts for a path the
+ * graph draws anyway. Drawn, they are indistinguishable from a real holding —
+ * Barclays looks like it owns 118 companies outright when it directly owns 20.
  *
- * A list can label a row "held indirectly"; an edge cannot. So the graph hides
- * them unless asked, and the node panel keeps them behind a disclosure.
+ * But NOT all of them are redundant. For 58 of 484 owned entities in the
+ * database the ultimate-parent edge is the ONLY inbound ownership there is:
+ * GLEIF recorded the top of the chain but not its steps, so no path reaches
+ * them. Filtering on `direct_or_indirect` removed those companies from the
+ * graph entirely — a regression this replaces.
  *
- * Edges with no value are always drawn: Wikidata and SEC never state the
- * distinction, and absent is not indirect.
+ * Whether a shortcut is genuinely redundant is a global property of the graph,
+ * far too expensive to work out per request (measured: 223 ms for one profile
+ * on the test subset). A maintenance pass computes it once and stamps
+ * `shortcut` on the edge.
+ *
+ * The default is deliberately fail-safe: only an edge PROVEN redundant is
+ * hidden. No flag — a new edge, or one the pass has not reached — is drawn.
+ * Hiding something we have not checked is how the last version lost data.
  */
 export function isDrawableOwnership(
-  rel: { direct_or_indirect?: string | null } | null | undefined,
-  includeIndirect: boolean,
+  rel: { shortcut?: boolean | null } | null | undefined,
 ): boolean {
-  if (includeIndirect) return true
-  return rel?.direct_or_indirect !== 'indirect'
+  return rel?.shortcut !== true
 }
 
-export function buildElements(
-  profile: FullProfile, loadedIds: Set<string>, includeIndirect = false,
-): GraphElement[] {
+export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
   const els: GraphElement[] = []
 
   const addNode = (data: NodeData) => {
@@ -58,7 +61,7 @@ export function buildElements(
   })
 
   for (const sub of subsidiaries) {
-    if (!isDrawableOwnership(sub.relationship, includeIndirect)) continue
+    if (!isDrawableOwnership(sub.relationship)) continue
     addNode({
       id:            sub.entity.id,
       label:         sub.entity.name,
@@ -75,6 +78,10 @@ export function buildElements(
       edgeDir:       'out',
       ownershipType: sub.relationship?.ownership_type || '',
       stakePct:      sub.relationship?.stake_percent ?? null,
+      // Kept on the edge so the graph can draw an ultimate-parent link dashed:
+      // it survived the filter because nothing else reaches that company, but it
+      // is still not a direct holding and should not look like one.
+      directOrIndirect: sub.relationship?.direct_or_indirect ?? '',
     })
   }
 
@@ -156,15 +163,13 @@ export function buildElementsUpward(profile: FullProfile, loadedIds: Set<string>
   return els
 }
 
-export function buildElementsDownward(
-  profile: FullProfile, loadedIds: Set<string>, includeIndirect = false,
-): GraphElement[] {
+export function buildElementsDownward(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
   const els: GraphElement[] = []
   const { entity, subsidiaries = [] } = profile
   for (const sub of subsidiaries) {
     // Same rule as buildElements — expanding a node must not reintroduce the
     // shortcut edges the initial render left out.
-    if (!isDrawableOwnership(sub.relationship, includeIndirect)) continue
+    if (!isDrawableOwnership(sub.relationship)) continue
     if (!loadedIds.has(sub.entity.id)) {
       loadedIds.add(sub.entity.id)
       els.push({ data: { id: sub.entity.id, label: sub.entity.name, nodeType: 'entity', entitySubtype: sub.entity.type, raw: sub.entity } })

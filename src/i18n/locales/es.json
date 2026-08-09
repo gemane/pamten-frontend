@@ -89,7 +89,8 @@
     "role": "Rol",
     "edgeWidth": "Grosor de arista",
     "lowPct": "% bajo",
-    "highPct": "% alto"
+    "highPct": "% alto",
+    "ultimateParent": "Matriz última (sin cadena directa)"
   },
   "panel": {
     "empty": "Haz clic en cualquier nodo del grafo\npara ver sus detalles aquí",
