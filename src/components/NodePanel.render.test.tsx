@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import NodePanel from './NodePanel'
 import type { NodeData, FullProfile, Entity } from '../types'
 
@@ -171,5 +172,88 @@ describe('NodePanel type markers', () => {
     const markers = screen.getAllByTestId('type-marker')
     expect(markers).toHaveLength(2)
     expect(markers[0].className).not.toBe(markers[1].className)
+  })
+})
+
+// ── Long subsidiary lists ─────────────────────────────────────────────────────
+//
+// Barclays has 118 subsidiaries and Unilever 112 in the test subset alone, all
+// rendered as one flat unlabelled list with no count. Grouping by the structural
+// relationship the data records makes them readable; the count comes from the
+// server because the section is capped and an array length is a lower bound.
+
+describe('NodePanel subsidiary grouping', () => {
+  const sub = (id: string, doi?: string) => ({
+    entity: { id, name: `Sub ${id}`, type: 'company' },
+    relationship: doi ? { direct_or_indirect: doi } : {},
+  })
+
+  const show = async (subsidiaries: unknown[], counts?: Record<string, number>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      owners: [], executives: [], subsidiaries, ...(counts ? { counts } : {}),
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+  }
+
+  const many = (n: number, doi: string) =>
+    Array.from({ length: n }, (_, i) => sub(`${doi}${i}`, doi))
+
+  it('shows the true count from the server, not the number of rows', async () => {
+    // The list is capped at 200; the count must survive that.
+    await show(many(3, 'direct'), { subsidiaries: 118 })
+    expect(screen.getByText('118')).toBeInTheDocument()
+  })
+
+  it('sets the indirect holdings apart and leaves the rest unlabelled', async () => {
+    // A subsidiary listed under a company is a holding of that company; only
+    // "held indirectly" says something the list does not already say.
+    await show([...many(10, 'direct'), ...many(10, 'indirect')])
+    expect(screen.getByText(/Held indirectly/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Direct holdings/i)).toBeNull()
+  })
+
+  it('shows the direct holdings immediately, without expanding anything', async () => {
+    await show([...many(10, 'direct'), ...many(10, 'indirect')])
+    expect(screen.getByText('Sub direct0')).toBeInTheDocument()   // in the main list
+    expect(screen.queryByText('Sub indirect0')).toBeNull()        // behind the heading
+  })
+
+  it('expands the indirect group on request', async () => {
+    await show([...many(10, 'direct'), ...many(10, 'indirect')])
+    await userEvent.click(screen.getByText(/Held indirectly/i))
+    expect(screen.getByText('Sub indirect0')).toBeInTheDocument()
+  })
+
+  it('leaves a short list flat', async () => {
+    // Two subsidiaries do not need a heading.
+    await show([sub('a', 'direct'), sub('b', 'indirect')])
+    expect(screen.queryByText(/Held indirectly/i)).toBeNull()
+    expect(screen.getByText('Sub a')).toBeInTheDocument()
+    expect(screen.getByText('Sub b')).toBeInTheDocument()
+  })
+
+  it('leaves a long list with nothing indirect flat', async () => {
+    await show(many(20, 'direct'))
+    expect(screen.queryByText(/Held indirectly/i)).toBeNull()
+    expect(screen.getByText('Sub direct0')).toBeInTheDocument()
+  })
+
+  it('leaves a wholly indirect list flat rather than retitling the section', async () => {
+    // With nothing left outside it, the heading would just rename "Subsidiaries"
+    // — and hide every row behind a collapsed group.
+    await show(many(20, 'indirect'))
+    expect(screen.queryByText(/Held indirectly/i)).toBeNull()
+    expect(screen.getByText('Sub indirect0')).toBeInTheDocument()
+  })
+
+  it('keeps relationships the source never stated visible in the main list', async () => {
+    // Wikidata and SEC never record the distinction. They belong in the list,
+    // where nothing claims they are direct — a "Direct holdings" heading above
+    // them would have.
+    await show([...many(10, 'direct'), sub('u1'), sub('u2'), ...many(3, 'indirect')])
+    expect(screen.getByText('Sub u1')).toBeInTheDocument()
+    expect(screen.getByText('Sub u2')).toBeInTheDocument()
   })
 })

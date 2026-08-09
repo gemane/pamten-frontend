@@ -1,14 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import {
-  buildElements,
-  buildElementsUpward,
-  buildElementsDownward,
-  buildPersonElements,
-  buildPersonProfileElements,
-} from './buildElements'
-import type {
-  Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, ExecutiveEntry, OwnsRelationship,
-} from '../types'
+import { buildElements, buildElementsUpward, buildElementsDownward, buildPersonElements, buildPersonProfileElements, isDrawableOwnership } from './buildElements'
+import type { Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, ExecutiveEntry, OwnsRelationship, EdgeData } from '../types'
 
 // ── fixtures ────────────────────────────────────────────────────────────────
 
@@ -194,5 +186,80 @@ describe('buildPersonProfileElements', () => {
     const els = buildPersonProfileElements(twoHoldings, seen)
     expect(nodes(els).map(e => e.data.id)).toEqual(['spacex'])
     expect(ids(edges(els))).toEqual(['musk__owns__spacex'])
+  })
+})
+
+// ── Redundant ownership shortcuts ─────────────────────────────────────────────
+//
+// GLEIF records "X is the ultimate parent of Y" alongside the chain that already
+// links them, so many indirect edges duplicate a drawn path. But not all: for 58
+// of 484 owned entities the ultimate-parent edge is the ONLY inbound ownership
+// there is, and an earlier version that filtered on `direct_or_indirect` removed
+// those companies from the graph entirely.
+//
+// So the graph hides only edges a maintenance pass has PROVEN redundant. Absent
+// means unproven, and unproven means drawn.
+
+describe('isDrawableOwnership', () => {
+  it('hides an edge proven redundant', () => {
+    expect(isDrawableOwnership({ shortcut: true })).toBe(false)
+  })
+
+  it('draws an edge proven load-bearing', () => {
+    expect(isDrawableOwnership({ shortcut: false })).toBe(true)
+  })
+
+  it('draws an unproven edge — including an indirect one', () => {
+    // The regression: filtering by kind hid 58 companies whose only owner link
+    // was an ultimate-parent edge. Nothing is hidden until it is checked.
+    expect(isDrawableOwnership({ direct_or_indirect: 'indirect' } as never)).toBe(true)
+    expect(isDrawableOwnership({})).toBe(true)
+    expect(isDrawableOwnership(null)).toBe(true)
+    expect(isDrawableOwnership(undefined)).toBe(true)
+  })
+})
+
+describe('buildElements and ownership shortcuts', () => {
+  const profile = (): FullProfile => ({
+    entity: { id: 'p', name: 'Parent', type: 'company', verified: false } as Entity,
+    owners: [], executives: [],
+    subsidiaries: [
+      { entity: { id: 'd', name: 'Direct Co', type: 'company' } as Entity,
+        relationship: { direct_or_indirect: 'direct' } },
+      { entity: { id: 'r', name: 'Redundant Co', type: 'company' } as Entity,
+        relationship: { direct_or_indirect: 'indirect', shortcut: true } },
+      { entity: { id: 'l', name: 'Load Bearing Co', type: 'company' } as Entity,
+        relationship: { direct_or_indirect: 'indirect', shortcut: false } },
+      { entity: { id: 'u', name: 'Unchecked Co', type: 'company' } as Entity,
+        relationship: { direct_or_indirect: 'indirect' } },
+    ],
+  } as FullProfile)
+
+  const ids = (els: ReturnType<typeof buildElements>) =>
+    els.filter(e => !('source' in e.data)).map(e => e.data.id)
+
+  it('omits only the proven-redundant shortcut', () => {
+    expect(ids(buildElements(profile(), new Set()))).toEqual(['p', 'd', 'l', 'u'])
+  })
+
+  it('keeps a company whose only link is an ultimate-parent edge', () => {
+    // Exactly the 58 that vanished. This is the test that would have caught it.
+    expect(ids(buildElements(profile(), new Set()))).toContain('l')
+  })
+
+  it('keeps an indirect edge nobody has checked yet', () => {
+    expect(ids(buildElements(profile(), new Set()))).toContain('u')
+  })
+
+  it('marks a surviving indirect edge so it can be drawn dashed', () => {
+    const edges = buildElements(profile(), new Set())
+      .filter(e => 'source' in e.data)
+      .map(e => e.data as EdgeData)
+    const loadBearing = edges.find(d => d.target === 'l')
+    expect(loadBearing?.directOrIndirect).toBe('indirect')
+  })
+
+  it('applies the same rule when expanding a node', () => {
+    expect(ids(buildElementsDownward(profile(), new Set()))).toEqual(['d', 'l', 'u'])
   })
 })

@@ -8,7 +8,7 @@ import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
 import EdgeReportButton from './EdgeReportButton'
-import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry } from '../types'
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
 // otherwise render in arbitrary backend order.
@@ -195,14 +195,26 @@ function MetaRow({ icon: Icon, label, value }: MetaRowProps) {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, count, children }: {
+  title: string
+  /** True total from the server. Not the child count: sections are capped, so what
+   *  is rendered can be fewer than what exists. */
+  count?: number | null
+  children: React.ReactNode
+}) {
   return (
     <div className="panel-section">
-      <h4 className="panel-section__title">{title}</h4>
+      <h4 className="panel-section__title">
+        {title}{count != null && <span className="panel-section__count">{count}</span>}
+      </h4>
       {children}
     </div>
   )
 }
+
+/** Below this, grouping costs more than it gives — three subsidiaries do not need
+ *  three headings. Barclays (118) and Unilever (112) are the cases it exists for. */
+const GROUPING_THRESHOLD = 12
 
 function CollapsibleSection({ title, count, defaultOpen = false, children }: {
   title: string
@@ -473,7 +485,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
 
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate, node, onReScrape }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
-  const { entity, owners = [], subsidiaries = [], executives = [], dual_listed = [],
+  const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [] } = profile
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
@@ -652,20 +664,52 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {subsidiaries.length > 0 && (
-        <Section title={t('panel.subsidiaries')}>
-          {[...subsidiaries].sort(byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? '')).map((s, i) => (
-            <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
-              action={<EdgeReportButton targetKind="owns" fromId={entity.id} toId={s.entity.id}
-                        label={s.entity.name} />}>
-              <span className="rel-item__name">{s.entity.name}</span>
-              <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
-            </RelRow>
-          ))}
+        <Section title={t('panel.subsidiaries')} count={counts?.subsidiaries}>
+          {(() => {
+            const sorted = [...subsidiaries].sort(
+              byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? ''))
+            const row = (s: SubsidiaryEntry, i: number) => (
+              <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
+                action={<EdgeReportButton targetKind="owns" fromId={entity.id} toId={s.entity.id}
+                          label={s.entity.name} />}>
+                <span className="rel-item__name">{s.entity.name}</span>
+                <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
+              </RelRow>
+            )
+
+            // Only the indirect holdings are set apart. A subsidiary listed under a
+            // company is a holding of that company — that needs no heading to say so,
+            // and labelling the ordinary case made the panel look like it was drawing
+            // a distinction where there is none. "Held indirectly" is the one that
+            // genuinely means something else: the company sits further down the tree.
+            //
+            // Relationships whose source never states the distinction (Wikidata, SEC)
+            // stay in the main list rather than getting a group of their own. That
+            // does not claim they are direct — the list makes no claim either way —
+            // where a "Direct holdings" heading above them would have.
+            const indirect = sorted.filter(s => s.relationship?.direct_or_indirect === 'indirect')
+            const rest = sorted.filter(s => s.relationship?.direct_or_indirect !== 'indirect')
+
+            // Splitting earns its keep only on a long list that actually splits: with
+            // nothing left in the main list, the heading would just retitle the section.
+            const worthGrouping =
+              sorted.length > GROUPING_THRESHOLD && indirect.length > 0 && rest.length > 0
+            if (!worthGrouping) return sorted.map(row)
+
+            return (
+              <>
+                {rest.map(row)}
+                <CollapsibleSection title={t('panel.indirectHoldings')} count={indirect.length}>
+                  {indirect.map(row)}
+                </CollapsibleSection>
+              </>
+            )
+          })()}
         </Section>
       )}
 
       {otherExecutives.length > 0 && (
-        <Section title={t('panel.executives')}>
+        <Section title={t('panel.executives')} count={counts?.executives}>
           {[...otherExecutives].sort(byRoleImportance(e => e.role?.role, e => e.person?.full_name ?? '')).map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
               action={<EdgeReportButton targetKind="role" fromId={e.person.id} toId={entity.id}

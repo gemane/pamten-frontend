@@ -4,6 +4,35 @@ import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person
 // emits nodes/edges whose id isn't already present, so a graph can be grown
 // incrementally without duplicating elements.
 
+/**
+ * Should this ownership edge be drawn?
+ *
+ * GLEIF records "X is the *ultimate* parent of Y" alongside the chain that
+ * already links them, so many `indirect` edges are shortcuts for a path the
+ * graph draws anyway. Drawn, they are indistinguishable from a real holding —
+ * Barclays looks like it owns 118 companies outright when it directly owns 20.
+ *
+ * But NOT all of them are redundant. For 58 of 484 owned entities in the
+ * database the ultimate-parent edge is the ONLY inbound ownership there is:
+ * GLEIF recorded the top of the chain but not its steps, so no path reaches
+ * them. Filtering on `direct_or_indirect` removed those companies from the
+ * graph entirely — a regression this replaces.
+ *
+ * Whether a shortcut is genuinely redundant is a global property of the graph,
+ * far too expensive to work out per request (measured: 223 ms for one profile
+ * on the test subset). A maintenance pass computes it once and stamps
+ * `shortcut` on the edge.
+ *
+ * The default is deliberately fail-safe: only an edge PROVEN redundant is
+ * hidden. No flag — a new edge, or one the pass has not reached — is drawn.
+ * Hiding something we have not checked is how the last version lost data.
+ */
+export function isDrawableOwnership(
+  rel: { shortcut?: boolean | null } | null | undefined,
+): boolean {
+  return rel?.shortcut !== true
+}
+
 export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
   const els: GraphElement[] = []
 
@@ -32,6 +61,7 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
   })
 
   for (const sub of subsidiaries) {
+    if (!isDrawableOwnership(sub.relationship)) continue
     addNode({
       id:            sub.entity.id,
       label:         sub.entity.name,
@@ -48,6 +78,10 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
       edgeDir:       'out',
       ownershipType: sub.relationship?.ownership_type || '',
       stakePct:      sub.relationship?.stake_percent ?? null,
+      // Kept on the edge so the graph can draw an ultimate-parent link dashed:
+      // it survived the filter because nothing else reaches that company, but it
+      // is still not a direct holding and should not look like one.
+      directOrIndirect: sub.relationship?.direct_or_indirect ?? '',
     })
   }
 
@@ -133,6 +167,9 @@ export function buildElementsDownward(profile: FullProfile, loadedIds: Set<strin
   const els: GraphElement[] = []
   const { entity, subsidiaries = [] } = profile
   for (const sub of subsidiaries) {
+    // Same rule as buildElements — expanding a node must not reintroduce the
+    // shortcut edges the initial render left out.
+    if (!isDrawableOwnership(sub.relationship)) continue
     if (!loadedIds.has(sub.entity.id)) {
       loadedIds.add(sub.entity.id)
       els.push({ data: { id: sub.entity.id, label: sub.entity.name, nodeType: 'entity', entitySubtype: sub.entity.type, raw: sub.entity } })

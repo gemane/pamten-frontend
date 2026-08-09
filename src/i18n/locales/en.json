@@ -89,7 +89,8 @@
     "role": "Role",
     "edgeWidth": "Edge width",
     "lowPct": "Low %",
-    "highPct": "High %"
+    "highPct": "High %",
+    "ultimateParent": "Ultimate parent (no direct chain)"
   },
   "panel": {
     "empty": "Click any node in the graph\nto see its details here",
@@ -137,7 +138,8 @@
     "nominee": "Nominee",
     "nomineeHint": "Nominee / custodian — holder of record, not a beneficial owner",
     "crossHoldings": "Circular ownership",
-    "crossHoldingsHint": "This entity and the one(s) below own each other (reciprocal holding)"
+    "crossHoldingsHint": "This entity and the one(s) below own each other (reciprocal holding)",
+    "indirectHoldings": "Held indirectly"
   },
   "report": {
     "button": "Report",

@@ -82,6 +82,14 @@ export interface Source {
 
 // Relationship types
 export interface OwnsRelationship {
+  /** GLEIF RR: 'direct' = the immediate parent, 'indirect' = the ultimate parent
+   *  (a shortcut edge duplicating a path the graph already contains). Absent on
+   *  Wikidata and SEC edges, which never state the distinction. */
+  direct_or_indirect?: 'direct' | 'indirect' | null
+  /** Set by the backend maintenance pass: this indirect edge is redundant because
+   *  a pure-direct chain already reaches the same company, so the graph can omit
+   *  it. Absent means unproven — always drawn. */
+  shortcut?: boolean | null
   stake_percent?: number | null
   voting_power_pct?: number | null
   ownership_type?: OwnershipType | null
@@ -122,8 +130,19 @@ export interface ExecutiveEntry {
   role: RoleRelationship
 }
 
+/** True section sizes, independent of the per-section row limit. */
+export interface ProfileCounts {
+  owners?: number | null
+  subsidiaries?: number | null
+  executives?: number | null
+  dual_listed?: number | null
+  succeeded_by?: number | null
+  replaces?: number | null
+}
+
 export interface FullProfile {
   entity: Entity
+  counts?: ProfileCounts
   owners: OwnerEntry[]
   subsidiaries: SubsidiaryEntry[]
   executives: ExecutiveEntry[]
@@ -194,6 +213,10 @@ export interface EdgeData {
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null
   stakePct?: number | null
+  /** 'indirect' here means an ultimate-parent link that survived the shortcut
+   *  filter because nothing else reaches that company — drawn dashed, since it is
+   *  still not a direct holding. */
+  directOrIndirect?: string | null
 }
 
 export type GraphElement =
