@@ -139,9 +139,7 @@
     "nomineeHint": "Nominee / custodio — titular registral, no propietario beneficiario",
     "crossHoldings": "Propiedad circular",
     "crossHoldingsHint": "Esta entidad y la(s) siguiente(s) se poseen mutuamente (participación recíproca)",
-    "directHoldings": "Participaciones directas",
-    "indirectHoldings": "En posesión indirecta",
-    "unstatedHoldings": "Relación no indicada"
+    "indirectHoldings": "En posesión indirecta"
   },
   "report": {
     "button": "Reportar",

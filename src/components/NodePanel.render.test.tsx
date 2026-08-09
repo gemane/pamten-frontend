@@ -206,16 +206,18 @@ describe('NodePanel subsidiary grouping', () => {
     expect(screen.getByText('118')).toBeInTheDocument()
   })
 
-  it('groups a long mixed list by direct and indirect', async () => {
+  it('sets the indirect holdings apart and leaves the rest unlabelled', async () => {
+    // A subsidiary listed under a company is a holding of that company; only
+    // "held indirectly" says something the list does not already say.
     await show([...many(10, 'direct'), ...many(10, 'indirect')])
-    expect(screen.getByText(/Direct holdings/i)).toBeInTheDocument()
     expect(screen.getByText(/Held indirectly/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Direct holdings/i)).toBeNull()
   })
 
-  it('starts with the indirect group collapsed', async () => {
+  it('shows the direct holdings immediately, without expanding anything', async () => {
     await show([...many(10, 'direct'), ...many(10, 'indirect')])
-    expect(screen.getByText('Sub direct0')).toBeInTheDocument()   // direct is open
-    expect(screen.queryByText('Sub indirect0')).toBeNull()        // indirect is not
+    expect(screen.getByText('Sub direct0')).toBeInTheDocument()   // in the main list
+    expect(screen.queryByText('Sub indirect0')).toBeNull()        // behind the heading
   })
 
   it('expands the indirect group on request', async () => {
@@ -225,23 +227,33 @@ describe('NodePanel subsidiary grouping', () => {
   })
 
   it('leaves a short list flat', async () => {
-    // Three subsidiaries do not need three headings.
+    // Two subsidiaries do not need a heading.
     await show([sub('a', 'direct'), sub('b', 'indirect')])
-    expect(screen.queryByText(/Direct holdings/i)).toBeNull()
+    expect(screen.queryByText(/Held indirectly/i)).toBeNull()
     expect(screen.getByText('Sub a')).toBeInTheDocument()
     expect(screen.getByText('Sub b')).toBeInTheDocument()
   })
 
-  it('leaves a long single-kind list flat', async () => {
-    // Nothing to compare it against, so a lone heading is pure noise.
+  it('leaves a long list with nothing indirect flat', async () => {
     await show(many(20, 'direct'))
-    expect(screen.queryByText(/Direct holdings/i)).toBeNull()
+    expect(screen.queryByText(/Held indirectly/i)).toBeNull()
+    expect(screen.getByText('Sub direct0')).toBeInTheDocument()
   })
 
-  it('gives unstated relationships their own group rather than hiding them', async () => {
-    // Wikidata and SEC never state the distinction; folding them into "direct"
-    // would invent structure the source never claimed.
-    await show([...many(10, 'direct'), sub('u1'), sub('u2'), sub('u3')])
-    expect(screen.getByText(/Relationship not stated/i)).toBeInTheDocument()
+  it('leaves a wholly indirect list flat rather than retitling the section', async () => {
+    // With nothing left outside it, the heading would just rename "Subsidiaries"
+    // — and hide every row behind a collapsed group.
+    await show(many(20, 'indirect'))
+    expect(screen.queryByText(/Held indirectly/i)).toBeNull()
+    expect(screen.getByText('Sub indirect0')).toBeInTheDocument()
+  })
+
+  it('keeps relationships the source never stated visible in the main list', async () => {
+    // Wikidata and SEC never record the distinction. They belong in the list,
+    // where nothing claims they are direct — a "Direct holdings" heading above
+    // them would have.
+    await show([...many(10, 'direct'), sub('u1'), sub('u2'), ...many(3, 'indirect')])
+    expect(screen.getByText('Sub u1')).toBeInTheDocument()
+    expect(screen.getByText('Sub u2')).toBeInTheDocument()
   })
 })

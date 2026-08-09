@@ -677,36 +677,31 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               </RelRow>
             )
 
-            const direct = sorted.filter(s => s.relationship?.direct_or_indirect === 'direct')
+            // Only the indirect holdings are set apart. A subsidiary listed under a
+            // company is a holding of that company — that needs no heading to say so,
+            // and labelling the ordinary case made the panel look like it was drawing
+            // a distinction where there is none. "Held indirectly" is the one that
+            // genuinely means something else: the company sits further down the tree.
+            //
+            // Relationships whose source never states the distinction (Wikidata, SEC)
+            // stay in the main list rather than getting a group of their own. That
+            // does not claim they are direct — the list makes no claim either way —
+            // where a "Direct holdings" heading above them would have.
             const indirect = sorted.filter(s => s.relationship?.direct_or_indirect === 'indirect')
-            // Neither stated: Wikidata and SEC never record the distinction. Its own
-            // group rather than folded into direct — guessing would invent structure
-            // the source never claimed.
-            const unstated = sorted.filter(s => !s.relationship?.direct_or_indirect)
+            const rest = sorted.filter(s => s.relationship?.direct_or_indirect !== 'indirect')
 
-            // Grouping earns its keep only on a long list that actually splits.
+            // Splitting earns its keep only on a long list that actually splits: with
+            // nothing left in the main list, the heading would just retitle the section.
             const worthGrouping =
-              sorted.length > GROUPING_THRESHOLD &&
-              [direct, indirect, unstated].filter(g => g.length > 0).length > 1
+              sorted.length > GROUPING_THRESHOLD && indirect.length > 0 && rest.length > 0
             if (!worthGrouping) return sorted.map(row)
 
             return (
               <>
-                {direct.length > 0 && (
-                  <CollapsibleSection title={t('panel.directHoldings')} count={direct.length} defaultOpen>
-                    {direct.map(row)}
-                  </CollapsibleSection>
-                )}
-                {indirect.length > 0 && (
-                  <CollapsibleSection title={t('panel.indirectHoldings')} count={indirect.length}>
-                    {indirect.map(row)}
-                  </CollapsibleSection>
-                )}
-                {unstated.length > 0 && (
-                  <CollapsibleSection title={t('panel.unstatedHoldings')} count={unstated.length}>
-                    {unstated.map(row)}
-                  </CollapsibleSection>
-                )}
+                {rest.map(row)}
+                <CollapsibleSection title={t('panel.indirectHoldings')} count={indirect.length}>
+                  {indirect.map(row)}
+                </CollapsibleSection>
               </>
             )
           })()}
