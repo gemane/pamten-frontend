@@ -142,6 +142,15 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
         color: '#c39bd3',
       },
     },
+    {
+      // An ultimate-parent link that survived the shortcut filter: nothing else
+      // reaches that company, so it must be drawn — but it is not a direct
+      // holding and should not look like one. Dashed, the same language the
+      // voting-power edges already use. Colour is left to the ownership-type
+      // rules below, so only the stroke pattern differs.
+      selector: 'edge[directOrIndirect = "indirect"]',
+      style: { 'line-style': 'dashed' },
+    },
     // Edge width by ownership type — used when stake% is not in the data
     { selector: 'edge[ownershipType = "minority"]',    style: { width: 2.5 } },
     { selector: 'edge[ownershipType = "controlling"]', style: { width: 4 } },

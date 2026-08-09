@@ -86,6 +86,10 @@ export interface OwnsRelationship {
    *  (a shortcut edge duplicating a path the graph already contains). Absent on
    *  Wikidata and SEC edges, which never state the distinction. */
   direct_or_indirect?: 'direct' | 'indirect' | null
+  /** Set by the backend maintenance pass: this indirect edge is redundant because
+   *  a pure-direct chain already reaches the same company, so the graph can omit
+   *  it. Absent means unproven — always drawn. */
+  shortcut?: boolean | null
   stake_percent?: number | null
   voting_power_pct?: number | null
   ownership_type?: OwnershipType | null
@@ -209,6 +213,10 @@ export interface EdgeData {
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null
   stakePct?: number | null
+  /** 'indirect' here means an ultimate-parent link that survived the shortcut
+   *  filter because nothing else reaches that company — drawn dashed, since it is
+   *  still not a direct holding. */
+  directOrIndirect?: string | null
 }
 
 export type GraphElement =
