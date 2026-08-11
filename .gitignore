@@ -1,3 +1,7 @@
 node_modules
 dist
 .env
+
+# Capacitor copies the built web assets here on `cap sync`. They are generated
+# from dist/ (itself ignored) and would otherwise be committed on every build.
+android/app/src/main/assets/public/
