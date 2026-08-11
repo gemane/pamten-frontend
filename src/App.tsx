@@ -3,7 +3,7 @@ import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
 import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiShare2, FiFlag } from 'react-icons/fi'
-import SearchBar     from './components/SearchBar'
+import SearchBar, { type SearchBarHandle } from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
 import type { GraphHandle } from './components/Graph'
@@ -78,6 +78,11 @@ function AppInner() {
   const canModerate = user?.role === 'moderator' || user?.role === 'admin'
   const userCanScrape = canScrape(user)
   const isMobile = useMobile()
+  const searchBarRef = useRef<SearchBarHandle>(null)
+  // Set when the search icon is tapped from another tab: SearchBar is not mounted
+  // yet, so the clear has to wait until it is. One-shot, so returning to the graph
+  // by any other route (browser Back, a deep link) does not wipe what was typed.
+  const pendingSearchFocus = useRef(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
   // Share + report (flag) tools belong to the data views, not the scraper/settings panels.
@@ -483,6 +488,29 @@ function AppInner() {
     }
   }, [countryData.length])
 
+  /** The search icon: empty the field and open the keyboard.
+   *
+   * When the graph tab is already showing this runs synchronously inside the
+   * click, which is the only way a mobile browser will raise the keyboard — the
+   * same focus() a tick later, from an effect, moves the cursor silently and no
+   * keyboard appears. Coming from another tab the field does not exist yet, so it
+   * is deferred to the effect below. */
+  const handleSearchTab = useCallback(() => {
+    if (activeTab === 'graph') searchBarRef.current?.clearAndFocus()
+    else pendingSearchFocus.current = true
+    handleTabChange('graph')
+  }, [activeTab, handleTabChange])
+
+  // The deferred half. Runs after SearchBar has mounted — and after its own
+  // selectedLabel effect, since child effects run before the parent's, so the
+  // clear is not immediately overwritten by the previously selected node's name.
+  useEffect(() => {
+    if (activeTab === 'graph' && pendingSearchFocus.current) {
+      pendingSearchFocus.current = false
+      searchBarRef.current?.clearAndFocus()
+    }
+  }, [activeTab])
+
   // Subsidiary NodeData for the MapPanel list when a company is selected
   const contextSubsidiaries = useMemo((): NodeData[] => {
     if (!selectedNode || selectedNode.nodeType !== 'entity') return []
@@ -742,7 +770,7 @@ function AppInner() {
                 <span className="logo-sub">Ownership Graph</span>
               </div>
               <div className="tab-toggle">
-                <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('graph')} title={t('nav.graph')}><FiSearch /></button>
+                <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /></button>
                 <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /></button>
                 <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
@@ -814,7 +842,7 @@ function AppInner() {
             {activeTab === 'graph' && (
               <>
                 <div className="graph-topbar">
-                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
+                  <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
                 </div>
                 <div className="mobile-canvas">
                   {elements.length > 0 && <GraphLegend />}
@@ -907,7 +935,7 @@ function AppInner() {
           <>
             {activeTab === 'graph' && (
               <div className="graph-topbar">
-                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
+                <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
               </div>
             )}
             <div className="graph-area">
@@ -944,7 +972,7 @@ function AppInner() {
 
       {isMobile && (
         <nav className="app-bottom-nav">
-          <button className={`bottom-nav-btn ${activeTab === 'graph' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('graph')}>
+          <button className={`bottom-nav-btn ${activeTab === 'graph' ? 'bottom-nav-btn--active' : ''}`} onClick={handleSearchTab}>
             <FiSearch /><span>{t('nav.graph')}</span>
           </button>
           <button className={`bottom-nav-btn ${activeTab === 'map' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('map')}>
