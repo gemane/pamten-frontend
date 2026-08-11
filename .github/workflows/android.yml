@@ -1,0 +1,76 @@
+name: Android
+
+# Builds a debug APK you can sideload onto a phone.
+#
+# It runs here rather than on the dev box for two reasons: the ubuntu runner ships
+# with the JDK and Android SDK already installed, and Gradle plus the Kotlin
+# compiler want more memory than that machine has spare while it is also running
+# ArcadeDB and imports.
+#
+# Debug signing only, on purpose. A debug APK installs fine by sideloading, which
+# is all a personal build needs. A release build would need a keystore in secrets,
+# and that is worth setting up when there is something to publish — not before.
+#
+# Manual by default: this does not need to run on every push, and an APK nobody
+# downloads is just minutes spent. It also runs on a tag so a release is
+# reproducible when there is one.
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: 'Site the app loads (see capacitor.config.ts)'
+        required: false
+        default: 'https://dev.owlgraph.org'
+  push:
+    tags: ['v*']
+
+jobs:
+  apk:
+    name: Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The app loads the deployed site, so these assets are not what runs — but
+      # `cap sync` requires webDir to exist, and building it also proves the web
+      # app still compiles before we wrap it.
+      - name: Build the web app
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+        env:
+          CAP_SERVER_URL: ${{ inputs.server_url || 'https://dev.owlgraph.org' }}
+
+      # Confirm the APK will point where we think. Getting this wrong produces an
+      # app that looks fine and silently talks to the wrong environment.
+      - name: Show what the app will load
+        run: |
+          echo "--- android/app/src/main/assets/capacitor.config.json ---"
+          cat android/app/src/main/assets/capacitor.config.json
+
+      - name: Build the APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: owlgraph-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
