@@ -1,13 +1,12 @@
 /**
- * Tapping the search icon should empty the field and put the cursor in it.
+ * The search icon takes two taps from another tab, on purpose.
  *
- * On a phone the point is the keyboard: mobile browsers only raise it for a
- * focus() that happens inside the user's gesture, which is why App calls
- * SearchBar imperatively rather than nudging it through a prop and an effect.
- * jsdom cannot show a keyboard, so these tests pin the two things it can see —
- * the field is cleared, and the cursor lands in it — plus the case that would
- * otherwise be an easy regression: coming back to the graph by *another* route
- * must not throw away what was typed.
+ * From elsewhere it only navigates: raising the keyboard there would cover the
+ * graph the tap just asked to see. Once the graph is showing, a tap empties the
+ * field and opens the keyboard.
+ *
+ * jsdom cannot show a keyboard, so these tests use focus as its proxy — which is
+ * accurate, because the keyboard is precisely what focus-during-a-gesture buys.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
@@ -81,29 +80,32 @@ describe('the search icon', () => {
     expect(document.activeElement).toBe(searchField())
   })
 
-  it('works when arriving from another tab, where the field does not exist yet', async () => {
+  it('only navigates when arriving from another tab — no keyboard over the graph', async () => {
+    // The whole reason for two taps. Focusing here pops the keyboard straight
+    // over the panel the tap just asked to look at.
     render(<App />)
-    await userEvent.type(searchField(), 'barclays', { delay: null })
+    await userEvent.click(screen.getByTitle(/settings/i))
 
-    await userEvent.click(screen.getByTitle(/settings/i))     // leaves the graph tab
-    await userEvent.click(searchIcon())                        // and back via the icon
+    await userEvent.click(searchIcon())
 
-    expect(searchField().value).toBe('')
+    expect(screen.getByTestId('graph')).toBeInTheDocument()   // it did navigate
+    expect(document.activeElement).not.toBe(searchField())    // but did not grab focus
+  })
+
+  it('opens the keyboard on the second tap, once the graph is showing', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByTitle(/settings/i))
+
+    await userEvent.click(searchIcon())    // first: navigate only
+    await userEvent.click(searchIcon())    // second: now the field exists
+
     expect(document.activeElement).toBe(searchField())
   })
 
   it('does not grab focus when the graph is reached another way', async () => {
-    // The regression this guards: the pending flag must be one-shot. A signal the
-    // remount replayed would focus the field every time the graph reappeared —
-    // and on a phone that means the keyboard springing up unasked after a Back
-    // press. (The field itself is empty here regardless: leaving the tab unmounts
-    // SearchBar, which is pre-existing behaviour and not what this pins.)
+    // Browser Back, a deep link, the bottom nav: none of these are the search
+    // icon, and none should pop the keyboard.
     render(<App />)
-    // Arm the deferred path for real: the flag is only set when the icon is
-    // tapped from *another* tab. Tapping it on the graph takes the synchronous
-    // route and never arms anything, so starting there tests nothing.
-    await userEvent.click(screen.getByTitle(/settings/i))
-    await userEvent.click(searchIcon())                        // arms, then consumes
     await userEvent.click(screen.getByTitle(/settings/i))
 
     window.location.hash = '#graph'

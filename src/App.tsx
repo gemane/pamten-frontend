@@ -79,10 +79,6 @@ function AppInner() {
   const userCanScrape = canScrape(user)
   const isMobile = useMobile()
   const searchBarRef = useRef<SearchBarHandle>(null)
-  // Set when the search icon is tapped from another tab: SearchBar is not mounted
-  // yet, so the clear has to wait until it is. One-shot, so returning to the graph
-  // by any other route (browser Back, a deep link) does not wipe what was typed.
-  const pendingSearchFocus = useRef(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
   // Share + report (flag) tools belong to the data views, not the scraper/settings panels.
@@ -488,28 +484,21 @@ function AppInner() {
     }
   }, [countryData.length])
 
-  /** The search icon: empty the field and open the keyboard.
+  /** The search icon. Two taps, doing different things on purpose.
    *
-   * When the graph tab is already showing this runs synchronously inside the
-   * click, which is the only way a mobile browser will raise the keyboard — the
-   * same focus() a tick later, from an effect, moves the cursor silently and no
-   * keyboard appears. Coming from another tab the field does not exist yet, so it
-   * is deferred to the effect below. */
+   * From another tab it only navigates. Raising the keyboard there would cover
+   * the graph the tap just asked to see — you would have to dismiss it before
+   * looking at anything, which is worse than the extra tap it saves.
+   *
+   * Once the graph is showing, a tap empties the field and opens the keyboard.
+   * That call has to happen synchronously inside the click: a mobile browser
+   * raises the keyboard only for a focus() during the user's gesture, and the
+   * same call a tick later from an effect moves the cursor in silence.
+   */
   const handleSearchTab = useCallback(() => {
     if (activeTab === 'graph') searchBarRef.current?.clearAndFocus()
-    else pendingSearchFocus.current = true
     handleTabChange('graph')
   }, [activeTab, handleTabChange])
-
-  // The deferred half. Runs after SearchBar has mounted — and after its own
-  // selectedLabel effect, since child effects run before the parent's, so the
-  // clear is not immediately overwritten by the previously selected node's name.
-  useEffect(() => {
-    if (activeTab === 'graph' && pendingSearchFocus.current) {
-      pendingSearchFocus.current = false
-      searchBarRef.current?.clearAndFocus()
-    }
-  }, [activeTab])
 
   // Subsidiary NodeData for the MapPanel list when a company is selected
   const contextSubsidiaries = useMemo((): NodeData[] => {
