@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
 import { search } from '../services/api'
@@ -32,7 +32,21 @@ export function consumeSkip(query: string, skip: string | null): { run: boolean;
   return { run: true, skip }
 }
 
-export default function SearchBar({ onSelect, selectedLabel, countries, onScrapeQuery, canScrape, onRequestLogin }: SearchBarProps) {
+export interface SearchBarHandle {
+  /** Empty the field and put the cursor in it.
+   *
+   * Exposed imperatively rather than driven by a prop so the caller can invoke it
+   * *synchronously inside the click handler*. Mobile browsers only raise the
+   * keyboard for a focus() that happens during the user's gesture; the same call
+   * one tick later, from an effect reacting to a state change, focuses the field
+   * silently and the keyboard never appears. */
+  clearAndFocus: () => void
+}
+
+const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar(
+  { onSelect, selectedLabel, countries, onScrapeQuery, canScrape, onRequestLogin }: SearchBarProps,
+  ref,
+) {
   const { t, i18n } = useTranslation()
   const [query, setQuery]           = useState<string>('')
   const [results, setResults]       = useState<SearchResult[]>([])
@@ -135,6 +149,8 @@ export default function SearchBar({ onSelect, selectedLabel, countries, onScrape
     setOpen(false)
     inputRef.current?.focus()
   }
+
+  useImperativeHandle(ref, () => ({ clearAndFocus: handleClear }))
 
   const badge = (type: string) => (
     <span className={`type-badge type-badge--${type.toLowerCase()}`}>{type}</span>
@@ -293,4 +309,6 @@ export default function SearchBar({ onSelect, selectedLabel, countries, onScrape
       )}
     </div>
   )
-}
+})
+
+export default SearchBar
