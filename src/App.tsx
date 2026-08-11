@@ -3,7 +3,7 @@ import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
 import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiShare2, FiFlag } from 'react-icons/fi'
-import SearchBar     from './components/SearchBar'
+import SearchBar, { type SearchBarHandle } from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
 import type { GraphHandle } from './components/Graph'
@@ -78,6 +78,7 @@ function AppInner() {
   const canModerate = user?.role === 'moderator' || user?.role === 'admin'
   const userCanScrape = canScrape(user)
   const isMobile = useMobile()
+  const searchBarRef = useRef<SearchBarHandle>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
   // Share + report (flag) tools belong to the data views, not the scraper/settings panels.
@@ -483,6 +484,22 @@ function AppInner() {
     }
   }, [countryData.length])
 
+  /** The search icon. Two taps, doing different things on purpose.
+   *
+   * From another tab it only navigates. Raising the keyboard there would cover
+   * the graph the tap just asked to see — you would have to dismiss it before
+   * looking at anything, which is worse than the extra tap it saves.
+   *
+   * Once the graph is showing, a tap empties the field and opens the keyboard.
+   * That call has to happen synchronously inside the click: a mobile browser
+   * raises the keyboard only for a focus() during the user's gesture, and the
+   * same call a tick later from an effect moves the cursor in silence.
+   */
+  const handleSearchTab = useCallback(() => {
+    if (activeTab === 'graph') searchBarRef.current?.clearAndFocus()
+    handleTabChange('graph')
+  }, [activeTab, handleTabChange])
+
   // Subsidiary NodeData for the MapPanel list when a company is selected
   const contextSubsidiaries = useMemo((): NodeData[] => {
     if (!selectedNode || selectedNode.nodeType !== 'entity') return []
@@ -742,7 +759,7 @@ function AppInner() {
                 <span className="logo-sub">Ownership Graph</span>
               </div>
               <div className="tab-toggle">
-                <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('graph')} title={t('nav.graph')}><FiSearch /></button>
+                <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /></button>
                 <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /></button>
                 <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
@@ -814,7 +831,7 @@ function AppInner() {
             {activeTab === 'graph' && (
               <>
                 <div className="graph-topbar">
-                  <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
+                  <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
                 </div>
                 <div className="mobile-canvas">
                   {elements.length > 0 && <GraphLegend />}
@@ -907,7 +924,7 @@ function AppInner() {
           <>
             {activeTab === 'graph' && (
               <div className="graph-topbar">
-                <SearchBar onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
+                <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
               </div>
             )}
             <div className="graph-area">
@@ -944,7 +961,7 @@ function AppInner() {
 
       {isMobile && (
         <nav className="app-bottom-nav">
-          <button className={`bottom-nav-btn ${activeTab === 'graph' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('graph')}>
+          <button className={`bottom-nav-btn ${activeTab === 'graph' ? 'bottom-nav-btn--active' : ''}`} onClick={handleSearchTab}>
             <FiSearch /><span>{t('nav.graph')}</span>
           </button>
           <button className={`bottom-nav-btn ${activeTab === 'map' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('map')}>
