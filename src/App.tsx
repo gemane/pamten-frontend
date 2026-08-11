@@ -23,7 +23,8 @@ import { useAndroidBackButton } from './hooks/useAndroidBackButton'
 import { useMobile } from './hooks/useMobile'
 import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getCountries, setUnauthorizedHandler, authVerifyEmail, ensureScrape } from './services/api'
+import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getEntitiesWithoutCountry, getCountries, setUnauthorizedHandler, authVerifyEmail, ensureScrape } from './services/api'
+import { readMapBasis, MAP_BASIS_KEY, NO_COUNTRY, type MapBasis } from './utils/mapBasis'
 import { canScrape } from './utils/scrapeAccess'
 import { scheduleIdle } from './utils/idle'
 import type {
@@ -100,6 +101,9 @@ function AppInner() {
   const [enrichNonce,     setEnrichNonce]     = useState<number>(0)   // bumps when a scrape appends data → NodePanel refetches
   const [toast,           setToast]           = useState<ToastState | null>(null)
   const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
+  // Registered-in versus run-from. Persisted, because it is a way of reading the
+  // map rather than a transient filter.
+  const [mapBasis,        setMapBasis]        = useState<MapBasis>(readMapBasis)
   const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   // Country list for the search filter — fetched once here (not in SearchBar) so it's
@@ -478,7 +482,7 @@ function AppInner() {
     if (tab === 'map') {
       if (countryData.length === 0) {
         setCountryLoading(true)
-        getEntitiesByCountry()
+        getEntitiesByCountry(mapBasis)
           .then(({ data }) => setCountryData(data))
           .catch(() => {})
           .finally(() => setCountryLoading(false))
@@ -486,7 +490,7 @@ function AppInner() {
       const primary = contextCountriesRef.current.find(c => c.role === 'primary' && c.lat != null && c.lng != null)
       setMapFlyTo(primary ? { center: [primary.lng!, primary.lat!], zoom: 4 } : null)
     }
-  }, [countryData.length])
+  }, [countryData.length, mapBasis])
 
   /** The search icon. Two taps, doing different things on purpose.
    *
@@ -566,19 +570,41 @@ function AppInner() {
   }, [selectedNode, elements])
   contextCountriesRef.current = contextCountries
 
+  /** Switching basis invalidates every count and list derived from the old one.
+   *  Refetching without clearing would leave one basis's counts beside the
+   *  other's entity lists — a map that looks right and is not. */
+  const handleBasisChange = useCallback((basis: MapBasis) => {
+    if (basis === mapBasis) return
+    setMapBasis(basis)
+    localStorage.setItem(MAP_BASIS_KEY, basis)
+    setSelectedCountry(null)
+    entityCountryCache.current.clear()
+    setCountryLoading(true)
+    getEntitiesByCountry(basis)
+      .then(({ data }) => setCountryData(data))
+      .catch(() => setCountryData([]))
+      .finally(() => setCountryLoading(false))
+  }, [mapBasis])
+
   // Lazy-load entities for a country the first time it is selected
   useEffect(() => {
     if (!selectedCountry) return
-    const already = countryData.find(d => d.country === selectedCountry)
+    // The API keys the unplaced group as country: null; the selection uses a
+    // sentinel, because null already means "nothing selected" here.
+    const key = selectedCountry === NO_COUNTRY ? null : selectedCountry
+    const already = countryData.find(d => d.country === key)
     if (already?.entities) return
-    getCountryEntities(selectedCountry)
+    const load = key === null
+      ? getEntitiesWithoutCountry(mapBasis)
+      : getCountryEntities(key, mapBasis)
+    load
       .then(({ data: entities }) => {
         setCountryData(prev => prev.map(d =>
-          d.country === selectedCountry ? { ...d, entities } : d
+          d.country === key ? { ...d, entities } : d
         ))
       })
       .catch(() => {})
-  }, [selectedCountry]) // intentionally excludes countryData to avoid re-runs
+  }, [selectedCountry, mapBasis]) // intentionally excludes countryData to avoid re-runs
 
   const handleEntityFromMap = useCallback(async (entityId: string) => {
     setActiveTab('graph')
@@ -802,6 +828,7 @@ function AppInner() {
                 selectedCountry={selectedCountry}
                 onSelectCountry={setSelectedCountry}
                 onLoadEntity={handleEntityFromMap}
+                basis={mapBasis}
                 loading={countryLoading}
                 contextNode={selectedNode}
                 contextSubsidiaries={contextSubsidiaries}
@@ -875,6 +902,8 @@ function AppInner() {
                     countryData={countryData}
                     selectedCountry={selectedCountry}
                     onCountryClick={setSelectedCountry}
+                    basis={mapBasis}
+                    onBasisChange={handleBasisChange}
                     contextCountries={contextCountries}
                     theme={theme}
                     flyTo={mapFlyTo}
@@ -886,6 +915,7 @@ function AppInner() {
                     selectedCountry={selectedCountry}
                     onSelectCountry={setSelectedCountry}
                     onLoadEntity={handleEntityFromMap}
+                    basis={mapBasis}
                     loading={countryLoading}
                     contextNode={selectedNode}
                     contextSubsidiaries={contextSubsidiaries}
@@ -938,6 +968,8 @@ function AppInner() {
                     countryData={countryData}
                     selectedCountry={selectedCountry}
                     onCountryClick={setSelectedCountry}
+                    basis={mapBasis}
+                    onBasisChange={handleBasisChange}
                     contextCountries={contextCountries}
                     theme={theme}
                     flyTo={mapFlyTo}

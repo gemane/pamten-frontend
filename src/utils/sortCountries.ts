@@ -10,9 +10,18 @@ export function sortCountries(
   by: CountrySort,
   locale?: string,
 ): CountryEntityGroup[] {
-  const byName = (a: CountryEntityGroup, b: CountryEntityGroup) =>
-    countryName(a.country, locale).localeCompare(countryName(b.country, locale), locale)
+  // The "not recorded" group (country === null) has no name to sort by and is not
+  // a place, so it sits at the end in both modes rather than competing for the top
+  // of the list on count alone.
+  const byName = (a: CountryEntityGroup, b: CountryEntityGroup) => {
+    if (!a.country || !b.country) return a.country ? -1 : b.country ? 1 : 0
+    return countryName(a.country, locale).localeCompare(countryName(b.country, locale), locale)
+  }
+  const unplaceableLast = (a: CountryEntityGroup, b: CountryEntityGroup) =>
+    a.country === b.country ? 0 : !a.country ? 1 : !b.country ? -1 : 0
+
   const arr = [...data]
-  arr.sort(by === 'name' ? byName : (a, b) => b.count - a.count || byName(a, b))
+  arr.sort((a, b) =>
+    unplaceableLast(a, b) || (by === 'name' ? byName(a, b) : b.count - a.count || byName(a, b)))
   return arr
 }

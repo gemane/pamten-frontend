@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import worldData from 'world-atlas/countries-110m.json'
 import { ALPHA2_TO_NUMERIC, countryName, toAlpha2 } from '../utils/isoCountries'
+import type { MapBasis } from '../utils/mapBasis'
 import { FiRotateCcw } from 'react-icons/fi'
 import type { MapDetailData } from './MapDetail'   // type only — no Leaflet at import
 import type { CountryEntityGroup, ContextCountry } from '../types'
@@ -28,11 +29,19 @@ interface MapViewProps {
   contextCountries?: ContextCountry[]
   theme?: 'dark' | 'light'
   flyTo?: FlyTo | null
+  /** Whether countries are counted by where companies are registered or run.
+   *  The control lives here, on the map, but the state lives in App because the
+   *  panel and the fetches depend on it too. */
+  basis?: MapBasis
+  onBasisChange?: (basis: MapBasis) => void
 }
 
 function buildNumericMap(countryData: CountryEntityGroup[]): Map<number, CountryEntityGroup> {
   const map = new Map<number, CountryEntityGroup>()
   for (const d of countryData) {
+    // The "not recorded" group has no country to colour. It is counted in the
+    // panel so the totals add up, but there is nowhere on a map to put it.
+    if (!d.country) continue
     const a2 = toAlpha2(d.country) ?? d.country
     const num = ALPHA2_TO_NUMERIC[a2]
     if (num) map.set(num, d)
@@ -123,6 +132,8 @@ export default function MapView({
   contextCountries = [],
   theme = 'dark',
   flyTo,
+  basis = 'jurisdiction',
+  onBasisChange,
 }: MapViewProps) {
   const { t, i18n } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
@@ -163,6 +174,25 @@ export default function MapView({
         <FiRotateCcw />
       </button>
 
+      {onBasisChange && (
+        <div className="map-basis" role="group" aria-label={t('map.basisLabel')}>
+          <button
+            className={`map-basis-btn ${basis === 'jurisdiction' ? 'map-basis-btn--active' : ''}`}
+            onClick={() => onBasisChange('jurisdiction')}
+            title={t('map.basisJurisdictionHint')}
+          >
+            {t('map.basisJurisdiction')}
+          </button>
+          <button
+            className={`map-basis-btn ${basis === 'hq' ? 'map-basis-btn--active' : ''}`}
+            onClick={() => onBasisChange('hq')}
+            title={t('map.basisHqHint')}
+          >
+            {t('map.basisHq')}
+          </button>
+        </div>
+      )}
+
       <div className="map-hint">{t('map.hint')}</div>
 
       <ComposableMap
@@ -192,7 +222,7 @@ export default function MapView({
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    onClick={() => !hasContext && data && onCountryClick(data.country)}
+                    onClick={() => !hasContext && data?.country && onCountryClick(data.country)}
                     onMouseEnter={() => {
                       setHoveredNum(numId)
                       if (context) {
@@ -201,7 +231,7 @@ export default function MapView({
                           .map(c => c.label)
                           .join(', ')
                         setTooltip({ x: 0, y: 0, text: label || countryName(String(numId), i18n.language) })
-                      } else if (data) {
+                      } else if (data?.country) {
                         setTooltip({ x: 0, y: 0,
                           text: `${countryName(data.country, i18n.language)} — ${t('map.entityCount', { count: data.count })}`,
                         })

@@ -285,7 +285,13 @@
     "viewLarger": "Größere Karte anzeigen",
     "close": "Schließen",
     "approxLocation": "Ungefähr — nur Stadt",
-    "registeredAddr": "Eingetragen"
+    "registeredAddr": "Eingetragen",
+    "basisLabel": "Unternehmen zählen nach",
+    "basisJurisdiction": "Sitzland",
+    "basisHq": "Hauptsitz",
+    "basisJurisdictionHint": "Wo Unternehmen rechtlich registriert sind",
+    "basisHqHint": "Wo Unternehmen tatsächlich geführt werden",
+    "noCountry": "Nicht erfasst"
   },
   "settings": {
     "title": "Einstellungen",

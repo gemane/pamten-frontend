@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiMapPin, FiLoader } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
 import { sortCountries, type CountrySort } from '../utils/sortCountries'
+import { NO_COUNTRY, basisCountry, sortSubsidiaries, type MapBasis } from '../utils/mapBasis'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
 import { colorFor } from '../utils/entityColors'
 
@@ -29,6 +30,7 @@ function EntityItem({ entity, onLoad }: EntityItemProps) {
 
 interface MapPanelProps {
   countryData: CountryEntityGroup[]
+  basis?: MapBasis
   selectedCountry: string | null
   onSelectCountry: (country: string | null) => void
   onLoadEntity: (id: string) => void
@@ -39,11 +41,12 @@ interface MapPanelProps {
 }
 
 export default function MapPanel({
-  countryData, selectedCountry, onSelectCountry, onLoadEntity, loading,
+  countryData, selectedCountry, onSelectCountry, onLoadEntity, loading, basis = 'jurisdiction',
   contextNode, contextSubsidiaries = [], onSelectSubsidiary,
 }: MapPanelProps) {
   const { t, i18n } = useTranslation()
-  const selected = countryData.find(d => d.country === selectedCountry)
+  // The unplaced group arrives as country: null but is selected by sentinel.
+  const selected = countryData.find(d => (d.country ?? NO_COUNTRY) === selectedCountry)
 
   const [sortBy, setSortBy] = useState<CountrySort>(
     () => (localStorage.getItem('map-sort') === 'name' ? 'name' : 'count'),
@@ -68,7 +71,7 @@ export default function MapPanel({
   // Context mode: a graph node is selected — show that company + its subsidiaries
   if (contextNode) {
     const primary = contextNode.raw as Entity
-    const primaryCountry = primary.hq_country || primary.country
+    const primaryCountry = basisCountry(primary, basis)
     return (
       <div className="map-panel">
         <div className="map-panel__country-header">
@@ -82,9 +85,9 @@ export default function MapPanel({
         </div>
         {contextSubsidiaries.length > 0 ? (
           <div className="map-panel__entity-list">
-            {contextSubsidiaries.map(sub => {
+            {sortSubsidiaries(contextSubsidiaries, basis, i18n.language).map(sub => {
               const e = sub.raw as Entity
-              const subCountry = e.hq_country || e.country
+              const subCountry = basisCountry(e, basis)
               return (
                 <button
                   key={sub.id}
@@ -95,7 +98,7 @@ export default function MapPanel({
                   <span className="map-entity-name">{sub.label}</span>
                   {subCountry
                     ? <span className="map-entity-type">{countryName(subCountry, i18n.language)}</span>
-                    : <span className="map-entity-type">{(e as Entity).type}</span>
+                    : <span className="map-entity-type map-entity-type--unknown">{t('map.noCountry')}</span>
                   }
                 </button>
               )
@@ -118,7 +121,9 @@ export default function MapPanel({
         <div className="map-panel__country-header">
           <FiMapPin />
           <div>
-            <div className="map-panel__country-name">{countryName(selected.country, i18n.language)}</div>
+            <div className="map-panel__country-name">
+              {selected.country ? countryName(selected.country, i18n.language) : t('map.noCountry')}
+            </div>
             <div className="map-panel__country-count">{t('map.entityCount', { count: selected.count })}</div>
           </div>
         </div>
@@ -166,10 +171,12 @@ export default function MapPanel({
           <button
             key={d.country}
             className="map-country-row"
-            onClick={() => onSelectCountry(d.country)}
+            onClick={() => onSelectCountry(d.country ?? NO_COUNTRY)}
           >
             <FiMapPin className="map-country-row__pin" />
-            <span className="map-country-row__name">{countryName(d.country, i18n.language)}</span>
+            <span className="map-country-row__name">
+              {d.country ? countryName(d.country, i18n.language) : t('map.noCountry')}
+            </span>
             <span className="map-country-row__count">{d.count}</span>
           </button>
         ))}
