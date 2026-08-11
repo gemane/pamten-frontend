@@ -19,6 +19,7 @@ import AuthModal     from './components/AuthModal'
 import ModeratorQueue from './components/ModeratorQueue'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
+import { useAndroidBackButton } from './hooks/useAndroidBackButton'
 import { useMobile } from './hooks/useMobile'
 import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -78,6 +79,9 @@ function AppInner() {
   const canModerate = user?.role === 'moderator' || user?.role === 'admin'
   const userCanScrape = canScrape(user)
   const isMobile = useMobile()
+  // Android's back gesture would otherwise close the app outright — Capacitor's
+  // native bridge does not handle it, so the web layer must.
+  useAndroidBackButton()
   const searchBarRef = useRef<SearchBarHandle>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
