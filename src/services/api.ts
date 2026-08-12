@@ -1,5 +1,6 @@
 import axios from 'axios'
 import i18n from '../i18n'
+import type { MapBasis } from '../utils/mapBasis'
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import type {
   SearchResult,
@@ -222,11 +223,21 @@ export const getEntity = (id: string): Promise<AxiosResponse<unknown>> =>
 export const getPerson = (id: string): Promise<AxiosResponse<unknown>> =>
   client.get(`/persons/${id}`)
 
-export const getEntitiesByCountry = (): Promise<AxiosResponse<CountryEntityGroup[]>> =>
-  client.get('/entities/by-country')
+export const getEntitiesByCountry = (
+  basis: MapBasis = 'jurisdiction',
+): Promise<AxiosResponse<CountryEntityGroup[]>> =>
+  client.get('/entities/by-country', { params: { basis } })
 
-export const getCountryEntities = (country: string, limit = 200): Promise<AxiosResponse<Entity[]>> =>
-  client.get(`/entities/by-country/${encodeURIComponent(country)}`, { params: { limit } })
+export const getCountryEntities = (
+  country: string, basis: MapBasis = 'jurisdiction', limit = 200,
+): Promise<AxiosResponse<Entity[]>> =>
+  client.get(`/entities/by-country/${encodeURIComponent(country)}`, { params: { basis, limit } })
+
+/** The companies the map cannot place — no country at all for this basis. */
+export const getEntitiesWithoutCountry = (
+  basis: MapBasis = 'jurisdiction', limit = 200,
+): Promise<AxiosResponse<Entity[]>> =>
+  client.get('/entities/without-country', { params: { basis, limit } })
 
 export const getPersonSources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/person/${id}`)

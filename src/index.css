@@ -1866,6 +1866,39 @@ a.source-item__name:hover { color: #4A90D9; }
 
 .map-reset-btn:hover { background: #2a3a5a; color: #eaeaea; }
 
+/* Registered / Headquarters switch. Top-LEFT, so it never collides with the
+   reset button opposite it, and the map stays usable at phone width where the
+   panel below can be scrolled out of sight. */
+.map-basis {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: #1e2a45;
+  border: 1px solid #2a3a5a;
+  border-radius: 8px;
+}
+.map-basis-btn {
+  padding: 4px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #8892a4;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.map-basis-btn:hover { color: #eaeaea; }
+.map-basis-btn--active { background: #24304f; color: #eaeaea; }
+
+/* A subsidiary the current basis cannot place — shown, but visibly not a place. */
+.map-entity-type--unknown { font-style: italic; opacity: 0.7; }
+
 .map-hint {
   position: absolute;
   bottom: 12px;
@@ -3186,6 +3219,10 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .user-badge { background: #eef2f7; border-color: #d1d9e6; color: #4a5568; }
 [data-theme="light"] .user-badge__email { color: #1a202c; }
 [data-theme="light"] .user-badge__logout { color: #718096; }
+[data-theme="light"] .map-basis { background: #ffffff; border-color: #d7dee8; }
+[data-theme="light"] .map-basis-btn { color: #5a6b80; }
+[data-theme="light"] .map-basis-btn:hover { color: #1a202c; }
+[data-theme="light"] .map-basis-btn--active { background: #e6edf6; color: #1a202c; }
 [data-theme="light"] .settings-section__title { color: #718096; }
 [data-theme="light"] .settings-theme-label { color: #4a5568; }
 [data-theme="light"] .settings-account__info { color: #4a5568; }

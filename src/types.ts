@@ -384,7 +384,10 @@ export interface ScrapeRun {
 
 // Country map types
 export interface CountryEntityGroup {
-  country: string
+  /** null is the "not recorded" group — companies with no country for the
+   *  selected basis. They are counted rather than dropped, so the totals on the
+   *  map add up; MapView skips them since they cannot be placed. */
+  country: string | null
   count: number
   entities?: Entity[]  // loaded lazily when a country is selected
 }
