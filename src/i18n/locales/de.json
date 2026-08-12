@@ -291,7 +291,9 @@
     "basisHq": "Hauptsitz",
     "basisJurisdictionHint": "Wo Unternehmen rechtlich registriert sind",
     "basisHqHint": "Wo Unternehmen tatsächlich geführt werden",
-    "noCountry": "Nicht erfasst"
+    "noCountry": "Nicht erfasst",
+    "subdivisionsOf": "Zeigen, wo in {{country}}",
+    "subdivisionNotStated": "Nicht angegeben"
   },
   "settings": {
     "title": "Einstellungen",

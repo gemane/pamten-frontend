@@ -291,7 +291,9 @@
     "basisHq": "Headquarters",
     "basisJurisdictionHint": "Where companies are legally registered",
     "basisHqHint": "Where companies are actually run",
-    "noCountry": "Not recorded"
+    "noCountry": "Not recorded",
+    "subdivisionsOf": "Show where in {{country}}",
+    "subdivisionNotStated": "Not stated"
   },
   "settings": {
     "title": "Settings",
