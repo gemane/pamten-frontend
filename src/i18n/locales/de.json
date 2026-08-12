@@ -293,7 +293,9 @@
     "basisHqHint": "Wo Unternehmen tatsächlich geführt werden",
     "noCountry": "Nicht erfasst",
     "subdivisionsOf": "Zeigen, wo in {{country}}",
-    "subdivisionNotStated": "Nicht angegeben"
+    "subdivisionNotStated": "Nicht angegeben",
+    "backToWorld": "Zurück zur Weltkarte",
+    "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen"
   },
   "settings": {
     "title": "Einstellungen",

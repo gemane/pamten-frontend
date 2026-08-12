@@ -940,6 +940,7 @@ function AppInner() {
                 <div className="mobile-canvas">
                   <MapView
                     countryData={countryData}
+                    subdivisionData={subdivisionData}
                     selectedCountry={selectedCountry}
                     onCountryClick={setSelectedCountry}
                     basis={mapBasis}
@@ -1007,6 +1008,7 @@ function AppInner() {
               {activeTab === 'map'
                 ? <MapView
                     countryData={countryData}
+                    subdivisionData={subdivisionData}
                     selectedCountry={selectedCountry}
                     onCountryClick={setSelectedCountry}
                     basis={mapBasis}

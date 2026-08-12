@@ -293,7 +293,9 @@
     "basisHqHint": "Where companies are actually run",
     "noCountry": "Not recorded",
     "subdivisionsOf": "Show where in {{country}}",
-    "subdivisionNotStated": "Not stated"
+    "subdivisionNotStated": "Not stated",
+    "backToWorld": "Back to world",
+    "hintStates": "Click a state to see its companies"
   },
   "settings": {
     "title": "Settings",

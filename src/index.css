@@ -2018,6 +2018,20 @@ a.source-item__name:hover { color: #4A90D9; }
   border-radius: 99px;
 }
 
+/* Back out of a state map. Sits where the reset button sits — it replaces it, so
+   the corner never holds two controls that both mean "undo my navigation" — and
+   is wider because it carries a label: an unlabelled arrow on a map of the United
+   States reads as "pan west" at least as readily as "leave". */
+.map-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 0 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 /* A country that states subdivisions carries two controls: the chevron opens its
    breakdown, the rest of the row selects the whole country. Separate targets
    because opening "United States" and selecting it are different intentions —

@@ -1,10 +1,12 @@
-import { useState, useMemo, lazy, Suspense } from 'react'
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
-import worldData from 'world-atlas/countries-110m.json'
-import { ALPHA2_TO_NUMERIC, countryName, toAlpha2 } from '../utils/isoCountries'
+import coarseWorld from 'world-atlas/countries-110m.json'
+import { ALPHA2_TO_NUMERIC, NUMERIC_TO_ALPHA2, countryName, toAlpha2 } from '../utils/isoCountries'
+import { subdivisionForFips, subdivisionName, DRILLABLE_COUNTRIES } from '../utils/isoSubdivisions'
+import { loadDetailedWorld, loadedWorld, loadUsStates, loadedUsStates, type Topology } from '../utils/mapGeography'
 import type { MapBasis } from '../utils/mapBasis'
-import { FiRotateCcw } from 'react-icons/fi'
+import { FiRotateCcw, FiArrowLeft } from 'react-icons/fi'
 import type { MapDetailData } from './MapDetail'   // type only — no Leaflet at import
 import type { CountryEntityGroup, ContextCountry } from '../types'
 
@@ -24,6 +26,9 @@ interface FlyTo {
 
 interface MapViewProps {
   countryData?: CountryEntityGroup[]
+  /** Counts per ISO 3166-2 code, for the state-level view. Empty means no country
+   *  can be drilled into — which is also the case under the headquarters basis. */
+  subdivisionData?: CountryEntityGroup[]
   selectedCountry?: string | null
   onCountryClick: (country: string) => void
   contextCountries?: ContextCountry[]
@@ -61,7 +66,33 @@ function buildContextNumericMap(contextCountries: ContextCountry[]): Map<number,
   return map
 }
 
+/** Subdivision counts for one country, keyed by ISO 3166-2 code. */
+export function buildSubdivisionMap(
+  subdivisionData: CountryEntityGroup[],
+  country: string,
+): Map<string, CountryEntityGroup> {
+  const map = new Map<string, CountryEntityGroup>()
+  for (const d of subdivisionData) {
+    if (d.country?.startsWith(`${country}-`)) map.set(d.country, d)
+  }
+  return map
+}
+
+/** Whether a country has a state map to drill into, and rows to fill it. */
+export function canDrillInto(
+  country: string | undefined | null,
+  subdivisionData: CountryEntityGroup[],
+): boolean {
+  if (!country || !DRILLABLE_COUNTRIES.includes(country)) return false
+  return subdivisionData.some(d => d.country?.startsWith(`${country}-`))
+}
+
 const MAX_COUNT = 20
+
+/** One country's companies concentrate far harder than the world's do — 35 of the
+ *  47 American ones are in Delaware — so the country scale would paint every other
+ *  state the same flat minimum. The state view scales to its own busiest state. */
+const MAX_STATE_COUNT = 10
 
 export interface PlacedMarker {
   c: ContextCountry
@@ -109,6 +140,7 @@ export function countryFill(
   isHovered: boolean,
   theme: 'dark' | 'light',
   hasContext: boolean,
+  max: number = MAX_COUNT,
 ): string {
   const noData    = theme === 'dark' ? '#1e2d4a' : '#c8d4e8'
   const noDataHov = theme === 'dark' ? '#263657' : '#b4c4da'
@@ -117,7 +149,7 @@ export function countryFill(
   if (context === 'subsidiary') return isHovered ? '#f59e0b' : '#d97706'
   if (!data || hasContext) return isHovered ? noDataHov : noData
 
-  const t = Math.min(data.count / MAX_COUNT, 1)
+  const t = Math.min(data.count / max, 1)
   if (isHovered) return '#6aaae3'
   const r = Math.round(30  + t * (74  - 30))
   const g = Math.round(74  + t * (144 - 74))
@@ -127,6 +159,7 @@ export function countryFill(
 
 export default function MapView({
   countryData = [],
+  subdivisionData = [],
   selectedCountry,
   onCountryClick,
   contextCountries = [],
@@ -137,6 +170,12 @@ export default function MapView({
 }: MapViewProps) {
   const { t, i18n } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
+  const [hoveredCode, setHoveredCode] = useState<string | null>(null)
+  // Which country's state map is open, if any. Local: it changes what this map
+  // draws, and nothing outside needs to know.
+  const [drillCountry, setDrillCountry] = useState<string | null>(null)
+  // Bumped when lazily-loaded geometry arrives, to re-render with it.
+  const [, setGeoVersion] = useState(0)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [detail,     setDetail]     = useState<MapDetailData | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
@@ -148,6 +187,29 @@ export default function MapView({
   const numericMap        = useMemo(() => buildNumericMap(countryData), [countryData])
   const contextNumericMap = useMemo(() => buildContextNumericMap(contextCountries), [contextCountries])
   const hasContext        = contextCountries.length > 0
+
+  // Sharper coastlines, fetched once the map is actually on screen. 110m is
+  // already drawn, so a failure here costs nothing but detail.
+  useEffect(() => {
+    if (loadedWorld()) return
+    let live = true
+    loadDetailedWorld().then(() => { if (live) setGeoVersion(v => v + 1) }).catch(() => {})
+    return () => { live = false }
+  }, [])
+
+  useEffect(() => {
+    if (!drillCountry || loadedUsStates()) return
+    let live = true
+    loadUsStates().then(() => { if (live) setGeoVersion(v => v + 1) }).catch(() => setDrillCountry(null))
+    return () => { live = false }
+  }, [drillCountry])
+
+  const worldGeography: Topology = loadedWorld() ?? coarseWorld
+  const stateGeography = drillCountry ? loadedUsStates() : null
+  const subdivisionMap = useMemo(
+    () => drillCountry ? buildSubdivisionMap(subdivisionData, drillCountry) : new Map(),
+    [subdivisionData, drillCountry],
+  )
 
   // Only markers with actual GPS coordinates
   const gpsMarkers = useMemo(() =>
@@ -170,9 +232,16 @@ export default function MapView({
         </div>
       )}
 
-      <button className="map-reset-btn" onClick={() => { setResetKey(k => k + 1); setZoom(flyTo?.zoom ?? 1) }} title={t('map.resetView')}>
-        <FiRotateCcw />
-      </button>
+      {drillCountry ? (
+        <button className="map-reset-btn map-back-btn" onClick={() => setDrillCountry(null)}
+                title={t('map.backToWorld')}>
+          <FiArrowLeft /> <span>{t('map.backToWorld')}</span>
+        </button>
+      ) : (
+        <button className="map-reset-btn" onClick={() => { setResetKey(k => k + 1); setZoom(flyTo?.zoom ?? 1) }} title={t('map.resetView')}>
+          <FiRotateCcw />
+        </button>
+      )}
 
       {onBasisChange && (
         <div className="map-basis" role="group" aria-label={t('map.basisLabel')}>
@@ -193,8 +262,54 @@ export default function MapView({
         </div>
       )}
 
-      <div className="map-hint">{t('map.hint')}</div>
+      <div className="map-hint">{drillCountry ? t('map.hintStates') : t('map.hint')}</div>
 
+      {stateGeography ? (
+        /* geoAlbersUsa, not the world's equal-earth: it is the projection that
+           puts Alaska and Hawaii somewhere usable instead of half a screen away. */
+        <ComposableMap
+          projection="geoAlbersUsa"
+          projectionConfig={{ scale: 800 }}
+          style={{ width: '100%', height: '100%' }}
+        >
+          <ZoomableGroup center={[0, 0]} zoom={1} minZoom={1} maxZoom={8}>
+            <Geographies geography={stateGeography}>
+              {({ geographies }: { geographies: Array<{ id: string; rsmKey: string }> }) =>
+                geographies.map((geo) => {
+                  const code      = subdivisionForFips(geo.id)
+                  const data      = code ? subdivisionMap.get(code) : undefined
+                  const isHovered = !!code && code === hoveredCode
+                  const fill      = countryFill(data, undefined, isHovered, theme, false, MAX_STATE_COUNT)
+                  const stroke    = theme === 'dark' ? '#2a3a5a' : '#8898b4'
+
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      onClick={() => code && data && onCountryClick(code)}
+                      onMouseEnter={() => {
+                        setHoveredCode(code)
+                        if (code) {
+                          setTooltip({ x: 0, y: 0, text: data
+                            ? `${subdivisionName(code)} — ${t('map.entityCount', { count: data.count })}`
+                            : subdivisionName(code) })
+                        }
+                      }}
+                      onMouseLeave={() => { setHoveredCode(null); setTooltip(null) }}
+                      style={{
+                        default: { fill, stroke, strokeWidth: 0.5, outline: 'none' },
+                        hover:   { fill, stroke, strokeWidth: 0.5, outline: 'none',
+                                   cursor: data ? 'pointer' : 'default' },
+                        pressed: { fill: '#2b6cb0', outline: 'none' },
+                      }}
+                    />
+                  )
+                })
+              }
+            </Geographies>
+          </ZoomableGroup>
+        </ComposableMap>
+      ) : (
       <ComposableMap
         projectionConfig={{ scale: 140 }}
         style={{ width: '100%', height: '100%' }}
@@ -207,7 +322,7 @@ export default function MapView({
           maxZoom={12}
           onMoveEnd={({ zoom: z }: { coordinates: [number, number]; zoom: number }) => setZoom(z)}
         >
-          <Geographies geography={worldData}>
+          <Geographies geography={worldGeography}>
             {({ geographies }: { geographies: Array<{ id: string; rsmKey: string }> }) =>
               geographies.map((geo) => {
                 const numId      = parseInt(geo.id)
@@ -222,7 +337,15 @@ export default function MapView({
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    onClick={() => !hasContext && data?.country && onCountryClick(data.country)}
+                    onClick={() => {
+                      if (hasContext || !data?.country) return
+                      // Select it either way. Drilling in as well, where there is
+                      // a state map to drill into, keeps "all American companies"
+                      // reachable — the panel fills with them while the map goes
+                      // finer.
+                      onCountryClick(data.country)
+                      if (canDrillInto(data.country, subdivisionData)) setDrillCountry(data.country)
+                    }}
                     onMouseEnter={() => {
                       setHoveredNum(numId)
                       if (context) {
@@ -230,7 +353,10 @@ export default function MapView({
                           .filter(c => (toAlpha2(c.country) ? ALPHA2_TO_NUMERIC[toAlpha2(c.country)!] : null) === numId)
                           .map(c => c.label)
                           .join(', ')
-                        setTooltip({ x: 0, y: 0, text: label || countryName(String(numId), i18n.language) })
+                        // The fallback used to pass the numeric TopoJSON id straight
+                        // to countryName, which renders it raw: "840", not a name.
+                        setTooltip({ x: 0, y: 0,
+                          text: label || countryName(NUMERIC_TO_ALPHA2[numId] ?? String(numId), i18n.language) })
                       } else if (data?.country) {
                         setTooltip({ x: 0, y: 0,
                           text: `${countryName(data.country, i18n.language)} — ${t('map.entityCount', { count: data.count })}`,
@@ -281,6 +407,7 @@ export default function MapView({
           ))}
         </ZoomableGroup>
       </ComposableMap>
+      )}
 
       {detail && (
         <Suspense fallback={null}>

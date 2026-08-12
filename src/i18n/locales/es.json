@@ -293,7 +293,9 @@
     "basisHqHint": "Desde donde se dirigen realmente",
     "noCountry": "No registrado",
     "subdivisionsOf": "Mostrar dónde en {{country}}",
-    "subdivisionNotStated": "No indicado"
+    "subdivisionNotStated": "No indicado",
+    "backToWorld": "Volver al mundo",
+    "hintStates": "Haz clic en un estado para ver sus empresas"
   },
   "settings": {
     "title": "Ajustes",
