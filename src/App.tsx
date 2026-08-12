@@ -23,8 +23,9 @@ import { useAndroidBackButton } from './hooks/useAndroidBackButton'
 import { useMobile } from './hooks/useMobile'
 import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getEntitiesWithoutCountry, getCountries, setUnauthorizedHandler, authVerifyEmail, ensureScrape } from './services/api'
+import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getEntitiesWithoutCountry, getEntitiesBySubdivision, getSubdivisionEntities, getCountries, setUnauthorizedHandler, authVerifyEmail, ensureScrape } from './services/api'
 import { readMapBasis, MAP_BASIS_KEY, NO_COUNTRY, type MapBasis } from './utils/mapBasis'
+import { isSubdivision } from './utils/isoSubdivisions'
 import { canScrape } from './utils/scrapeAccess'
 import { scheduleIdle } from './utils/idle'
 import type {
@@ -105,6 +106,11 @@ function AppInner() {
   // map rather than a transient filter.
   const [mapBasis,        setMapBasis]        = useState<MapBasis>(readMapBasis)
   const [countryLoading,  setCountryLoading]  = useState<boolean>(false)
+  // Counts per ISO 3166-2 subdivision (US-DE, CA-ON), for the countries that state
+  // one. A separate list because it is a different key space: 'US-DE' is not a
+  // country and must never be mixed into countryData, where MapView would try to
+  // colour it.
+  const [subdivisionData, setSubdivisionData] = useState<CountryEntityGroup[]>([])
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   // Country list for the search filter — fetched once here (not in SearchBar) so it's
   // available whichever tab the app opens on, not only after the graph SearchBar mounts.
@@ -487,10 +493,18 @@ function AppInner() {
           .catch(() => {})
           .finally(() => setCountryLoading(false))
       }
+      // Only under the registration basis: a subdivision is where a company is
+      // registered, so it says nothing about where it is run. Failure is silent —
+      // the breakdown is an extra, and the map is fine without it.
+      if (mapBasis === 'jurisdiction' && subdivisionData.length === 0) {
+        getEntitiesBySubdivision()
+          .then(({ data }) => setSubdivisionData(data.filter(d => d.country)))
+          .catch(() => {})
+      }
       const primary = contextCountriesRef.current.find(c => c.role === 'primary' && c.lat != null && c.lng != null)
       setMapFlyTo(primary ? { center: [primary.lng!, primary.lat!], zoom: 4 } : null)
     }
-  }, [countryData.length, mapBasis])
+  }, [countryData.length, subdivisionData.length, mapBasis])
 
   /** The search icon. Two taps, doing different things on purpose.
    *
@@ -584,6 +598,16 @@ function AppInner() {
       .then(({ data }) => setCountryData(data))
       .catch(() => setCountryData([]))
       .finally(() => setCountryLoading(false))
+    // Subdivisions belong to the registration basis alone. Under headquarters they
+    // are dropped rather than left stale: a company registered in Delaware and run
+    // from London must not appear under Delaware in a view of where things are run.
+    if (basis === 'jurisdiction') {
+      getEntitiesBySubdivision()
+        .then(({ data }) => setSubdivisionData(data.filter(d => d.country)))
+        .catch(() => setSubdivisionData([]))
+    } else {
+      setSubdivisionData([])
+    }
   }, [mapBasis])
 
   // Lazy-load entities for a country the first time it is selected
@@ -591,6 +615,21 @@ function AppInner() {
     if (!selectedCountry) return
     // The API keys the unplaced group as country: null; the selection uses a
     // sentinel, because null already means "nothing selected" here.
+    // A subdivision ('US-DE') is a row in the other list, loaded from the other
+    // endpoint. Country codes are two characters and the unplaced group uses a
+    // sentinel, so the hyphen tells them apart with nothing to keep in sync.
+    if (isSubdivision(selectedCountry)) {
+      const code = selectedCountry
+      if (subdivisionData.find(d => d.country === code)?.entities) return
+      getSubdivisionEntities(code)
+        .then(({ data: entities }) => {
+          setSubdivisionData(prev => prev.map(d =>
+            d.country === code ? { ...d, entities } : d
+          ))
+        })
+        .catch(() => {})
+      return
+    }
     const key = selectedCountry === NO_COUNTRY ? null : selectedCountry
     const already = countryData.find(d => d.country === key)
     if (already?.entities) return
@@ -825,6 +864,7 @@ function AppInner() {
             <div className="left-panel__detail">
               <MapPanel
                 countryData={countryData}
+                subdivisionData={subdivisionData}
                 selectedCountry={selectedCountry}
                 onSelectCountry={setSelectedCountry}
                 onLoadEntity={handleEntityFromMap}
@@ -900,6 +940,7 @@ function AppInner() {
                 <div className="mobile-canvas">
                   <MapView
                     countryData={countryData}
+                    subdivisionData={subdivisionData}
                     selectedCountry={selectedCountry}
                     onCountryClick={setSelectedCountry}
                     basis={mapBasis}
@@ -912,6 +953,7 @@ function AppInner() {
                 <div className="mobile-panel">
                   <MapPanel
                     countryData={countryData}
+                    subdivisionData={subdivisionData}
                     selectedCountry={selectedCountry}
                     onSelectCountry={setSelectedCountry}
                     onLoadEntity={handleEntityFromMap}
@@ -966,6 +1008,7 @@ function AppInner() {
               {activeTab === 'map'
                 ? <MapView
                     countryData={countryData}
+                    subdivisionData={subdivisionData}
                     selectedCountry={selectedCountry}
                     onCountryClick={setSelectedCountry}
                     basis={mapBasis}

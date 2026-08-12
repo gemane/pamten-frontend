@@ -139,7 +139,8 @@
     "nomineeHint": "Nominee / custodian — holder of record, not a beneficial owner",
     "crossHoldings": "Circular ownership",
     "crossHoldingsHint": "This entity and the one(s) below own each other (reciprocal holding)",
-    "indirectHoldings": "Held indirectly"
+    "indirectHoldings": "Held indirectly",
+    "registeredIn": "Registered in"
   },
   "report": {
     "button": "Report",
@@ -291,7 +292,11 @@
     "basisHq": "Headquarters",
     "basisJurisdictionHint": "Where companies are legally registered",
     "basisHqHint": "Where companies are actually run",
-    "noCountry": "Not recorded"
+    "noCountry": "Not recorded",
+    "subdivisionsOf": "Show where in {{country}}",
+    "subdivisionNotStated": "Not stated",
+    "backToWorld": "Back to world",
+    "hintStates": "Click a state to see its companies"
   },
   "settings": {
     "title": "Settings",

@@ -239,6 +239,28 @@ export const getEntitiesWithoutCountry = (
 ): Promise<AxiosResponse<Entity[]>> =>
   client.get('/entities/without-country', { params: { basis, limit } })
 
+/**
+ * Counts per ISO 3166-2 subdivision (`US-DE`), across every country at once.
+ *
+ * `subdivision` stays out of the `MapBasis` union deliberately: it is a
+ * refinement of where a company is *registered*, not a third thing the
+ * Registered/Headquarters switch offers, and widening the union would put a
+ * third button on that switch by accident.
+ *
+ * One call for all of them — there are a few dozen rows in total — and the caller
+ * narrows to a country by prefix.
+ */
+export const getEntitiesBySubdivision = (): Promise<AxiosResponse<CountryEntityGroup[]>> =>
+  client.get('/entities/by-country', { params: { basis: 'subdivision' } })
+
+/** The companies registered in one subdivision. */
+export const getSubdivisionEntities = (
+  code: string, limit = 200,
+): Promise<AxiosResponse<Entity[]>> =>
+  client.get(`/entities/by-country/${encodeURIComponent(code)}`, {
+    params: { basis: 'subdivision', limit },
+  })
+
 export const getPersonSources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/person/${id}`)
 

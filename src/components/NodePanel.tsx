@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
+import { isSubdivision, subdivisionName } from '../utils/isoSubdivisions'
 import { colorFor, typeLabelKey } from '../utils/entityColors'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
@@ -518,6 +519,13 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // Dual-listed companies have multiple domiciles / HQs.
   const countryList = (entity.countries?.length ? entity.countries : (entity.country ? [entity.country] : []))
     .map(c => countryName(c, i18n.language))
+
+  // Where a company chose to be domiciled at a finer grain than the country —
+  // Delaware, Ontario, Nevis. Shown only when there is more to say than the
+  // country row already says, so a UK company does not get a redundant line.
+  const subdivision = entity.jurisdiction_code && isSubdivision(entity.jurisdiction_code)
+    ? subdivisionName(entity.jurisdiction_code)
+    : null
   const hqList = (entity.hq_locations?.length
     ? entity.hq_locations.map(loc => {
         const [city, cc] = loc.split('|')
@@ -547,6 +555,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       <div className="panel-meta">
         <MetaRow icon={FiMapPin}     label={countryList.length > 1 ? t('panel.countries') : t('panel.country')} value={countryList.join(', ') || null} />
+        {subdivision && (
+          <MetaRow icon={FiMapPin} label={t('panel.registeredIn')} value={subdivision} />
+        )}
         <MetaRow icon={FiCalendar}   label={t('panel.founded')}  value={entity.founded} />
         <MetaRow icon={FiDollarSign} label={t('panel.revenue')}  value={entity.revenue != null ? fmt(entity.revenue) : null} />
         <MetaRow icon={FiUsers}      label={t('panel.employees')} value={employeeText} />

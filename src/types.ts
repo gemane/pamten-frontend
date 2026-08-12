@@ -50,6 +50,7 @@ export interface Entity {
   registered_address?: string  // normalized registered office (PSC/company-data)
   hq_address?: string       // full HQ address (map pin is geocoded from this)
   hq_geo_precision?: string  // 'exact' | 'approx' — how precisely hq_lat/hq_lng was geocoded
+  jurisdiction_code?: string  // ISO 3166-2 registration, e.g. 'US-DE' — sparse; absent means "not stated"
   founded_date?: string     // full YYYY-MM-DD incorporation/creation date (headline `founded` stays the year)
 }
 

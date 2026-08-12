@@ -139,7 +139,8 @@
     "nomineeHint": "Nominee / Depotverwalter — nur eingetragener Halter, kein wirtschaftlicher Eigentümer",
     "crossHoldings": "Überkreuzbeteiligung",
     "crossHoldingsHint": "Dieses Unternehmen und die unten genannten besitzen sich gegenseitig (wechselseitige Beteiligung)",
-    "indirectHoldings": "Indirekt gehalten"
+    "indirectHoldings": "Indirekt gehalten",
+    "registeredIn": "Registriert in"
   },
   "report": {
     "button": "Melden",
@@ -291,7 +292,11 @@
     "basisHq": "Hauptsitz",
     "basisJurisdictionHint": "Wo Unternehmen rechtlich registriert sind",
     "basisHqHint": "Wo Unternehmen tatsächlich geführt werden",
-    "noCountry": "Nicht erfasst"
+    "noCountry": "Nicht erfasst",
+    "subdivisionsOf": "Zeigen, wo in {{country}}",
+    "subdivisionNotStated": "Nicht angegeben",
+    "backToWorld": "Zurück zur Weltkarte",
+    "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen"
   },
   "settings": {
     "title": "Einstellungen",

@@ -139,7 +139,8 @@
     "nomineeHint": "Nominee / custodio — titular registral, no propietario beneficiario",
     "crossHoldings": "Propiedad circular",
     "crossHoldingsHint": "Esta entidad y la(s) siguiente(s) se poseen mutuamente (participación recíproca)",
-    "indirectHoldings": "En posesión indirecta"
+    "indirectHoldings": "En posesión indirecta",
+    "registeredIn": "Registrada en"
   },
   "report": {
     "button": "Reportar",
@@ -291,7 +292,11 @@
     "basisHq": "Sede",
     "basisJurisdictionHint": "Donde las empresas están registradas legalmente",
     "basisHqHint": "Desde donde se dirigen realmente",
-    "noCountry": "No registrado"
+    "noCountry": "No registrado",
+    "subdivisionsOf": "Mostrar dónde en {{country}}",
+    "subdivisionNotStated": "No indicado",
+    "backToWorld": "Volver al mundo",
+    "hintStates": "Haz clic en un estado para ver sus empresas"
   },
   "settings": {
     "title": "Ajustes",

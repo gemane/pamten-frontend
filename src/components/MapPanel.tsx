@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowLeft, FiMapPin, FiLoader } from 'react-icons/fi'
+import { FiArrowLeft, FiMapPin, FiLoader, FiChevronRight, FiChevronDown } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
 import { sortCountries, type CountrySort } from '../utils/sortCountries'
+import { subdivisionName, subdivisionCountry, isSubdivision } from '../utils/isoSubdivisions'
 import { NO_COUNTRY, basisCountry, sortSubsidiaries, type MapBasis } from '../utils/mapBasis'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
 import { colorFor } from '../utils/entityColors'
@@ -28,8 +29,42 @@ function EntityItem({ entity, onLoad }: EntityItemProps) {
   )
 }
 
+/**
+ * The subdivision rows for one country, biggest first, with the companies that
+ * state no subdivision as an explicit tail row.
+ *
+ * That tail row is the honest part: GLEIF states a subdivision for about 1% of
+ * records, so a country's subdivisions rarely add up to its total. Leaving the
+ * remainder out would imply every American company is accounted for by the states
+ * listed, when in this data 47 of 47 happen to be — and on other data they will
+ * not be.
+ */
+export function subdivisionRows(
+  country: string,
+  countryCount: number,
+  subdivisions: CountryEntityGroup[],
+): { code: string | null; count: number }[] {
+  const mine = subdivisions
+    .filter(d => d.country && subdivisionCountry(d.country) === country)
+    .map(d => ({ code: d.country as string, count: d.count }))
+    .sort((a, b) => b.count - a.count || subdivisionName(a.code).localeCompare(subdivisionName(b.code)))
+
+  // A country that states no subdivision at all has no breakdown — returning
+  // "United Kingdom: 119 not stated" would be a row that says nothing the row
+  // above it did not already say.
+  if (mine.length === 0) return []
+
+  const stated = mine.reduce((n, d) => n + d.count, 0)
+  const rest = countryCount - stated
+  return rest > 0 ? [...mine, { code: null, count: rest }] : mine
+}
+
 interface MapPanelProps {
   countryData: CountryEntityGroup[]
+  /** Counts per ISO 3166-2 code, across all countries; rows are matched by prefix.
+   *  Empty under the headquarters basis, where a registration subdivision would be
+   *  answering a different question than the one on screen. */
+  subdivisionData?: CountryEntityGroup[]
   basis?: MapBasis
   selectedCountry: string | null
   onSelectCountry: (country: string | null) => void
@@ -41,12 +76,16 @@ interface MapPanelProps {
 }
 
 export default function MapPanel({
-  countryData, selectedCountry, onSelectCountry, onLoadEntity, loading, basis = 'jurisdiction',
-  contextNode, contextSubsidiaries = [], onSelectSubsidiary,
+  countryData, subdivisionData = [], selectedCountry, onSelectCountry, onLoadEntity, loading,
+  basis = 'jurisdiction', contextNode, contextSubsidiaries = [], onSelectSubsidiary,
 }: MapPanelProps) {
   const { t, i18n } = useTranslation()
-  // The unplaced group arrives as country: null but is selected by sentinel.
+  // The unplaced group arrives as country: null but is selected by sentinel. A
+  // selected subdivision lives in the other list — same row shape, different key
+  // space, so the lookup falls through to it.
   const selected = countryData.find(d => (d.country ?? NO_COUNTRY) === selectedCountry)
+    ?? subdivisionData.find(d => d.country === selectedCountry)
+  const [expanded, setExpanded] = useState<string | null>(null)
 
   const [sortBy, setSortBy] = useState<CountrySort>(
     () => (localStorage.getItem('map-sort') === 'name' ? 'name' : 'count'),
@@ -122,7 +161,11 @@ export default function MapPanel({
           <FiMapPin />
           <div>
             <div className="map-panel__country-name">
-              {selected.country ? countryName(selected.country, i18n.language) : t('map.noCountry')}
+              {selected.country
+                ? (isSubdivision(selected.country)
+                    ? `${subdivisionName(selected.country)}, ${countryName(subdivisionCountry(selected.country), i18n.language)}`
+                    : countryName(selected.country, i18n.language))
+                : t('map.noCountry')}
             </div>
             <div className="map-panel__country-count">{t('map.entityCount', { count: selected.count })}</div>
           </div>
@@ -167,19 +210,59 @@ export default function MapPanel({
         </button>
       </div>
       <div className="map-panel__country-list">
-        {sortedCountries.map(d => (
-          <button
-            key={d.country}
-            className="map-country-row"
-            onClick={() => onSelectCountry(d.country ?? NO_COUNTRY)}
-          >
-            <FiMapPin className="map-country-row__pin" />
-            <span className="map-country-row__name">
-              {d.country ? countryName(d.country, i18n.language) : t('map.noCountry')}
-            </span>
-            <span className="map-country-row__count">{d.count}</span>
-          </button>
-        ))}
+        {sortedCountries.map(d => {
+          const rows = d.country ? subdivisionRows(d.country, d.count, subdivisionData) : []
+          // One row plus the remainder tells the reader nothing they cannot see
+          // already, so an expander only appears where there is a breakdown.
+          const canExpand = rows.filter(r => r.code).length > 0
+          const isOpen = canExpand && expanded === d.country
+          return (
+            <div key={d.country} className="map-country-group">
+              <div className={`map-country-row ${isOpen ? 'map-country-row--open' : ''}`}>
+                {canExpand ? (
+                  <button
+                    className="map-country-row__toggle"
+                    aria-expanded={isOpen}
+                    aria-label={t('map.subdivisionsOf', {
+                      country: countryName(d.country as string, i18n.language),
+                    })}
+                    onClick={() => setExpanded(isOpen ? null : d.country)}
+                  >
+                    {isOpen ? <FiChevronDown /> : <FiChevronRight />}
+                  </button>
+                ) : (
+                  <FiMapPin className="map-country-row__pin" />
+                )}
+                <button
+                  className="map-country-row__main"
+                  onClick={() => onSelectCountry(d.country ?? NO_COUNTRY)}
+                >
+                  <span className="map-country-row__name">
+                    {d.country ? countryName(d.country, i18n.language) : t('map.noCountry')}
+                  </span>
+                  <span className="map-country-row__count">{d.count}</span>
+                </button>
+              </div>
+              {isOpen && (
+                <div className="map-subdivision-list">
+                  {rows.map(r => (
+                    <button
+                      key={r.code ?? '__rest__'}
+                      className="map-subdivision-row"
+                      disabled={!r.code}
+                      onClick={() => r.code && onSelectCountry(r.code)}
+                    >
+                      <span className="map-subdivision-row__name">
+                        {r.code ? subdivisionName(r.code) : t('map.subdivisionNotStated')}
+                      </span>
+                      <span className="map-country-row__count">{r.count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

@@ -257,3 +257,35 @@ describe('NodePanel subsidiary grouping', () => {
     expect(screen.getByText('Sub u2')).toBeInTheDocument()
   })
 })
+
+describe('where a company is registered', () => {
+  const withEntity = async (extra: Partial<Entity>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false, ...extra } as Entity,
+      owners: [], subsidiaries: [], executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+  }
+
+  it('names the subdivision a company is registered in', async () => {
+    // The country row says "United States", which is true of 47 companies here
+    // and interesting about none of them. Delaware is the fact.
+    await withEntity({ country: 'US', jurisdiction_code: 'US-DE' })
+    expect(screen.getByText('Registered in')).toBeInTheDocument()
+    expect(screen.getByText('Delaware')).toBeInTheDocument()
+  })
+
+  it('says nothing when the source stated no subdivision', async () => {
+    // Sparse by nature — about 1% of GLEIF records carry one. An empty or
+    // "unknown" row on every other company would be noise.
+    await withEntity({ country: 'GB' })
+    expect(screen.queryByText('Registered in')).toBeNull()
+  })
+
+  it('ignores a value that is not a subdivision code', async () => {
+    await withEntity({ country: 'US', jurisdiction_code: 'US' })
+    expect(screen.queryByText('Registered in')).toBeNull()
+  })
+})
+
