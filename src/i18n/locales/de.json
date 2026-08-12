@@ -139,7 +139,8 @@
     "nomineeHint": "Nominee / Depotverwalter — nur eingetragener Halter, kein wirtschaftlicher Eigentümer",
     "crossHoldings": "Überkreuzbeteiligung",
     "crossHoldingsHint": "Dieses Unternehmen und die unten genannten besitzen sich gegenseitig (wechselseitige Beteiligung)",
-    "indirectHoldings": "Indirekt gehalten"
+    "indirectHoldings": "Indirekt gehalten",
+    "registeredIn": "Registriert in"
   },
   "report": {
     "button": "Melden",

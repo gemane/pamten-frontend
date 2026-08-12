@@ -16,7 +16,7 @@ The `*.onrender.com` URLs still serve the same deployments, but the owlgraph.org
 | Framework | React 18 + TypeScript (strict mode) |
 | Build | Vite 5 |
 | Graph | Cytoscape.js + cytoscape-cola |
-| Map | react-simple-maps + world-atlas |
+| Map | react-simple-maps + world-atlas (countries) + us-atlas (states) |
 | HTTP | Axios |
 | Icons | react-icons (Feather set) |
 | Hosting | Render (static site) |
@@ -64,7 +64,9 @@ src/
 ├── services/
 │   └── api.ts               # Axios client + all API calls
 └── utils/
-    └── isoCountries.ts      # ISO 3166-1 alpha-2 ↔ numeric mapping for map
+    ├── isoCountries.ts      # ISO 3166-1 alpha-2 ↔ numeric mapping for map
+    ├── isoSubdivisions.ts   # ISO 3166-2 names + the FIPS→code join for the state map
+    └── mapGeography.ts      # Lazily-loaded map geometry (detailed world, US states)
 ```
 
 ---
@@ -94,10 +96,36 @@ src/
 - Undated relationships appear under "No date recorded"
 
 ### Map view
-- World SVG map with countries highlighted where entities are headquartered
-- Colour intensity scales with entity count per country
+- World SVG map with countries shaded by how many companies they hold
+- **Registered / Headquarters** switch on the map — where a company is legally registered versus where it is actually run. No fallback between them: a company with no recorded HQ is counted as "Not recorded" rather than shown under its registration country
 - Scroll to zoom, drag to pan, reset button top-right
 - Click a country → left panel shows its entity list; click an entity to load it into the graph
+
+#### Subdivisions
+
+Countries that state an ISO 3166-2 jurisdiction (`US-DE`) can be broken down further. In practice
+that means the US and Canada: about 1% of GLEIF records carry one, and **35 of the 47 American
+companies in the dev graph are registered in Delaware** — the thing a country-level map cannot say.
+
+- A country with subdivisions gets a chevron in the country list; expanded, it lists them
+  biggest-first, plus a "Not stated" row for the remainder so the numbers add up
+- Clicking such a country on the map drills into its **state map** (`geoAlbersUsa`), coloured on
+  its own scale — one country concentrates far harder than the world does
+- Canada gets the list breakdown but no state map: there is no bundled Canadian geometry
+- The node panel shows **Registered in Delaware** where the source states one
+- Subdivisions belong to the registration basis; under Headquarters they disappear
+
+Subdivision names are English only — `Intl.DisplayNames` has no `subdivision` type, so there is
+nothing to localise from.
+
+#### Map geometry
+
+All geometry is bundled (npm dependency, never a CDN): the CSP blocks other hosts and the Android
+build has to draw a map offline. `countries-110m` (106 kB) is imported statically for the first
+paint; `countries-50m` (739 kB) and `us-atlas/states-10m` (112 kB) load lazily from
+`utils/mapGeography.ts`, so they stay out of the entry chunk and cost nothing to anyone who never
+opens the map. Check `npm run build` output if you touch this — a lazy import that silently
+becomes a static one shows up only as a bigger `index-*.js`.
 
 ### Scraper panel (graduated by role)
 

@@ -139,7 +139,8 @@
     "nomineeHint": "Nominee / custodian — holder of record, not a beneficial owner",
     "crossHoldings": "Circular ownership",
     "crossHoldingsHint": "This entity and the one(s) below own each other (reciprocal holding)",
-    "indirectHoldings": "Held indirectly"
+    "indirectHoldings": "Held indirectly",
+    "registeredIn": "Registered in"
   },
   "report": {
     "button": "Report",
