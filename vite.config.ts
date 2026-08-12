@@ -37,7 +37,11 @@ function cspPlugin(apiUrl: string): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const apiUrl = env.VITE_API_URL || 'https://pamten-backend-yrbh.onrender.com'
+  // Fallback is the canonical host, not the Render default (pamten-backend-yrbh
+  // .onrender.com): both serve the same service, but only the owlgraph.org names
+  // are the ones the deployed frontend and the docs use, and this value goes
+  // into the page's CSP connect-src.
+  const apiUrl = env.VITE_API_URL || 'https://api-dev.owlgraph.org'
 
   return {
     test: {
