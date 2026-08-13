@@ -50,6 +50,9 @@ export interface Entity {
   registered_address?: string  // normalized registered office (PSC/company-data)
   hq_address?: string       // full HQ address (map pin is geocoded from this)
   hq_geo_precision?: string  // 'exact' | 'approx' — how precisely hq_lat/hq_lng was geocoded
+  reg_lat?: number          // the REGISTERED office, geocoded from `address` — an offshore
+  reg_lng?: number          // company's agent's door, which is not where it is run
+  reg_geo_precision?: string
   jurisdiction_code?: string  // ISO 3166-2 registration, e.g. 'US-DE' — sparse; absent means "not stated"
   founded_date?: string     // full YYYY-MM-DD incorporation/creation date (headline `founded` stays the year)
 }
@@ -396,13 +399,14 @@ export interface CountryEntityGroup {
 export interface ContextCountry {
   country: string        // alpha-2 or full name
   role: 'primary' | 'subsidiary'
-  lat?: number           // hq_lat if available
-  lng?: number           // hq_lng if available
+  lat?: number           // coordinates for the SELECTED basis (hq_* or reg_*)
+  lng?: number
   label: string          // entity name for tooltip
-  city?: string          // hq_city — shown in the location detail popup
-  hqAddress?: string     // full HQ address (the pinned location)
+  city?: string          // hq_city — shown in the location detail popup (HQ basis only)
+  hqAddress?: string     // the address the pin actually stands on, for the selected basis
   legalAddress?: string  // registered/legal address (shown as info when it differs)
-  precise?: boolean      // hq_geo_precision === 'exact' → pin vs approximate circle
+  basis?: 'jurisdiction' | 'hq'   // which place this pin is, so it can be styled and labelled
+  precise?: boolean      // geo precision 'exact' → pin vs approximate circle
 }
 
 // Toast

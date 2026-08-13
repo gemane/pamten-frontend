@@ -41,6 +41,30 @@ export function basisCountry(entity: Entity | undefined | null, basis: MapBasis)
 }
 
 /**
+ * Where to put this company's pin for the selected basis — its headquarters, or
+ * its registered office.
+ *
+ * Two genuinely different places, and the gap between them is the finding:
+ * BARCLAYS CAPITAL (CAYMAN) LIMITED is registered at its agent's door on Grand
+ * Cayman and run from London.
+ *
+ * Same rule as `basisCountry`: **no fallback**. Showing the headquarters pin
+ * under Registered would put a company at an address the register never gave,
+ * and nothing on screen would say so. Null means "we cannot place it here" —
+ * the country still shades, there is simply no pin.
+ */
+export function basisCoords(
+  entity: Entity | undefined | null,
+  basis: MapBasis,
+): { lat: number; lng: number; precise: boolean } | null {
+  const lat = basis === 'hq' ? entity?.hq_lat : entity?.reg_lat
+  const lng = basis === 'hq' ? entity?.hq_lng : entity?.reg_lng
+  if (lat == null || lng == null) return null
+  const precision = basis === 'hq' ? entity?.hq_geo_precision : entity?.reg_geo_precision
+  return { lat, lng, precise: precision === 'exact' }
+}
+
+/**
  * Order subsidiaries so the countries with the most of them come first.
  *
  * Answers "where is this group concentrated" at a glance, which a list in graph

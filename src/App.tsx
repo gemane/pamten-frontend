@@ -26,6 +26,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getEntitiesWithoutCountry, getEntitiesBySubdivision, getSubdivisionEntities, getCountries, setUnauthorizedHandler, authVerifyEmail, ensureScrape } from './services/api'
 import { readMapBasis, MAP_BASIS_KEY, NO_COUNTRY, type MapBasis } from './utils/mapBasis'
 import { isSubdivision } from './utils/isoSubdivisions'
+import { buildContextCountries } from './utils/contextCountries'
 import { canScrape } from './utils/scrapeAccess'
 import { scheduleIdle } from './utils/idle'
 import type {
@@ -541,47 +542,10 @@ function AppInner() {
   }, [selectedNode, elements])
 
   // Countries to highlight on the map based on the selected graph node
-  const contextCountries = useMemo((): ContextCountry[] => {
-    if (!selectedNode || selectedNode.nodeType !== 'entity') return []
-    const result: ContextCountry[] = []
-    const seen = new Set<string>()
-    const cache = entityCountryCache.current
-
-    const addEntity = (raw: Entity, id: string, role: 'primary' | 'subsidiary') => {
-      const country = raw.hq_country || raw.country || cache.get(id)?.country
-      if (!country) return
-      const lat = raw.hq_lat ?? cache.get(id)?.lat
-      const lng = raw.hq_lng ?? cache.get(id)?.lng
-      const key = `${role}:${country}`
-      if (seen.has(key)) return
-      seen.add(key)
-      cache.set(id, { country, lat, lng })
-      result.push({ country, role, lat, lng, label: raw.name, city: raw.hq_city,
-                    hqAddress: raw.hq_address ?? raw.registered_address,
-                    legalAddress: raw.address,
-                    precise: raw.hq_geo_precision === 'exact' })
-    }
-
-    addEntity(selectedNode.raw as Entity, selectedNode.id, 'primary')
-
-    // Collect IDs of direct subsidiaries (outbound ownership edges)
-    const subsidiaryIds = new Set<string>()
-    for (const el of elements) {
-      const d = el.data
-      if ('source' in d && d.source === selectedNode.id && d.edgeDir === 'out') {
-        subsidiaryIds.add(d.target)
-      }
-    }
-
-    for (const el of elements) {
-      const d = el.data as NodeData & Record<string, unknown>
-      if (!d.source && subsidiaryIds.has(d.id) && d.nodeType === 'entity' && d.raw) {
-        addEntity(d.raw as Entity, d.id as string, 'subsidiary')
-      }
-    }
-
-    return result
-  }, [selectedNode, elements])
+  const contextCountries = useMemo(
+    () => buildContextCountries(selectedNode, elements, mapBasis, entityCountryCache.current),
+    [selectedNode, elements, mapBasis],
+  )
   contextCountriesRef.current = contextCountries
 
   /** Switching basis invalidates every count and list derived from the old one.

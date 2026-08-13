@@ -98,6 +98,10 @@ src/
 ### Map view
 - World SVG map with countries shaded by how many companies they hold
 - **Registered / Headquarters** switch on the map — where a company is legally registered versus where it is actually run. No fallback between them: a company with no recorded HQ is counted as "Not recorded" rather than shown under its registration country
+- With a company selected, its **pin follows the basis**: the headquarters (amber) or the
+  registered office (violet), which for an offshore company is its agent's door — Barclays Capital
+  (Cayman) sits on Grand Cayman under Registered and in London under Headquarters. No fallback
+  between them: where that basis has no coordinates there is no pin, only the country shading
 - Scroll to zoom, drag to pan, reset button top-right
 - Click a country → left panel shows its entity list; click an entity to load it into the graph
 
