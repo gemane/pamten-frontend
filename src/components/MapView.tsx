@@ -87,6 +87,23 @@ export function canDrillInto(
   return subdivisionData.some(d => d.country?.startsWith(`${country}-`))
 }
 
+/**
+ * Pin colour: amber for a headquarters, violet for a registered office.
+ *
+ * Only one basis is on screen at a time, so the colour is not there to compare
+ * them side by side — it is there so you can tell at a glance *which place* you
+ * are looking at. A pin moving from London to Grand Cayman without changing its
+ * appearance is indistinguishable from the map being wrong.
+ *
+ * Violet rather than blue: the choropleth underneath is blue, and a blue pin on
+ * a blue country is a pin you cannot see. Lightness still separates the primary
+ * company from its subsidiaries, as before.
+ */
+export function pinFill(role: 'primary' | 'subsidiary', basis: MapBasis): string {
+  if (basis === 'jurisdiction') return role === 'primary' ? '#c084fc' : '#9333ea'
+  return role === 'primary' ? '#fcd34d' : '#f59e0b'
+}
+
 const MAX_COUNT = 20
 
 /** One country's companies concentrate far harder than the world's do — 35 of the
@@ -134,6 +151,13 @@ export function spreadOverlapping(markers: ContextCountry[], radius = 14): Place
   return out
 }
 
+/** The shaded country under a context pin — the pin's colour, darkened. Same
+ *  amber/violet split, so a country and the pin standing on it agree. */
+const CONTEXT_FILL: Record<MapBasis, Record<'primary' | 'subsidiary', string>> = {
+  hq:           { primary: '#b45309', subsidiary: '#d97706' },
+  jurisdiction: { primary: '#7e22ce', subsidiary: '#6b21a8' },
+}
+
 export function countryFill(
   data: CountryEntityGroup | undefined,
   context: 'primary' | 'subsidiary' | undefined,
@@ -141,12 +165,12 @@ export function countryFill(
   theme: 'dark' | 'light',
   hasContext: boolean,
   max: number = MAX_COUNT,
+  basis: MapBasis = 'hq',
 ): string {
   const noData    = theme === 'dark' ? '#1e2d4a' : '#c8d4e8'
   const noDataHov = theme === 'dark' ? '#263657' : '#b4c4da'
 
-  if (context === 'primary')    return isHovered ? '#fcd34d' : '#b45309'
-  if (context === 'subsidiary') return isHovered ? '#f59e0b' : '#d97706'
+  if (context) return isHovered ? pinFill(context, basis) : CONTEXT_FILL[basis][context]
   if (!data || hasContext) return isHovered ? noDataHov : noData
 
   const t = Math.min(data.count / max, 1)
@@ -329,7 +353,7 @@ export default function MapView({
                 const data       = numericMap.get(numId)
                 const context    = contextNumericMap.get(numId)
                 const isHovered  = numId === hoveredNum
-                const fill       = countryFill(data, context, isHovered, theme, hasContext)
+                const fill       = countryFill(data, context, isHovered, theme, hasContext, MAX_COUNT, basis)
                 const stroke     = theme === 'dark' ? '#2a3a5a' : '#8898b4'
                 const strokeW    = context ? 0.8 : 0.5
 
@@ -397,7 +421,7 @@ export default function MapView({
                 <circle r={(clustered ? 15 : 24) / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
                 <circle
                   r={(c.role === 'primary' ? 8 : 7) / zoom}
-                  fill={c.role === 'primary' ? '#fcd34d' : '#f59e0b'}
+                  fill={pinFill(c.role, c.basis ?? basis)}
                   stroke={theme === 'dark' ? '#111827' : '#fff'}
                   strokeWidth={1.5 / zoom}
                   style={{ cursor: 'pointer', pointerEvents: 'none' }}
