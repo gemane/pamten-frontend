@@ -1,0 +1,13 @@
+{
+	"appId": "org.owlgraph.app",
+	"appName": "Owlgraph",
+	"webDir": "dist",
+	"server": {
+		"url": "https://dev.owlgraph.org",
+		"cleartext": false,
+		"androidScheme": "https"
+	},
+	"android": {
+		"allowMixedContent": false
+	}
+}
