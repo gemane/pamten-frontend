@@ -4,7 +4,7 @@ import { FiArrowLeft, FiMapPin, FiLoader, FiChevronRight, FiChevronDown } from '
 import { countryName } from '../utils/isoCountries'
 import { sortCountries, type CountrySort } from '../utils/sortCountries'
 import { subdivisionName, subdivisionCountry, isSubdivision } from '../utils/isoSubdivisions'
-import { NO_COUNTRY, basisCountry, sortSubsidiaries, type MapBasis } from '../utils/mapBasis'
+import { NO_COUNTRY, basisCountry, basisAddress, sortSubsidiaries, type MapBasis } from '../utils/mapBasis'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
 import { colorFor } from '../utils/entityColors'
 
@@ -111,6 +111,10 @@ export default function MapPanel({
   if (contextNode) {
     const primary = contextNode.raw as Entity
     const primaryCountry = basisCountry(primary, basis)
+    // The address the pin is standing on, so the reader can see where that is
+    // without opening the pin. Follows the basis: a Cayman pin must not be
+    // captioned with a London street.
+    const primaryAddress = basisAddress(primary, basis)
     return (
       <div className="map-panel">
         <div className="map-panel__country-header">
@@ -119,6 +123,9 @@ export default function MapPanel({
             <div className="map-panel__country-name">{contextNode.label}</div>
             {primaryCountry && (
               <div className="map-panel__country-count">{countryName(primaryCountry, i18n.language)}</div>
+            )}
+            {primaryAddress && (
+              <div className="map-panel__address" title={primaryAddress}>{primaryAddress}</div>
             )}
           </div>
         </div>

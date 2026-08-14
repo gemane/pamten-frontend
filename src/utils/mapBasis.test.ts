@@ -7,7 +7,7 @@
  * and that a company the basis cannot place is still shown rather than dropped.
  */
 import { describe, it, expect } from 'vitest'
-import { basisCountry, sortSubsidiaries, readMapBasis, MAP_BASIS_KEY } from './mapBasis'
+import { basisCountry, basisAddress, sortSubsidiaries, readMapBasis, MAP_BASIS_KEY } from './mapBasis'
 import type { Entity, NodeData } from '../types'
 
 const sub = (label: string, country?: string | null, hq?: string | null): NodeData => ({
@@ -114,5 +114,37 @@ describe('readMapBasis', () => {
     localStorage.setItem(MAP_BASIS_KEY, 'nonsense')
     expect(readMapBasis()).toBe('jurisdiction')
     localStorage.clear()
+  })
+})
+
+describe('basisAddress', () => {
+  // Registered at its agent's door on Grand Cayman, run from London.
+  const cayman = {
+    address: 'c/o Maples, Ugland House, Grand Cayman, KY1-1104, KY',
+    hq_address: '1 Churchill Place, London, E14 5HP, GB',
+  } as Entity
+
+  it('gives the registered office under jurisdiction', () => {
+    expect(basisAddress(cayman, 'jurisdiction')).toMatch(/Ugland House/)
+  })
+
+  it('gives the headquarters under hq', () => {
+    expect(basisAddress(cayman, 'hq')).toMatch(/Churchill Place/)
+  })
+
+  it('does NOT fall back to the other one', () => {
+    // Captioning a Cayman pin with a London street is worse than no caption.
+    expect(basisAddress({ hq_address: '1 Churchill Place' } as Entity, 'jurisdiction')).toBeNull()
+    expect(basisAddress({ address: 'Ugland House' } as Entity, 'hq')).toBeNull()
+  })
+
+  it('treats blank and missing as nothing', () => {
+    expect(basisAddress({ address: '   ' } as Entity, 'jurisdiction')).toBeNull()
+    expect(basisAddress(null, 'hq')).toBeNull()
+    expect(basisAddress(undefined, 'jurisdiction')).toBeNull()
+  })
+
+  it('trims what it returns', () => {
+    expect(basisAddress({ hq_address: '  1 High St  ' } as Entity, 'hq')).toBe('1 High St')
   })
 })

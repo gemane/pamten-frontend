@@ -65,6 +65,20 @@ export function basisCoords(
 }
 
 /**
+ * The address the pin stands on for this basis: the headquarters street address,
+ * or the registered office.
+ *
+ * Same no-fallback rule as the rest of the switch. Showing an HQ street under
+ * Registered would caption a Cayman pin with a London address — the two are
+ * different places, which is the entire reason the switch exists.
+ */
+export function basisAddress(entity: Entity | undefined | null, basis: MapBasis): string | null {
+  // `address` is GLEIF's human-readable legal address — the registered office.
+  const value = basis === 'hq' ? entity?.hq_address : entity?.address
+  return value?.trim() ? value.trim() : null
+}
+
+/**
  * Order subsidiaries so the countries with the most of them come first.
  *
  * Answers "where is this group concentrated" at a glance, which a list in graph
