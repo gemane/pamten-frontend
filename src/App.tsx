@@ -125,7 +125,6 @@ function AppInner() {
   const scrapeBarTimer     = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrapeOverlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const elementsRef        = useRef<GraphElement[]>([])
-  const contextCountriesRef = useRef<ContextCountry[]>([])
   elementsRef.current = elements
   // Cache entity→country resolved during contextCountries so subsidiaries can use it when selected
   const entityCountryCache = useRef<Map<string, { country: string; lat?: number; lng?: number }>>(new Map())
@@ -502,8 +501,6 @@ function AppInner() {
           .then(({ data }) => setSubdivisionData(data.filter(d => d.country)))
           .catch(() => {})
       }
-      const primary = contextCountriesRef.current.find(c => c.role === 'primary' && c.lat != null && c.lng != null)
-      setMapFlyTo(primary ? { center: [primary.lng!, primary.lat!], zoom: 4 } : null)
     }
   }, [countryData.length, subdivisionData.length, mapBasis])
 
@@ -546,7 +543,28 @@ function AppInner() {
     () => buildContextCountries(selectedNode, elements, mapBasis, entityCountryCache.current),
     [selectedNode, elements, mapBasis],
   )
-  contextCountriesRef.current = contextCountries
+  // Fly to whichever company the map is currently about: on opening the tab, when
+  // a subsidiary is clicked in the panel, and when Back restores the one before it.
+  //
+  // This used to be computed once, in the tab handler, from a snapshot — so
+  // selecting a subsidiary left the viewport on the parent's country while the
+  // panel talked about somewhere else entirely.
+  const mapPrimary = contextCountries.find(
+    c => c.role === 'primary' && c.lat != null && c.lng != null)
+  const flyLat = mapPrimary?.lat ?? null
+  const flyLng = mapPrimary?.lng ?? null
+  const hasContext = !!selectedNode
+  useEffect(() => {
+    if (activeTab !== 'map') return
+    if (flyLat != null && flyLng != null) {
+      setMapFlyTo({ center: [flyLng, flyLat], zoom: 4 })
+    } else if (!hasContext) {
+      setMapFlyTo(null)           // nothing selected → back to the world view
+    }
+    // A company selected but not placeable keeps the current viewport: there is
+    // nowhere to fly to, and snapping out to the world would be worse than
+    // leaving the map where the reader put it.
+  }, [activeTab, flyLat, flyLng, hasContext])
 
   /** Switching basis invalidates every count and list derived from the old one.
    *  Refetching without clearing would leave one basis's counts beside the
