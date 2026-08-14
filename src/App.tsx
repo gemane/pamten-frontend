@@ -699,6 +699,20 @@ function AppInner() {
   const applyView = useCallback((view: ViewState) => {
     handleTabChange(view.tab)
     setSelectedCountry(view.tab === 'map' ? (view.country ?? null) : null)
+    if (view.tab === 'map') {
+      // Back out of a subsidiary to the company whose list it came from. The node
+      // is normally already in the graph — it is how it got on screen — so this is
+      // a lookup, not a fetch. A deep link into a company that was never loaded
+      // falls through to restoreEntity, which loads it and selects it.
+      if (view.nodeId) {
+        const found = elementsRef.current.find(
+          el => !('source' in el.data) && el.data.id === view.nodeId)
+        if (found) setSelectedNode(found.data as NodeData)
+        else if (view.nodeId !== centerIdRef.current) restoreEntity(view.nodeId, 'entity')
+      } else {
+        setSelectedNode(null)
+      }
+    }
     if (view.tab === 'graph') {
       if (view.entityId && view.entityId !== centerIdRef.current) {
         restoreEntity(view.entityId, view.entityType ?? 'entity')
@@ -749,6 +763,9 @@ function AppInner() {
       entityId:   centerId ?? undefined,
       entityType: centerType,
       country:    selectedCountry ?? undefined,
+      // On the map, which company's subsidiaries the panel is listing. Selecting
+      // one used to change nothing in the URL, so Back walked past the map.
+      nodeId:     activeTab === 'map' ? selectedNode?.id : undefined,
     })
     if (restoreTargetRef.current) {
       if (hash === restoreTargetRef.current) restoreTargetRef.current = null
@@ -760,7 +777,7 @@ function AppInner() {
     } else {
       window.history.pushState(null, '', hash)
     }
-  }, [activeTab, centerId, centerType, selectedCountry])
+  }, [activeTab, centerId, centerType, selectedCountry, selectedNode])
 
   return (
     <div className="app">
