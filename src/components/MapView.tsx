@@ -203,10 +203,18 @@ export default function MapView({
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [detail,     setDetail]     = useState<MapDetailData | null>(null)
   const [resetKey,   setResetKey]   = useState<number>(0)
-  // Seed from flyTo so pin markers (sized as radius / zoom) are correct on the
-  // first paint after an auto-zoom. react-simple-maps bypasses move events for
-  // flyTo, so onMoveEnd never fires to correct a stale zoom of 1.
+  // Pin markers are sized as radius / zoom, so this has to track the real zoom.
+  // Seeded from flyTo for the first paint after an auto-zoom.
   const [zoom,       setZoom]       = useState<number>(() => flyTo?.zoom ?? 1)
+
+  // Keep the pin scale in step with a fly that arrives AFTER mount.
+  // react-simple-maps does not fire onMoveEnd for a prop-driven flyTo, so nothing
+  // else corrects `zoom` — and seeding it at mount only worked while the caller
+  // happened to set flyTo before the first render. When that ordering changed,
+  // pins were drawn at zoom 1 on a map showing zoom 4: four times too large.
+  useEffect(() => {
+    if (flyTo) setZoom(flyTo.zoom)
+  }, [flyTo])
 
   const numericMap        = useMemo(() => buildNumericMap(countryData), [countryData])
   const contextNumericMap = useMemo(() => buildContextNumericMap(contextCountries), [contextCountries])

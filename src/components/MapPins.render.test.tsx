@@ -111,3 +111,40 @@ describe('the empty state', () => {
     expect(screen.getByText(/no geographic data/i)).toBeInTheDocument()
   })
 })
+
+describe('pin size follows the zoom', () => {
+  // Pins are drawn at radius / zoom so they stay the same size on screen at every
+  // zoom level. The regression: `zoom` was seeded only at mount, which was correct
+  // only while the caller set flyTo *before* the map first rendered. When that
+  // ordering changed — the fly-to moved into an effect so it could follow a
+  // selected subsidiary — pins were drawn at zoom 1 on a map showing zoom 4, i.e.
+  // four times too big.
+  const radius = (container: HTMLElement) =>
+    container.querySelector('circle[fill]:not([fill="transparent"])')?.getAttribute('r')
+
+  const view = (flyTo: { center: [number, number]; zoom: number } | null) =>
+    render(<MapView countryData={[]} contextCountries={[london]} basis="hq"
+                    flyTo={flyTo} onCountryClick={vi.fn()} />)
+
+  it('scales down when the map is already flown in at mount', () => {
+    const { container } = view({ center: [-0.0757, 51.5074], zoom: 4 })
+    expect(radius(container)).toBe(String(8 / 4))
+  })
+
+  it('scales down when the fly arrives after mount — the reported bug', () => {
+    const { container, rerender } = view(null)
+    expect(radius(container)).toBe('8')            // world view, full size
+
+    rerender(<MapView countryData={[]} contextCountries={[london]} basis="hq"
+                      flyTo={{ center: [-0.0757, 51.5074], zoom: 4 }} onCountryClick={vi.fn()} />)
+
+    expect(radius(container)).toBe(String(8 / 4))  // not still 8
+  })
+
+  it('rescales when a later fly uses a different zoom', () => {
+    const { container, rerender } = view({ center: [-0.0757, 51.5074], zoom: 4 })
+    rerender(<MapView countryData={[]} contextCountries={[london]} basis="hq"
+                      flyTo={{ center: [-6.26, 53.34], zoom: 8 }} onCountryClick={vi.fn()} />)
+    expect(radius(container)).toBe(String(8 / 8))
+  })
+})
