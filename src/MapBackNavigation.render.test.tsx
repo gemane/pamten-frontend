@@ -18,7 +18,10 @@ import type { ReactNode } from 'react'
 import type { Entity, FullProfile, NodeData, OwnsRelationship } from './types'
 
 vi.mock('./components/Graph', () => ({ default: () => <div data-testid="graph" /> }))
-vi.mock('./components/MapView', () => ({ default: () => <div data-testid="map" /> }))
+vi.mock('./components/MapView', () => ({
+  default: ({ flyTo }: { flyTo?: { center: [number, number]; zoom: number } | null }) =>
+    <div data-testid="map" data-fly={flyTo ? `${flyTo.center[1]},${flyTo.center[0]}@${flyTo.zoom}` : 'none'} />,
+}))
 vi.mock('./components/GraphLegend', () => ({ default: () => null }))
 vi.mock('./components/ScraperPanel', () => ({ default: () => null }))
 vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
@@ -58,14 +61,22 @@ import { search, getFullProfile, getCountries, getEntitiesByCountry,
          getEntitiesBySubdivision, getCountryEntities,
          getEntitiesWithoutCountry } from './services/api'
 
-const ent = (id: string, name: string): Entity =>
-  ({ id, name, type: 'company', verified: false, country: 'US' } as Entity)
+// Coordinates on BOTH bases: the map defaults to Registered, so an entity with
+// only hq_lat/hq_lng has correctly nothing to fly to.
+const ent = (id: string, name: string, at?: [number, number]): Entity =>
+  ({ id, name, type: 'company', verified: false, country: 'US', hq_country: 'US',
+     hq_lat: at?.[0], hq_lng: at?.[1], reg_lat: at?.[0], reg_lng: at?.[1] } as Entity)
 
 const microsoft: FullProfile = {
-  entity: ent('e-msft', 'MICROSOFT CORPORATION'),
+  entity: ent('e-msft', 'MICROSOFT CORPORATION', [47.64, -122.13]),   // Redmond
   owners: [],
   subsidiaries: [{
-    entity: ent('e-li', 'LINKEDIN IRELAND UNLIMITED COMPANY'),
+    entity: ent('e-li', 'LINKEDIN IRELAND UNLIMITED COMPANY', [53.34, -6.26]),  // Dublin
+    relationship: { ownership_type: 'full', stake_percent: 100 } as OwnsRelationship,
+  }, {
+    // No coordinates on either basis — one of the ~230 registered offices
+    // OpenStreetMap cannot place.
+    entity: ent('e-unplaced', 'UNPLACEABLE HOLDINGS LTD'),
     relationship: { ownership_type: 'full', stake_percent: 100 } as OwnsRelationship,
   }],
   executives: [],
@@ -85,8 +96,10 @@ beforeEach(() => {
   vi.mocked(getCountryEntities).mockResolvedValue({ data: [] } as never)
   vi.mocked(getEntitiesWithoutCountry).mockResolvedValue({ data: [] } as never)
   vi.mocked(getFullProfile).mockResolvedValue({ data: microsoft } as never)
+  // With coordinates: the selected node's own record is what places the primary
+  // pin, and /search returns the whole vertex.
   vi.mocked(search).mockResolvedValue({ data: [
-    { type: 'Entity', score: 1, node: ent('e-msft', 'MICROSOFT CORPORATION') },
+    { type: 'Entity', score: 1, node: ent('e-msft', 'MICROSOFT CORPORATION', [47.64, -122.13]) },
   ] } as never)
 })
 
@@ -103,6 +116,7 @@ async function openMicrosoftOnTheMap() {
 }
 
 const panelContext = () => screen.getByTestId('map-panel').getAttribute('data-context')
+const flyTo = () => screen.getByTestId('map').getAttribute('data-fly')
 
 /** Press Back.
  *
@@ -158,5 +172,46 @@ describe('back from a subsidiary on the map', () => {
     pressBack('#graph/e/e-msft')
     await waitFor(() => expect(screen.getByTestId('graph')).toBeInTheDocument())
     expect(screen.queryByTestId('map-panel')).toBeNull()
+  })
+})
+
+describe('the map moves to whatever it is showing', () => {
+  it('flies to the company when the tab is opened', async () => {
+    await openMicrosoftOnTheMap()
+    await waitFor(() => expect(flyTo()).toBe('47.64,-122.13@4'))
+  })
+
+  it('flies to a subsidiary when it is selected', async () => {
+    // The gap: this was computed once, on tab change, so clicking a subsidiary
+    // left the viewport on the parent while the panel described somewhere else.
+    await openMicrosoftOnTheMap()
+    await userEvent.click(await screen.findByRole('button',
+      { name: /LINKEDIN IRELAND UNLIMITED COMPANY/i }))
+    await waitFor(() => expect(flyTo()).toBe('53.34,-6.26@4'))   // Dublin
+  })
+
+  it('leaves the viewport alone for a company it cannot place', async () => {
+    // Snapping out to the world would be worse than staying put: the reader
+    // clicked a company, not "show me everywhere".
+    await openMicrosoftOnTheMap()
+    await waitFor(() => expect(flyTo()).toBe('47.64,-122.13@4'))
+
+    await userEvent.click(await screen.findByRole('button',
+      { name: /UNPLACEABLE HOLDINGS LTD/i }))
+
+    await waitFor(() => expect(panelContext()).toBe('UNPLACEABLE HOLDINGS LTD'))
+    expect(flyTo()).toBe('47.64,-122.13@4')       // unchanged, not 'none'
+  })
+
+  it('flies back when Back returns to the parent', async () => {
+    await openMicrosoftOnTheMap()
+    await userEvent.click(await screen.findByRole('button',
+      { name: /LINKEDIN IRELAND UNLIMITED COMPANY/i }))
+    await waitFor(() => expect(flyTo()).toBe('53.34,-6.26@4'))
+
+    pressBack('#map/n/e-msft')
+
+    await waitFor(() => expect(flyTo()).toBe('47.64,-122.13@4'))  // Redmond again
+    expect(panelContext()).toBe('MICROSOFT CORPORATION')
   })
 })
