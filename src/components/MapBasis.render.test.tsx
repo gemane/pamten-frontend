@@ -134,3 +134,36 @@ describe('persistence', () => {
       .toHaveClass('map-basis-btn--active')
   })
 })
+
+describe('the address under the company name', () => {
+  const cayman = {
+    id: 'e1', name: 'BARCLAYS CAPITAL (CAYMAN) LIMITED', type: 'company', verified: false,
+    country: 'KY', hq_country: 'GB',
+    address: 'c/o Maples, Ugland House, Grand Cayman, KY1-1104, KY',
+    hq_address: '1 Churchill Place, London, E14 5HP, GB',
+  } as Entity
+  const node = { id: 'e1', label: 'BARCLAYS CAPITAL (CAYMAN) LIMITED',
+                 nodeType: 'entity' as const, raw: cayman }
+
+  const panel = (basis: 'jurisdiction' | 'hq', raw: Entity = cayman) => {
+    const { container } = render(
+      <MapPanel countryData={[]} selectedCountry={null} onSelectCountry={vi.fn()}
+                onLoadEntity={vi.fn()} loading={false} basis={basis}
+                contextNode={{ ...node, raw }} contextSubsidiaries={[]} />)
+    return container.querySelector('.map-panel__address')?.textContent ?? null
+  }
+
+  it('shows where the pin is standing, under the name', () => {
+    expect(panel('hq')).toMatch(/Churchill Place/)
+  })
+
+  it('shows the registered office under Registered', () => {
+    // The pin is on Grand Cayman in this view; the caption has to agree with it.
+    expect(panel('jurisdiction')).toMatch(/Ugland House/)
+  })
+
+  it('shows nothing when that basis has no address', () => {
+    const bare = { ...cayman, address: undefined, hq_address: undefined } as Entity
+    expect(panel('hq', bare)).toBeNull()
+  })
+})
