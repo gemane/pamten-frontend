@@ -22,6 +22,21 @@ describe('buildHash', () => {
       .toBe('#map/c/United%20States')
   })
 
+  it('encodes the company whose subsidiaries the map is listing', () => {
+    expect(buildHash({ tab: 'map', nodeId: 'e-msft' })).toBe('#map/n/e-msft')
+    expect(buildHash({ tab: 'map', nodeId: 'lei:213800/X' })).toBe('#map/n/lei%3A213800%2FX')
+  })
+
+  it('puts the company ahead of a selected country', () => {
+    // The panel shows it that way round: a company's subsidiary list replaces the
+    // country list, so the URL has to describe the view that is actually on screen.
+    expect(buildHash({ tab: 'map', nodeId: 'e-msft', country: 'US' })).toBe('#map/n/e-msft')
+  })
+
+  it('ignores a node on non-map tabs', () => {
+    expect(buildHash({ tab: 'graph', nodeId: 'e-msft' })).toBe('#graph')
+  })
+
   it('ignores entity on non-graph tabs and country on non-map tabs', () => {
     expect(buildHash({ tab: 'map', entityId: 'x' })).toBe('#map')
     expect(buildHash({ tab: 'graph', country: 'AT' })).toBe('#graph')
