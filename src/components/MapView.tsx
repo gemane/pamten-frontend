@@ -5,7 +5,7 @@ import coarseWorld from 'world-atlas/countries-110m.json'
 import { ALPHA2_TO_NUMERIC, NUMERIC_TO_ALPHA2, countryName, toAlpha2 } from '../utils/isoCountries'
 import { subdivisionForFips, subdivisionName, DRILLABLE_COUNTRIES } from '../utils/isoSubdivisions'
 import { loadDetailedWorld, loadedWorld, loadUsStates, loadedUsStates, type Topology } from '../utils/mapGeography'
-import type { MapBasis } from '../utils/mapBasis'
+import { pinFill, type MapBasis } from '../utils/mapBasis'
 import { FiRotateCcw, FiArrowLeft } from 'react-icons/fi'
 import type { MapDetailData } from './MapDetail'   // type only — no Leaflet at import
 import type { CountryEntityGroup, ContextCountry } from '../types'
@@ -99,11 +99,6 @@ export function canDrillInto(
  * a blue country is a pin you cannot see. Lightness still separates the primary
  * company from its subsidiaries, as before.
  */
-export function pinFill(role: 'primary' | 'subsidiary', basis: MapBasis): string {
-  if (basis === 'jurisdiction') return role === 'primary' ? '#c084fc' : '#9333ea'
-  return role === 'primary' ? '#fcd34d' : '#f59e0b'
-}
-
 const MAX_COUNT = 20
 
 /** One country's companies concentrate far harder than the world's do — 35 of the

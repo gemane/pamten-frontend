@@ -9,7 +9,8 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import MapView, { pinFill, countryFill } from './MapView'
+import MapView, { countryFill } from './MapView'
+import { pinFill } from '../utils/mapBasis'
 import type { ContextCountry } from '../types'
 
 vi.mock('react-simple-maps', () => ({

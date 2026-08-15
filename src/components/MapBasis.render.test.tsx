@@ -11,7 +11,7 @@ import userEvent from '@testing-library/user-event'
 import i18n from '../i18n'
 import MapView from './MapView'
 import MapPanel from './MapPanel'
-import { MAP_BASIS_KEY, NO_COUNTRY } from '../utils/mapBasis'
+import { MAP_BASIS_KEY, NO_COUNTRY, pinFill } from '../utils/mapBasis'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
 
 // react-simple-maps needs a real layout engine; the switch is plain DOM beside it.
@@ -122,6 +122,58 @@ describe('the subsidiary list', () => {
 
   it('reorders when the basis changes', () => {
     expect(withBasis('hq')).toEqual(['Cayman Co', 'London One', 'London Two'])
+  })
+})
+
+/**
+ * The dots beside the names in the context list are the same companies the map
+ * draws as pins, so they have to be the same colour. They were a fixed amber —
+ * the *shaded-country* amber, at that — which meant that under Registered, the
+ * default, every pin on the map was violet and every dot beside it was orange.
+ */
+describe('the dots agree with the pins', () => {
+  const sub = (label: string): NodeData => ({
+    id: label, label, nodeType: 'entity',
+    raw: { id: label, name: label, type: 'company', country: 'GB', hq_country: 'GB' } as Entity,
+  })
+  const node = { id: 'p', label: 'Parent', nodeType: 'entity' as const,
+                 raw: { id: 'p', name: 'Parent', type: 'company', country: 'GB' } as Entity }
+
+  const dots = (basis: 'jurisdiction' | 'hq') => {
+    const { container } = render(
+      <MapPanel countryData={[]} selectedCountry={null} onSelectCountry={vi.fn()}
+                onLoadEntity={vi.fn()} loading={false} basis={basis}
+                contextNode={node} contextSubsidiaries={[sub('Sub One')]} />)
+    return Array.from(container.querySelectorAll('.map-entity-dot'))
+      .map(d => (d as HTMLElement).style.background)
+  }
+
+  const rgb = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16)
+    return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`
+  }
+
+  it('uses the pin colours under Registered', () => {
+    expect(dots('jurisdiction')).toEqual([
+      rgb(pinFill('primary', 'jurisdiction')),
+      rgb(pinFill('subsidiary', 'jurisdiction')),
+    ])
+  })
+
+  it('uses the pin colours under Headquarters', () => {
+    expect(dots('hq')).toEqual([
+      rgb(pinFill('primary', 'hq')),
+      rgb(pinFill('subsidiary', 'hq')),
+    ])
+  })
+
+  it('changes colour with the basis, as the pins do', () => {
+    expect(dots('jurisdiction')).not.toEqual(dots('hq'))
+  })
+
+  it('tells the company apart from its subsidiaries', () => {
+    const [primary, subsidiary] = dots('jurisdiction')
+    expect(primary).not.toBe(subsidiary)
   })
 })
 

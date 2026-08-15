@@ -4,7 +4,7 @@ import { FiArrowLeft, FiMapPin, FiLoader, FiChevronRight, FiChevronDown, FiMoreV
 import { countryName } from '../utils/isoCountries'
 import { sortCountries, type CountrySort } from '../utils/sortCountries'
 import { subdivisionName, subdivisionCountry, isSubdivision } from '../utils/isoSubdivisions'
-import { NO_COUNTRY, basisCountry, basisAddress, sortSubsidiaries, type MapBasis } from '../utils/mapBasis'
+import { NO_COUNTRY, basisCountry, basisAddress, sortSubsidiaries, pinFill, type MapBasis } from '../utils/mapBasis'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
 import { colorFor } from '../utils/entityColors'
 import ActionMenu from './ActionMenu'
@@ -122,7 +122,11 @@ export default function MapPanel({
     return (
       <div className="map-panel">
         <div className="map-panel__country-header">
-          <span className="map-entity-dot" style={{ background: '#b45309', width: 10, height: 10, flexShrink: 0 }} />
+          {/* The company's own pin colour, not a fixed amber: under Registered the
+              pins are violet, and a list that stays amber beside them makes the
+              reader match names by hand to find a company on the map. */}
+          <span className="map-entity-dot"
+                style={{ background: pinFill('primary', basis), width: 10, height: 10, flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="map-panel__country-name">{contextNode.label}</div>
             {primaryCountry && (
@@ -160,7 +164,7 @@ export default function MapPanel({
                   className="map-entity-item"
                   onClick={() => onSelectSubsidiary ? onSelectSubsidiary(sub) : onLoadEntity(sub.id)}
                 >
-                  <span className="map-entity-dot" style={{ background: '#d97706' }} />
+                  <span className="map-entity-dot" style={{ background: pinFill('subsidiary', basis) }} />
                   <span className="map-entity-name">{sub.label}</span>
                   {subCountry
                     ? <span className="map-entity-type">{countryName(subCountry, i18n.language)}</span>
