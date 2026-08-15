@@ -1900,8 +1900,12 @@ a.source-item__name:hover { color: #4A90D9; }
 /* ── Map panel (left sidebar) ──────────────────────────── */
 .map-panel {
   padding: 16px;
-  height: 100%;
-  overflow-y: auto;
+  /* Fills its container, but does NOT scroll: the container already does, on
+     both layouts (.left-panel__detail on desktop, .mobile-panel on mobile). A
+     scroller inside a scroller ends where the outer one's padding starts —
+     height: 100% resolves against the content box — so the list was cut off
+     mid-row with a dead band of panel background beneath it. */
+  min-height: 100%;
 }
 
 .map-panel__loading {
@@ -3170,7 +3174,9 @@ a.source-item__name:hover { color: #4A90D9; }
     overflow-y: auto;
     background: #16213e;
     border-top: 1px solid #2a2a4a;
-    padding-bottom: 72px; /* clears fixed bottom nav (58px) + breathing room */
+    /* Breathing room only. The nav is cleared once, by .right-panel — reserving
+       it here as well took another 58px out of every panel below the canvas. */
+    padding-bottom: 16px;
   }
 
   /* Full-screen panel for scraper / settings */
@@ -3178,7 +3184,7 @@ a.source-item__name:hover { color: #4A90D9; }
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding-bottom: 72px;
+    padding-bottom: 16px;   /* as .mobile-panel: .right-panel clears the nav */
   }
 
   /* Bottom nav: fixed bar below everything */
