@@ -313,14 +313,19 @@ export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =
 export const createFlag = (payload: FlagCreatePayload): Promise<AxiosResponse<FlagCreateResult>> =>
   client.post('/flags', payload)
 
+// `related_to` asks for one company or person AND everything reported about it —
+// the node plus any relationship at either end — so the disputed badge and the
+// scoped queue count the same set.
 export const getFlagSummary = (
-  params: { node_id?: string; from_id?: string; to_id?: string; role?: string }
+  params: { node_id?: string; from_id?: string; to_id?: string; role?: string; related_to?: string }
 ): Promise<AxiosResponse<FlagSummary>> =>
   client.get('/flags/summary', { params })
 
 // Moderation (moderator/admin only on the server)
+// Paged: the total for the same filters comes back in the `X-Total-Count`
+// header, since the body is a bare array.
 export const getFlags = (
-  params: { status?: string; target_kind?: string; category?: string; limit?: number }
+  params: { status?: string; target_kind?: string; category?: string; related_to?: string; skip?: number; limit?: number }
 ): Promise<AxiosResponse<Flag[]>> =>
   client.get('/flags', { params })
 
@@ -329,7 +334,7 @@ export const updateFlagStatus = (id: string, status: string): Promise<AxiosRespo
 
 // Aggregated queue — one row per target+category with a count + member flag_ids.
 export const getFlagGroups = (
-  params: { status?: string; target_kind?: string; category?: string }
+  params: { status?: string; target_kind?: string; category?: string; related_to?: string }
 ): Promise<AxiosResponse<FlagGroup[]>> =>
   client.get('/flags', { params: { ...params, group: true, limit: 500 } })
 

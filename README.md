@@ -89,7 +89,9 @@ src/
 - **Actions live in the panel.** A ⋮ beside a company or person name opens **Share** and **Report**;
   right-clicking (or long-pressing, on touch) a relationship row opens **Report relationship** and
   **View source**, which goes to the register record that asserted *that* relationship. Under the
-  name sits the "disputed" badge, and — for a moderator — the way into the flag queue. There are no
+  name sits the "disputed" badge, and — for a moderator, and only when this record actually has
+  reports waiting — the way into the flag queue, scoped to **this** company and every relationship
+  at either end of it. The full queue, every company, is in **Settings**, paged. There are no
   floating buttons
 - **Type markers**: every row in the relationship lists (owners, subsidiaries, executives, dual-listed, succession) carries a small coloured marker matching the node's colour in the graph — round for a person, rounded-square for an entity. The palette lives once in `src/utils/entityColors.ts` and is read by the graph, the legend, the map panel and the scraper results, so they cannot drift.
 - **Long subsidiary lists are grouped** by how the holding is held — *Direct holdings* open, *Held indirectly* and *Relationship not stated* collapsed — once a list exceeds 12 and actually splits. Section headers carry the true count from the server, which matters because sections are capped and a rendered list can be shorter than reality (Barclays: 118 subsidiaries).

@@ -250,6 +250,16 @@ body {
   overflow-y: auto;
   margin-top: 6px;
 }
+.mod-queue__pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(113, 128, 150, 0.25);
+}
+.mod-queue__range { font-size: 12px; color: #718096; }
 .mod-flag {
   display: flex;
   gap: 10px;

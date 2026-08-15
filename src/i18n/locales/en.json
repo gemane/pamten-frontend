@@ -198,7 +198,11 @@
     "reporter": {
       "user": "Signed-in user",
       "anon": "Anonymous"
-    }
+    },
+    "open": "Open the queue",
+    "prev": "Previous",
+    "next": "Next",
+    "range": "{{from}}–{{to}} of {{total}}"
   },
   "pin": {
     "title": "Pin a correction",

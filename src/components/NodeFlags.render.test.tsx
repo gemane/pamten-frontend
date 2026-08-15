@@ -2,11 +2,11 @@
  * What sits under a node's name.
  *
  * The disputed badge is for everyone — it says the record is contested. The
- * queue button is for moderators, and is now the *only* way into the queue,
- * since the header button and the floating one are gone.
+ * queue button is for moderators, and only when this node has something waiting.
  *
- * The gate is what these tests are really for: a moderator control leaking to
- * ordinary readers is invisible in review and obvious in production.
+ * Two gates, and both fail silently: a moderator control leaking to ordinary
+ * readers is invisible in review and obvious in production, and a button that
+ * opens an empty queue on every clean company is the thing this change removed.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
@@ -14,8 +14,10 @@ import userEvent from '@testing-library/user-event'
 
 vi.mock('../services/api', () => ({ getFlagSummary: vi.fn() }))
 vi.mock('./ModeratorQueue', () => ({
-  default: ({ onClose }: { onClose: () => void }) =>
-    <div data-testid="queue"><button onClick={onClose}>close</button></div>,
+  default: ({ onClose, relatedTo }: { onClose: () => void; relatedTo?: string }) =>
+    <div data-testid="queue" data-related-to={relatedTo}>
+      <button onClick={onClose}>close</button>
+    </div>,
 }))
 
 const auth = { user: null as { role: string } | null }
@@ -54,18 +56,28 @@ describe('the disputed badge', () => {
 })
 
 describe('the moderator queue', () => {
-  it('is offered to a moderator', async () => {
+  it('is offered to a moderator when something is waiting', async () => {
     auth.user = { role: 'moderator' }
-    summary(0)
+    summary(2)
     show()
     expect(await screen.findByRole('button', { name: /Flag queue/i })).toBeInTheDocument()
   })
 
   it('is offered to an admin', async () => {
     auth.user = { role: 'admin' }
-    summary(0)
+    summary(2)
     show()
     expect(await screen.findByRole('button', { name: /Flag queue/i })).toBeInTheDocument()
+  })
+
+  it('is NOT offered on a clean company, even to a moderator', async () => {
+    // The point of the change: a button under the name means there is work
+    // behind it. The full queue is in Settings for when you go looking.
+    auth.user = { role: 'moderator' }
+    summary(0)
+    const { container } = show()
+    await waitFor(() => expect(getFlagSummary).toHaveBeenCalled())
+    expect(container).toBeEmptyDOMElement()
   })
 
   it('is NOT offered to an ordinary user', async () => {
@@ -83,12 +95,23 @@ describe('the moderator queue', () => {
     expect(screen.queryByRole('button', { name: /Flag queue/i })).toBeNull()
   })
 
-  it('opens the queue', async () => {
+  it('opens the queue, scoped to this node', async () => {
     auth.user = { role: 'moderator' }
-    summary(0)
+    summary(1)
     show()
     await userEvent.click(await screen.findByRole('button', { name: /Flag queue/i }))
-    expect(screen.getByTestId('queue')).toBeInTheDocument()
+    expect(screen.getByTestId('queue')).toHaveAttribute('data-related-to', 'e1')
+  })
+})
+
+describe('the count', () => {
+  it('asks for the node AND its relationships, not the node alone', async () => {
+    // A report filed by right-clicking a subsidiary row belongs to the panel it
+    // was filed from. Ask by node_id and those reports vanish from the company
+    // that owns them — with the badge still reading a confident, wrong number.
+    summary(1)
+    show()
+    await waitFor(() => expect(getFlagSummary).toHaveBeenCalledWith({ related_to: 'e1' }))
   })
 })
 
