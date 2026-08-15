@@ -49,7 +49,9 @@
     "filterCountries": "Filtrar países…",
     "noResultsScrape": "Sin coincidencias — ¿buscar \"{{query}}\" en las fuentes?",
     "alsoScrape": "¿No está? Buscar \"{{query}}\" en las fuentes",
-    "scrapeSignIn": "Inicia sesión y verifica tu correo para buscar en fuentes externas."
+    "scrapeSignIn": "Inicia sesión y verifica tu correo para buscar en fuentes externas.",
+    "noResultsScrapeIn": "¿Sin coincidencias — buscar \"{{query}}\" en fuentes de {{country}}?",
+    "alsoScrapeIn": "¿No es esta? Buscar \"{{query}}\" en fuentes de {{country}}"
   },
   "scrape": {
     "title": "Buscando {{company}} en las fuentes…",
@@ -276,7 +278,8 @@
     "enriching": "Enriqueciendo \"{{query}}\"…",
     "scrapeNoResults": "No se encontró nada en las fuentes para \"{{query}}\".",
     "scrapeError": "La búsqueda en las fuentes falló. Inténtalo de nuevo.",
-    "scrapeCooldown": "Esta empresa se actualizó recientemente. Puedes actualizar sus fuentes de nuevo más tarde."
+    "scrapeCooldown": "Esta empresa se actualizó recientemente. Puedes actualizar sus fuentes de nuevo más tarde.",
+    "scrapeNoResultsIn": "No se encontró nada para \"{{query}}\" en {{country}}."
   },
   "map": {
     "resetView": "Restablecer vista",

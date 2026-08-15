@@ -456,5 +456,10 @@ export const runScraperAll = (company: string, depth = 2): Promise<AxiosResponse
 
 // On-demand enrichment for any verified user: ensure a company is present + fresh,
 // scraping the instant sources only when needed (see backend app/scraper/ondemand.py).
-export const ensureScrape = (query: string, depth = 1, force = false): Promise<AxiosResponse<EnsureResult>> =>
-  client.post('/scraper/ensure', { query, depth, force })
+// `country` (ISO-2) narrows both halves of the lookup: which company in the DB
+// counts as the answer, and what the sources are allowed to answer with. Without
+// it, "Alphabet" searched under Germany comes back as Alphabet Inc.
+export const ensureScrape = (
+  query: string, depth = 1, force = false, country?: string,
+): Promise<AxiosResponse<EnsureResult>> =>
+  client.post('/scraper/ensure', country ? { query, depth, force, country } : { query, depth, force })

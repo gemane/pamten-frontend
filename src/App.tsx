@@ -2,6 +2,7 @@ import { Component, useState, useRef, useCallback, useEffect, useMemo } from 're
 import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
+import { countryName } from './utils/isoCountries'
 import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
 import SearchBar, { type SearchBarHandle } from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
@@ -210,14 +211,14 @@ function AppInner() {
     [cancelPendingIdle, stopScrapeBar, stopScrapeOverlay])  // unmount
 
   // Phase 2: when the UI goes idle, deepen to depth 2 and append what's new.
-  const scheduleDepth2Enrich = useCallback((query: string) => {
+  const scheduleDepth2Enrich = useCallback((query: string, country?: string) => {
     const token = enrichSeqRef.current
     cancelPendingIdle()
     idleCancelRef.current = scheduleIdle(async () => {
       idleCancelRef.current = null
       startScrapeBar()
       try {
-        const { data } = await ensureScrape(query, 2, false)
+        const { data } = await ensureScrape(query, 2, false, country)
         if (token !== enrichSeqRef.current) return       // navigated away — drop it
         if (data.scraped && data.profile) appendProfile(data.profile)
       } catch { /* best-effort — enrichment never blocks the UI */ }
@@ -226,7 +227,8 @@ function AppInner() {
   }, [appendProfile, cancelPendingIdle, startScrapeBar, stopScrapeBar])
 
   // Phase 1: enrich an already-rendered entity (depth 1), then schedule the idle deepen.
-  const enrichExisting = useCallback(async (query: string, entityId: string, force = false) => {
+  const enrichExisting = useCallback(async (query: string, entityId: string, force = false,
+                                            country?: string) => {
     if (!canScrape(user)) return
     const token = enrichSeqRef.current
     setExpandingId(entityId)
@@ -237,7 +239,7 @@ function AppInner() {
     // / SEC" overlay for data that's already in the DB.
     if (force) startScrapeOverlay(query); else startScrapeBar()
     try {
-      const { data } = await ensureScrape(query, 1, force)
+      const { data } = await ensureScrape(query, 1, force, country)
       if (token !== enrichSeqRef.current) return
       if (data.scraped && data.profile) appendProfile(data.profile)
       // A forced refresh is denied within the 24h cooldown — tell the user why nothing changed.
@@ -255,10 +257,13 @@ function AppInner() {
   // absent), build the fresh graph, then deepen on idle.
   // Force a fresh re-scrape of a company already in the graph (the node-panel button).
   const handleReScrape = useCallback((node: NodeData) => {
-    void enrichExisting(node.label, node.id, true)
+    // The company's own country, so a refresh cannot walk off to a same-named
+    // company somewhere else — the sources would happily hand one over.
+    const country = (node.raw as { country?: string | null } | undefined)?.country || undefined
+    void enrichExisting(node.label, node.id, true, country)
   }, [enrichExisting])
 
-  const handleScrapeQuery = useCallback(async (query: string) => {
+  const handleScrapeQuery = useCallback(async (query: string, country?: string) => {
     if (!canScrape(user)) { setShowAuth(true); return }
     resetEnrichment()
     setToast(null)
@@ -268,7 +273,7 @@ function AppInner() {
     setLoading(true)
     loadedIds.current = new Set()
     try {
-      const { data } = await ensureScrape(query, 1, true)
+      const { data } = await ensureScrape(query, 1, true, country)
       if (data.scraped && data.entity_id && data.profile) {
         const entity = data.profile.entity
         const newNode: NodeData = {
@@ -279,9 +284,13 @@ function AppInner() {
         setElements(buildElements(data.profile, loadedIds.current))
         setSelectedNode(newNode)
         setNavHistory([newNode])
-        scheduleDepth2Enrich(query)
+        scheduleDepth2Enrich(query, country)
       } else {
-        showToast(t('toast.scrapeNoResults', { query }), 'info')
+        // Named, because the search was restricted: "nothing in Germany" is a
+        // different fact from "nothing anywhere", and only one of them is true.
+        showToast(country
+          ? t('toast.scrapeNoResultsIn', { query, country: countryName(country, i18n.language) })
+          : t('toast.scrapeNoResults', { query }), 'info')
       }
     } catch {
       showToast(t('toast.scrapeError'), 'error')

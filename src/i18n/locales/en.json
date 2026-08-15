@@ -49,7 +49,9 @@
     "filterCountries": "Filter countries…",
     "noResultsScrape": "No match — search sources for \"{{query}}\"?",
     "alsoScrape": "Not the one? Search sources for \"{{query}}\"",
-    "scrapeSignIn": "Sign in and verify your email to search external sources."
+    "scrapeSignIn": "Sign in and verify your email to search external sources.",
+    "noResultsScrapeIn": "No match — search {{country}} sources for \"{{query}}\"?",
+    "alsoScrapeIn": "Not the one? Search {{country}} sources for \"{{query}}\""
   },
   "scrape": {
     "title": "Searching sources for {{company}}…",
@@ -276,7 +278,8 @@
     "enriching": "Enriching \"{{query}}\"…",
     "scrapeNoResults": "Nothing found in the sources for \"{{query}}\".",
     "scrapeError": "Source search failed. Please try again.",
-    "scrapeCooldown": "This company was updated recently. You can refresh its sources again later."
+    "scrapeCooldown": "This company was updated recently. You can refresh its sources again later.",
+    "scrapeNoResultsIn": "Nothing found for \"{{query}}\" in {{country}}."
   },
   "map": {
     "resetView": "Reset view",
