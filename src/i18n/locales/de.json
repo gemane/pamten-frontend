@@ -478,5 +478,12 @@
     "wasVerified": "· Signatur verifiziert ✓",
     "wasUnverified": "· unverifiziert",
     "pubkeyPlaceholder": "Öffentlicher Schlüssel des Peers (optional, zur Verifizierung seiner Exporte)"
+  },
+  "menu": {
+    "actions": "Aktionen",
+    "share": "Teilen",
+    "report": "Melden",
+    "reportRelationship": "Beziehung melden",
+    "viewSource": "Quelle ansehen"
   }
 }

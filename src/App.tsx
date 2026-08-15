@@ -2,7 +2,7 @@ import { Component, useState, useRef, useCallback, useEffect, useMemo } from 're
 import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
-import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiShare2, FiFlag } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
 import SearchBar, { type SearchBarHandle } from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
@@ -16,7 +16,6 @@ import SettingsPanel from './components/SettingsPanel'
 import MapView       from './components/MapView'
 import MapPanel      from './components/MapPanel'
 import AuthModal     from './components/AuthModal'
-import ModeratorQueue from './components/ModeratorQueue'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { useAndroidBackButton } from './hooks/useAndroidBackButton'
@@ -78,7 +77,6 @@ function AppInner() {
   const [showAuth, setShowAuth] = useState<boolean>(false)
   const [authMode, setAuthMode] = useState<'login' | 'reset'>('login')
   const [resetToken, setResetToken] = useState<string | null>(null)
-  const [showFlagQueue, setShowFlagQueue] = useState<boolean>(false)
   const canModerate = user?.role === 'moderator' || user?.role === 'admin'
   const userCanScrape = canScrape(user)
   const isMobile = useMobile()
@@ -88,8 +86,6 @@ function AppInner() {
   const searchBarRef = useRef<SearchBarHandle>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
-  // Share + report (flag) tools belong to the data views, not the scraper/settings panels.
-  const showShareTools = activeTab === 'graph' || activeTab === 'map'
 
   const [elements,        setElements]        = useState<GraphElement[]>([])
   const [centerId,        setCenterId]        = useState<string | null>(null)
@@ -810,7 +806,6 @@ function AppInner() {
           resetToken={resetToken ?? undefined}
         />
       )}
-      {showFlagQueue && canModerate && <ModeratorQueue onClose={() => setShowFlagQueue(false)} />}
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       {/* Desktop sidebar — hidden on mobile */}
@@ -832,14 +827,6 @@ function AppInner() {
                 <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
               </div>
-              {showShareTools && (
-                <>
-                  {canModerate && (
-                    <button className="tab-btn" onClick={() => setShowFlagQueue(true)} title={t('modQueue.title')}><FiFlag /></button>
-                  )}
-                  <button className="tab-btn share-btn" onClick={handleShare} title={t('share.title')}><FiShare2 /></button>
-                </>
-              )}
             </div>
           </div>
 
@@ -853,6 +840,7 @@ function AppInner() {
                   onExportPng={elements.length > 0 ? handleExportPng : undefined}
                   onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                   onViewOnMap={() => handleTabChange('map')}
+                  onShare={handleShare}
                   onNavigate={handleNavigateTo}
                   onReScrape={userCanScrape ? handleReScrape : undefined}
                 />
@@ -867,6 +855,7 @@ function AppInner() {
                 selectedCountry={selectedCountry}
                 onSelectCountry={setSelectedCountry}
                 onLoadEntity={handleEntityFromMap}
+                onShare={handleShare}
                 basis={mapBasis}
                 loading={countryLoading}
                 contextNode={selectedNode}
@@ -928,6 +917,7 @@ function AppInner() {
                     onExportPng={elements.length > 0 ? handleExportPng : undefined}
                     onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                     onViewOnMap={() => handleTabChange('map')}
+                    onShare={handleShare}
                     onNavigate={handleNavigateTo}
                     onReScrape={userCanScrape ? handleReScrape : undefined}
                   />
@@ -956,6 +946,7 @@ function AppInner() {
                     selectedCountry={selectedCountry}
                     onSelectCountry={setSelectedCountry}
                     onLoadEntity={handleEntityFromMap}
+                    onShare={handleShare}
                     basis={mapBasis}
                     loading={countryLoading}
                     contextNode={selectedNode}
@@ -980,18 +971,6 @@ function AppInner() {
                   onLogout={logout}
                 />
               </div>
-            )}
-            {showShareTools && (
-              <>
-                {canModerate && (
-                  <button className="mobile-share-fab mobile-flag-fab" onClick={() => setShowFlagQueue(true)} title={t('modQueue.title')}>
-                    <FiFlag />
-                  </button>
-                )}
-                <button className="mobile-share-fab" onClick={handleShare} title={t('share.title')}>
-                  <FiShare2 />
-                </button>
-              </>
             )}
           </>
         ) : (

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import NodePanel from './NodePanel'
 import type { NodeData, FullProfile, Entity } from '../types'
@@ -14,7 +14,6 @@ vi.mock('../services/api', () => ({
 }))
 vi.mock('./NodeFlags', () => ({ default: () => null }))
 vi.mock('./TimelinePanel', () => ({ default: () => null }))
-vi.mock('./EdgeReportButton', () => ({ default: () => null }))
 
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 
@@ -334,6 +333,95 @@ describe('a person: age while living, dates once dead', () => {
     await show({ nationality: 'AT' })
     expect(text()).not.toMatch(/Age/)
     expect(text()).not.toMatch(/Born/)
+  })
+})
+
+describe('the \u22ee beside the name', () => {
+  const openEntity = async (over: Record<string, unknown> = {}) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      owners: [], subsidiaries: [], executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} {...over} />)
+    await screen.findByText('Acme Corp')
+  }
+
+  it('offers share and report', async () => {
+    await openEntity({ onShare: vi.fn() })
+    await userEvent.click(screen.getByRole('button', { name: /Actions/i }))
+    expect(screen.getByText('Share')).toBeInTheDocument()
+    expect(screen.getByText('Report')).toBeInTheDocument()
+  })
+
+  it('shares through the handler App gave it', async () => {
+    const onShare = vi.fn()
+    await openEntity({ onShare })
+    await userEvent.click(screen.getByRole('button', { name: /Actions/i }))
+    await userEvent.click(screen.getByText('Share'))
+    expect(onShare).toHaveBeenCalledTimes(1)
+  })
+
+  it('omits share when there is no handler, rather than showing a dead item', async () => {
+    await openEntity()
+    await userEvent.click(screen.getByRole('button', { name: /Actions/i }))
+    expect(screen.queryByText('Share')).toBeNull()
+    expect(screen.getByText('Report')).toBeInTheDocument()
+  })
+
+  it('opens the report dialog', async () => {
+    await openEntity({ onShare: vi.fn() })
+    await userEvent.click(screen.getByRole('button', { name: /Actions/i }))
+    await userEvent.click(screen.getByText('Report'))
+    expect(await screen.findByText('Report a problem')).toBeInTheDocument()
+    // …and it is about this company: the subtitle names it.
+    expect(screen.getByText(/Tell us what looks wrong about Acme Corp/)).toBeInTheDocument()
+  })
+})
+
+describe('a relationship row', () => {
+  const withSubsidiary = async (sourceUrl?: string | null) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      owners: [], executives: [],
+      subsidiaries: [{
+        entity: { id: 'e2', name: 'Beta Ltd', type: 'company', verified: false } as Entity,
+        relationship: { ownership_type: 'full', stake_percent: 100, source_url: sourceUrl } as never,
+      }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    return await screen.findByText('Beta Ltd')
+  }
+
+  const rowOf = (el: HTMLElement) => el.closest('.rel-row') as HTMLElement
+
+  it('opens a menu on right-click', async () => {
+    const row = rowOf(await withSubsidiary('https://search.gleif.org/#/record/X'))
+    fireEvent.contextMenu(row)
+    expect(screen.getByText(/Report relationship/i)).toBeInTheDocument()
+    expect(screen.getByText(/View source/i)).toBeInTheDocument()
+  })
+
+  it('offers no source when the relationship has none', async () => {
+    // Omitted rather than disabled: a dead item invites a click that does nothing.
+    const row = rowOf(await withSubsidiary(null))
+    fireEvent.contextMenu(row)
+    expect(screen.getByText(/Report relationship/i)).toBeInTheDocument()
+    expect(screen.queryByText(/View source/i)).toBeNull()
+  })
+
+  it('opens that relationship\'s record, not the company\'s', async () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const row = rowOf(await withSubsidiary('https://www.sec.gov/Archives/edgar/data/1/x-index.htm'))
+    fireEvent.contextMenu(row)
+    await userEvent.click(screen.getByText(/View source/i))
+    expect(open).toHaveBeenCalledWith(
+      'https://www.sec.gov/Archives/edgar/data/1/x-index.htm', '_blank', 'noopener,noreferrer')
+    open.mockRestore()
+  })
+
+  it('has no flag icon any more', async () => {
+    const row = rowOf(await withSubsidiary('https://x.test/1'))
+    expect(row.querySelector('.edge-report-btn')).toBeNull()
   })
 })
 

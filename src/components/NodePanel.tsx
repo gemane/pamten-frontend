@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash } from 'react-icons/fi'
+import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import { ageFrom } from '../utils/age'
@@ -9,7 +9,9 @@ import { colorFor, typeLabelKey } from '../utils/entityColors'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
-import EdgeReportButton from './EdgeReportButton'
+import ActionMenu     from './ActionMenu'
+import ReportModal    from './ReportModal'
+import { useLongPress } from '../hooks/useLongPress'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry } from '../types'
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
@@ -176,11 +178,41 @@ function usePersonImage(fullName: string | undefined, wikipediaUrl?: string): st
   return src
 }
 
+/** The ⋮ beside a name: share this view, or report this company or person.
+ *
+ *  Sharing reads the URL rather than the node, because the hash already encodes
+ *  which node is open — the same link the reader has in their address bar. */
+function NodeActions({ label, nodeId, targetKind, onShare }: {
+  label: string
+  nodeId: string
+  targetKind: 'entity' | 'person'
+  onShare?: () => void
+}) {
+  const { t } = useTranslation()
+  const [reporting, setReporting] = useState(false)
+  const items = [
+    ...(onShare ? [{ key: 'share', label: t('menu.share'), icon: <FiShare2 size={13} />,
+                     onSelect: onShare }] : []),
+    { key: 'report', label: t('menu.report'), icon: <FiFlag size={13} />,
+      onSelect: () => setReporting(true) },
+  ]
+  return (
+    <>
+      <ActionMenu items={items} triggerLabel={t('menu.actions')} trigger={<FiMoreVertical />} />
+      {reporting && (
+        <ReportModal targetKind={targetKind} targetLabel={label} nodeId={nodeId}
+                     onClose={() => setReporting(false)} />
+      )}
+    </>
+  )
+}
+
 interface NodePanelProps {
   node: NodeData | null
   onExportPng?: () => void
   onExportCsv?: () => void
   onViewOnMap?: () => void
+  onShare?: () => void
   onNavigate?: (node: NodeData) => void
   // Force a fresh scrape of this company (verified users only — App passes undefined otherwise).
   onReScrape?: (node: NodeData) => void
@@ -286,7 +318,7 @@ function DetailsSection({ entity }: { entity: Entity }) {
   )
 }
 
-function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: NodeData) => void }) {
+function PersonView({ node, onNavigate, onShare }: { node: NodeData; onNavigate?: (n: NodeData) => void; onShare?: () => void }) {
   const raw = node.raw as Person
   const { t, i18n } = useTranslation()
   const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
@@ -317,7 +349,13 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
         <img className="panel-avatar" src={imgSrc} alt={raw.full_name} />
       )}
       <span className="node-type-badge node-type-badge--person">{t('legend.person')}</span>
-      <h2 className="panel-name">{raw.full_name}</h2>
+      <div className="panel-header-row">
+        <h2 className="panel-name">{raw.full_name}</h2>
+        {/* Share and report live here now: one ⋮ beside the name, rather than a
+          share button in the header, another floating on mobile, and a Report
+          button of its own. */}
+        <NodeActions label={raw.full_name} nodeId={node.id} targetKind="person" onShare={onShare} />
+      </div>
       <NodeFlags nodeId={node.id} targetKind="person" label={raw.full_name} />
       {raw.description && <p className="panel-desc">{raw.description}</p>}
       <div className="panel-meta">
@@ -338,8 +376,9 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
         <Section title={t('panel.positions')}>
           {[...positions].sort(byName(p => p.entity?.name ?? '')).map((p, i) => (
             <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
-              action={<EdgeReportButton targetKind="role" fromId={node.id} toId={p.entity.id}
-                        role={p.role?.role} label={p.entity.name} />}>
+              rel={{ targetKind: 'role', fromId: node.id, toId: p.entity.id,
+                     role: p.role?.role, label: p.entity.name,
+                     sourceUrl: p.role?.source_url }}>
               <span className="rel-item__name">{p.entity.name}</span>
               <span className="role-badge">{p.role?.role}</span>
             </RelRow>
@@ -351,8 +390,8 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
         <Section title={t('panel.ownerships')}>
           {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '')).map((h, i) => (
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
-              action={<EdgeReportButton targetKind="owns" fromId={node.id} toId={h.entity.id}
-                        label={h.entity.name} />}>
+              rel={{ targetKind: 'owns', fromId: node.id, toId: h.entity.id,
+                     label: h.entity.name, sourceUrl: h.relationship?.source_url }}>
               <span className="rel-item__name">{h.entity.name}</span>
               <OwnershipBadge
                 type={h.relationship?.ownership_type}
@@ -402,20 +441,62 @@ function TypeMarker({ node }: { node: NodeData }) {
   )
 }
 
-function RelRow({ node, onNavigate, action, children }: {
+/** What a relationship row can be asked about: report it, or go to the record
+ *  that asserted it. Identified by the natural key the flag system uses
+ *  (from → to [+ role]) rather than any generated id, so a report survives a
+ *  re-scrape. */
+export interface RelTarget {
+  targetKind: 'owns' | 'role'
+  fromId: string
+  toId: string
+  role?: string
+  label: string
+  sourceUrl?: string | null
+}
+
+function RelRow({ node, onNavigate, rel, children }: {
   node: NodeData | null
   onNavigate?: (n: NodeData) => void
-  action?: React.ReactNode
+  rel?: RelTarget
   children: React.ReactNode
 }) {
+  const { t } = useTranslation()
+  const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null)
+  const [reporting, setReporting] = useState(false)
+  // Unconditional: a hook cannot be called behind an `if`, and a row with
+  // nothing to offer simply never opens the menu.
+  const press = useLongPress(at => { if (rel) setMenuAt(at) })
+
   // No node means there is no entity to describe (free float, a missing owner),
   // so no marker rather than a meaningless grey one.
   const body = <>{node ? <TypeMarker node={node} /> : null}{children}</>
   const row = (node && node.id && onNavigate)
     ? <button type="button" className="rel-item rel-item--clickable" onClick={() => onNavigate(node)}>{body}</button>
     : <div className="rel-item">{body}</div>
-  if (!action) return row
-  return <div className="rel-row">{row}{action}</div>
+  if (!rel) return row
+
+  const items = [
+    { key: 'report', label: t('menu.reportRelationship'), icon: <FiFlag size={12} />,
+      onSelect: () => setReporting(true) },
+    // Omitted rather than disabled when the relationship has no record to open:
+    // a dead menu item invites a click that does nothing.
+    ...(rel.sourceUrl ? [{
+      key: 'source', label: t('menu.viewSource'), icon: <FiExternalLink size={12} />,
+      onSelect: () => window.open(rel.sourceUrl as string, '_blank', 'noopener,noreferrer'),
+    }] : []),
+  ]
+
+  return (
+    <div className="rel-row" {...press}>
+      {row}
+      <ActionMenu items={items} position={menuAt} onClose={() => setMenuAt(null)} />
+      {reporting && (
+        <ReportModal targetKind={rel.targetKind} targetLabel={rel.label}
+                     fromId={rel.fromId} toId={rel.toId} role={rel.role}
+                     onClose={() => setReporting(false)} />
+      )}
+    </div>
+  )
 }
 
 interface EntityOverviewProps {
@@ -424,6 +505,7 @@ interface EntityOverviewProps {
   onExportPng?: () => void
   onExportCsv?: () => void
   onViewOnMap?: () => void
+  onShare?: () => void
   onNavigate?: (node: NodeData) => void
   node: NodeData
   onReScrape?: (node: NodeData) => void
@@ -498,7 +580,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onNavigate, node, onReScrape }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [] } = profile
@@ -563,7 +645,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       {entity.is_nominee && (
         <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
       )}
-      <h2 className="panel-name">{entity.name}</h2>
+      <div className="panel-header-row">
+        <h2 className="panel-name">{entity.name}</h2>
+        <NodeActions label={entity.name} nodeId={entity.id} targetKind="entity" onShare={onShare} />
+      </div>
       <NodeFlags nodeId={entity.id} targetKind="entity" label={entity.name} />
       {entity.description && <p className="panel-desc">{entity.description}</p>}
 
@@ -602,9 +687,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
             o => o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '',
           )).map((o, i) => (
             <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}
-              action={o.owner
-                ? <EdgeReportButton targetKind="owns" fromId={o.owner.id} toId={entity.id}
-                    label={('name' in o.owner ? o.owner.name : o.owner.full_name)} />
+              rel={o.owner
+                ? { targetKind: 'owns', fromId: o.owner.id, toId: entity.id,
+                    label: ('name' in o.owner ? o.owner.name : o.owner.full_name),
+                    sourceUrl: o.relationship?.source_url }
                 : undefined}>
               <span className="rel-item__name">
                 {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
@@ -680,8 +766,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         <Section title={t('panel.foundedBy')}>
           {[...founders].sort(byName(f => f.person?.full_name ?? '')).map((f, i) => (
             <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}
-              action={<EdgeReportButton targetKind="role" fromId={f.person.id} toId={entity.id}
-                        role={f.role?.role || 'Founder'} label={f.person.full_name} />}>
+              rel={{ targetKind: 'role', fromId: f.person.id, toId: entity.id,
+                     role: f.role?.role || 'Founder', label: f.person.full_name,
+                     sourceUrl: f.role?.source_url }}>
               <span className="rel-item__name">{f.person.full_name}</span>
             </RelRow>
           ))}
@@ -695,8 +782,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? ''))
             const row = (s: SubsidiaryEntry, i: number) => (
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
-                action={<EdgeReportButton targetKind="owns" fromId={entity.id} toId={s.entity.id}
-                          label={s.entity.name} />}>
+                rel={{ targetKind: 'owns', fromId: entity.id, toId: s.entity.id,
+                       label: s.entity.name, sourceUrl: s.relationship?.source_url }}>
                 <span className="rel-item__name">{s.entity.name}</span>
                 <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
               </RelRow>
@@ -737,8 +824,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         <Section title={t('panel.executives')} count={counts?.executives}>
           {[...otherExecutives].sort(byRoleImportance(e => e.role?.role, e => e.person?.full_name ?? '')).map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
-              action={<EdgeReportButton targetKind="role" fromId={e.person.id} toId={entity.id}
-                        role={e.role?.role} label={e.person.full_name} />}>
+              rel={{ targetKind: 'role', fromId: e.person.id, toId: entity.id,
+                     role: e.role?.role, label: e.person.full_name,
+                     sourceUrl: e.role?.source_url }}>
               <span className="rel-item__name">{e.person.full_name}</span>
               <span className="role-badge">{e.role?.role}</span>
             </RelRow>
@@ -797,7 +885,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onNavigate, onReScrape, refreshKey }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshKey }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -846,7 +934,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     )
   }
 
-  if (node.nodeType === 'person') return <PersonView node={node} onNavigate={onNavigate} />
+  if (node.nodeType === 'person') return <PersonView node={node} onNavigate={onNavigate} onShare={onShare} />
 
   if (loading) {
     return (
@@ -862,7 +950,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onNavigate={onNavigate} />
+        ? <EntityOverview profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )

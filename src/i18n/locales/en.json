@@ -478,5 +478,12 @@
     "wasVerified": "· signature verified ✓",
     "wasUnverified": "· unverified",
     "pubkeyPlaceholder": "Peer public key (optional, to verify their exports)"
+  },
+  "menu": {
+    "actions": "Actions",
+    "share": "Share",
+    "report": "Report",
+    "reportRelationship": "Report relationship",
+    "viewSource": "View source"
   }
 }

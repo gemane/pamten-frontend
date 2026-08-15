@@ -102,6 +102,7 @@ export interface OwnsRelationship {
   value_usd?: number
   source_id?: string
   credibility_score?: number
+  source_url?: string | null   // deep link to the record that asserted it
 }
 
 export interface RoleRelationship {
@@ -110,6 +111,7 @@ export interface RoleRelationship {
   until?: string | null
   source_id?: string
   credibility_score?: number
+  source_url?: string | null   // deep link to the record that asserted it
 }
 
 // API response types

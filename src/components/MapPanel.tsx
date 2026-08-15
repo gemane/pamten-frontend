@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowLeft, FiMapPin, FiLoader, FiChevronRight, FiChevronDown } from 'react-icons/fi'
+import { FiArrowLeft, FiMapPin, FiLoader, FiChevronRight, FiChevronDown, FiMoreVertical, FiShare2, FiFlag } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
 import { sortCountries, type CountrySort } from '../utils/sortCountries'
 import { subdivisionName, subdivisionCountry, isSubdivision } from '../utils/isoSubdivisions'
 import { NO_COUNTRY, basisCountry, basisAddress, sortSubsidiaries, type MapBasis } from '../utils/mapBasis'
 import type { CountryEntityGroup, Entity, NodeData } from '../types'
 import { colorFor } from '../utils/entityColors'
+import ActionMenu from './ActionMenu'
+import ReportModal from './ReportModal'
 
 // Was a three-entry copy of the palette — see ScraperPanel for the same fix.
 const typeColor = (type?: string | null) => colorFor('entity', type).fill
@@ -73,11 +75,12 @@ interface MapPanelProps {
   contextNode?: NodeData | null
   contextSubsidiaries?: NodeData[]
   onSelectSubsidiary?: (node: NodeData) => void
+  onShare?: () => void
 }
 
 export default function MapPanel({
   countryData, subdivisionData = [], selectedCountry, onSelectCountry, onLoadEntity, loading,
-  basis = 'jurisdiction', contextNode, contextSubsidiaries = [], onSelectSubsidiary,
+  basis = 'jurisdiction', contextNode, contextSubsidiaries = [], onSelectSubsidiary, onShare,
 }: MapPanelProps) {
   const { t, i18n } = useTranslation()
   // The unplaced group arrives as country: null but is selected by sentinel. A
@@ -86,6 +89,7 @@ export default function MapPanel({
   const selected = countryData.find(d => (d.country ?? NO_COUNTRY) === selectedCountry)
     ?? subdivisionData.find(d => d.country === selectedCountry)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [reporting, setReporting] = useState(false)
 
   const [sortBy, setSortBy] = useState<CountrySort>(
     () => (localStorage.getItem('map-sort') === 'name' ? 'name' : 'count'),
@@ -119,7 +123,7 @@ export default function MapPanel({
       <div className="map-panel">
         <div className="map-panel__country-header">
           <span className="map-entity-dot" style={{ background: '#b45309', width: 10, height: 10, flexShrink: 0 }} />
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div className="map-panel__country-name">{contextNode.label}</div>
             {primaryCountry && (
               <div className="map-panel__country-count">{countryName(primaryCountry, i18n.language)}</div>
@@ -128,7 +132,23 @@ export default function MapPanel({
               <div className="map-panel__address" title={primaryAddress}>{primaryAddress}</div>
             )}
           </div>
+          {/* Same ⋮ as the node panel: the map is another place a company is
+              named, so it is another place to share or report one. */}
+          <ActionMenu
+            triggerLabel={t('menu.actions')}
+            trigger={<FiMoreVertical />}
+            items={[
+              ...(onShare ? [{ key: 'share', label: t('menu.share'),
+                               icon: <FiShare2 size={13} />, onSelect: onShare }] : []),
+              { key: 'report', label: t('menu.report'), icon: <FiFlag size={13} />,
+                onSelect: () => setReporting(true) },
+            ]}
+          />
         </div>
+        {reporting && (
+          <ReportModal targetKind="entity" targetLabel={contextNode.label}
+                       nodeId={contextNode.id} onClose={() => setReporting(false)} />
+        )}
         {contextSubsidiaries.length > 0 ? (
           <div className="map-panel__entity-list">
             {sortSubsidiaries(contextSubsidiaries, basis, i18n.language).map(sub => {

@@ -478,5 +478,12 @@
     "wasVerified": "· firma verificada ✓",
     "wasUnverified": "· sin verificar",
     "pubkeyPlaceholder": "Clave pública del par (opcional, para verificar sus exportaciones)"
+  },
+  "menu": {
+    "actions": "Acciones",
+    "share": "Compartir",
+    "report": "Reportar",
+    "reportRelationship": "Reportar relación",
+    "viewSource": "Ver fuente"
   }
 }
