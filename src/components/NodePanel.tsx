@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
+import { ageFrom } from '../utils/age'
 import { isSubdivision, subdivisionName } from '../utils/isoSubdivisions'
 import { colorFor, typeLabelKey } from '../utils/entityColors'
 import OwnershipBadge from './OwnershipBadge'
@@ -102,7 +103,18 @@ export function personDisplayDetails(p: Person, lang: string) {
     .map(c => countryName(c, lang))
     .filter(Boolean)
   return {
-    born: formatProvenanceDate(p.birth_date),
+    // A living person gets an age, not a birth date: it answers the question a
+    // reader of an ownership graph actually has, and it is the smaller
+    // disclosure about someone who never contacted us — the same fact, minus the
+    // part that helps identify them. The date is still stored, and is still what
+    // the age is computed from.
+    //
+    // Someone who has died keeps their dates. Those bound the period in which
+    // they could have held or exercised control, which is what an ownership
+    // record is read for; an age that changes every year cannot answer "who was
+    // responsible for this company in 1985".
+    age:  p.death_date ? null : ageFrom(p.birth_date),
+    born: p.death_date ? formatProvenanceDate(p.birth_date) : null,
     died: formatProvenanceDate(p.death_date),
     nationalities,
     aka: (p.alias ?? []).filter(Boolean),
@@ -278,7 +290,7 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
   const raw = node.raw as Person
   const { t, i18n } = useTranslation()
   const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
-  const { born, died, nationalities, aka } = personDisplayDetails(raw, i18n.language)
+  const { age, born, died, nationalities, aka } = personDisplayDetails(raw, i18n.language)
 
   // A person's positions (HAS_ROLE) and ownerships (OWNS) already exist in the
   // graph — fetch them so the panel shows what they hold, not just their bio.
@@ -309,6 +321,8 @@ function PersonView({ node, onNavigate }: { node: NodeData; onNavigate?: (n: Nod
       <NodeFlags nodeId={node.id} targetKind="person" label={raw.full_name} />
       {raw.description && <p className="panel-desc">{raw.description}</p>}
       <div className="panel-meta">
+        <MetaRow icon={FiCalendar} label={t('panel.age')}
+                 value={age !== null ? t('panel.years', { count: age }) : null} />
         <MetaRow icon={FiCalendar} label={t('panel.born')} value={born} />
         <MetaRow icon={FiMapPin} label={t('panel.birthPlace')} value={raw.birth_place} />
         <MetaRow icon={FiCalendar} label={t('panel.died')} value={died} />

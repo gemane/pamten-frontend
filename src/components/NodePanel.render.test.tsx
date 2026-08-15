@@ -16,7 +16,7 @@ vi.mock('./NodeFlags', () => ({ default: () => null }))
 vi.mock('./TimelinePanel', () => ({ default: () => null }))
 vi.mock('./EdgeReportButton', () => ({ default: () => null }))
 
-import { getFullProfile, getEntitySources } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 
 const mockProfile = vi.mocked(getFullProfile)
 const mockSources = vi.mocked(getEntitySources)
@@ -286,6 +286,54 @@ describe('where a company is registered', () => {
   it('ignores a value that is not a subdivision code', async () => {
     await withEntity({ country: 'US', jurisdiction_code: 'US' })
     expect(screen.queryByText('Registered in')).toBeNull()
+  })
+})
+
+describe('a person: age while living, dates once dead', () => {
+  const person = (extra: Record<string, unknown>) => ({
+    id: 'p1', first_name: 'A', last_name: 'B', full_name: 'A B', verified: false, ...extra,
+  })
+
+  const show = async (extra: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {} } as never)
+    vi.mocked(getPersonProfile).mockResolvedValue({ data: { person: person(extra), positions: [], holdings: [] } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+    render(<NodePanel node={{ id: 'p1', label: 'A B', nodeType: 'person',
+                              raw: person(extra) as never }} refreshKey={0} />)
+    await screen.findByText('A B')
+  }
+
+  const text = () => document.querySelector('.panel-meta')?.textContent ?? ''
+
+  it('shows a living person an age and no date at all', async () => {
+    // The point of the change: the date is still stored and still returned by the
+    // API, but it is not what the panel puts in front of a reader.
+    await show({ birth_date: '1971-07-14' })
+    expect(text()).toMatch(/Age/)
+    expect(text()).toMatch(/\d+ years/)
+    expect(text()).not.toMatch(/1971/)
+  })
+
+  it('shows a deceased person both dates and no age', async () => {
+    // Their dates bound the period in which they could have held control, which
+    // is what an ownership record is read for. An age cannot answer that.
+    await show({ birth_date: '1917-08-04', death_date: '2015-05-31' })
+    expect(text()).toMatch(/Born/)
+    expect(text()).toMatch(/1917/)
+    expect(text()).toMatch(/2015/)
+    expect(text()).not.toMatch(/Age/)
+  })
+
+  it('works from a month and year, which is all Companies House publishes', async () => {
+    await show({ birth_date: '1951-08' })
+    expect(text()).toMatch(/\d+ years/)
+    expect(text()).not.toMatch(/1951/)
+  })
+
+  it('shows neither row when there is no birth date', async () => {
+    await show({ nationality: 'AT' })
+    expect(text()).not.toMatch(/Age/)
+    expect(text()).not.toMatch(/Born/)
   })
 })
 
