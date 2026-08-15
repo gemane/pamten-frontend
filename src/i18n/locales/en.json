@@ -71,7 +71,8 @@
     "expandHint": "Double-click to expand",
     "filterTitle": "Minimum stake",
     "filterAny": "Any",
-    "filterCoverage": "{{stated}} of {{total}} ownership links state a percentage. The rest are always shown."
+    "filterCoverage": "{{stated}} of {{total}} ownership links state a percentage.",
+    "filterCoverageRest": "The rest are always shown."
   },
   "legend": {
     "nodes": "Nodes",

@@ -116,7 +116,10 @@ export default function GraphStakeFilter({ value, onChange, stated, total }: Gra
               {filterLabel(f, anyLabel)}
             </button>
           ))}
-          <p className="graph-filter__note">{t('graph.filterCoverage', { stated, total })}</p>
+          <div className="graph-filter__note">
+            <p>{t('graph.filterCoverage', { stated, total })}</p>
+            <p>{t('graph.filterCoverageRest')}</p>
+          </div>
         </div>
       )}
     </div>

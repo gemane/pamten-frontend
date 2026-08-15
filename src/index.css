@@ -2764,6 +2764,9 @@ a.source-item__name:hover { color: #4A90D9; }
   padding: 8px;
   backdrop-filter: blur(8px);
   min-width: 150px;
+  /* Without a ceiling the panel takes its width from the coverage sentence's
+     max-content — one long line, and every band row trailing empty space. */
+  max-width: 215px;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -2791,6 +2794,7 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 .graph-filter__option:hover { background: rgba(255,255,255,0.07); color: #fff; }
 .graph-filter__option--active { color: #fff; }
+.graph-filter__note p + p { margin-top: 3px; }
 .graph-filter__note {
   margin-top: 6px;
   padding: 6px 8px 0;

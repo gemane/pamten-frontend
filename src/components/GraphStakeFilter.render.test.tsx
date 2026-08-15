@@ -108,6 +108,17 @@ describe('the control', () => {
     show(ANY_STAKE, vi.fn(), 26, 115)
     await userEvent.click(button())
     expect(screen.getByText(/26 of 115/)).toBeInTheDocument()
+    expect(screen.getByText(/always shown/i)).toBeInTheDocument()
+  })
+
+  it('breaks that note over two lines rather than one long one', async () => {
+    // A single sentence set the panel's width from its max-content, leaving the
+    // band rows trailing empty space. Where it breaks is fixed here rather than
+    // left to the wrap point, which differs per language.
+    show(ANY_STAKE, vi.fn(), 26, 115)
+    await userEvent.click(button())
+    const note = screen.getByText(/26 of 115/).parentElement!
+    expect(note.querySelectorAll('p')).toHaveLength(2)
   })
 })
 
