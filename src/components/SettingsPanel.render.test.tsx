@@ -11,8 +11,14 @@ vi.mock('../services/api', () => ({
   deleteUser: vi.fn(),
 }))
 vi.mock('./MfaSection', () => ({ default: () => null }))
+vi.mock('./ModeratorQueue', () => ({
+  default: ({ relatedTo }: { relatedTo?: string }) =>
+    <div data-testid="queue" data-related-to={relatedTo ?? ''} />,
+}))
 
 const verifiedUser: AuthUser = { id: 'u1', email: 'me@example.com', role: 'viewer', email_verified: true } as AuthUser
+const as = (role: string) => ({ ...verifiedUser, role } as AuthUser)
+const queueButton = () => screen.queryByRole('button', { name: /Open the queue/i })
 
 beforeEach(() => localStorage.clear())
 afterEach(() => { localStorage.clear(); i18n.changeLanguage('en') })
@@ -56,5 +62,41 @@ describe('SettingsPanel (render)', () => {
     expect(screen.getByText('me@example.com')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /Logout/ }))
     expect(props.onLogout).toHaveBeenCalledTimes(1)
+  })
+})
+
+/**
+ * The full moderation queue lives here, because the button under a company's
+ * name only appears when that company has something waiting. Unlike that one,
+ * this shows whether or not anything is queued — Settings is where you go
+ * looking, so an empty queue should say so rather than vanish.
+ */
+describe('the moderation queue section', () => {
+  it('is offered to a moderator', () => {
+    renderPanel({ user: as('moderator') })
+    expect(queueButton()).toBeInTheDocument()
+  })
+
+  it('is offered to an admin', () => {
+    renderPanel({ user: as('admin') })
+    expect(queueButton()).toBeInTheDocument()
+  })
+
+  it('is NOT offered to an ordinary user', () => {
+    renderPanel({ user: verifiedUser })
+    expect(screen.getByText('me@example.com')).toBeInTheDocument()   // panel did render
+    expect(queueButton()).toBeNull()
+  })
+
+  it('is NOT offered to a logged-out visitor', () => {
+    renderPanel({ user: null })
+    expect(queueButton()).toBeNull()
+  })
+
+  it('opens the queue in a modal, unscoped — every company, not one', async () => {
+    renderPanel({ user: as('moderator') })
+    expect(screen.queryByTestId('queue')).toBeNull()
+    await userEvent.click(queueButton()!)
+    expect(screen.getByTestId('queue')).toHaveAttribute('data-related-to', '')
   })
 })

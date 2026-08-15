@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown } from 'react-icons/fi'
+import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown, FiFlag } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import MfaSection from './MfaSection'
 import ChangePasswordSection from './ChangePasswordSection'
 import DeleteAccountSection from './DeleteAccountSection'
+import ModeratorQueue from './ModeratorQueue'
 import type { ThemeMode } from '../hooks/useTheme'
 import type { AuthUser } from '../types'
 import { systemLanguage } from '../utils/systemLanguage'
@@ -72,6 +73,10 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
   // The saved language PREFERENCE ('system' or a code) — distinct from the resolved
   // i18n.language, so "System" stays highlighted even though the UI shows e.g. German.
   const [langPref, setLangPref] = useState<string>(() => localStorage.getItem('lang') || 'system')
+  const [showQueue, setShowQueue] = useState<boolean>(false)
+  // Derived here rather than passed down: `user` is already a prop, and NodeFlags
+  // decides the same way, so the two gates cannot drift.
+  const canModerate = user?.role === 'moderator' || user?.role === 'admin'
 
   const applyLang = (code: string) => {
     setLangPref(code)
@@ -182,8 +187,22 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
         </div>
       )}
 
+      {/* The whole queue, every company. Unlike the button under a node's name
+          this one shows even when nothing is waiting — Settings is where you go
+          looking, and an empty queue should say so rather than vanish. */}
+      {canModerate && (
+        <div className="settings-section">
+          <h4 className="settings-section__title">{t('modQueue.title')}</h4>
+          <button className="scraper-dup-link" onClick={() => setShowQueue(true)}>
+            <FiFlag /> {t('modQueue.open')}
+          </button>
+        </div>
+      )}
+
       {/* Last, and after the admin panel: destructive and irreversible. */}
       {user && <DeleteAccountSection onDeleted={onLogout} />}
+
+      {showQueue && <ModeratorQueue onClose={() => setShowQueue(false)} />}
     </div>
   )
 }
