@@ -114,3 +114,17 @@ export function sortSubsidiaries(
     return (a.label || '').localeCompare(b.label || '', locale)
   })
 }
+
+/**
+ * The colour of a company on the map — its pin, and the dot beside its name in
+ * the panel.
+ *
+ * Violet under Registered, amber under Headquarters, lighter for the company the
+ * map is about than for its subsidiaries. It lives here, beside the basis it
+ * depends on, because the panel needs it as much as the map does: a list whose
+ * dots disagree with the pins next to them makes the reader match names by hand.
+ */
+export function pinFill(role: 'primary' | 'subsidiary', basis: MapBasis): string {
+  if (basis === 'jurisdiction') return role === 'primary' ? '#c084fc' : '#9333ea'
+  return role === 'primary' ? '#fcd34d' : '#f59e0b'
+}
