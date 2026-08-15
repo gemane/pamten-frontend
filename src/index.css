@@ -2711,6 +2711,18 @@ a.source-item__name:hover { color: #4A90D9; }
 /* ── Graph legend ───────────────────────────────────────── */
 .graph-legend {
   position: absolute;
+  /* Below the stake filter, which owns the top of this corner: 12 + 32 + 6. */
+  top: 50px;
+  right: 12px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.graph-filter {
+  position: absolute;
   top: 12px;
   right: 12px;
   z-index: 999;
@@ -2720,7 +2732,10 @@ a.source-item__name:hover { color: #4A90D9; }
   gap: 6px;
 }
 
-.graph-legend__toggle {
+/* The filter button is the ⓘ's twin — same size, same glass, same corner — so
+   one definition covers both and they cannot drift apart. */
+.graph-legend__toggle,
+.graph-filter__toggle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2734,7 +2749,56 @@ a.source-item__name:hover { color: #4A90D9; }
   backdrop-filter: blur(6px);
   transition: color 0.15s, border-color 0.15s;
 }
-.graph-legend__toggle:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+.graph-legend__toggle:hover,
+.graph-filter__toggle:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+/* Wider than the ⓘ once a band is chosen: it carries the band's label. */
+.graph-filter__toggle { width: auto; min-width: 32px; gap: 5px; padding: 0 8px; }
+.graph-filter__toggle--on { color: #eaeaea; border-color: rgba(74,144,217,0.6); }
+.graph-filter__value { font-size: 11px; font-weight: 600; }
+
+.graph-filter__panel {
+  background: rgba(20, 20, 40, 0.9);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 8px;
+  backdrop-filter: blur(8px);
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.graph-filter__heading {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8892a4;
+  padding: 2px 8px 5px;
+}
+.graph-filter__option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #c0c8d8;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.graph-filter__option:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.graph-filter__option--active { color: #fff; }
+.graph-filter__note {
+  margin-top: 6px;
+  padding: 6px 8px 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 10px;
+  line-height: 1.4;
+  color: #8892a4;
+}
 
 .graph-legend__panel {
   background: rgba(20, 20, 40, 0.9);
@@ -2873,30 +2937,6 @@ a.source-item__name:hover { color: #4A90D9; }
 .rel-row { -webkit-touch-callout: none; }
 
 /* ── Graph threshold slider ────────────────────────────── */
-.graph-threshold {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  z-index: 10;
-  background: rgba(26, 26, 46, 0.92);
-  border: 1px solid #2d2d50;
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 150px;
-}
-.graph-threshold__label {
-  font-size: 11px;
-  color: #8892a4;
-  user-select: none;
-}
-.graph-threshold__slider {
-  width: 100%;
-  accent-color: #4A90D9;
-  cursor: pointer;
-}
 
 /* ── Graph tooltip ──────────────────────────────────────── */
 .graph-tooltip {
@@ -3413,11 +3453,18 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 [data-theme="light"] .graph-welcome__chip:hover { border-color: #2b6cb0; color: #2b6cb0; background: rgba(43,108,176,0.06); }
 
+[data-theme="light"] .graph-filter__panel { background: rgba(255,255,255,0.95); border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .graph-filter__heading,
+[data-theme="light"] .graph-filter__note { color: #718096; }
+[data-theme="light"] .graph-filter__option { color: #1a202c; }
+[data-theme="light"] .graph-filter__option:hover { background: rgba(0,0,0,0.06); color: #000; }
+[data-theme="light"] .graph-filter__toggle,
 [data-theme="light"] .graph-legend__toggle {
   background: rgba(255,255,255,0.9);
   border-color: rgba(0,0,0,0.12);
   color: #4a5568;
 }
+[data-theme="light"] .graph-filter__toggle:hover,
 [data-theme="light"] .graph-legend__toggle:hover { color: #1a202c; border-color: rgba(0,0,0,0.25); }
 [data-theme="light"] .graph-legend__panel { background: rgba(255,255,255,0.95); border-color: rgba(0,0,0,0.1); }
 [data-theme="light"] .graph-legend__section { color: #718096; }
@@ -3434,11 +3481,6 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .action-menu__list button { color: #2d3748; }
 [data-theme="light"] .action-menu__list button:hover { background: #eef2f7; color: #1a202c; }
 
-[data-theme="light"] .graph-threshold {
-  background: rgba(255,255,255,0.92);
-  border-color: #d1d9e6;
-}
-[data-theme="light"] .graph-threshold__label { color: #4a5568; }
 
 [data-theme="light"] .graph-tooltip {
   background: rgba(255,255,255,0.97);
