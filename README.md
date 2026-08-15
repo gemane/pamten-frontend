@@ -82,6 +82,7 @@ src/
 - Edge colours by ownership type: full/majority `#2ECC71`, minority `#F39C12`, controlling `#E74C3C`
 - Click a node to open the detail panel; double-click to expand its connections directly
 - **Expand into graph** button in the panel loads an entity's full ownership graph
+- **Minimum stake filter**, above the ⓘ in the top-right: `Any · ≥5% · ≥25% · >50% · >75%`. Bands rather than a slider, because ownership is *reported* in bands — Companies House PSC states "more than 25%", never a number — and because those thresholds are the ones the rules name. A link whose percentage is undisclosed is always kept, since most ownership links state none (26 of 115 on Barclays, 1 of 28 on Microsoft) and hiding them would delete most of the graph while presenting the rest as the whole picture; the panel says how many of the links on screen can actually be judged.
 
 ### Node detail panel
 - **Entity panel**: shows company logo (fetched from Wikidata via P154/P18 → Wikimedia Commons), ownership badges, subsidiaries, executives, **succession** links (*Succeeded by* / *Formerly*, e.g. Twitter → X Corp.), and a link to Wikipedia. Entities collapsed from several BODS filings (an id-less party re-declared per controlled company) list every declaring **source statement** id, so per-statement provenance stays visible after the merge

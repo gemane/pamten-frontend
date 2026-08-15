@@ -1,10 +1,11 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
-import type { GraphElement, NodeData } from '../types'
+import type { EdgeData, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
+import GraphStakeFilter, { ANY_STAKE, keepsEdge, type StakeFilter } from './GraphStakeFilter'
 
 export interface GraphHandle {
   exportPng: () => void
@@ -359,7 +360,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
   const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
-  const [threshold, setThreshold] = useState(0)
+  const [stakeFilter, setStakeFilter] = useState<StakeFilter>(ANY_STAKE)
   const [examples, setExamples]   = useState(() => pickRandom(ALL_EXAMPLE_QUERIES, 3))
   const [taglineIdx, setTaglineIdx] = useState(0)
   const [stats, setStats]         = useState<StatsResponse | null>(null)
@@ -520,7 +521,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     if (centerId) cy.$id(centerId).addClass('center')
   }, [centerId, elements])
 
-  // Hide edges below the stake% threshold; hide orphaned nodes.
+  // Hide ownership below the chosen band; hide nodes left with nothing.
   useEffect(() => {
     const cy = cyRef.current
     if (!cy || elements.length === 0) return
@@ -528,15 +529,14 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const stakePct  = edge.data('stakePct')
       const edgeType  = edge.data('edgeType')
       if (edgeType === 'role') return
-      const hidden = stakePct != null && stakePct < threshold
-      edge.style('display', hidden ? 'none' : 'element')
+      edge.style('display', keepsEdge(stakePct, stakeFilter) ? 'element' : 'none')
     })
     cy.nodes().forEach(node => {
       if (node.id() === centerId) return
       const visible = node.connectedEdges().some(e => e.style('display') !== 'none')
       node.style('display', visible ? 'element' : 'none')
     })
-  }, [threshold, elements, centerId])
+  }, [stakeFilter, elements, centerId])
 
   const centerLabel = elements.find(el => 'id' in el.data && el.data.id === centerId)
     ?.data.label ?? 'graph'
@@ -552,6 +552,15 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       a.click()
     },
   }), [theme, centerLabel])
+
+  // What the filter can actually judge on this graph: ownership links that state
+  // a percentage, out of the ownership links there are.
+  const stakeCoverage = useMemo(() => {
+    const owns = elements
+      .map(el => el.data)
+      .filter((d): d is EdgeData => 'edgeType' in d && d.edgeType !== 'role')
+    return { stated: owns.filter(d => d.stakePct != null).length, total: owns.length }
+  }, [elements])
 
   const showNodeActions = elements.length > 0
     && !!selectedNode
@@ -617,14 +626,8 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       )}
 
       {elements.length > 0 && (
-        <div className="graph-threshold">
-          <span className="graph-threshold__label">{t('graph.minStake', { value: threshold })}</span>
-          <input
-            className="graph-threshold__slider"
-            type="range" min={0} max={25} step={1} value={threshold}
-            onChange={e => setThreshold(Number(e.target.value))}
-          />
-        </div>
+        <GraphStakeFilter value={stakeFilter} onChange={setStakeFilter}
+                          stated={stakeCoverage.stated} total={stakeCoverage.total} />
       )}
 
       {tooltip && (

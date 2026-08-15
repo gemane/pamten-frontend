@@ -66,10 +66,12 @@
     "export": "Exportar",
     "exportPng": "Imagen PNG",
     "exportCsv": "Datos CSV",
-    "minStake": "Mín. participación: {{value}}%",
     "expandGraph": "Ampliar grafo",
     "openAsCenter": "Abrir como centro",
-    "expandHint": "Doble clic para expandir"
+    "expandHint": "Doble clic para expandir",
+    "filterTitle": "Participación mínima",
+    "filterAny": "Todas",
+    "filterCoverage": "{{stated}} de {{total}} participaciones indican un porcentaje. El resto se muestra siempre."
   },
   "legend": {
     "nodes": "Nodos",
