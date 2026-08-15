@@ -71,7 +71,8 @@
     "expandHint": "Doppelklick zum Erweitern",
     "filterTitle": "Mindestanteil",
     "filterAny": "Alle",
-    "filterCoverage": "{{stated}} von {{total}} Beteiligungen nennen einen Prozentsatz. Die übrigen werden immer angezeigt."
+    "filterCoverage": "{{stated}} von {{total}} Beteiligungen nennen einen Prozentsatz.",
+    "filterCoverageRest": "Die übrigen werden immer angezeigt."
   },
   "legend": {
     "nodes": "Knoten",

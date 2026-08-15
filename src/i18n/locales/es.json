@@ -71,7 +71,8 @@
     "expandHint": "Doble clic para expandir",
     "filterTitle": "Participación mínima",
     "filterAny": "Todas",
-    "filterCoverage": "{{stated}} de {{total}} participaciones indican un porcentaje. El resto se muestra siempre."
+    "filterCoverage": "{{stated}} de {{total}} participaciones indican un porcentaje.",
+    "filterCoverageRest": "El resto se muestra siempre."
   },
   "legend": {
     "nodes": "Nodos",
