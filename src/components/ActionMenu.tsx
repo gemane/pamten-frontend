@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 
 /**
  * A small menu, in two shapes.
@@ -15,6 +15,26 @@ import { useState, useEffect, useRef, type ReactNode } from 'react'
  * controls that were reachable on a phone, and a menu that will not close by
  * tapping away is worse than no menu.
  */
+
+/**
+ * Where a free-positioned menu actually goes.
+ *
+ * The pointer is the preferred corner, but a menu opened near an edge would hang
+ * off the screen — a right-click on a relationship row at the right of the panel
+ * is the common case — so it is pulled back inside. A menu wider than the
+ * viewport gives up and sits at the margin.
+ */
+export function clampToViewport(
+  at: { x: number; y: number },
+  size: { width: number; height: number },
+  viewport: { width: number; height: number },
+  margin = 8,
+): { left: number; top: number } {
+  return {
+    left: Math.max(margin, Math.min(at.x, viewport.width - size.width - margin)),
+    top: Math.max(margin, Math.min(at.y, viewport.height - size.height - margin)),
+  }
+}
 
 export interface MenuItem {
   key: string
@@ -40,6 +60,8 @@ export default function ActionMenu({
   const anchored = position === undefined
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [placed, setPlaced] = useState<{ left: number; top: number } | null>(null)
 
   const showing = anchored ? open : position !== null
   const close = () => { setOpen(false); onClose?.() }
@@ -62,14 +84,37 @@ export default function ActionMenu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showing])
 
+  // Measured after the menu exists but before it is painted, so it never appears
+  // at the pointer and then jumps.
+  const px = position?.x
+  const py = position?.y
+  useLayoutEffect(() => {
+    if (anchored || px == null || py == null || !listRef.current) { setPlaced(null); return }
+    const box = listRef.current.getBoundingClientRect()
+    setPlaced(clampToViewport(
+      { x: px, y: py },
+      { width: box.width, height: box.height },
+      { width: window.innerWidth, height: window.innerHeight },
+    ))
+  }, [anchored, px, py])
+
   if (items.length === 0) return null
 
   const menu = showing && (
-    <div className="action-menu__list" role="menu"
+    <div className="action-menu__list" role="menu" ref={listRef}
          // Free-positioned menus are fixed to the viewport: a row lives inside a
          // scrolling panel, and an absolutely-positioned menu would scroll away
          // from the pointer that opened it.
-         style={anchored ? undefined : { position: 'fixed', top: position!.y, left: position!.x }}>
+         //
+         // `right: auto` is not decoration. The class anchors the menu under a ⋮
+         // with `right: 0`; leaving that in place while setting `left` stretches
+         // the box between the two, so the menu ran from the pointer all the way
+         // to the right edge of the screen.
+         style={anchored ? undefined : {
+           position: 'fixed', right: 'auto',
+           top: placed?.top ?? position!.y,
+           left: placed?.left ?? position!.x,
+         }}>
       {items.map(item => (
         <button key={item.key} role="menuitem" onClick={() => { close(); item.onSelect() }}>
           {item.icon}{item.label}
