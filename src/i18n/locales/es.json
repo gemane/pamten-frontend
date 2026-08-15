@@ -140,7 +140,10 @@
     "crossHoldings": "Propiedad circular",
     "crossHoldingsHint": "Esta entidad y la(s) siguiente(s) se poseen mutuamente (participación recíproca)",
     "indirectHoldings": "En posesión indirecta",
-    "registeredIn": "Registrada en"
+    "registeredIn": "Registrada en",
+    "age": "Edad",
+    "years_one": "{{count}} año",
+    "years_other": "{{count}} años"
   },
   "report": {
     "button": "Reportar",

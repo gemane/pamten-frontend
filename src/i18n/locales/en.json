@@ -140,7 +140,10 @@
     "crossHoldings": "Circular ownership",
     "crossHoldingsHint": "This entity and the one(s) below own each other (reciprocal holding)",
     "indirectHoldings": "Held indirectly",
-    "registeredIn": "Registered in"
+    "registeredIn": "Registered in",
+    "age": "Age",
+    "years_one": "{{count}} year",
+    "years_other": "{{count}} years"
   },
   "report": {
     "button": "Report",

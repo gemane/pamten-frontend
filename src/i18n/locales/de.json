@@ -140,7 +140,10 @@
     "crossHoldings": "Überkreuzbeteiligung",
     "crossHoldingsHint": "Dieses Unternehmen und die unten genannten besitzen sich gegenseitig (wechselseitige Beteiligung)",
     "indirectHoldings": "Indirekt gehalten",
-    "registeredIn": "Registriert in"
+    "registeredIn": "Registriert in",
+    "age": "Alter",
+    "years_one": "{{count}} Jahr",
+    "years_other": "{{count}} Jahre"
   },
   "report": {
     "button": "Melden",
