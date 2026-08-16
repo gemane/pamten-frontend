@@ -82,20 +82,23 @@ describe('the mark inside the app', () => {
   const app = readFileSync(join(root, 'src', 'App.tsx'), 'utf-8')
   const graph = readFileSync(join(root, 'src', 'components', 'Graph.tsx'), 'utf-8')
 
-  it('is decorative in both places it appears', () => {
+  it('is decorative in the topbar', () => {
     // The wordmark beside it already says "Owlgraph"; a screen reader announcing
     // the image as well reads the brand out twice.
-    for (const [name, src] of [['App', app], ['Graph', graph]] as const) {
-      const img = src.match(/<img className="(?:logo-mark|graph-welcome__mark)"[\s\S]*?\/>/)
-      expect(img, `no mark found in ${name}`).toBeTruthy()
-      expect(img![0], `${name}: mark should be decorative`).toMatch(/alt=""/)
-      expect(img![0], `${name}: mark should be hidden from screen readers`).toMatch(/aria-hidden/)
-    }
+    const img = app.match(/<img className="logo-mark"[\s\S]*?\/>/)
+    expect(img).toBeTruthy()
+    expect(img![0]).toMatch(/alt=""/)
+    expect(img![0]).toMatch(/aria-hidden/)
   })
 
   it('is sized in the markup, so the layout does not jump while it loads', () => {
     expect(app).toMatch(/className="logo-mark"[\s\S]*?width=\{\d+\} height=\{\d+\}/)
-    expect(graph).toMatch(/className="graph-welcome__mark"[\s\S]*?width=\{\d+\} height=\{\d+\}/)
+  })
+
+  it('stays off the start screen, where the wordmark carries it alone', () => {
+    // Tried and removed: at 44px the word "Owlgraph" is the whole identity there,
+    // and a mark above it made a prompt-to-search look like a splash screen.
+    expect(graph).not.toMatch(/graph-welcome__mark/)
   })
 })
 

@@ -2561,14 +2561,6 @@ a.source-item__name:hover { color: #4A90D9; }
   pointer-events: none;
 }
 
-.graph-welcome__mark {
-  display: block;
-  margin: 0 auto 14px;
-  /* Dimmer than the wordmark it introduces: this screen is a prompt to search,
-     not a splash. */
-  opacity: 0.75;
-}
-
 .graph-welcome__logo {
   font-size: 44px;
   font-weight: 800;

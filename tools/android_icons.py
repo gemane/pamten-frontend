@@ -50,9 +50,19 @@ LEGACY_FILL = 0.78
 LEGACY_PLATE = (255, 255, 255, 255)
 LEGACY_RADIUS = 0.22
 
-#: Share of the adaptive foreground the mark fills — the 72dp safe zone inside
-#: the 108dp layer, and the whole reason this script exists.
-ADAPTIVE_FILL = 72 / 108
+#: Share of the adaptive foreground the mark fills.
+#:
+#: The layer is 108dp and the masked viewport is the central 72dp — but that is a
+#: *viewport*, not a shape. Launchers mask it to a circle, a squircle, a teardrop;
+#: Google's guidance is that only the central **66dp circle** is guaranteed to
+#: survive all of them.
+#:
+#: The mark is square, and a square inside a circle is bounded by the circle's
+#: diameter over root two — not by its diameter. Sizing the square to the 72dp
+#: box (0.667) is the mistake that was shipped first: it fits the square viewport
+#: exactly and loses all four corners the moment a launcher draws a circle.
+SAFE_CIRCLE_DP = 66
+ADAPTIVE_FILL = (SAFE_CIRCLE_DP / 2 ** 0.5) / 108
 
 
 def render(source, canvas_px: int, fill: float, plate: tuple | None = None):
@@ -64,7 +74,10 @@ def render(source, canvas_px: int, fill: float, plate: tuple | None = None):
     from PIL import Image, ImageDraw
 
     art = source.crop(source.getchannel("A").getbbox())   # trim transparent margin
-    target = max(1, round(canvas_px * fill))
+    # Floor, not round: `fill` is a ceiling the art must stay under. Rounding up a
+    # single pixel pushes the corners of a square mark back outside the circle,
+    # which is a whole pixel of clipping for nothing.
+    target = max(1, int(canvas_px * fill))
     scale = target / max(art.size)
     art = art.resize((max(1, round(art.width * scale)), max(1, round(art.height * scale))),
                      Image.LANCZOS)
@@ -79,6 +92,26 @@ def render(source, canvas_px: int, fill: float, plate: tuple | None = None):
         out.paste(backing, (0, 0), mask)
     out.paste(art, ((canvas_px - art.width) // 2, (canvas_px - art.height) // 2), art)
     return out
+
+
+def _outside_safe_circle(img) -> list[str]:
+    """Complain if any opaque pixel falls outside the guaranteed-visible circle.
+
+    This is the check that would have caught the corners being cut: the art can
+    sit inside the square viewport and still stick out of every circular mask
+    drawn within it.
+    """
+    bbox = img.convert("RGBA").getchannel("A").getbbox()
+    if not bbox:
+        return ["fully transparent"]
+    size = img.size[0]
+    centre = size / 2
+    radius = size * (SAFE_CIRCLE_DP / 108) / 2
+    corners = [(bbox[0], bbox[1]), (bbox[2], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3])]
+    worst = max(((x - centre) ** 2 + (y - centre) ** 2) ** 0.5 for x, y in corners)
+    if worst > radius + 0.5:
+        return [f"art reaches {worst:.0f}px from centre, safe circle is {radius:.0f}px"]
+    return []
 
 
 def main() -> int:
@@ -113,9 +146,17 @@ def main() -> int:
         for name, (px, fill, plate) in wanted.items():
             path = folder / name
             if args.check:
-                have = Image.open(path).size if path.exists() else None
-                ok = have == (px, px)
-                print(f"{'ok ' if ok else 'BAD'} {path.relative_to(ROOT)} {have} want {(px, px)}")
+                if not path.exists():
+                    print(f"BAD {path.relative_to(ROOT)} missing")
+                    continue
+                img = Image.open(path)
+                notes = []
+                if img.size != (px, px):
+                    notes.append(f"size {img.size} want {(px, px)}")
+                if name == "ic_launcher_foreground.png":
+                    notes += _outside_safe_circle(img)
+                print(f"{'BAD' if notes else 'ok '} {path.relative_to(ROOT)} "
+                      f"{'; '.join(notes) or f'{img.size[0]}px'}")
                 continue
             render(source, px, fill, plate).save(path, "PNG", optimize=True)
             print(f"wrote {path.relative_to(ROOT)} ({px}x{px})")
