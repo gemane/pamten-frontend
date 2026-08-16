@@ -856,6 +856,8 @@ function AppInner() {
                 onClick={handleClearGraph}
                 title={t('nav.home')}
               >
+                <img className="logo-mark" src="/icons/logo.svg" alt="" aria-hidden="true"
+                     width={22} height={22} />
                 <span className="logo">Owlgraph</span>
                 <span className="logo-sub">Ownership Graph</span>
               </div>

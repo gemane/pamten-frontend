@@ -661,6 +661,14 @@ body {
   gap: 8px;
 }
 
+/* The mark sits on the text's baseline row rather than on the baseline itself —
+   `align-items: baseline` would hang a square image off the letters. */
+.logo-mark {
+  align-self: center;
+  flex-shrink: 0;
+  display: block;
+}
+
 .logo-group--clickable {
   cursor: pointer;
 }
@@ -2551,6 +2559,14 @@ a.source-item__name:hover { color: #4A90D9; }
   justify-content: center;
   gap: 14px;
   pointer-events: none;
+}
+
+.graph-welcome__mark {
+  display: block;
+  margin: 0 auto 14px;
+  /* Dimmer than the wordmark it introduces: this screen is a prompt to search,
+     not a splash. */
+  opacity: 0.75;
 }
 
 .graph-welcome__logo {
