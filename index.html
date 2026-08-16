@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Owlgraph – Corporate Ownership Map</title>
+
+    <!-- The SVG first: browsers that take it get a mark that stays sharp at any
+         size and follows the tab's own scaling. The .ico is the fallback for the
+         ones that don't, and lives at the root because that is where a browser
+         looks for it unasked. -->
+    <link rel="icon" href="/icons/logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/icons/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/icons/logo-180.png" />
+    <!-- .json rather than .webmanifest: static hosts map the former to a JSON
+         content type and serve the latter as octet-stream, which is not what a
+         manifest is supposed to arrive as. -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
     <script>
       (function(){
         var t = localStorage.getItem('owlgraph-theme');

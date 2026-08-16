@@ -661,6 +661,14 @@ body {
   gap: 8px;
 }
 
+/* The mark sits on the text's baseline row rather than on the baseline itself —
+   `align-items: baseline` would hang a square image off the letters. */
+.logo-mark {
+  align-self: center;
+  flex-shrink: 0;
+  display: block;
+}
+
 .logo-group--clickable {
   cursor: pointer;
 }
