@@ -572,6 +572,10 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
       {elements.length === 0 && (
         <div className="graph-welcome">
+          {/* Decorative: the wordmark underneath already names the app, so the
+              mark is hidden from screen readers rather than read out twice. */}
+          <img className="graph-welcome__mark" src="/icons/logo.svg" alt="" aria-hidden="true"
+               width={72} height={72} />
           <div className="graph-welcome__logo">Owlgraph</div>
           <p key={taglineIdx} className="graph-welcome__tagline">
             {taglineIdx === 0 ? t('graph.tagline') : t('graph.tagline2')}
