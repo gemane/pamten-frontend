@@ -13,7 +13,9 @@ interface SearchBarProps {
   // from the start, not only after the graph-tab SearchBar first mounts.
   countries: { country: string; count: number }[]
   // When a search finds nothing in the DB, verified users can scrape the typed query.
-  onScrapeQuery?: (query: string) => void
+  // The chosen country travels with it: the sources have no idea one was picked
+  // unless they are told, and each answers "Alphabet" with the American company.
+  onScrapeQuery?: (query: string, country?: string) => void
   canScrape?: boolean
   // Open the login modal — makes the "sign in to search sources" hint actionable.
   onRequestLogin?: () => void
@@ -169,8 +171,13 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
    * ALPHABET" — saw no way to look the real company up, and no hint that the
    * option existed at all. The empty-result branch had always offered a sign-in
    * prompt; this makes the two consistent.
+   *
+   * The label names the chosen country, because the search that follows is
+   * restricted to it: an empty result has to read as "not in Germany" rather
+   * than "not anywhere".
    */
   const scrapeRow = (labelKey: 'search.alsoScrape' | 'search.noResultsScrape') => {
+    const where = country ? countryName(country, i18n.language) : null
     if (canScrape && onScrapeQuery) {
       return (
         <li
@@ -179,10 +186,15 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
             const q = query.trim()
             setOpen(false)
             inputRef.current?.blur()
-            onScrapeQuery(q)
+            onScrapeQuery(q, country || undefined)
           }}
         >
-          <span className="search-item__name">{t(labelKey, { query: query.trim() })}</span>
+          <span className="search-item__name">
+            {where
+              ? t(`${labelKey}In` as 'search.alsoScrapeIn' | 'search.noResultsScrapeIn',
+                  { query: query.trim(), country: where })
+              : t(labelKey, { query: query.trim() })}
+          </span>
         </li>
       )
     }

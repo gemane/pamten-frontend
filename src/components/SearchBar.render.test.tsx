@@ -54,7 +54,7 @@ describe('SearchBar (render)', () => {
     const scrapeRow = screen.getByText(/search sources for/i)
     await userEvent.click(scrapeRow)
 
-    expect(onScrapeQuery).toHaveBeenCalledWith('microsoft')
+    expect(onScrapeQuery).toHaveBeenCalledWith('microsoft', undefined)
   })
 
   it('offers "search sources" when there are no results, for verified users', async () => {
@@ -66,7 +66,7 @@ describe('SearchBar (render)', () => {
     const scrapeRow = await screen.findByText(/search sources for/i)
     await userEvent.click(scrapeRow)
 
-    expect(onScrapeQuery).toHaveBeenCalledWith('nonesuchco')
+    expect(onScrapeQuery).toHaveBeenCalledWith('nonesuchco', undefined)
   })
 
   it('shows a sign-in hint (no scrape) when the user cannot scrape', async () => {
@@ -109,7 +109,7 @@ describe('SearchBar (render)', () => {
     await type('Alphabet')
     const row = await screen.findByText(/alphabet/i, { selector: '.search-item--scrape .search-item__name' })
     await userEvent.click(row)
-    expect(onScrapeQuery).toHaveBeenCalledWith('Alphabet')
+    expect(onScrapeQuery).toHaveBeenCalledWith('Alphabet', undefined)
   })
 
   it('prompts an unverified user to sign in when a result matched', async () => {
@@ -134,5 +134,64 @@ describe('SearchBar (render)', () => {
     await type('Alphabet')
     await screen.findByText(/sign in/i)
     expect(onScrapeQuery).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * The country the user picked has to reach the scrape, not just the database
+ * query.
+ *
+ * Asked for "Alphabet", every source left to itself answers with Alphabet Inc of
+ * Mountain View — it is the most famous company by that name. Dropping the
+ * country here looks like nothing at all from the outside: the scrape succeeds,
+ * and imports the wrong company under a German search.
+ */
+describe('the chosen country travels with the scrape', () => {
+  const germany = [{ country: 'DE', count: 12 }]
+
+  const pickGermany = async () => {
+    await userEvent.click(screen.getByRole('button', { name: /All countries/i }))
+    await userEvent.click(await screen.findByText('Germany'))
+  }
+
+  it('hands the country to onScrapeQuery', async () => {
+    resolveSearch([])
+    const onScrapeQuery = vi.fn()
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery}
+                      countries={germany} canScrape />)
+
+    await pickGermany()
+    await type('alphabet')
+    await userEvent.click(await screen.findByText(/search .* sources for/i))
+
+    expect(onScrapeQuery).toHaveBeenCalledWith('alphabet', 'DE')
+  })
+
+  it('names the country in the row, so an empty result reads as "not in Germany"', async () => {
+    resolveSearch([])
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()}
+                      countries={germany} canScrape />)
+
+    await pickGermany()
+    await type('alphabet')
+    expect(await screen.findByText(/Germany sources/i)).toBeInTheDocument()
+  })
+
+  it('says nothing about a country when none is chosen', async () => {
+    resolveSearch([])
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} countries={germany} canScrape />)
+
+    await type('alphabet')
+    const row = await screen.findByText(/search sources for/i)
+    expect(row.textContent).not.toMatch(/Germany/)
+  })
+
+  it('restricts the database search to it as well', async () => {
+    resolveSearch([])
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} countries={germany} canScrape />)
+
+    await pickGermany()
+    await type('alphabet')
+    await waitFor(() => expect(search).toHaveBeenCalledWith('alphabet', 'DE'))
   })
 })

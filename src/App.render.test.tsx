@@ -71,9 +71,11 @@ describe('App on-demand enrich flow', () => {
     const row = await screen.findByText('Microsoft Corporation')
     await userEvent.click(row)
 
-    // The passive enrich fires with force=false…
+    // The passive enrich fires with force=false and no country: this one came from
+    // clicking a DB result, which already IS a particular company — the country
+    // filter only has a job when a name still has to be resolved to one.
     await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
-    expect(mockEnsure).toHaveBeenCalledWith('Microsoft Corporation', 1, false)
+    expect(mockEnsure).toHaveBeenCalledWith('Microsoft Corporation', 1, false, undefined)
 
     // …and the prominent "Searching sources for X…" overlay must NOT appear (regression #103).
     await new Promise(r => setTimeout(r, 350))   // past the 250ms overlay delay

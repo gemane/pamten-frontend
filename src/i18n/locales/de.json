@@ -49,7 +49,9 @@
     "filterCountries": "Länder filtern…",
     "noResultsScrape": "Kein Treffer — Quellen nach \"{{query}}\" durchsuchen?",
     "alsoScrape": "Nicht dabei? Quellen nach \"{{query}}\" durchsuchen",
-    "scrapeSignIn": "Melde dich an und bestätige deine E-Mail, um die Quellen zu durchsuchen."
+    "scrapeSignIn": "Melde dich an und bestätige deine E-Mail, um die Quellen zu durchsuchen.",
+    "noResultsScrapeIn": "Kein Treffer — Quellen in {{country}} nach \"{{query}}\" durchsuchen?",
+    "alsoScrapeIn": "Nicht die richtige? Quellen in {{country}} nach \"{{query}}\" durchsuchen"
   },
   "scrape": {
     "title": "Quellen nach {{company}} durchsuchen…",
@@ -276,7 +278,8 @@
     "enriching": "\"{{query}}\" wird angereichert…",
     "scrapeNoResults": "In den Quellen nichts zu \"{{query}}\" gefunden.",
     "scrapeError": "Quellensuche fehlgeschlagen. Bitte versuche es erneut.",
-    "scrapeCooldown": "Dieses Unternehmen wurde kürzlich aktualisiert. Du kannst die Quellen später erneut aktualisieren."
+    "scrapeCooldown": "Dieses Unternehmen wurde kürzlich aktualisiert. Du kannst die Quellen später erneut aktualisieren.",
+    "scrapeNoResultsIn": "Nichts gefunden für \"{{query}}\" in {{country}}."
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",
