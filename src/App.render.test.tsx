@@ -156,3 +156,37 @@ describe('refreshing a company from its panel', () => {
     expect(mockEnsure.mock.calls[0][2]).toBe(true)
   })
 })
+
+/**
+ * A search the server refused to repeat.
+ *
+ * "Alphabet" in France has no answer, and asking twice does not produce one. The
+ * server remembers the miss and declines to ask the sources again — so the UI
+ * must not report "nothing found" as though it had looked. Same words for two
+ * different events is how a working guard gets mistaken for a broken search.
+ */
+describe('a search that was already tried', () => {
+  const scrapeFor = async (query: string, reason: string) => {
+    mockSearch.mockResolvedValue({ data: [] } as never)          // nothing in the DB
+    mockEnsure.mockResolvedValue({
+      data: { scraped: false, reason, entity_id: null, depth_reached: 0,
+              sources_run: [], profile: null, missed_at: '2026-08-16T10:00:00Z' },
+    } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), query, { delay: null })
+    await userEvent.click(await screen.findByText(/search sources for/i))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+  }
+
+  it('says the sources were already asked, not that nothing was found', async () => {
+    await scrapeFor('alphabet', 'recently_missed')
+    expect(await screen.findByText(/Already searched/i)).toBeInTheDocument()
+    expect(screen.queryByText(/^Nothing found in the sources/i)).toBeNull()
+  })
+
+  it('still says "nothing found" when the sources really were asked', async () => {
+    await scrapeFor('alphabet', 'absent')
+    expect(await screen.findByText(/Nothing found/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Already searched/i)).toBeNull()
+  })
+})

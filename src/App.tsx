@@ -285,6 +285,13 @@ function AppInner() {
         setSelectedNode(newNode)
         setNavHistory([newNode])
         scheduleDepth2Enrich(query, country)
+      } else if (data.reason === 'recently_missed') {
+        // The server refused to ask the sources again, because this exact search
+        // came back empty a moment ago. Saying "nothing found" a second time would
+        // suggest it looked — it did not, deliberately.
+        showToast(country
+          ? t('toast.scrapeAlreadyMissedIn', { query, country: countryName(country, i18n.language) })
+          : t('toast.scrapeAlreadyMissed', { query }), 'info')
       } else {
         // Named, because the search was restricted: "nothing in Germany" is a
         // different fact from "nothing anywhere", and only one of them is true.

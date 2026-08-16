@@ -279,7 +279,9 @@
     "scrapeNoResults": "No se encontró nada en las fuentes para \"{{query}}\".",
     "scrapeError": "La búsqueda en las fuentes falló. Inténtalo de nuevo.",
     "scrapeCooldown": "Esta empresa se actualizó recientemente. Puedes actualizar sus fuentes de nuevo más tarde.",
-    "scrapeNoResultsIn": "No se encontró nada para \"{{query}}\" en {{country}}."
+    "scrapeNoResultsIn": "No se encontró nada para \"{{query}}\" en {{country}}.",
+    "scrapeAlreadyMissed": "Ya se buscó \"{{query}}\" en las fuentes — sin resultados. Inténtalo más tarde.",
+    "scrapeAlreadyMissedIn": "Ya se buscó \"{{query}}\" en fuentes de {{country}} — sin resultados. Inténtalo más tarde."
   },
   "map": {
     "resetView": "Restablecer vista",
