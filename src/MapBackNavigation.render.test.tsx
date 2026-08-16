@@ -50,6 +50,9 @@ vi.mock('./context/AuthContext', () => ({
 }))
 
 vi.mock('./services/api', () => ({
+  // Measurement is fire-and-forget; the factory is exhaustive, so an
+  // un-stubbed export throws inside the handler that calls it.
+  reportEvent: vi.fn(),
   search: vi.fn(), ensureScrape: vi.fn(), getFullProfile: vi.fn(), getPersonProfile: vi.fn(),
   getEntitiesByCountry: vi.fn(), getCountryEntities: vi.fn(), getEntitiesWithoutCountry: vi.fn(),
   getEntitiesBySubdivision: vi.fn(), getSubdivisionEntities: vi.fn(), getCountries: vi.fn(),

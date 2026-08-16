@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
-import { search } from '../services/api'
+import { search, reportEvent } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import type { SearchResult } from '../types'
 
@@ -63,6 +63,15 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
   const countryRef = useRef<HTMLDivElement>(null)
   const skipQuery  = useRef<string | null>(null)
   const reqSeq     = useRef<number>(0)
+  /**
+   * The last search that ran and has not yet been accounted for.
+   *
+   * A search is only worth counting once it has *settled* — a result was taken,
+   * or the user gave up. The box queries every 300ms while typing, so counting
+   * requests would record "mi", "mic", "micr": not what anyone searched for, and
+   * a sharper picture of someone's typing than of their intent.
+   */
+  const pending    = useRef<{ query: string; country: string; hits: number } | null>(null)
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -75,16 +84,21 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        settleUnresolved()      // clicked away without taking anything
+      }
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setOpen(false)
+        settleUnresolved()
         inputRef.current?.blur()
       }
     }
@@ -121,6 +135,8 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
         if (mySeq !== reqSeq.current) return
         setResults(data)
         setOpen(true)
+        // Noted, not reported: it becomes a data point only once it settles.
+        pending.current = { query: q, country, hits: data.length }
       } catch {
         if (mySeq === reqSeq.current) setResults([])
       } finally {
@@ -132,7 +148,28 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
     }
   }, [query, country])
 
-  const handleSelect = (result: SearchResult) => {
+  const settle = (outcome: 'selected' | 'zero' | 'abandoned', rank?: number) => {
+    const p = pending.current
+    if (!p) return
+    pending.current = null
+    try {
+      reportEvent({ kind: 'search', query: p.query, country: p.country || undefined,
+                    outcome, ...(rank === undefined ? {} : { rank }) })
+    } catch {
+      // Measurement sits directly in front of selecting a company. `reportEvent`
+      // swallows its own network failures, but anything that throws on the way
+      // in must not stop the click doing what the user asked for.
+    }
+  }
+
+  /** Nothing was taken: either there was nothing to take, or nothing appealed. */
+  const settleUnresolved = () => {
+    const p = pending.current
+    if (p) settle(p.hits === 0 ? 'zero' : 'abandoned')
+  }
+
+  const handleSelect = (result: SearchResult, rank?: number) => {
+    settle('selected', rank)
     const nodeName = 'name' in result.node ? result.node.name : ('full_name' in result.node ? result.node.full_name : '')
     // Setting query to the selected name must NOT re-trigger the debounced search
     // (which would reopen the dropdown). Also drop any in-flight request.
@@ -146,6 +183,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
   }
 
   const handleClear = () => {
+    settleUnresolved()
     setQuery('')
     setResults([])
     setOpen(false)
@@ -291,11 +329,13 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
 
       {open && results.length > 0 && (
         <ul className="search-dropdown">
-          {results.map(r => (
+          {results.map((r, i) => (
             <li
               key={r.node.id}
               className="search-item"
-              onMouseDown={() => handleSelect(r)}
+              // The index is the clicked position: if people routinely take the
+              // fourth result, the ranking is wrong and this is how that shows up.
+              onMouseDown={() => handleSelect(r, i)}
             >
               {badge(r.type)}
               <span className="search-item__name">

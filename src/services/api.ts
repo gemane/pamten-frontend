@@ -309,6 +309,30 @@ export const pullFederationPeer = (id: string): Promise<AxiosResponse<PeerPullRe
 export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/entity/${id}`)
 
+// ── Usage measurement ────────────────────────────────────────────────────────
+//
+// Aggregate counters only: what was searched for and which features get used.
+// No id of any kind is sent — not the user, not a session, not a device — and the
+// server keeps counts rather than events (see backend app/analytics.py).
+//
+// Fire-and-forget by design: measurement may never delay, block or break the
+// thing it is measuring, so failures are swallowed here rather than handled by
+// every call site.
+export interface AnalyticsEvent {
+  kind: 'search' | 'usage'
+  query?: string
+  country?: string
+  /** `selected` a result was chosen · `zero` nothing was found · `abandoned` results
+   *  were shown and none was taken. Reported once, when a search settles. */
+  outcome?: 'selected' | 'zero' | 'abandoned'
+  rank?: number
+  event?: string
+}
+
+export const reportEvent = (body: AnalyticsEvent): void => {
+  void client.post('/analytics/event', body).catch(() => { /* never surfaces */ })
+}
+
 // ── Verification flags ───────────────────────────────────────────────────────
 export const createFlag = (payload: FlagCreatePayload): Promise<AxiosResponse<FlagCreateResult>> =>
   client.post('/flags', payload)
