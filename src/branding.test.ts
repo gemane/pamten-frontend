@@ -15,7 +15,7 @@ const root = join(__dirname, '..')
 const publicFile = (href: string) => join(root, 'public', href.replace(/^\//, ''))
 
 const indexHtml = readFileSync(join(root, 'index.html'), 'utf-8')
-const manifest = JSON.parse(readFileSync(join(root, 'public', 'site.webmanifest'), 'utf-8'))
+const manifest = JSON.parse(readFileSync(join(root, 'public', 'manifest.json'), 'utf-8'))
 
 /** Every `href` on a <link rel="icon|apple-touch-icon|manifest">. */
 const linkedHrefs = [...indexHtml.matchAll(/<link\s+rel="(icon|apple-touch-icon|manifest)"[^>]*href="([^"]+)"/g)]
@@ -44,7 +44,7 @@ describe('the icons referenced in index.html', () => {
 
 describe('the web manifest', () => {
   it('is linked from the page', () => {
-    expect(linkedHrefs).toContain('/site.webmanifest')
+    expect(linkedHrefs).toContain('/manifest.json')
   })
 
   it('names the app for a home screen', () => {
