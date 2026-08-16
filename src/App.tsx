@@ -23,7 +23,21 @@ import { useAndroidBackButton } from './hooks/useAndroidBackButton'
 import { useMobile } from './hooks/useMobile'
 import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { getFullProfile, getPersonProfile, search, getEntitiesByCountry, getCountryEntities, getEntitiesWithoutCountry, getEntitiesBySubdivision, getSubdivisionEntities, getCountries, setUnauthorizedHandler, authVerifyEmail, ensureScrape } from './services/api'
+import {
+  getFullProfile,
+  getPersonProfile,
+  search,
+  getEntitiesByCountry,
+  getCountryEntities,
+  getEntitiesWithoutCountry,
+  getEntitiesBySubdivision,
+  getSubdivisionEntities,
+  getCountries,
+  setUnauthorizedHandler,
+  authVerifyEmail,
+  ensureScrape,
+  reportEvent,
+} from './services/api'
 import { readMapBasis, MAP_BASIS_KEY, NO_COUNTRY, type MapBasis } from './utils/mapBasis'
 import { isSubdivision } from './utils/isoSubdivisions'
 import { buildContextCountries } from './utils/contextCountries'
@@ -273,6 +287,7 @@ function AppInner() {
     setLoading(true)
     loadedIds.current = new Set()
     try {
+      reportEvent({ kind: 'usage', event: 'scrape.requested' })
       const { data } = await ensureScrape(query, 1, true, country)
       if (data.scraped && data.entity_id && data.profile) {
         const entity = data.profile.entity
@@ -386,6 +401,7 @@ function AppInner() {
   }, [loadEntity, loadPerson, showToast, resetEnrichment])
 
   const handleExpand = useCallback(async (nodeId: string) => {
+    reportEvent({ kind: 'usage', event: 'graph.expand' })
     setExpandingId(nodeId)
     try {
       // Build against a draft copy: the build functions mark every ID they
@@ -437,10 +453,12 @@ function AppInner() {
   }, [resetEnrichment])
 
   const handleExportPng = useCallback(() => {
+    reportEvent({ kind: 'usage', event: 'export.png' })
     graphRef.current?.exportPng()
   }, [])
 
   const handleExportCsv = useCallback(() => {
+    reportEvent({ kind: 'usage', event: 'export.csv' })
     const csv = buildCsvContent(elementsRef.current, t, i18n.language)
     const blob = new Blob([csv], { type: 'text/csv' })
     const a = document.createElement('a')
@@ -451,6 +469,7 @@ function AppInner() {
   }, [t])
 
   const handleShare = useCallback(async () => {
+    reportEvent({ kind: 'usage', event: 'share.link' })
     const outcome = await shareLink(window.location.href, isMobile)
     if (outcome === 'copied')      showToast(t('share.copied'), 'success')
     else if (outcome === 'failed') showToast(t('share.error'), 'error')
@@ -583,6 +602,9 @@ function AppInner() {
    *  other's entity lists — a map that looks right and is not. */
   const handleBasisChange = useCallback((basis: MapBasis) => {
     if (basis === mapBasis) return
+    // Which of the two the map is actually read in — the switch was a guess about
+    // what people want, and this is the only thing that can settle it.
+    reportEvent({ kind: 'usage', event: basis === 'hq' ? 'map.basis.hq' : 'map.basis.jurisdiction' })
     setMapBasis(basis)
     localStorage.setItem(MAP_BASIS_KEY, basis)
     setSelectedCountry(null)
