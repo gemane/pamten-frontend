@@ -279,7 +279,9 @@
     "scrapeNoResults": "In den Quellen nichts zu \"{{query}}\" gefunden.",
     "scrapeError": "Quellensuche fehlgeschlagen. Bitte versuche es erneut.",
     "scrapeCooldown": "Dieses Unternehmen wurde kürzlich aktualisiert. Du kannst die Quellen später erneut aktualisieren.",
-    "scrapeNoResultsIn": "Nichts gefunden für \"{{query}}\" in {{country}}."
+    "scrapeNoResultsIn": "Nichts gefunden für \"{{query}}\" in {{country}}.",
+    "scrapeAlreadyMissed": "Quellen wurden bereits nach \"{{query}}\" durchsucht — nichts gefunden. Später erneut versuchen.",
+    "scrapeAlreadyMissedIn": "Quellen in {{country}} wurden bereits nach \"{{query}}\" durchsucht — nichts gefunden. Später erneut versuchen."
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",

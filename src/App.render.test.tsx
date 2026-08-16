@@ -14,7 +14,19 @@ vi.mock('./components/ScraperPanel', () => ({ default: () => null }))
 vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
 vi.mock('./components/AuthModal', () => ({ default: () => null }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
-vi.mock('./components/NodePanel', () => ({ default: () => <div data-testid="node-panel" /> }))
+vi.mock('./components/NodePanel', () => ({
+  default: ({ node, onReScrape }: { node?: { label: string } | null
+                                    onReScrape?: (n: unknown) => void }) => (
+    <div data-testid="node-panel">
+      {/* The real Refresh button lives deep in the panel; this stands in for it so
+          App's own handler — including which country it scopes the refresh to —
+          is the code under test. */}
+      {onReScrape && node && (
+        <button onClick={() => onReScrape(node)}>refresh-from-sources</button>
+      )}
+    </div>
+  ),
+}))
 
 // Signed-in, email-verified user so on-demand scraping is allowed.
 vi.mock('./context/AuthContext', () => ({
@@ -44,11 +56,13 @@ const mockSearch = vi.mocked(search)
 const mockEnsure = vi.mocked(ensureScrape)
 const mockProfile = vi.mocked(getFullProfile)
 
-const entity = (id: string, name: string): Entity => ({ id, name, type: 'company', verified: false } as Entity)
+const entity = (id: string, name: string, country?: string): Entity =>
+  ({ id, name, type: 'company', verified: false, ...(country ? { country } : {}) } as Entity)
 const fullProfile = (id: string, name: string): FullProfile => ({
   entity: entity(id, name), owners: [], subsidiaries: [], executives: [],
 })
-const result = (id: string, name: string): SearchResult => ({ type: 'Entity', score: 1, node: entity(id, name) })
+const result = (id: string, name: string, country?: string): SearchResult =>
+  ({ type: 'Entity', score: 1, node: entity(id, name, country) })
 
 beforeEach(() => {
   vi.mocked(getCountries).mockResolvedValue({ data: [] } as never)
@@ -101,5 +115,78 @@ describe('App on-demand enrich flow', () => {
 
     finish({ data: { scraped: false, reason: 'fresh', entity_id: null, depth_reached: 0, sources_run: [], profile: null } })
     await waitFor(() => expect(screen.queryByText(/Searching sources for/i)).not.toBeInTheDocument())
+  })
+})
+
+/**
+ * Refresh from sources, on a company already in the graph.
+ *
+ * It is the other way a scrape starts, and it takes its country from the company
+ * itself rather than the search box — a refresh must not walk off to a same-named
+ * company somewhere else, which is exactly what the sources would hand over if
+ * asked bare. Nothing else covers this wiring, and losing it looks like a
+ * perfectly ordinary refresh.
+ */
+describe('refreshing a company from its panel', () => {
+  const openAndRefresh = async (res: SearchResult) => {
+    mockSearch.mockResolvedValue({ data: [res] } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'acme', { delay: null })
+    await userEvent.click(await screen.findByText((res.node as Entity).name))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+    mockEnsure.mockClear()                       // drop the passive enrich on select
+    await userEvent.click(await screen.findByRole('button', { name: 'refresh-from-sources' }))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+  }
+
+  it('scopes the refresh to the company own country', async () => {
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, true, 'DE')
+  })
+
+  it('leaves it unrestricted when the company has no country recorded', async () => {
+    // A tenth of the graph has none. Refusing to refresh those would be worse
+    // than refreshing them unrestricted, which is what always happened.
+    await openAndRefresh(result('e1', 'Acme Anywhere'))
+    expect(mockEnsure).toHaveBeenCalledWith('Acme Anywhere', 1, true, undefined)
+  })
+
+  it('forces the scrape, unlike the passive enrich on select', async () => {
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    expect(mockEnsure.mock.calls[0][2]).toBe(true)
+  })
+})
+
+/**
+ * A search the server refused to repeat.
+ *
+ * "Alphabet" in France has no answer, and asking twice does not produce one. The
+ * server remembers the miss and declines to ask the sources again — so the UI
+ * must not report "nothing found" as though it had looked. Same words for two
+ * different events is how a working guard gets mistaken for a broken search.
+ */
+describe('a search that was already tried', () => {
+  const scrapeFor = async (query: string, reason: string) => {
+    mockSearch.mockResolvedValue({ data: [] } as never)          // nothing in the DB
+    mockEnsure.mockResolvedValue({
+      data: { scraped: false, reason, entity_id: null, depth_reached: 0,
+              sources_run: [], profile: null, missed_at: '2026-08-16T10:00:00Z' },
+    } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), query, { delay: null })
+    await userEvent.click(await screen.findByText(/search sources for/i))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+  }
+
+  it('says the sources were already asked, not that nothing was found', async () => {
+    await scrapeFor('alphabet', 'recently_missed')
+    expect(await screen.findByText(/Already searched/i)).toBeInTheDocument()
+    expect(screen.queryByText(/^Nothing found in the sources/i)).toBeNull()
+  })
+
+  it('still says "nothing found" when the sources really were asked', async () => {
+    await scrapeFor('alphabet', 'absent')
+    expect(await screen.findByText(/Nothing found/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Already searched/i)).toBeNull()
   })
 })
