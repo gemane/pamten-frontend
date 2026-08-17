@@ -500,4 +500,29 @@ describe('the person timeline tab', () => {
     expect(screen.getByText('1997')).toBeInTheDocument()
     expect(screen.getByText(/until 2011/i)).toBeInTheDocument()
   })
+
+  it('swaps the whole body, the way a company panel does', async () => {
+    // Tabs at the top and one view at a time. Leaving the bio above the timeline
+    // made the person panel behave unlike every other panel in the app.
+    withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
+                     role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
+    render(<NodePanel node={personNode} />)
+    await userEvent.click(await screen.findByRole('button', { name: /timeline/i }))
+
+    expect(screen.queryByText('Steve Jobs')).toBeNull()      // bio is not underneath
+    expect(screen.getByText('1997')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /overview/i }))
+    expect(screen.getByText('Steve Jobs')).toBeInTheDocument()
+  })
+
+  it('puts the tabs above everything on the overview too', async () => {
+    withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
+                     role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
+    const { container } = render(<NodePanel node={personNode} />)
+    await screen.findByRole('button', { name: /timeline/i })
+
+    const body = container.querySelector('.panel-body') as HTMLElement
+    expect(body.firstElementChild).toHaveClass('panel-tabs')
+  })
 })
