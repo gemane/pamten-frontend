@@ -240,11 +240,23 @@ export interface AuthUser {
 // Result of POST /scraper/ensure (on-demand enrichment).
 export interface EnsureResult {
   scraped: boolean
-  reason: string          // absent | never_on_demand | stale | deepen | forced | fresh | disabled | in_progress | cooldown
+  reason: string          // absent | never_on_demand | stale | deepen | forced | fresh | disabled | in_progress | cooldown | recently_missed
+  /** What was found. A name can be a company or a person, and searching a
+   *  person's name used to produce a company node for them. */
+  kind?: 'entity' | 'person'
   entity_id: string | null
+  person_id?: string | null
   depth_reached: number
   sources_run: string[]
-  profile: FullProfile | null
+  profile: FullProfile | PersonProfile | null
+}
+
+/** Narrow an ensure result to the person case — `kind` decides, and the profile
+ *  shape follows from it. */
+export function isPersonResult(
+  r: EnsureResult,
+): r is EnsureResult & { person_id: string; profile: PersonProfile } {
+  return r.kind === 'person' && !!r.person_id && !!r.profile
 }
 
 export interface AuthContextValue {
