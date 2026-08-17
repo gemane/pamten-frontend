@@ -425,3 +425,36 @@ describe('a relationship row', () => {
   })
 })
 
+/**
+ * Refresh from sources, on a PERSON.
+ *
+ * People can be scraped now — their roles and holdings come from Wikidata's
+ * reverse links — so the person panel needs the control the company panel always
+ * had. It was missing because until recently there was nothing behind it.
+ */
+describe('refreshing a person', () => {
+  const personNode: NodeData = {
+    id: 'p1', label: 'Larry Page', nodeType: 'person',
+    raw: { id: 'p1', full_name: 'Larry Page' } as never,
+  }
+
+  beforeEach(() => {
+    vi.mocked(getPersonProfile).mockResolvedValue(
+      { data: { person: { id: 'p1', full_name: 'Larry Page' }, positions: [], holdings: [] } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+  })
+
+  it('offers the refresh button when the caller can scrape', async () => {
+    const onReScrape = vi.fn()
+    render(<NodePanel node={personNode} onReScrape={onReScrape} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: /refresh/i }))
+    expect(onReScrape).toHaveBeenCalledWith(personNode)
+  })
+
+  it('offers nothing when the caller cannot scrape', async () => {
+    render(<NodePanel node={personNode} />)
+    await screen.findByText('Larry Page')
+    expect(screen.queryByRole('button', { name: /refresh/i })).toBeNull()
+  })
+})
