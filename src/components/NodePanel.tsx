@@ -355,21 +355,24 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
   // than no tab.
   const showTimeline = hasDatedRows(profile)
 
+  // Tabs OUTSIDE the padded body, exactly as the company panel nests them: the
+  // bar then spans the full width and the body's own padding is the gap beneath
+  // it. Inside, it was inset by that padding and sat flush against the avatar.
   if (showTimeline && activeView === 'timeline' && profile) {
-    // Tabs at the top and the body swapped whole, exactly as a company's panel
-    // does it. Keeping the bio above the timeline would have read as a different
-    // kind of panel for no reason other than the order I happened to write it in.
     return (
-      <div className="panel-body">
+      <>
         <PanelTabs active={activeView} onChange={setActiveView} />
-        <PersonTimeline profile={profile} />
-      </div>
+        <div className="panel-body">
+          <PersonTimeline profile={profile} />
+        </div>
+      </>
     )
   }
 
   return (
-    <div className="panel-body">
+    <>
       {showTimeline && <PanelTabs active={activeView} onChange={setActiveView} />}
+      <div className="panel-body">
       {imgSrc && (
         <img className="panel-avatar" src={imgSrc} alt={raw.full_name} />
       )}
@@ -447,7 +450,8 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
       )}
 
       <SourcesSection sources={sources} />
-    </div>
+      </div>
+    </>
   )
 }
 

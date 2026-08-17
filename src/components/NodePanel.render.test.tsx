@@ -516,13 +516,30 @@ describe('the person timeline tab', () => {
     expect(screen.getByText('Steve Jobs')).toBeInTheDocument()
   })
 
-  it('puts the tabs above everything on the overview too', async () => {
+  it('puts the tab bar above the padded body, not inside it', async () => {
+    // The company panel nests them this way, and the nesting is what produces
+    // the spacing: inside `.panel-body` the bar is inset by that padding and
+    // sits flush against the avatar beneath it.
     withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
                      role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
     const { container } = render(<NodePanel node={personNode} />)
     await screen.findByRole('button', { name: /timeline/i })
 
+    const tabs = container.querySelector('.panel-tabs') as HTMLElement
     const body = container.querySelector('.panel-body') as HTMLElement
-    expect(body.firstElementChild).toHaveClass('panel-tabs')
+    expect(body.contains(tabs)).toBe(false)
+    expect(tabs.nextElementSibling).toBe(body)
+  })
+
+  it('nests them the same way on the timeline view', async () => {
+    withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
+                     role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
+    const { container } = render(<NodePanel node={personNode} />)
+    await userEvent.click(await screen.findByRole('button', { name: /timeline/i }))
+
+    const tabs = container.querySelector('.panel-tabs') as HTMLElement
+    const body = container.querySelector('.panel-body') as HTMLElement
+    expect(body.contains(tabs)).toBe(false)
+    expect(tabs.nextElementSibling).toBe(body)
   })
 })
