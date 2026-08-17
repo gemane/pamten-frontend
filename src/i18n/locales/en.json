@@ -263,7 +263,10 @@
     "loading": "Loading timeline…",
     "error": "Could not load timeline.",
     "empty": "No historical data yet.",
-    "emptyHint": "Dates are recorded when relationships are created manually or via the scraper."
+    "emptyHint": "Dates are recorded when relationships are created manually or via the scraper.",
+    "owns": "owns",
+    "born": "born",
+    "died": "died"
   },
   "toast": {
     "personGraphError": "Could not load person graph.",

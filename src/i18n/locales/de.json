@@ -263,7 +263,10 @@
     "loading": "Zeitverlauf wird geladen…",
     "error": "Zeitverlauf konnte nicht geladen werden.",
     "empty": "Noch keine historischen Daten.",
-    "emptyHint": "Daten werden erfasst, wenn Beziehungen manuell oder über den Scraper angelegt werden."
+    "emptyHint": "Daten werden erfasst, wenn Beziehungen manuell oder über den Scraper angelegt werden.",
+    "owns": "hält",
+    "born": "geboren",
+    "died": "gestorben"
   },
   "toast": {
     "personGraphError": "Personendiagramm konnte nicht geladen werden.",

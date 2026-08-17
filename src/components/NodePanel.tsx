@@ -9,6 +9,7 @@ import { colorFor, typeLabelKey } from '../utils/entityColors'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
+import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
@@ -346,10 +347,32 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
     return () => { active = false }
   }, [node.id])
   const positions = profile?.positions ?? []
-  const holdings  = profile?.holdings ?? []
+  const holdings  = profile?.holdings  ?? []
+  const [activeView, setActiveView] = useState<string>('overview')
+  // Only offer the timeline when something is dated. Roughly half the people in
+  // the graph have no dated position at all — their roles come from a reverse
+  // lookup that carries none — and an empty tab on every one of them is worse
+  // than no tab.
+  const showTimeline = hasDatedRows(profile)
+
+  // Tabs OUTSIDE the padded body, exactly as the company panel nests them: the
+  // bar then spans the full width and the body's own padding is the gap beneath
+  // it. Inside, it was inset by that padding and sat flush against the avatar.
+  if (showTimeline && activeView === 'timeline' && profile) {
+    return (
+      <>
+        <PanelTabs active={activeView} onChange={setActiveView} />
+        <div className="panel-body">
+          <PersonTimeline profile={profile} />
+        </div>
+      </>
+    )
+  }
 
   return (
-    <div className="panel-body">
+    <>
+      {showTimeline && <PanelTabs active={activeView} onChange={setActiveView} />}
+      <div className="panel-body">
       {imgSrc && (
         <img className="panel-avatar" src={imgSrc} alt={raw.full_name} />
       )}
@@ -427,7 +450,8 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
       )}
 
       <SourcesSection sources={sources} />
-    </div>
+      </div>
+    </>
   )
 }
 
