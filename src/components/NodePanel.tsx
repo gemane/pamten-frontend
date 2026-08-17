@@ -355,8 +355,21 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
   // than no tab.
   const showTimeline = hasDatedRows(profile)
 
+  if (showTimeline && activeView === 'timeline' && profile) {
+    // Tabs at the top and the body swapped whole, exactly as a company's panel
+    // does it. Keeping the bio above the timeline would have read as a different
+    // kind of panel for no reason other than the order I happened to write it in.
+    return (
+      <div className="panel-body">
+        <PanelTabs active={activeView} onChange={setActiveView} />
+        <PersonTimeline profile={profile} />
+      </div>
+    )
+  }
+
   return (
     <div className="panel-body">
+      {showTimeline && <PanelTabs active={activeView} onChange={setActiveView} />}
       {imgSrc && (
         <img className="panel-avatar" src={imgSrc} alt={raw.full_name} />
       )}
@@ -384,13 +397,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         <MetaRow icon={FiTag} label={t('panel.alsoKnownAs')} value={aka.length ? aka.join(', ') : null} />
       </div>
 
-      {showTimeline && <PanelTabs active={activeView} onChange={setActiveView} />}
-
-      {showTimeline && activeView === 'timeline' && profile && (
-        <PersonTimeline profile={profile} />
-      )}
-
-      {activeView === 'overview' && positions.length > 0 && (
+      {positions.length > 0 && (
         <Section title={t('panel.positions')}>
           {[...positions].sort(byName(p => p.entity?.name ?? '')).map((p, i) => (
             <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
@@ -404,7 +411,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         </Section>
       )}
 
-      {activeView === 'overview' && holdings.length > 0 && (
+      {holdings.length > 0 && (
         <Section title={t('panel.ownerships')}>
           {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '')).map((h, i) => (
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
@@ -421,7 +428,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         </Section>
       )}
 
-      {activeView === 'overview' && raw.wikipedia_url && (
+      {raw.wikipedia_url && (
         <a className="panel-link" href={raw.wikipedia_url} target="_blank" rel="noreferrer">
           <FiExternalLink /> {t('panel.wikipedia')}
         </a>
