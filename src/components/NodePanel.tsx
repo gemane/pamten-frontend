@@ -318,7 +318,12 @@ function DetailsSection({ entity }: { entity: Entity }) {
   )
 }
 
-function PersonView({ node, onNavigate, onShare }: { node: NodeData; onNavigate?: (n: NodeData) => void; onShare?: () => void }) {
+function PersonView({ node, onNavigate, onShare, onReScrape }: {
+  node: NodeData
+  onNavigate?: (n: NodeData) => void
+  onShare?: () => void
+  onReScrape?: (node: NodeData) => void
+}) {
   const raw = node.raw as Person
   const { t, i18n } = useTranslation()
   const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
@@ -407,6 +412,18 @@ function PersonView({ node, onNavigate, onShare }: { node: NodeData; onNavigate?
         <a className="panel-link" href={raw.wikipedia_url} target="_blank" rel="noreferrer">
           <FiExternalLink /> {t('panel.wikipedia')}
         </a>
+      )}
+
+      {/* People can be scraped now, so they can be refreshed — the same control
+          the company panel has, and it was missing here purely because until
+          recently there was nothing behind it for a person. */}
+      {onReScrape && (
+        <div className="panel-rescrape">
+          <button type="button" className="panel-rescrape__btn"
+                  title={t('panel.reScrapeTitle')} onClick={() => onReScrape(node)}>
+            {t('panel.reScrape')}
+          </button>
+        </div>
       )}
 
       <SourcesSection sources={sources} />
@@ -934,7 +951,10 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     )
   }
 
-  if (node.nodeType === 'person') return <PersonView node={node} onNavigate={onNavigate} onShare={onShare} />
+  if (node.nodeType === 'person') {
+    return <PersonView node={node} onNavigate={onNavigate} onShare={onShare}
+                       onReScrape={onReScrape} />
+  }
 
   if (loading) {
     return (
