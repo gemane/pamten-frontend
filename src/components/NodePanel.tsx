@@ -9,6 +9,7 @@ import { colorFor, typeLabelKey } from '../utils/entityColors'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
+import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
@@ -346,7 +347,13 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
     return () => { active = false }
   }, [node.id])
   const positions = profile?.positions ?? []
-  const holdings  = profile?.holdings ?? []
+  const holdings  = profile?.holdings  ?? []
+  const [activeView, setActiveView] = useState<string>('overview')
+  // Only offer the timeline when something is dated. Roughly half the people in
+  // the graph have no dated position at all — their roles come from a reverse
+  // lookup that carries none — and an empty tab on every one of them is worse
+  // than no tab.
+  const showTimeline = hasDatedRows(profile)
 
   return (
     <div className="panel-body">
@@ -377,7 +384,13 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         <MetaRow icon={FiTag} label={t('panel.alsoKnownAs')} value={aka.length ? aka.join(', ') : null} />
       </div>
 
-      {positions.length > 0 && (
+      {showTimeline && <PanelTabs active={activeView} onChange={setActiveView} />}
+
+      {showTimeline && activeView === 'timeline' && profile && (
+        <PersonTimeline profile={profile} />
+      )}
+
+      {activeView === 'overview' && positions.length > 0 && (
         <Section title={t('panel.positions')}>
           {[...positions].sort(byName(p => p.entity?.name ?? '')).map((p, i) => (
             <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
@@ -391,7 +404,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         </Section>
       )}
 
-      {holdings.length > 0 && (
+      {activeView === 'overview' && holdings.length > 0 && (
         <Section title={t('panel.ownerships')}>
           {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '')).map((h, i) => (
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
@@ -408,7 +421,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         </Section>
       )}
 
-      {raw.wikipedia_url && (
+      {activeView === 'overview' && raw.wikipedia_url && (
         <a className="panel-link" href={raw.wikipedia_url} target="_blank" rel="noreferrer">
           <FiExternalLink /> {t('panel.wikipedia')}
         </a>

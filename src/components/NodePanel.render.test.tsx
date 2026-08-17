@@ -458,3 +458,46 @@ describe('refreshing a person', () => {
     expect(screen.queryByRole('button', { name: /refresh/i })).toBeNull()
   })
 })
+
+/**
+ * The timeline tab on a person.
+ *
+ * Gated deliberately: about half the people in the graph have no dated position
+ * at all, and a tab that always opens onto "no date recorded" is worse than no
+ * tab. What decides is the data, not the node type.
+ */
+describe('the person timeline tab', () => {
+  const personNode: NodeData = {
+    id: 'p1', label: 'Steve Jobs', nodeType: 'person',
+    raw: { id: 'p1', full_name: 'Steve Jobs' } as never,
+  }
+
+  const withPositions = (positions: unknown[]) => {
+    vi.mocked(getPersonProfile).mockResolvedValue(
+      { data: { person: { id: 'p1', full_name: 'Steve Jobs' }, positions, holdings: [] } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+  }
+
+  it('appears when the person has a dated position', async () => {
+    withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
+                     role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
+    render(<NodePanel node={personNode} />)
+    expect(await screen.findByRole('button', { name: /timeline/i })).toBeInTheDocument()
+  })
+
+  it('stays away when nothing is dated', async () => {
+    withPositions([{ entity: { id: 'e1', name: 'Google' }, role: { role: 'Founder' } }])
+    render(<NodePanel node={personNode} />)
+    await screen.findByText('Google')                 // the overview rendered
+    expect(screen.queryByRole('button', { name: /timeline/i })).toBeNull()
+  })
+
+  it('switches the body to the timeline', async () => {
+    withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
+                     role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
+    render(<NodePanel node={personNode} />)
+    await userEvent.click(await screen.findByRole('button', { name: /timeline/i }))
+    expect(screen.getByText('1997')).toBeInTheDocument()
+    expect(screen.getByText(/until 2011/i)).toBeInTheDocument()
+  })
+})
