@@ -19,8 +19,10 @@ const holding = (company: string, since?: string, pct?: number) =>
   ({ entity: { id: company, name: company },
      relationship: { since, stake_percent: pct, ownership_type: 'minority' } })
 
-const profile = (positions: unknown[], holdings: unknown[] = []): PersonProfile =>
-  ({ person: { id: 'p1', full_name: 'Test Person' }, positions, holdings } as unknown as PersonProfile)
+const profile = (positions: unknown[], holdings: unknown[] = [],
+                 person: Record<string, unknown> = {}): PersonProfile =>
+  ({ person: { id: 'p1', full_name: 'Test Person', ...person },
+     positions, holdings } as unknown as PersonProfile)
 
 // Steve Jobs, as the graph holds him.
 const JOBS = profile([
@@ -116,5 +118,61 @@ describe('what it draws', () => {
     render(<PersonTimeline profile={profile([], [holding('Alphabet Inc.', '2022-02-11', 6.12)])} />)
     const group = screen.getByText('2022').closest('.tl-group') as HTMLElement
     expect(within(group).getByText(/6\.12/)).toBeInTheDocument()
+  })
+})
+
+/**
+ * Born and died, as markers.
+ *
+ * Year only, and deliberately: the panel shows a living person an age rather
+ * than a date — the smaller disclosure about somebody who never contacted us —
+ * and a year is smaller again. It earns its place because a career is read
+ * against it: a first directorship means something different at 24 than at 54.
+ * The record of processing carries the same rule.
+ */
+describe('the life markers', () => {
+  const withDates = (birth?: string, death?: string) => profile(
+    [position('Apple Inc.', 'CEO', '1997-09-01', '2011-08-23')], [],
+    { birth_date: birth, death_date: death })
+
+  it('places a birth marker in its year', () => {
+    render(<PersonTimeline profile={withDates('1955-02-24')} />)
+    const group = screen.getByText('1955').closest('.tl-group') as HTMLElement
+    expect(within(group).getByText(/born/i)).toBeInTheDocument()
+  })
+
+  it('places a death marker too', () => {
+    render(<PersonTimeline profile={withDates('1955-02-24', '2011-10-05')} />)
+    const group = screen.getByText('2011').closest('.tl-group') as HTMLElement
+    expect(within(group).getByText(/died/i)).toBeInTheDocument()
+  })
+
+  it('shows the year and never the full date', () => {
+    // The whole basis on which this was agreed. A day and month here would be a
+    // disclosure the privacy notice says is not made.
+    render(<PersonTimeline profile={withDates('1955-02-24', '2011-10-05')} />)
+    expect(screen.queryByText(/02-24|24 February|Feb/i)).toBeNull()
+    expect(screen.queryByText(/10-05|5 October|Oct/i)).toBeNull()
+  })
+
+  it('says nothing when no birth date is recorded', () => {
+    render(<PersonTimeline profile={withDates()} />)
+    expect(screen.queryByText(/born/i)).toBeNull()
+  })
+
+  it('does not badge a birth as active', () => {
+    render(<PersonTimeline profile={withDates('1955-02-24')} />)
+    const group = screen.getByText('1955').closest('.tl-group') as HTMLElement
+    expect(within(group).queryByText(/active/i)).toBeNull()
+  })
+
+  it('is not on its own enough to open the tab', () => {
+    // A birth year with no dated position would open a tab holding one grey dot.
+    expect(hasDatedRows(profile([position('Google', 'Founder')], [],
+                                { birth_date: '1973-03-26' }))).toBe(false)
+  })
+
+  it('still counts a dated position as enough', () => {
+    expect(hasDatedRows(withDates('1955-02-24'))).toBe(true)
   })
 })

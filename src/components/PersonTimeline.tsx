@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { FiClock, FiUser, FiArrowUpLeft } from 'react-icons/fi'
+import { FiClock, FiUser, FiArrowUpLeft, FiGift } from 'react-icons/fi'
 import OwnershipBadge from './OwnershipBadge'
 import type { OwnsRelationship, PersonProfile } from '../types'
 
@@ -22,10 +22,17 @@ import type { OwnsRelationship, PersonProfile } from '../types'
  *   Guessing one would put a fabricated year on the graph's own timeline.
  * - **Ownership has no end dates** in this data (0 of 111 on the dev graph), so
  *   a holding reads "since 2022" rather than as a closed span.
+ *
+ * Born and died appear as their own markers, and only as **years**. The panel
+ * shows a living person an age rather than a date, deliberately — the smaller
+ * disclosure about somebody who never contacted us. A year is smaller again, and
+ * it is what makes a career legible: a first directorship reads differently at 24
+ * than at 54. The record of processing says so too; the two move together.
  */
 
 export interface TimelineRow {
-  kind: 'role' | 'owns'
+  /** A relationship, or a marker on the person's own life. */
+  kind: 'role' | 'owns' | 'life'
   label: string                 // the role, or "owns"
   company: string
   companyId?: string
@@ -38,6 +45,16 @@ export interface TimelineRow {
 /** Positions and holdings as one list, newest first, undated last. */
 export function personTimelineRows(profile: PersonProfile): TimelineRow[] {
   const rows: TimelineRow[] = []
+
+  // Born, and died where recorded. Year only — see the note above.
+  const born = profile.person?.birth_date
+  const died = profile.person?.death_date
+  if (born) {
+    rows.push({ kind: 'life', label: 'born', company: '', since: born, until: null })
+  }
+  if (died) {
+    rows.push({ kind: 'life', label: 'died', company: '', since: died, until: null })
+  }
 
   for (const position of profile.positions ?? []) {
     const rel = position.role
@@ -75,10 +92,14 @@ export function personTimelineRows(profile: PersonProfile): TimelineRow[] {
   })
 }
 
-/** Whether there is a timeline worth showing. */
+/** Whether there is a timeline worth showing.
+ *
+ *  A birth year on its own is not a career — it would open a tab containing one
+ *  grey dot — so the gate asks for a dated *relationship*, not merely a dated row.
+ */
 export function hasDatedRows(profile: PersonProfile | null | undefined): boolean {
   if (!profile) return false
-  return personTimelineRows(profile).some(r => !!r.since)
+  return personTimelineRows(profile).some(r => !!r.since && r.kind !== 'life')
 }
 
 function groupByYear(rows: TimelineRow[]): [string, TimelineRow[]][] {
@@ -97,9 +118,26 @@ function groupByYear(rows: TimelineRow[]): [string, TimelineRow[]][] {
 function Row({ row }: { row: TimelineRow }) {
   const { t } = useTranslation()
   const isOwns = row.kind === 'owns'
-  const color = isOwns ? '#8E44AD' : '#27AE60'
-  const Icon = isOwns ? FiArrowUpLeft : FiUser
+  const isLife = row.kind === 'life'
+  const color = isLife ? '#8892a4' : isOwns ? '#8E44AD' : '#27AE60'
+  const Icon = isLife ? FiGift : isOwns ? FiArrowUpLeft : FiUser
   const ended = row.until ? row.until.slice(0, 4) : null
+
+  if (isLife) {
+    // No company, no badge: a life event is a marker on the line, not a
+    // relationship, and "Active" against a birth would be absurd.
+    return (
+      <div className="tl-event tl-event--life">
+        <div className="tl-event__dot" style={{ background: color }} />
+        <div className="tl-event__body">
+          <span className="tl-event__kind" style={{ color }}>
+            <Icon />
+            {row.label === 'born' ? t('timeline.born') : t('timeline.died')}
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="tl-event">
