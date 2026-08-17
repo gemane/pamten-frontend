@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import NodePanel from './NodePanel'
 import type { NodeData, FullProfile, Entity } from '../types'
@@ -541,5 +541,115 @@ describe('the person timeline tab', () => {
     const body = container.querySelector('.panel-body') as HTMLElement
     expect(body.contains(tabs)).toBe(false)
     expect(tabs.nextElementSibling).toBe(body)
+  })
+})
+
+/**
+ * A person's history reaches the panel now — the profile no longer drops roles
+ * that have ended. The two views want different slices of it: the overview says
+ * what somebody does, the timeline what they have done.
+ */
+describe('current positions versus the whole career', () => {
+  const personNode: NodeData = {
+    id: 'p1', label: 'Steve Jobs', nodeType: 'person',
+    raw: { id: 'p1', full_name: 'Steve Jobs' } as never,
+  }
+
+  const jobs = () => {
+    vi.mocked(getPersonProfile).mockResolvedValue({ data: {
+      person: { id: 'p1', full_name: 'Steve Jobs' },
+      positions: [
+        { entity: { id: 'e1', name: 'Apple Inc.' },
+          role: { role: 'Board Member', since: '1977-03-01', until: '1985-09-01' } },
+        { entity: { id: 'e1', name: 'Apple Inc.' },
+          role: { role: 'Board Member', since: '1997-01-01', until: '2011-10-05' } },
+        { entity: { id: 'e2', name: 'NeXT' }, role: { role: 'Founder' } },
+      ],
+      holdings: [],
+    } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+  }
+
+  const section = (title: RegExp) =>
+    screen.getByText(title).closest('.panel-section') as HTMLElement
+
+  it('lists a current role under Positions', async () => {
+    jobs()
+    render(<NodePanel node={personNode} />)
+    await screen.findByText('NeXT')
+    expect(within(section(/^Positions$/)).getByText('NeXT')).toBeInTheDocument()
+  })
+
+  it('does not mix a finished role in with the current ones', async () => {
+    // Undated and side by side, the two board spells looked like the duplicate
+    // bug they are not.
+    jobs()
+    render(<NodePanel node={personNode} />)
+    await screen.findByText('NeXT')
+    expect(within(section(/^Positions$/)).queryByText('Apple Inc.')).toBeNull()
+  })
+
+  it('lists both finished spells under Former positions', async () => {
+    jobs()
+    render(<NodePanel node={personNode} />)
+    await screen.findByText(/former positions/i)
+    const former = section(/former positions/i)
+    expect(within(former).getAllByText('Apple Inc.')).toHaveLength(2)
+  })
+
+  it('dates each finished spell, so the two are told apart', async () => {
+    // Without the years they are two identical rows, which is exactly what the
+    // duplicate-role bug looked like.
+    jobs()
+    render(<NodePanel node={personNode} />)
+    const former = await screen.findByText(/former positions/i)
+      .then(() => section(/former positions/i))
+    expect(within(former).getByText(/1977\s*.\s*1985/)).toBeInTheDocument()
+    expect(within(former).getByText(/1997\s*.\s*2011/)).toBeInTheDocument()
+  })
+
+  it('puts the most recent spell first', async () => {
+    jobs()
+    render(<NodePanel node={personNode} />)
+    await screen.findByText(/former positions/i)
+    const years = within(section(/former positions/i))
+      .getAllByText(/\d{4}/).map(e => e.textContent)
+    expect(years[0]).toMatch(/1997/)
+  })
+
+  it('shows no Former positions section when nothing has ended', async () => {
+    vi.mocked(getPersonProfile).mockResolvedValue({ data: {
+      person: { id: 'p1', full_name: 'Steve Jobs' },
+      positions: [{ entity: { id: 'e2', name: 'NeXT' }, role: { role: 'Founder' } }],
+      holdings: [],
+    } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+    render(<NodePanel node={personNode} />)
+    await screen.findByText('NeXT')
+    expect(screen.queryByText(/former positions/i)).toBeNull()
+  })
+
+  it('states an end year alone when the start was never recorded', async () => {
+    // Reverse lookups supply plenty of these. "– 2011" would read as a typo.
+    vi.mocked(getPersonProfile).mockResolvedValue({ data: {
+      person: { id: 'p1', full_name: 'Steve Jobs' },
+      positions: [{ entity: { id: 'e1', name: 'Apple Inc.' },
+                    role: { role: 'CEO', until: '2011-08-23' } }],
+      holdings: [],
+    } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+    render(<NodePanel node={personNode} />)
+    expect(await screen.findByText(/until 2011/i)).toBeInTheDocument()
+  })
+
+  it('the timeline shows both spells on the same board', async () => {
+    // The whole point: he joined in 1977, left in 1985, came back in 1997.
+    jobs()
+    render(<NodePanel node={personNode} />)
+    await userEvent.click(await screen.findByRole('button', { name: /timeline/i }))
+
+    expect(screen.getByText('1977')).toBeInTheDocument()
+    expect(screen.getByText('1997')).toBeInTheDocument()
+    expect(screen.getAllByText('Board Member')).toHaveLength(2)
   })
 })

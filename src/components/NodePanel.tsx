@@ -33,6 +33,31 @@ function byName<T>(getName: (x: T) => string) {
   return (a: T, b: T) => getName(a).localeCompare(getName(b))
 }
 
+/** A finished role's years, e.g. "1977 – 1985". Years only, matching the
+ *  timeline and the panel's own rule on dates about people: an age rather than
+ *  a birthday, a year rather than a day. Where the start was never recorded —
+ *  common in reverse lookups — the end alone is stated rather than invented. */
+export function tenure(role: { since?: string | null; until?: string | null } | null | undefined,
+                       t: (k: string, o?: Record<string, unknown>) => string): string {
+  const from = role?.since?.slice(0, 4)
+  const to = role?.until?.slice(0, 4)
+  if (!to) return ''
+  return from ? `${from} \u2013 ${to}` : t('timeline.until', { year: to })
+}
+
+/** Most recent first: a career reads backwards from what someone last did.
+ *  Undated starts sort last, as they do everywhere else. */
+export function byTenureDesc<T extends { role?: { since?: string | null; until?: string | null } | null }>(
+  a: T, b: T,
+): number {
+  const ka = a.role?.until || a.role?.since || ''
+  const kb = b.role?.until || b.role?.since || ''
+  if (!ka && !kb) return 0
+  if (!ka) return 1
+  if (!kb) return -1
+  return kb.localeCompare(ka)
+}
+
 // Executive seniority: rank a role string by importance (CEO first, board/other
 // last); the final tiebreak is always alphabetical by name. Matched on keywords
 // so scraped variants ("Chief Executive Officer", "CEO", "Chairman"…) all land.
@@ -346,8 +371,20 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
       .catch(() => { if (active) setSources([]) })
     return () => { active = false }
   }, [node.id])
-  const positions = profile?.positions ?? []
-  const holdings  = profile?.holdings  ?? []
+  // The profile carries a person's whole history now, ended roles included, so
+  // the timeline can draw a career. The overview splits it: what they do *now*,
+  // then what they used to do, each ended role carrying its years.
+  //
+  // The split is what makes the history readable at all. Steve Jobs sat on
+  // Apple's board twice; listed together and undated, those two rows look like
+  // the duplicate bug we just fixed. Dated and set apart, they read as a career.
+  // Filtering happens here rather than on the server so the timeline — and any
+  // other caller — still gets everything.
+  const allPositions = profile?.positions ?? []
+  const allHoldings  = profile?.holdings  ?? []
+  const positions = allPositions.filter(p => !p.role?.until)
+  const formerPositions = allPositions.filter(p => p.role?.until)
+  const holdings  = allHoldings.filter(h => !h.relationship?.until)
   const [activeView, setActiveView] = useState<string>('overview')
   // Only offer the timeline when something is dated. Roughly half the people in
   // the graph have no dated position at all — their roles come from a reverse
@@ -409,6 +446,21 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
                      sourceUrl: p.role?.source_url }}>
               <span className="rel-item__name">{p.entity.name}</span>
               <span className="role-badge">{p.role?.role}</span>
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
+      {formerPositions.length > 0 && (
+        <Section title={t('panel.formerPositions')}>
+          {[...formerPositions].sort(byTenureDesc).map((p, i) => (
+            <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
+              rel={{ targetKind: 'role', fromId: node.id, toId: p.entity.id,
+                     role: p.role?.role, label: p.entity.name,
+                     sourceUrl: p.role?.source_url }}>
+              <span className="rel-item__name">{p.entity.name}</span>
+              <span className="role-badge role-badge--former">{p.role?.role}</span>
+              <span className="rel-item__year">{tenure(p.role, t)}</span>
             </RelRow>
           ))}
         </Section>

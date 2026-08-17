@@ -1346,6 +1346,14 @@ button.rel-item--clickable:hover { background: #253454; }
   font-weight: 600;
 }
 
+/* A role that has ended: same badge, stated more quietly than a current one, so
+   a long career does not read as a wall of live positions. */
+.role-badge--former {
+  color: #8b95a7;
+  background: rgba(139,149,167,0.15);
+}
+[data-theme="light"] .role-badge--former { color: #718096; }
+
 .rel-item__year {
   font-size: 11px;
   color: #8b95a7;

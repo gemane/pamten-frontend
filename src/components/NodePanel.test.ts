@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc } from './NodePanel'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
@@ -250,5 +250,73 @@ describe('entityDetailRows', () => {
   it('skips fields that are absent', () => {
     const rows = entityDetailRows({ ...base, legal_form: 'Fund' })
     expect(rows.map(r => r.labelKey)).toEqual(['panel.legalForm'])
+  })
+})
+
+/**
+ * A finished role's years.
+ *
+ * The panel splits a person's positions into what they do and what they did,
+ * and the years are what make the second list readable: Steve Jobs has two
+ * board seats at Apple, and undated they are two identical rows.
+ */
+describe('tenure', () => {
+  const t = (key: string, o?: Record<string, unknown>) =>
+    key === 'timeline.until' ? `until ${o?.year}` : key
+
+  const role = (since?: string | null, until?: string | null) => ({ since, until })
+
+  it('states a closed span as years', () => {
+    expect(tenure(role('1977-03-01', '1985-09-01'), t)).toBe('1977 \u2013 1985')
+  })
+
+  it('never shows the day or the month', () => {
+    // The same rule the timeline and the record of processing hold to.
+    expect(tenure(role('1977-03-01', '1985-09-01'), t)).not.toMatch(/03|09/)
+  })
+
+  it('states the end alone when the start was never recorded', () => {
+    // Common from reverse lookups. A leading dash would read as a typo, and an
+    // invented start year would be worse.
+    expect(tenure(role(null, '2011-08-23'), t)).toBe('until 2011')
+  })
+
+  it('says nothing about a role that has not ended', () => {
+    // The section it belongs to only holds ended roles, but the helper is
+    // exported: an open role must not be given a span it does not have.
+    expect(tenure(role('1976-04-01', null), t)).toBe('')
+    expect(tenure(role(null, null), t)).toBe('')
+    expect(tenure(null, t)).toBe('')
+  })
+})
+
+describe('byTenureDesc', () => {
+  const spell = (since?: string | null, until?: string | null) => ({ role: { since, until } })
+
+  it('puts the most recent spell first', () => {
+    const out = [spell('1977-03-01', '1985-09-01'), spell('1997-01-01', '2011-10-05')]
+      .sort(byTenureDesc)
+    expect(out[0].role.since).toBe('1997-01-01')
+  })
+
+  it('ranks a role still running above one that ended earlier', () => {
+    // Sorted on the end date where there is one, the start otherwise.
+    const out = [spell('1985-01-01', '1990-01-01'), spell('2020-01-01', null)].sort(byTenureDesc)
+    expect(out[0].role.since).toBe('2020-01-01')
+  })
+
+  it('orders by when a role ended, not when it began', () => {
+    // A long spell that ran to 2025 is more recent than a short one that
+    // started later and finished in 2005 — "most recent" means last held.
+    const out = [spell('2000-01-01', '2005-01-01'), spell('1990-01-01', '2025-01-01')]
+      .sort(byTenureDesc)
+    expect(out[0].role.until).toBe('2025-01-01')
+  })
+
+  it('leaves undated roles last, whichever way round they arrive', () => {
+    // Both branches of the comparator: a sort of two elements only asks once.
+    const dated = spell('1977-03-01', '1985-09-01')
+    expect([spell(null, null), dated].sort(byTenureDesc)[0]).toBe(dated)
+    expect([dated, spell(null, null)].sort(byTenureDesc)[0]).toBe(dated)
   })
 })
