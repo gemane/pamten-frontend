@@ -43,6 +43,7 @@ import { isSubdivision } from './utils/isoSubdivisions'
 import { buildContextCountries } from './utils/contextCountries'
 import { canScrape } from './utils/scrapeAccess'
 import { scheduleIdle } from './utils/idle'
+import { isPersonResult } from './types'
 import type {
   GraphElement,
   NodeData,
@@ -234,7 +235,11 @@ function AppInner() {
       try {
         const { data } = await ensureScrape(query, 2, false, country)
         if (token !== enrichSeqRef.current) return       // navigated away — drop it
-        if (data.scraped && data.profile) appendProfile(data.profile)
+        // The deepen pass only enriches companies; a person result has no
+        // deeper level to fetch, and appendProfile expects an entity profile.
+        if (data.scraped && data.profile && !isPersonResult(data)) {
+          appendProfile(data.profile as FullProfile)
+        }
       } catch { /* best-effort — enrichment never blocks the UI */ }
       finally { stopScrapeBar() }
     })
@@ -255,7 +260,9 @@ function AppInner() {
     try {
       const { data } = await ensureScrape(query, 1, force, country)
       if (token !== enrichSeqRef.current) return
-      if (data.scraped && data.profile) appendProfile(data.profile)
+      if (data.scraped && data.profile && !isPersonResult(data)) {
+        appendProfile(data.profile as FullProfile)
+      }
       // A forced refresh is denied within the 24h cooldown — tell the user why nothing changed.
       else if (force && data.reason === 'cooldown') showToast(t('toast.scrapeCooldown'), 'info')
     } catch { /* best-effort */ }
@@ -289,14 +296,29 @@ function AppInner() {
     try {
       reportEvent({ kind: 'usage', event: 'scrape.requested' })
       const { data } = await ensureScrape(query, 1, true, country)
-      if (data.scraped && data.entity_id && data.profile) {
-        const entity = data.profile.entity
+      if (isPersonResult(data)) {
+        // A person, not a company. The graph is built around them — their roles
+        // and holdings as connected companies — the same shape as clicking a
+        // person already produces.
+        const profile = data.profile
+        loadedIds.current = new Set()
+        const els = buildPersonProfileElements(profile, loadedIds.current)
+        const node: NodeData = {
+          id: profile.person.id, label: profile.person.full_name,
+          nodeType: 'person', raw: profile.person,
+        }
+        setCenterId(profile.person.id)
+        setElements(els)
+        setSelectedNode(node)
+        setNavHistory([node])
+      } else if (data.scraped && data.entity_id && data.profile) {
+        const entity = (data.profile as FullProfile).entity
         const newNode: NodeData = {
           id: entity.id, label: entity.name, nodeType: 'entity',
           entitySubtype: entity.type ?? null, raw: entity,
         }
         setCenterId(entity.id)
-        setElements(buildElements(data.profile, loadedIds.current))
+        setElements(buildElements(data.profile as FullProfile, loadedIds.current))
         setSelectedNode(newNode)
         setNavHistory([newNode])
         scheduleDepth2Enrich(query, country)

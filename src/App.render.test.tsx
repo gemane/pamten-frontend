@@ -193,3 +193,64 @@ describe('a search that was already tried', () => {
     expect(screen.queryByText(/Already searched/i)).toBeNull()
   })
 })
+
+/**
+ * Searching a person's name.
+ *
+ * It used to do something worse than nothing: the top Wikidata hit for "Larry
+ * Page" is the man, and he was written into the graph as a company. The backend
+ * scrapes people properly now and says which it found; the UI has to build the
+ * graph around the person rather than reaching for `profile.entity`, which a
+ * person profile does not have.
+ */
+describe('a search that turns out to be a person', () => {
+  const personProfile = {
+    person: { id: 'p1', full_name: 'Larry Page', nodeType: 'person' },
+    positions: [{ entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company' },
+                  relationship: { role: 'Founder' } }],
+    holdings: [{ entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company' },
+                 relationship: {} }],
+  }
+
+  it('renders the person rather than crashing on a missing entity', async () => {
+    mockSearch.mockResolvedValue({ data: [] } as never)
+    mockEnsure.mockResolvedValue({
+      data: { scraped: true, reason: 'absent', kind: 'person', entity_id: null,
+              person_id: 'p1', depth_reached: 1, sources_run: ['wikidata'],
+              profile: personProfile },
+    } as never)
+    render(<App />)
+
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'larry page',
+                         { delay: null })
+    await userEvent.click(await screen.findByText(/search sources for/i))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+
+    // The node panel opens for the person, and no "nothing found" toast appears:
+    // something WAS found, it simply was not a company.
+    await waitFor(() => expect(screen.getByTestId('node-panel')).toBeInTheDocument())
+    expect(screen.queryByText(/Nothing found/i)).toBeNull()
+  })
+
+  it('does not chase a deeper pass for a person', async () => {
+    // The depth-2 enrich exists to walk a company's ownership; a person has no
+    // deeper level, and appendProfile would be handed the wrong shape.
+    mockSearch.mockResolvedValue({ data: [] } as never)
+    mockEnsure.mockResolvedValue({
+      data: { scraped: true, reason: 'absent', kind: 'person', entity_id: null,
+              person_id: 'p1', depth_reached: 1, sources_run: ['wikidata'],
+              profile: personProfile },
+    } as never)
+    render(<App />)
+
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'larry page',
+                         { delay: null })
+    await userEvent.click(await screen.findByText(/search sources for/i))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalledTimes(1))
+
+    // The idle pass lands on a 1.5s fallback timer in jsdom (utils/idle.ts), so a
+    // shorter wait would pass whether or not it was scheduled.
+    await new Promise(r => setTimeout(r, 1800))
+    expect(mockEnsure.mock.calls.every(c => c[1] !== 2)).toBe(true)
+  })
+})
