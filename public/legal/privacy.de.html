@@ -71,10 +71,30 @@ zwei Teile, weil zwei sehr unterschiedliche Personengruppen betroffen sind:</p>
   </tr>
 </table>
 
-<p class="note"><strong>Was wir bewusst nicht erheben.</strong> Keine Analyse-Tools, keine
-Tracking-Pixel, keine Werbung, kein Profiling, keine Skripte Dritter. Wir protokollieren Ihre
-IP-Adresse und Ihren Browser nicht zu Ihrem Konto oder Ihren Sitzungen. Wir verkaufen oder
-vermieten keine Daten — und werden das auch nie tun.</p>
+<p class="note"><strong>Was wir bewusst nicht erheben.</strong> Keine Tracking-Pixel, keine
+Werbung, kein Profiling, keine Skripte Dritter. Wir protokollieren Ihre IP-Adresse und Ihren
+Browser nicht zu Ihrem Konto oder Ihren Sitzungen. Wir verkaufen oder vermieten keine Daten — und
+werden das auch nie tun.</p>
+
+<h3>Zählen, ohne zu beobachten</h3>
+<p>Einiges zählen wir durchaus, und wir sagen lieber genau was, als uns hinter dem Wort „Analytics“
+zu verstecken. Wir führen <strong>Summen</strong>: wie oft nach einem Firmennamen gesucht wurde,
+wie oft eine Suche nichts fand, wie oft eine Funktion genutzt wurde und wie lange Anfragen
+dauerten. So entscheiden wir, welche Register als Nächstes dazukommen, statt zu raten.</p>
+
+<p>Zum Zählen statt Beobachten wird das dadurch, dass <strong>nichts Sie identifiziert</strong>:
+keine Nutzerkennung, keine Verknüpfung zum Konto, keine Sitzungskennung, keine gespeicherte
+IP-Adresse, keine Gerätekennung, keine Browserkennung und kein Zeitstempel zu einem einzelnen
+Ereignis. Es gibt überhaupt kein Ereignisprotokoll — nur Summen. Niemand, auch wir nicht, kann
+rekonstruieren, wonach eine einzelne Person gesucht hat, weil das nirgends festgehalten wird.
+Gemessen wird in unserer eigenen Datenbank; kein Analyse-Anbieter ist beteiligt, und in der Seite
+steckt kein Skript Dritter.</p>
+
+<p>Eines sagen wir offen: Der Zähler ist nach den gesuchten Wörtern benannt, und irgendjemand wird
+einen Personennamen in ein Suchfeld tippen. Dieser Name wird dann als Text gespeichert — ohne
+Verbindung zu der Person, die gesucht hat. Lesbar ist er nur für die Administration, und eine
+Suchanfrage, die zwölf Monate lang niemand wiederholt hat, wird gelöscht. Das sagen wir lieber,
+als zu behaupten, der Bestand sei in jede Richtung anonym.</p>
 
 <h3>Cookies</h3>
 <p>Ein einziges Cookie: ein <code>httpOnly</code>-Sitzungscookie, das bei der Anmeldung gesetzt
@@ -88,6 +108,7 @@ sich nicht anzumelden. Es läuft nach 30 Tagen ab; die Abmeldung widerruft es so
   <li><strong>Kontodaten</strong> — bis Sie Ihr Konto löschen.</li>
   <li><strong>Sitzungen</strong> — höchstens 30 Tage, bei Abmeldung sofort.</li>
   <li><strong>Anmelde-Token</strong> — 15 Minuten.</li>
+  <li><strong>Nutzungssummen</strong> — gelöscht, sobald sie 12 Monate unberührt sind.</li>
 </ul>
 
 <h3>Konto löschen</h3>
@@ -134,10 +155,14 @@ speichern wir — denn das genaue Datum verhindert, dass zwei Personen mit demse
 dieselbe gehalten werden. Sonst könnte Ihnen ein Unternehmen zugeordnet werden, mit dem Sie nichts
 zu tun haben.</p>
 
-<p class="note"><strong>Angezeigt wird es nicht.</strong> Bei lebenden Personen zeigt die Seite ein
-<strong>Alter</strong>, kein Datum. Bei Verstorbenen zeigen wir Geburts- und Sterbedatum, weil
-daraus hervorgeht, in welchem Zeitraum diese Person Kontrolle ausüben konnte — und genau dafür wird
-ein Eigentümerverzeichnis gelesen.</p>
+<p class="note"><strong>Das vollständige Datum zeigen wir nicht.</strong> Bei lebenden Personen
+zeigt das Panel ein <strong>Alter</strong>, und der Lebenslauf ist mit dem <strong>Geburtsjahr</strong>
+markiert. Tag und Monat — der Teil, der eine Person identifiziert oder die Sicherheitsfrage ihrer
+Bank beantwortet — bleiben unveröffentlicht. Das Jahr steht dort, weil es einen Lebenslauf erst
+lesbar macht: ein erstes Aufsichtsratsmandat mit 24 bedeutet etwas anderes als mit 54, und ohne
+Jahr ist eine Zeitleiste eine Liste von Daten ohne Bezug. Bei Verstorbenen zeigen wir Geburts- und
+Sterbejahr, weil daraus hervorgeht, in welchem Zeitraum diese Person Kontrolle ausüben konnte —
+und genau dafür wird ein Eigentümerverzeichnis gelesen.</p>
 
 <p class="note">Ihre Wohnadresse, Ihre Ausweisnummern oder Kontodaten speichern wir nicht.</p>
 

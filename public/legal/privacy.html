@@ -72,10 +72,29 @@ groups of people are affected:</p>
   </tr>
 </table>
 
-<p class="note"><strong>What we deliberately do not collect.</strong> No analytics, no tracking
-pixels, no advertising, no profiling, no third-party scripts of any kind. We do not log your IP
-address or browser against your account or your sessions. We do not sell or rent data to anyone,
-and we never will.</p>
+<p class="note"><strong>What we deliberately do not collect.</strong> No tracking pixels, no
+advertising, no profiling, no third-party scripts of any kind. We do not log your IP address or
+browser against your account or your sessions. We do not sell or rent data to anyone, and we
+never will.</p>
+
+<h3>Counting, without watching</h3>
+<p>We do count some things, and we would rather say exactly what than hide behind the word
+"analytics". We keep <strong>running totals</strong>: how often a company name has been searched
+for, how often a search found nothing, how often a feature was used, and how long requests took.
+That is how we decide which registers to add next, rather than guessing.</p>
+
+<p>What makes it counting rather than watching is that <strong>nothing identifies you</strong>.
+There is no user id, no account link, no session id, no stored IP address, no device identifier,
+no browser string, and no timestamp on any individual event. There is no event log at all — only
+totals. Nobody, ourselves included, can reconstruct what any one person searched for, because that
+information is never written down. It is measured in our own database; no analytics company is
+involved and there is no third-party script in the page.</p>
+
+<p>One thing to be straight about: the counter is keyed on the words searched for, and somebody
+will type a person's name into a search box. That name is then stored as text, unattached to
+whoever searched for it. It is readable only by an administrator, and a query nobody has repeated
+for twelve months is deleted. We would rather tell you that than claim the store is anonymous in
+every direction.</p>
 
 <h3>Cookies</h3>
 <p>One cookie: an <code>httpOnly</code> session cookie set when you sign in, so you stay signed in
@@ -89,6 +108,7 @@ revokes it immediately.</p>
   <li><strong>Account data</strong> — until you delete your account.</li>
   <li><strong>Sessions</strong> — 30 days maximum, or immediately on sign-out.</li>
   <li><strong>Sign-in tokens</strong> — 15 minutes.</li>
+  <li><strong>Usage totals</strong> — deleted once untouched for 12 months.</li>
 </ul>
 
 <h3>Deleting your account</h3>
@@ -134,10 +154,14 @@ records a full date for people who have an entry there, and we do hold that — 
 date is what stops two people who share a name being treated as one. Without it, a company you
 have nothing to do with could be shown as yours.</p>
 
-<p class="note"><strong>We do not display it.</strong> For a living person the page shows an
-<strong>age</strong>, not a date. For someone who has died we show the dates of birth and death,
-because those show the period in which that person could have held control — which is what an
-ownership record is read for.</p>
+<p class="note"><strong>We do not display the full date.</strong> For a living person the panel
+shows an <strong>age</strong>, and their career timeline is marked with the <strong>year</strong>
+of birth. The day and month — the part that identifies someone, or answers their bank's security
+question — stay unpublished. The year is there because it is what makes a career legible: a first
+directorship at 24 means something different from one at 54, and a timeline without it is a list
+of dates against no one. For someone who has died we show the years of birth and death, because
+those show the period in which that person could have held control — which is what an ownership
+record is read for.</p>
 
 <p class="note">We do not hold your home address, your national identifiers, or any financial
 account details.</p>

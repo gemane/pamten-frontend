@@ -21,7 +21,8 @@ Google's deletion-URL rule requires.
 
 ## Google Play — Data safety
 
-**Does your app collect or share any of the required user data types?** → **Yes** (email only).
+**Does your app collect or share any of the required user data types?** → **Yes** (an email
+address, and aggregate app activity).
 
 | Data type | Collected | Shared | Purpose | Required? |
 |---|---|---|---|---|
@@ -29,15 +30,28 @@ Google's deletion-URL rule requires.
 | Personal info → Name, address, phone, race, political views | No | No | — | — |
 | Financial info | No | No | — | — |
 | Location (precise or approximate) | **No** | No | — | — |
-| Web browsing history, search history | No | No | — | — |
-| App activity, app info, performance, diagnostics | **No** | No | — | — |
+| App activity → **In-app search history** | **Yes** | **No** | Analytics — deciding which company registers to add next | Optional |
+| App activity → **App interactions** | **Yes** | **No** | Analytics — which features are worth keeping | Optional |
+| App activity → Installed apps, other user-generated content | No | No | — | — |
+| Web browsing history | **No** | No | — | — |
+| App info and performance (crash logs, diagnostics) | **No** | No | — | — |
 | Device or other IDs | **No** | No | — | — |
+
+⚠️ **The two "Yes" rows are declared on purpose, and Play arguably does not require them.** Play
+excludes data that is aggregated so it cannot be linked to a person, and ours qualifies: no user
+id, no session id, no device id, no IP, no per-event timestamp — running totals and nothing else.
+Leaning on that exclusion is a judgement call about our own product, made by us, in our favour.
+Declaring instead costs a line in a form and cannot be wrong. Do not "simplify" these back to No
+without a lawyer saying so in writing.
 
 Answers to the remaining questions:
 
 - **Is all user data encrypted in transit?** → Yes. HTTPS throughout.
 - **Do you provide a way to request data deletion?** → Yes, both in-app and via the URL above.
-- **Data collected for advertising or marketing?** → No. There is no advertising.
+- **Data collected for advertising or marketing?** → No. There is no advertising, and no data is
+  used for it.
+- **Is the app-activity data processed ephemerally?** → No. It is kept as running totals and
+  deleted once a row has been untouched for 12 months.
 - **Data shared with third parties?** → No. The email address is *processed* by our email
   provider to deliver account emails, which the form counts as processing rather than sharing.
 - **Is the app committed to Play's Families policy / does it target children?** → No.
@@ -57,10 +71,20 @@ third-party analytics SDKs.
 |---|---|---|
 | Contact Info | Email Address | App Functionality (account creation, sign-in, password reset) |
 
-**Data not linked to you:** none.
+**Data not linked to you:**
 
-Everything else — Health, Financial, Location, Contacts, User Content, Browsing History, Search
-History, Identifiers, Usage Data, Diagnostics, Purchases, Sensitive Info — is **not collected**.
+| Category | Type | Purpose |
+|---|---|---|
+| Search History | Search History | Analytics — what people look for, so the roadmap follows demand |
+| Usage Data | Product Interaction | Analytics — which features are used |
+
+"Not linked" is the accurate answer and not a convenient one: the counters carry no user id, no
+session id, no device identifier and no IP address, so there is nothing on the row to link them
+*to*. Apple's definition is about whether the data is associated with an identity, not about
+whether it is collected.
+
+Everything else — Health, Financial, Location, Contacts, User Content, Browsing History,
+Identifiers, Diagnostics, Purchases, Sensitive Info — is **not collected**.
 
 Apple also asks whether account creation is offered and whether deletion is possible in-app: yes
 to both. The in-app path is Settings → Delete account, and it re-authenticates with the password.
@@ -72,10 +96,17 @@ to both. The in-app path is Settings → Delete account, and it re-authenticates
 - **Stored per session:** SHA-256 token hash, family id, expiry, revoked flag. **No IP address and
   no user-agent** are recorded against an account or a session.
 - **Cookies:** one strictly-necessary `httpOnly` session cookie, 30 days.
-- **Third-party code in the client:** none that phones home. No analytics, error-reporting,
-  advertising or attribution SDKs.
+- **Stored as usage totals, tied to nobody:** counts per normalised search query + country
+  (searched, found nothing, result taken), per named interaction, and per route template with a
+  latency band. No user id, session id, IP address, device identifier, user agent, or per-event
+  timestamp — there is no event log, only totals, so no individual's activity can be
+  reconstructed. The query column is free text and can contain a person's name; see Activity 3 of
+  the record of processing.
+- **Third-party code in the client:** none that phones home. No error-reporting, advertising or
+  attribution SDKs, and **no analytics SDK** — the counting above is first-party, into our own
+  database, and reaches no other company.
 - **Retention:** account data until the user deletes it; sessions ≤ 30 days; sign-in tokens
-  15 minutes.
+  15 minutes; usage totals deleted once untouched for 12 months (`manage.py prune-analytics`).
 - **Deletion:** removes the user record, password hash, TOTP secret, recovery codes, all sessions
   and rate-limit counters; anonymises data-quality reports the user filed.
 
