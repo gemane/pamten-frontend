@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, Fragment, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
@@ -580,19 +580,25 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
             <div className="graph-welcome__stats">
               <span>{stats.companies.toLocaleString(i18n.language)} {t('graph.statCompanies')}</span>
               <span>{stats.people.toLocaleString(i18n.language)} {t('graph.statPeople')}</span>
+              {/* Two and two on a phone. See .graph-welcome__break — it collapses
+                  on desktop, where the four still read as one line. */}
+              <div className="graph-welcome__break" />
               <span>{stats.relationships.toLocaleString(i18n.language)} {t('graph.statRelationships')}</span>
               <span>{stats.sources.toLocaleString(i18n.language)} {t('graph.statSources')}</span>
             </div>
           )}
           <div className="graph-welcome__chips">
-            {examples.map(name => (
-              <button
-                key={name}
-                className="graph-welcome__chip"
-                onClick={() => onExampleClick?.(name)}
-              >
-                {name}
-              </button>
+            {examples.map((name, i) => (
+              <Fragment key={name}>
+                {/* Two, then the third on its own row — same break as the stats. */}
+                {i === 2 && <div className="graph-welcome__break" />}
+                <button
+                  className="graph-welcome__chip"
+                  onClick={() => onExampleClick?.(name)}
+                >
+                  {name}
+                </button>
+              </Fragment>
             ))}
           </div>
         </div>
