@@ -1241,6 +1241,13 @@ body {
   margin-bottom: 8px;
 }
 
+/* A section nested inside another (the GLEIF parent statement inside Details) ends
+   the outer one, so its own bottom margin — and its last paragraph's — would stack
+   into ~34px of dead space before whatever follows the collapsible. Scoped to the
+   nested case so the spacing between top-level sections is untouched. */
+.panel-section .panel-section:last-child { margin-bottom: 0; }
+.panel-section .panel-section > .panel-desc:last-child { margin-bottom: 0; }
+
 /* Collapsible section header (e.g. Sources) */
 .panel-section__toggle {
   display: flex;
