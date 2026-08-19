@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datenschutzerklärung — Owlgraph</title>
+<link rel="stylesheet" href="/legal/legal.css">
+</head>
+<body>
+<header class="doc">
+  <span class="lang"><a href="/legal/privacy.html">English</a></span>
+  <a class="home" href="/">Owlgraph</a>
+  <h1>Datenschutzerklärung</h1>
+  <p class="updated">Zuletzt aktualisiert: 9. August 2026</p>
+</header>
+
+<p>Owlgraph macht sichtbar, wem Unternehmen gehören und wer sie kontrolliert — auf Basis
+öffentlicher Register. Diese Erklärung beschreibt, was wir mit personenbezogenen Daten tun. Sie hat
+zwei Teile, weil zwei sehr unterschiedliche Personengruppen betroffen sind:</p>
+
+<ul>
+  <li><strong><a href="#part1">Teil 1</a> — Personen mit einem Owlgraph-Konto.</strong>
+      Daten, die Sie uns selbst geben (Art. 13 DSGVO).</li>
+  <li><strong><a href="#part2">Teil 2</a> — Personen, die in den Eigentümerdaten vorkommen.</strong>
+      Daten über Sie, die wir aus öffentlichen Registern haben — nicht von Ihnen (Art. 14 DSGVO).
+      Wenn Sie Geschäftsführer:in oder wirtschaftliche:r Eigentümer:in sind, ist das Ihr Teil.</li>
+</ul>
+
+<h2>Verantwortlicher</h2>
+<table>
+  <tr><th>Verantwortlicher</th><td>{{OWNER_NAME}}<br>{{OWNER_ADDRESS}}<br>Österreich</td></tr>
+  <tr><th>Kontakt</th><td><a href="mailto:{{OWNER_EMAIL}}">{{OWNER_EMAIL}}</a></td></tr>
+  <tr><th>Datenschutzbeauftragter</th><td>Nicht bestellt. Wir sind dazu nicht verpflichtet; über
+      den obigen Kontakt erreichen Sie den Verantwortlichen direkt.</td></tr>
+</table>
+
+<h2 id="part1">Teil 1 — Wenn Sie ein Owlgraph-Konto haben</h2>
+
+<h3>Was wir speichern und warum</h3>
+<table>
+  <tr><th>Daten</th><th>Wozu</th><th>Rechtsgrundlage</th></tr>
+  <tr>
+    <td>E-Mail-Adresse</td>
+    <td>Identifiziert und bestätigt Ihr Konto, ermöglicht das Zurücksetzen des Passworts</td>
+    <td>Art. 6 Abs. 1 lit. b — Vertragserfüllung (das Konto, das Sie angelegt haben)</td>
+  </tr>
+  <tr>
+    <td>Passwort, ausschließlich als bcrypt-Hash</td>
+    <td>Anmeldung. Ihr tatsächliches Passwort speichern und sehen wir nie</td>
+    <td>Art. 6 Abs. 1 lit. b</td>
+  </tr>
+  <tr>
+    <td>Rolle (Viewer, Contributor, Moderator, Admin)</td>
+    <td>Legt fest, was Sie tun dürfen</td>
+    <td>Art. 6 Abs. 1 lit. b</td>
+  </tr>
+  <tr>
+    <td>Zwei-Faktor-Geheimnis und Wiederherstellungscodes, falls aktiviert</td>
+    <td>Schutz Ihres Kontos. Vollständig freiwillig</td>
+    <td>Art. 6 Abs. 1 lit. b und Art. 32 — Sicherheit der Verarbeitung</td>
+  </tr>
+  <tr>
+    <td>Sitzungsdaten: gehashtes Sitzungstoken, Ablaufzeitpunkt, Widerrufsstatus</td>
+    <td>Angemeldet bleiben; gestohlene Sitzungen abschneiden können</td>
+    <td>Art. 6 Abs. 1 lit. f — berechtigtes Interesse an Kontosicherheit</td>
+  </tr>
+  <tr>
+    <td>Von Ihnen gemeldete Datenfehler</td>
+    <td>Prüfung und Korrektur der Datenbank</td>
+    <td>Art. 6 Abs. 1 lit. f — berechtigtes Interesse an Datenqualität</td>
+  </tr>
+</table>
+
+<p class="note"><strong>Was wir bewusst nicht erheben.</strong> Keine Tracking-Pixel, keine
+Werbung, kein Profiling, keine Skripte Dritter. Wir protokollieren Ihre IP-Adresse und Ihren
+Browser nicht zu Ihrem Konto oder Ihren Sitzungen. Wir verkaufen oder vermieten keine Daten — und
+werden das auch nie tun.</p>
+
+<h3>Zählen, ohne zu beobachten</h3>
+<p>Einiges zählen wir durchaus, und wir sagen lieber genau was, als uns hinter dem Wort „Analytics“
+zu verstecken. Wir führen <strong>Summen</strong>: wie oft nach einem Firmennamen gesucht wurde,
+wie oft eine Suche nichts fand, wie oft eine Funktion genutzt wurde und wie lange Anfragen
+dauerten. So entscheiden wir, welche Register als Nächstes dazukommen, statt zu raten.</p>
+
+<p>Zum Zählen statt Beobachten wird das dadurch, dass <strong>nichts Sie identifiziert</strong>:
+keine Nutzerkennung, keine Verknüpfung zum Konto, keine Sitzungskennung, keine gespeicherte
+IP-Adresse, keine Gerätekennung, keine Browserkennung und kein Zeitstempel zu einem einzelnen
+Ereignis. Es gibt überhaupt kein Ereignisprotokoll — nur Summen. Niemand, auch wir nicht, kann
+rekonstruieren, wonach eine einzelne Person gesucht hat, weil das nirgends festgehalten wird.
+Gemessen wird in unserer eigenen Datenbank; kein Analyse-Anbieter ist beteiligt, und in der Seite
+steckt kein Skript Dritter.</p>
+
+<p>Eines sagen wir offen: Der Zähler ist nach den gesuchten Wörtern benannt, und irgendjemand wird
+einen Personennamen in ein Suchfeld tippen. Dieser Name wird dann als Text gespeichert — ohne
+Verbindung zu der Person, die gesucht hat. Lesbar ist er nur für die Administration, und eine
+Suchanfrage, die zwölf Monate lang niemand wiederholt hat, wird gelöscht. Das sagen wir lieber,
+als zu behaupten, der Bestand sei in jede Richtung anonym.</p>
+
+<h3>Cookies</h3>
+<p>Ein einziges Cookie: ein <code>httpOnly</code>-Sitzungscookie, das bei der Anmeldung gesetzt
+wird, damit Sie angemeldet bleiben, ohne dass die App eine langlebige Zugangsberechtigung dort
+halten muss, wo JavaScript sie erreichen könnte. Es ist für die von Ihnen gewünschte Anmeldung
+unbedingt erforderlich — daher ist kein Cookie-Banner nötig und es gibt nichts abzulehnen, außer
+sich nicht anzumelden. Es läuft nach 30 Tagen ab; die Abmeldung widerruft es sofort.</p>
+
+<h3>Speicherdauer</h3>
+<ul>
+  <li><strong>Kontodaten</strong> — bis Sie Ihr Konto löschen.</li>
+  <li><strong>Sitzungen</strong> — höchstens 30 Tage, bei Abmeldung sofort.</li>
+  <li><strong>Anmelde-Token</strong> — 15 Minuten.</li>
+  <li><strong>Nutzungssummen</strong> — gelöscht, sobald sie 12 Monate unberührt sind.</li>
+</ul>
+
+<h3>Konto löschen</h3>
+<p>Einstellungen → Konto löschen, oder schreiben Sie uns. Die vollständige Beschreibung steht auf
+der <a href="/legal/delete-account.de.html">Löschseite</a>. Die Löschung entfernt dauerhaft Ihren
+Kontodatensatz samt Passwort-Hash, Zwei-Faktor-Geheimnis und Wiederherstellungscodes, alle
+Sitzungen sowie Ihre Rate-Limit-Zähler.</p>
+<p>Von Ihnen gemeldete Datenfehler werden <strong>anonymisiert statt gelöscht</strong>: Die Meldung
+betrifft ein Unternehmen, nicht Sie, und ihre Löschung würde die Moderationshistorie stillschweigend
+verändern. Nur die Verbindung zu Ihnen wird gekappt.</p>
+
+<h2 id="part2">Teil 2 — Wenn Sie in den Eigentümerdaten vorkommen</h2>
+
+<p>Owlgraph veröffentlicht ein Netz von Unternehmensbeteiligungen. Da Unternehmen letztlich
+Menschen gehören, nennt dieses Netz auch Personen. <strong>Diese Daten haben wir nicht von
+Ihnen.</strong> Wir entnehmen sie öffentlichen Registern, die gesetzlich zur Veröffentlichung
+verpflichtet sind. Art. 14 DSGVO verpflichtet uns, Sie darüber von uns aus zu informieren — das
+geschieht hier.</p>
+
+<h3>Woher die Daten stammen</h3>
+<table>
+  <tr><th>Quelle</th><th>Was wir übernehmen</th></tr>
+  <tr>
+    <td><strong>UK Companies House — People with Significant Control (PSC)</strong></td>
+    <td>Name, Staatsangehörigkeit, Geburtsmonat und -jahr, Wohnsitzland sowie die kontrollierten
+        Unternehmen mit Umfang und Art der Kontrolle</td>
+  </tr>
+  <tr>
+    <td><strong>US SEC EDGAR</strong></td>
+    <td>Namen von Organmitgliedern, Führungskräften und Insidern aus Unternehmensmeldungen, deren
+        Funktionen und offengelegte Beteiligungen</td>
+  </tr>
+  <tr>
+    <td><strong>Wikidata</strong></td>
+    <td>Namen sowie, soweit öffentlich verzeichnet, Geburtsdatum und -ort von Personen mit
+        eigenem Eintrag</td>
+  </tr>
+</table>
+
+<p class="note"><strong>Wie genau ein Geburtsdatum ist, hängt vom Register ab.</strong>
+Companies House veröffentlicht nur Monat und Jahr; mehr liegt uns zu einer britischen PSC nicht
+vor. Wikidata verzeichnet zu Personen mit eigenem Eintrag ein vollständiges Datum, und dieses
+speichern wir — denn das genaue Datum verhindert, dass zwei Personen mit demselben Namen für
+dieselbe gehalten werden. Sonst könnte Ihnen ein Unternehmen zugeordnet werden, mit dem Sie nichts
+zu tun haben.</p>
+
+<p class="note"><strong>Das vollständige Datum zeigen wir nicht.</strong> Bei lebenden Personen
+zeigt das Panel ein <strong>Alter</strong>, und der Lebenslauf ist mit dem <strong>Geburtsjahr</strong>
+markiert. Tag und Monat — der Teil, der eine Person identifiziert oder die Sicherheitsfrage ihrer
+Bank beantwortet — bleiben unveröffentlicht. Das Jahr steht dort, weil es einen Lebenslauf erst
+lesbar macht: ein erstes Aufsichtsratsmandat mit 24 bedeutet etwas anderes als mit 54, und ohne
+Jahr ist eine Zeitleiste eine Liste von Daten ohne Bezug. Bei Verstorbenen zeigen wir Geburts- und
+Sterbejahr, weil daraus hervorgeht, in welchem Zeitraum diese Person Kontrolle ausüben konnte —
+und genau dafür wird ein Eigentümerverzeichnis gelesen.</p>
+
+<p class="note">Ihre Wohnadresse, Ihre Ausweisnummern oder Kontodaten speichern wir nicht.</p>
+
+<h3>Warum, und auf welcher Grundlage</h3>
+<p>Rechtsgrundlage ist <strong>Art. 6 Abs. 1 lit. f — berechtigte Interessen</strong>. Das
+Interesse ist die Transparenz von Unternehmenseigentum: sichtbar zu machen, wer ein Unternehmen
+letztlich kontrolliert. Genau dafür wurden diese Register öffentlich gemacht; es dient Journalismus,
+Forschung, Due Diligence und Geldwäschebekämpfung.</p>
+<p>Wir haben dieses Interesse gegen Ihre Rechte abgewogen. Tragend sind: Die Daten sind bereits
+gesetzlich veröffentlicht und als öffentlich angelegt; wir übernehmen nur das Minimum, das die
+Register über Personen offenlegen; wir reichern nichts Privates an; wir betreiben kein Profiling,
+kein Scoring, keine Werbung und keine automatisierten Entscheidungen; und die Kontrolle über ein
+Unternehmen betrifft eine öffentliche Rolle, nicht das Privatleben.</p>
+<p>Sie können die Abwägung bei uns anfordern; wir stellen sie zur Verfügung.</p>
+
+<h3>Wer die Daten sonst sieht</h3>
+<p>Das Beteiligungsnetz ist <strong>öffentlich zugänglich</strong> — das ist der Zweck des Dienstes.
+Gehen Sie davon aus, dass alles darin von jeder Person gelesen werden kann. Darüber hinaus geben wir
+Personendaten an niemanden weiter. Wir verkaufen sie nicht und übermitteln sie weder an Werbetreibende
+noch an Datenhändler.</p>
+
+<h3>Speicherdauer</h3>
+<p>Solange das Quellregister die Angabe veröffentlicht und sie dafür relevant bleibt, wer ein
+Unternehmen kontrolliert. Vermerkt ein Register das Ende einer Kontrolle, behalten wir den
+historischen Eintrag mit Enddatum — gerade der Wechsel von Eigentumsverhältnissen ist die
+Information, derentwegen Menschen hierherkommen. Bei einem erfolgreichen Widerspruch (siehe unten)
+entfernen oder sperren wir den Eintrag unabhängig davon.</p>
+
+<h3>Ihre Rechte und wie Sie sie ausüben</h3>
+<p>Sie haben das Recht auf <strong>Auskunft</strong>, <strong>Berichtigung</strong> unrichtiger
+Daten, <strong>Löschung</strong>, <strong>Einschränkung</strong> der Verarbeitung,
+<strong>Datenübertragbarkeit</strong> und — weil wir uns auf berechtigte Interessen stützen —
+jederzeit auf <strong>Widerspruch</strong> aus Gründen Ihrer besonderen Situation. Bei Widerspruch
+müssen wir die Verarbeitung einstellen, sofern wir keine zwingenden schutzwürdigen Gründe
+nachweisen, die Ihre Rechte überwiegen.</p>
+
+<p>Zwei Wege:</p>
+<ul>
+  <li><strong>Eintrag direkt melden.</strong> Jedes Unternehmen und jede Person in der App hat eine
+      Melde-Schaltfläche. Sie funktioniert <strong>ohne Konto</strong>; Meldungen gehen in eine
+      Moderationsliste. Geeignet für „das ist falsch“ oder „das bin nicht ich“.</li>
+  <li><strong>Schreiben Sie an <a href="mailto:{{OWNER_EMAIL}}">{{OWNER_EMAIL}}</a></strong> für
+      Auskunft, Löschung, Widerspruch oder alles, was eine begründete Antwort braucht. Wir antworten
+      innerhalb eines Monats, wie es die DSGVO vorsieht. Bitte beschreiben Sie den Eintrag; unter
+      Umständen stellen wir eine Rückfrage — das schützt Sie auch davor, dass jemand anderes Ihren
+      Eintrag ändert.</li>
+</ul>
+
+<p class="note"><strong>Eine ehrliche Einschränkung.</strong> Entfernen wir einen Eintrag, den das
+Quellregister weiterhin veröffentlicht, kann ihn der nächste Import zurückbringen. Bei einem
+Widerspruch sperren wir den Eintrag daher, sodass ein erneuter Import ihn nicht wiederherstellen
+kann. Ist der zugrunde liegende Registereintrag selbst falsch, lohnt sich zusätzlich eine Korrektur
+beim Register — sonst behalten alle anderen Nutzer dieses Registers den Fehler.</p>
+
+<h2>Für alle: eingesetzte Dienste</h2>
+<p>Diese Liste halten wir bewusst kurz.</p>
+<table>
+  <tr><th>Anbieter</th><th>Wofür</th><th>Wo</th></tr>
+  <tr><td>Render Services, Inc.</td><td>Hosting von Anwendung und Website</td>
+      <td>Server in <strong>Frankfurt, Deutschland</strong> (EU)</td></tr>
+  <tr><td>Selbst betriebener Datenbankserver</td><td>Speicherung des Datengraphen</td><td>EU</td></tr>
+  <tr><td>Resend</td><td>Versand von Konto-E-Mails (Bestätigung, Passwort-Zurücksetzung)</td>
+      <td><strong>USA</strong> — Übermittlung abgesichert durch die Standardvertragsklauseln der
+      EU-Kommission. Betroffen sind nur Ihre E-Mail-Adresse und der Nachrichtentext</td></tr>
+  <tr><td>OpenStreetMap Nominatim</td>
+      <td>Umwandlung der Firmenadresse — Sitz laut Register und Geschäftsanschrift — in
+          Kartenkoordinaten, damit sie auf der Karte angezeigt werden kann</td>
+      <td>EU. Nur Firmenadressen — nie Ihre Kontodaten und nie die Adresse einer Person
+          (eine solche speichern wir nicht)</td></tr>
+</table>
+
+<h2>Sicherheit</h2>
+<p>Alles läuft über HTTPS. Passwörter werden als bcrypt-Hash, Sitzungstoken nur als SHA-256-Hash
+gespeichert; beides lässt sich aus der Datenbank nicht zurücklesen. Sitzungen werden bei jeder
+Nutzung erneuert; ein wiederverwendetes Token entwertet die gesamte zugehörige Token-Familie.
+Zwei-Faktor-Authentifizierung steht zur Verfügung und wird empfohlen.</p>
+
+<h2>Beschwerden</h2>
+<p>Bitte wenden Sie sich zuerst an uns — das meiste lässt sich direkt schneller klären. Sie haben
+außerdem das Recht auf Beschwerde bei einer Aufsichtsbehörde. Zuständig ist:</p>
+<p><strong>Österreichische Datenschutzbehörde</strong><br>
+Barichgasse 40–42, 1030 Wien, Österreich<br>
+<a href="https://www.dsb.gv.at">www.dsb.gv.at</a></p>
+<p>Wenn Sie in einem anderen EU- oder EWR-Staat leben, können Sie sich auch an Ihre örtliche
+Behörde wenden.</p>
+
+<h2>Änderungen</h2>
+<p>Bei wesentlichen Änderungen aktualisieren wir das Datum oben und weisen Kontoinhaber:innen in der
+App darauf hin. Dieses Dokument beschreibt, was die Software tatsächlich tut — ändert sich die
+Software, ändert sich auch dieses Dokument.</p>
+
+<footer class="doc">
+  <a href="/legal/index.de.html">Rechtliches</a>
+  <a href="/legal/imprint.de.html">Impressum</a>
+  <a href="/legal/terms.de.html">Nutzungsbedingungen</a>
+  <a href="/legal/data-sources.de.html">Datenquellen</a>
+  <a href="/legal/delete-account.de.html">Konto löschen</a>
+</footer>
+</body>
+</html>

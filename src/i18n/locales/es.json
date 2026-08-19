@@ -390,7 +390,12 @@
       "disablePrompt": "Introduce un código actual (o de recuperación) para desactivar los dos factores.",
       "error": "Algo salió mal. Inténtalo de nuevo.",
       "badCode": "Ese código no es válido. Inténtalo de nuevo."
-    }
+    },
+    "legal": "Aviso legal",
+    "legalPrivacy": "Política de privacidad",
+    "legalImprint": "Aviso legal e identificación",
+    "legalTerms": "Condiciones de uso",
+    "legalSources": "Fuentes de datos"
   },
   "scraper": {
     "title": "Scraper",

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Owlgraph</title>
+<link rel="stylesheet" href="/legal/legal.css">
+</head>
+<body>
+<header class="doc">
+  <span class="lang"><a href="/legal/privacy.de.html">Deutsch</a></span>
+  <a class="home" href="/">Owlgraph</a>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: 9 August 2026</p>
+</header>
+
+<p>Owlgraph maps who owns and controls companies, using public registers. This policy
+explains what we do with personal data. It has two parts, because two very different
+groups of people are affected:</p>
+
+<ul>
+  <li><strong><a href="#part1">Part 1</a> — people who create an Owlgraph account.</strong>
+      Data you give us directly (GDPR Art. 13).</li>
+  <li><strong><a href="#part2">Part 2</a> — people who appear in the ownership data.</strong>
+      Data about you that we obtained from public registers, not from you (GDPR Art. 14).
+      If you are a company director or a person with significant control, this is the part
+      that concerns you.</li>
+</ul>
+
+<h2>Who is responsible</h2>
+<table>
+  <tr><th>Controller</th><td>{{OWNER_NAME}}<br>{{OWNER_ADDRESS}}<br>Austria</td></tr>
+  <tr><th>Contact</th><td><a href="mailto:{{OWNER_EMAIL}}">{{OWNER_EMAIL}}</a></td></tr>
+  <tr><th>Data protection officer</th><td>None appointed. We are not required to appoint one,
+      and the contact above reaches the controller directly.</td></tr>
+</table>
+
+<h2 id="part1">Part 1 — If you have an Owlgraph account</h2>
+
+<h3>What we store, and why</h3>
+<table>
+  <tr><th>Data</th><th>Why</th><th>Legal basis</th></tr>
+  <tr>
+    <td>Email address</td>
+    <td>Identifies your account, verifies it, and lets you reset your password</td>
+    <td>Art. 6(1)(b) — performance of a contract (providing the account you asked for)</td>
+  </tr>
+  <tr>
+    <td>Password, stored only as a bcrypt hash</td>
+    <td>Signing in. We never store or see your actual password</td>
+    <td>Art. 6(1)(b)</td>
+  </tr>
+  <tr>
+    <td>Role (viewer, contributor, moderator, admin)</td>
+    <td>Decides what you may do</td>
+    <td>Art. 6(1)(b)</td>
+  </tr>
+  <tr>
+    <td>Two-factor secret and recovery codes, if you enable 2FA</td>
+    <td>Protecting your account. Entirely optional</td>
+    <td>Art. 6(1)(b) and Art. 32 — security of processing</td>
+  </tr>
+  <tr>
+    <td>Session records: a hashed session token, its expiry, and whether it was revoked</td>
+    <td>Keeping you signed in, and letting a stolen session be cut off</td>
+    <td>Art. 6(1)(f) — our legitimate interest in account security</td>
+  </tr>
+  <tr>
+    <td>Reports you submit about incorrect data</td>
+    <td>Reviewing and correcting the database</td>
+    <td>Art. 6(1)(f) — our legitimate interest in data quality</td>
+  </tr>
+</table>
+
+<p class="note"><strong>What we deliberately do not collect.</strong> No tracking pixels, no
+advertising, no profiling, no third-party scripts of any kind. We do not log your IP address or
+browser against your account or your sessions. We do not sell or rent data to anyone, and we
+never will.</p>
+
+<h3>Counting, without watching</h3>
+<p>We do count some things, and we would rather say exactly what than hide behind the word
+"analytics". We keep <strong>running totals</strong>: how often a company name has been searched
+for, how often a search found nothing, how often a feature was used, and how long requests took.
+That is how we decide which registers to add next, rather than guessing.</p>
+
+<p>What makes it counting rather than watching is that <strong>nothing identifies you</strong>.
+There is no user id, no account link, no session id, no stored IP address, no device identifier,
+no browser string, and no timestamp on any individual event. There is no event log at all — only
+totals. Nobody, ourselves included, can reconstruct what any one person searched for, because that
+information is never written down. It is measured in our own database; no analytics company is
+involved and there is no third-party script in the page.</p>
+
+<p>One thing to be straight about: the counter is keyed on the words searched for, and somebody
+will type a person's name into a search box. That name is then stored as text, unattached to
+whoever searched for it. It is readable only by an administrator, and a query nobody has repeated
+for twelve months is deleted. We would rather tell you that than claim the store is anonymous in
+every direction.</p>
+
+<h3>Cookies</h3>
+<p>One cookie: an <code>httpOnly</code> session cookie set when you sign in, so you stay signed in
+without the app having to hold a long-lived credential where JavaScript could reach it. It is
+strictly necessary to provide the login you asked for, so no consent banner is required and there
+is nothing to opt out of other than not signing in. It expires after 30 days, and signing out
+revokes it immediately.</p>
+
+<h3>How long we keep it</h3>
+<ul>
+  <li><strong>Account data</strong> — until you delete your account.</li>
+  <li><strong>Sessions</strong> — 30 days maximum, or immediately on sign-out.</li>
+  <li><strong>Sign-in tokens</strong> — 15 minutes.</li>
+  <li><strong>Usage totals</strong> — deleted once untouched for 12 months.</li>
+</ul>
+
+<h3>Deleting your account</h3>
+<p>Settings → Delete account, or write to us. See
+<a href="/legal/delete-account.html">the deletion page</a> for the full procedure. Deletion
+permanently removes your account record together with your password hash, two-factor secret and
+recovery codes, all your sessions, and your rate-limit counters.</p>
+<p>Reports you filed about incorrect company data are <strong>anonymised rather than
+deleted</strong>: the report is about a company, not about you, and removing it would silently
+rewrite the moderation history. Only the link back to you is severed, so the report can no longer
+be connected to you.</p>
+
+<h2 id="part2">Part 2 — If you appear in the ownership data</h2>
+
+<p>Owlgraph publishes a graph of company ownership. Because companies are ultimately owned and
+controlled by people, that graph names individuals. <strong>We did not get this data from you.</strong>
+We took it from public registers that are required by law to publish it. GDPR Art. 14 obliges us
+to tell you this proactively, which is what this part does.</p>
+
+<h3>Where it comes from</h3>
+<table>
+  <tr><th>Source</th><th>What we take</th></tr>
+  <tr>
+    <td><strong>UK Companies House — People with Significant Control (PSC)</strong></td>
+    <td>Name, nationality, month and year of birth, country of residence and the companies you
+        control, with the size and nature of that control</td>
+  </tr>
+  <tr>
+    <td><strong>US SEC EDGAR</strong></td>
+    <td>Names of officers, directors and insiders disclosed in company filings, and their roles
+        and disclosed holdings</td>
+  </tr>
+  <tr>
+    <td><strong>Wikidata</strong></td>
+    <td>Names, and where publicly recorded, dates and places of birth of people notable enough to
+        have an entry</td>
+  </tr>
+</table>
+
+<p class="note"><strong>How precise a date of birth is depends on the register.</strong>
+Companies House publishes month and year only, and that is all we hold for a UK PSC. Wikidata
+records a full date for people who have an entry there, and we do hold that — because the exact
+date is what stops two people who share a name being treated as one. Without it, a company you
+have nothing to do with could be shown as yours.</p>
+
+<p class="note"><strong>We do not display the full date.</strong> For a living person the panel
+shows an <strong>age</strong>, and their career timeline is marked with the <strong>year</strong>
+of birth. The day and month — the part that identifies someone, or answers their bank's security
+question — stay unpublished. The year is there because it is what makes a career legible: a first
+directorship at 24 means something different from one at 54, and a timeline without it is a list
+of dates against no one. For someone who has died we show the years of birth and death, because
+those show the period in which that person could have held control — which is what an ownership
+record is read for.</p>
+
+<p class="note">We do not hold your home address, your national identifiers, or any financial
+account details.</p>
+
+<h3>Why we do it, and on what basis</h3>
+<p>The legal basis is <strong>Art. 6(1)(f) — legitimate interests</strong>. The interest is
+transparency of corporate ownership: making it possible to see who ultimately controls a company,
+which is the express purpose for which these registers were made public in the first place, and
+which supports journalism, research, due diligence and anti-money-laundering work.</p>
+<p>We have weighed that interest against your rights, and the balance rests on these points: the
+data is already published by law and expected to be public; we take the minimum the registers
+disclose about individuals; we do not enrich it with anything private; we do not profile,
+score, advertise to or make automated decisions about anyone; and control of a company is
+information about a public role, not about private life.</p>
+<p>You can ask us for the reasoning behind this assessment, and we will provide it.</p>
+
+<h3>Who else sees it</h3>
+<p>The ownership graph is <strong>publicly accessible</strong> — that is the point of the service,
+and you should assume anything in it can be read by anyone. Beyond publication on this site, we do
+not share person data with anyone. We do not sell it, and we do not send it to advertisers or data
+brokers.</p>
+
+<h3>How long we keep it</h3>
+<p>For as long as the source register publishes it and the record remains relevant to understanding
+who controls a company. Where a register marks a person's control as ended, we keep the historical
+record with its end date, because a change of ownership is itself the information people come here
+for. If you object successfully (below), we remove or suppress the record regardless.</p>
+
+<h3>Your rights, and how to use them</h3>
+<p>You have the right to <strong>access</strong> the data we hold about you, to have inaccurate data
+<strong>corrected</strong>, to request <strong>erasure</strong>, to <strong>restrict</strong>
+processing, to <strong>data portability</strong>, and — because we rely on legitimate interests —
+to <strong>object</strong> at any time on grounds relating to your particular situation. If you
+object, we must stop unless we can show compelling legitimate grounds that override your rights.</p>
+
+<p>Two routes:</p>
+<ul>
+  <li><strong>Report an incorrect record directly.</strong> Every company and person in the app has
+      a report button. It works <strong>without an account</strong>, and reports go to a moderation
+      queue. Best for "this is wrong" or "this is not me".</li>
+  <li><strong>Write to <a href="mailto:{{OWNER_EMAIL}}">{{OWNER_EMAIL}}</a></strong> for access,
+      erasure, objection, or anything needing a considered answer. We reply within one month, as
+      the GDPR requires. Please describe which record you mean; we may need to ask a question to
+      be sure we have the right person, which is itself a safeguard against someone else editing
+      your record.</li>
+</ul>
+
+<p class="note"><strong>One honest limitation.</strong> If we remove a record that the source
+register still publishes, our next import can bring it back. When we act on an objection we
+suppress the record so re-import cannot resurrect it. If the underlying entry is itself wrong, it
+is worth correcting it at the register too — otherwise every other user of that register keeps the
+error.</p>
+
+<h2>Everyone: services we rely on</h2>
+<p>We keep this list short on purpose.</p>
+<table>
+  <tr><th>Provider</th><th>What for</th><th>Where</th></tr>
+  <tr><td>Render Services, Inc.</td><td>Hosting the application and website</td>
+      <td>Servers in <strong>Frankfurt, Germany</strong> (EU)</td></tr>
+  <tr><td>Self-managed database server</td><td>Storing the graph</td><td>EU</td></tr>
+  <tr><td>Resend</td><td>Sending account emails (verification, password reset)</td>
+      <td><strong>USA</strong> — transfer safeguarded by the EU Commission's Standard Contractual
+      Clauses. Only your email address and the message are involved</td></tr>
+  <tr><td>OpenStreetMap Nominatim</td>
+      <td>Turning a company's address — its registered office and its business address — into map
+          coordinates, so it can be shown on the map</td>
+      <td>EU. Company addresses only — never your account data, and never a person's address
+          (we do not hold one)</td></tr>
+</table>
+
+<h2>Security</h2>
+<p>Everything travels over HTTPS. Passwords are stored as bcrypt hashes and session tokens only as
+SHA-256 hashes, so neither can be read back out of the database. Sessions rotate on use, and a
+replayed session token invalidates the whole family of tokens it belongs to. Two-factor
+authentication is available and we recommend it.</p>
+
+<h2>Complaints</h2>
+<p>Please try us first — most things are quicker to fix directly. You also have the right to
+complain to a supervisory authority. Ours is:</p>
+<p><strong>Österreichische Datenschutzbehörde</strong><br>
+Barichgasse 40–42, 1030 Vienna, Austria<br>
+<a href="https://www.dsb.gv.at">www.dsb.gv.at</a></p>
+<p>If you live in another EU or EEA country, you may complain to your local authority instead.</p>
+
+<h2>Changes</h2>
+<p>If this policy changes materially we will update the date at the top and, for account holders,
+say so in the app. This document describes what the software actually does; when the software
+changes, this changes with it.</p>
+
+<footer class="doc">
+  <a href="/legal/">Legal</a>
+  <a href="/legal/imprint.html">Imprint</a>
+  <a href="/legal/terms.html">Terms</a>
+  <a href="/legal/data-sources.html">Data sources</a>
+  <a href="/legal/delete-account.html">Delete account</a>
+</footer>
+</body>
+</html>

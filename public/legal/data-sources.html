@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Sources &amp; Attribution — Owlgraph</title>
+<link rel="stylesheet" href="/legal/legal.css">
+</head>
+<body>
+<header class="doc">
+  <span class="lang"><a href="/legal/data-sources.de.html">Deutsch</a></span>
+  <a class="home" href="/">Owlgraph</a>
+  <h1>Data Sources &amp; Attribution</h1>
+  <p class="updated">Last updated: 9 August 2026</p>
+</header>
+
+<p>Owlgraph holds no ownership data of its own. Everything comes from the public registers below,
+and every record in the app links back to the source it came from. Several of these licences
+<strong>require</strong> attribution, so this page is a licence obligation rather than a courtesy —
+and if you reuse our database, these conditions travel with it.</p>
+
+<h2>Sources</h2>
+
+<table>
+  <tr><th>Source</th><th>What we take</th><th>Licence</th></tr>
+  <tr>
+    <td><strong>GLEIF</strong> — Global Legal Entity Identifier Foundation<br>
+        <a href="https://www.gleif.org">gleif.org</a></td>
+    <td>Legal entities (LEI, name, country, legal form, address) and parent/subsidiary
+        consolidation relationships</td>
+    <td><strong>CC0 1.0</strong> — public domain dedication</td>
+  </tr>
+  <tr>
+    <td><strong>UK Companies House</strong><br>
+        <a href="https://www.gov.uk/government/organisations/companies-house">gov.uk</a></td>
+    <td>Company names and registered offices; People with Significant Control</td>
+    <td><strong>Open Government Licence v3.0</strong> — requires attribution.
+        Contains public sector information licensed under the OGL v3.0</td>
+  </tr>
+  <tr>
+    <td><strong>US SEC EDGAR</strong><br>
+        <a href="https://www.sec.gov/edgar">sec.gov/edgar</a></td>
+    <td>Filer entities, officers and insiders, disclosed holdings</td>
+    <td><strong>US public domain</strong> — works of the US federal government</td>
+  </tr>
+  <tr>
+    <td><strong>Wikidata</strong><br>
+        <a href="https://www.wikidata.org">wikidata.org</a></td>
+    <td>Company and person identifiers, cross-references between registers</td>
+    <td><strong>CC0 1.0</strong> — public domain dedication</td>
+  </tr>
+  <tr>
+    <td><strong>OpenStreetMap / Nominatim</strong><br>
+        <a href="https://www.openstreetmap.org">openstreetmap.org</a></td>
+    <td>Geocoding: turning a registered town into map coordinates</td>
+    <td><strong>ODbL v1.0</strong> — © OpenStreetMap contributors, requires attribution and
+        share-alike</td>
+  </tr>
+  <tr>
+    <td><strong>Natural Earth</strong> (via world-atlas)</td>
+    <td>Country outlines for the map view</td>
+    <td><strong>Public domain</strong></td>
+  </tr>
+</table>
+
+<h2>Attribution to use when reusing our data</h2>
+<p>If you publish anything built on the Owlgraph database, this is enough:</p>
+<p class="note">Ownership data from Owlgraph, licensed under the ODbL v1.0. Contains information
+from GLEIF (CC0), UK Companies House under the Open Government Licence v3.0, US SEC EDGAR (public
+domain), Wikidata (CC0) and © OpenStreetMap contributors (ODbL).</p>
+
+<h2>How the data is combined</h2>
+<p>Records describing the same company are merged when they share a hard identifier — an LEI, a
+Companies House number, an SEC CIK or a Wikidata QID. Where no shared identifier exists, matching
+falls back to normalised names, which is less reliable; such merges are reviewed rather than
+applied automatically. Each source carries a credibility score, and where two sources disagree
+about the same fact, the more credible and more recent one is shown. Every value keeps a record of
+which source asserted it.</p>
+
+<h2>Corrections</h2>
+<p>If a record here is wrong, the report button in the app sends it to a moderation queue — no
+account needed. Please also consider correcting it at the source register: we re-import from those
+registers regularly, so a fix at the source is the one that lasts, and it helps everyone else using
+the same data. Individuals: see
+<a href="/legal/privacy.html#part2">Part 2 of the privacy policy</a> for your rights.</p>
+
+<h2>Our own licences</h2>
+<ul>
+  <li><strong>Application source code</strong> — MIT Licence</li>
+  <li><strong>Ownership database</strong> — Open Database Licence (ODbL) v1.0</li>
+</ul>
+
+<footer class="doc">
+  <a href="/legal/">Legal</a>
+  <a href="/legal/privacy.html">Privacy</a>
+  <a href="/legal/imprint.html">Imprint</a>
+  <a href="/legal/terms.html">Terms</a>
+  <a href="/legal/delete-account.html">Delete account</a>
+</footer>
+</body>
+</html>

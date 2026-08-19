@@ -390,7 +390,12 @@
       "disablePrompt": "Enter a current code (or a recovery code) to turn two-factor off.",
       "error": "Something went wrong. Try again.",
       "badCode": "That code isn't valid. Try again."
-    }
+    },
+    "legal": "Legal",
+    "legalPrivacy": "Privacy policy",
+    "legalImprint": "Imprint",
+    "legalTerms": "Terms of use",
+    "legalSources": "Data sources"
   },
   "scraper": {
     "title": "Scraper",
