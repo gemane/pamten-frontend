@@ -653,3 +653,115 @@ describe('current positions versus the whole career', () => {
     expect(screen.getAllByText('Board Member')).toHaveLength(2)
   })
 })
+
+/**
+ * Why a company reports no parent, on the panel.
+ *
+ * The one thing these guard above all: this is NOT a statement about owners.
+ * GLEIF asks who consolidates the accounts; 53 of the 63 companies carrying a
+ * reason on the dev graph also have shareholders listed, Apple with 37 of them.
+ * A design that hid the section when owners existed, or that worded it as "no
+ * owners", would be wrong for the large majority of the cases it exists for.
+ */
+describe('why a company reports no parent', () => {
+  const withEntity = async (extra: Partial<Entity>, owners: unknown[] = []) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false, ...extra } as Entity,
+      owners, subsidiaries: [], executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+  }
+
+  const owner = (name: string, pct: number) =>
+    ({ owner: { id: name, name, type: 'company' }, relationship: { stake_percent: pct } })
+
+  it('shows the reason even when the company has shareholders', async () => {
+    // The Apple case, which is the majority case.
+    await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS' },
+                     [owner('Vanguard Group', 8.3), owner('BlackRock', 6.7)])
+    expect(screen.getByText('Vanguard Group')).toBeInTheDocument()
+    expect(screen.getByText('Parent company')).toBeInTheDocument()
+    expect(screen.getByText(/controlled by natural persons/)).toBeInTheDocument()
+  })
+
+  it('never says the company has no owners', async () => {
+    await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS' }, [owner('Vanguard Group', 8.3)])
+    expect(screen.queryByText(/no owners/i)).toBeNull()
+    expect(screen.queryByText(/no shareholders/i)).toBeNull()
+  })
+
+  it('keeps the statement out of the Owned by section', async () => {
+    // Printed under the owner rows it reads as a qualification of them.
+    await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS' }, [owner('Vanguard Group', 8.3)])
+    const ownedBy = screen.getByText('Owned by').closest('.panel-section') as HTMLElement
+    expect(within(ownedBy).queryByText(/Reports no direct parent/)).toBeNull()
+  })
+
+  it('says the shareholders are a separate question when there are some', async () => {
+    await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS' }, [owner('Vanguard Group', 8.3)])
+    expect(screen.getByText(/shareholders listed above are a separate question/)).toBeInTheDocument()
+  })
+
+  it('drops that sentence when there are none', async () => {
+    await withEntity({ no_direct_parent_reason: 'NO_KNOWN_PERSON' })
+    expect(screen.getByText(/who consolidates this company's accounts/)).toBeInTheDocument()
+    expect(screen.queryByText(/listed above/)).toBeNull()
+  })
+
+  it('still shows the section when the company has no owners at all', async () => {
+    // Fevertree: no owner edges, NO_KNOWN_PERSON. The "Owned by" heading is absent,
+    // so a footnote there would have had nothing to attach to.
+    await withEntity({ no_direct_parent_reason: 'NO_KNOWN_PERSON' })
+    expect(screen.getByText('Parent company')).toBeInTheDocument()
+    expect(screen.queryByText('Owned by')).toBeNull()
+  })
+
+  it('says nothing at all when the company filed no exception', async () => {
+    await withEntity({}, [owner('Vanguard Group', 8.3)])
+    expect(screen.queryByText('Parent company')).toBeNull()
+  })
+
+  it('states both answers when they differ', async () => {
+    await withEntity({ no_direct_parent_reason: 'NO_LEI',
+                       no_ultimate_parent_reason: 'NON_CONSOLIDATING' })
+    expect(screen.getByText(/Reports no direct parent/)).toBeInTheDocument()
+    expect(screen.getByText(/Reports no ultimate parent/)).toBeInTheDocument()
+  })
+
+  it('states one answer when both questions got the same one', async () => {
+    await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS',
+                       no_ultimate_parent_reason: 'NATURAL_PERSONS' })
+    expect(screen.getByText(/Reports no direct or ultimate parent/)).toBeInTheDocument()
+    expect(screen.queryByText(/Reports no direct parent/)).toBeNull()
+  })
+
+  it('reads a code it has no copy for, rather than leaking a key', async () => {
+    await withEntity({ no_direct_parent_reason: 'WHOLLY_NEW_REASON' })
+    expect(screen.getByText(/wholly new reason/)).toBeInTheDocument()
+    expect(document.body.textContent).not.toContain('parentReason.')
+  })
+
+  it('links a reference that is a real URL', async () => {
+    await withEntity({ no_direct_parent_reason: 'NO_LEI',
+                       no_direct_parent_reason_reference: 'https://example.test/register/1' })
+    const link = screen.getByRole('link', { name: /view reference/i })
+    expect(link).toHaveAttribute('href', 'https://example.test/register/1')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link.getAttribute('rel')).toContain('noreferrer')
+  })
+
+  it('shows a reference that is not a URL as plain text', async () => {
+    await withEntity({ no_direct_parent_reason: 'NO_LEI',
+                       no_direct_parent_reason_reference: 'Companies House filing 12345' })
+    expect(screen.getByText(/Companies House filing 12345/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /view reference/i })).toBeNull()
+  })
+
+  it('describes NO_LEI as a refusal, not an absence', async () => {
+    // GLEIF's definition is "The parent does not consent to have an LEI" — the
+    // code name invites the other reading and our own docs made that mistake.
+    await withEntity({ no_direct_parent_reason: 'NO_LEI' })
+    expect(screen.getByText(/does not consent to having an LEI/)).toBeInTheDocument()
+  })
+})

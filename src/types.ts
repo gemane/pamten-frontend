@@ -55,6 +55,16 @@ export interface Entity {
   reg_geo_precision?: string
   jurisdiction_code?: string  // ISO 3166-2 registration, e.g. 'US-DE' — sparse; absent means "not stated"
   founded_date?: string     // full YYYY-MM-DD incorporation/creation date (headline `founded` stays the year)
+  // GLEIF Level 2 *reporting exceptions* — why the company names no parent. An LEI
+  // holder must report its parent or file a reason, so these say "asked and declined",
+  // which is a different fact from having no parent recorded at all. Direct and
+  // ultimate are separate questions with separate answers. Comma-joined when a filer
+  // gives more than one reason; the `_reference` is free text, often a URL pointing at
+  // the parent it would not name.
+  no_direct_parent_reason?: string
+  no_ultimate_parent_reason?: string
+  no_direct_parent_reason_reference?: string
+  no_ultimate_parent_reason_reference?: string
 }
 
 export interface Person {

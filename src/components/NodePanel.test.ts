@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines } from './NodePanel'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
@@ -318,5 +318,134 @@ describe('byTenureDesc', () => {
     const dated = spell('1977-03-01', '1985-09-01')
     expect([spell(null, null), dated].sort(byTenureDesc)[0]).toBe(dated)
     expect([dated, spell(null, null)].sort(byTenureDesc)[0]).toBe(dated)
+  })
+})
+
+/**
+ * Why a company reports no parent.
+ *
+ * GLEIF asks who **consolidates the accounts**, not who holds the shares, so a
+ * company can have a long shareholder list and still report no parent — Apple
+ * lists 37 owners and reports NATURAL_PERSONS. Everything here is about turning
+ * one or two published enum fields into what the panel should say, without
+ * overstating it.
+ */
+describe('parentExceptionLines', () => {
+  const entity = (extra: Partial<Entity>) => ({ id: 'e1', name: 'X', ...extra }) as Entity
+
+  it('says nothing when the company filed nothing', () => {
+    expect(parentExceptionLines(entity({}))).toEqual([])
+  })
+
+  it('says nothing for empty or whitespace fields', () => {
+    expect(parentExceptionLines(entity({
+      no_direct_parent_reason: '', no_ultimate_parent_reason: '   ',
+    }))).toEqual([])
+  })
+
+  it('reports a direct-only answer', () => {
+    // The commonest shape by far: 47 of the 63 on the dev graph.
+    const [line] = parentExceptionLines(entity({ no_direct_parent_reason: 'NO_LEI' }))
+    expect(line.scope).toBe('direct')
+    expect(line.reasons.map(r => r.key)).toEqual(['NO_LEI'])
+  })
+
+  it('reports an ultimate-only answer', () => {
+    const [line] = parentExceptionLines(entity({ no_ultimate_parent_reason: 'NON_PUBLIC' }))
+    expect(line.scope).toBe('ultimate')
+  })
+
+  it('collapses a pair that answers both questions the same way', () => {
+    // Saying it twice, identically, reads as a bug rather than as two answers.
+    const lines = parentExceptionLines(entity({
+      no_direct_parent_reason: 'NATURAL_PERSONS',
+      no_ultimate_parent_reason: 'NATURAL_PERSONS',
+    }))
+    expect(lines).toHaveLength(1)
+    expect(lines[0].scope).toBe('both')
+  })
+
+  it('collapses regardless of the order the reasons were listed in', () => {
+    const lines = parentExceptionLines(entity({
+      no_direct_parent_reason: 'NO_LEI,NON_PUBLIC',
+      no_ultimate_parent_reason: 'NON_PUBLIC,NO_LEI',
+    }))
+    expect(lines).toHaveLength(1)
+    // Displayed in the order the direct field gave them, not re-sorted.
+    expect(lines[0].reasons.map(r => r.key)).toEqual(['NO_LEI', 'NON_PUBLIC'])
+  })
+
+  it('keeps two lines when the same reason carries different references', () => {
+    // Two pointers are two statements, however alike the reasons: collapsing
+    // would silently drop one of the company's own citations.
+    const lines = parentExceptionLines(entity({
+      no_direct_parent_reason: 'NO_LEI',
+      no_ultimate_parent_reason: 'NO_LEI',
+      no_direct_parent_reason_reference: 'https://example.test/a',
+      no_ultimate_parent_reason_reference: 'https://example.test/b',
+    }))
+    expect(lines).toHaveLength(2)
+  })
+
+  it('keeps two lines when the answers differ, direct first', () => {
+    const lines = parentExceptionLines(entity({
+      no_direct_parent_reason: 'NO_LEI',
+      no_ultimate_parent_reason: 'NON_CONSOLIDATING',
+    }))
+    expect(lines.map(l => l.scope)).toEqual(['direct', 'ultimate'])
+  })
+
+  it('trims, drops empties and de-duplicates a multi-reason field', () => {
+    const [line] = parentExceptionLines(entity({
+      no_direct_parent_reason: ' NO_LEI , ,NON_PUBLIC, NO_LEI ,',
+    }))
+    expect(line.reasons.map(r => r.key)).toEqual(['NO_LEI', 'NON_PUBLIC'])
+  })
+
+  it('normalises a lower-case token to the translation key', () => {
+    const [line] = parentExceptionLines(entity({ no_direct_parent_reason: 'natural_persons' }))
+    expect(line.reasons[0].key).toBe('NATURAL_PERSONS')
+  })
+
+  it('keeps a code it does not recognise, and humanises it', () => {
+    // GLEIF has changed this list in both directions. A reason we have no copy
+    // for is still one the company reported, and the sentence around it stays true.
+    const [line] = parentExceptionLines(entity({ no_direct_parent_reason: 'WHOLLY_NEW_REASON' }))
+    expect(line.reasons[0]).toEqual({ key: 'WHOLLY_NEW_REASON', fallback: 'wholly new reason' })
+  })
+
+  describe('the reference the filer points at', () => {
+    const ref = (reference: string) =>
+      parentExceptionLines(entity({
+        no_direct_parent_reason: 'NO_LEI', no_direct_parent_reason_reference: reference }))[0]
+
+    it('links an http(s) URL', () => {
+      expect(ref('https://example.test/company/1').href).toBe('https://example.test/company/1')
+      expect(ref('http://example.test/company/1').href).toBe('http://example.test/company/1')
+    })
+
+    it('refuses to link a javascript: URL but still reports it', () => {
+      const line = ref('javascript:alert(1)')
+      expect(line.href).toBeNull()
+      expect(line.reference).toBe('javascript:alert(1)')
+    })
+
+    it('does not guess a scheme for a bare host', () => {
+      // Prepending https:// to a register's free text fabricates a destination
+      // nobody gave us.
+      expect(ref('www.example.test/company/1').href).toBeNull()
+    })
+
+    it('shows prose as prose', () => {
+      const line = ref('Companies House filing 12345')
+      expect(line.href).toBeNull()
+      expect(line.reference).toBe('Companies House filing 12345')
+    })
+
+    it('treats a blank reference as none', () => {
+      const line = ref('   ')
+      expect(line.reference).toBeNull()
+      expect(line.href).toBeNull()
+    })
   })
 })

@@ -149,7 +149,14 @@
     "registeredIn": "Registered in",
     "age": "Age",
     "years_one": "{{count}} year",
-    "years_other": "{{count}} years"
+    "years_other": "{{count}} years",
+    "parentCompany": "Parent company",
+    "parentNoneDirect": "Reports no direct parent to GLEIF: {{reasons}}.",
+    "parentNoneUltimate": "Reports no ultimate parent to GLEIF: {{reasons}}.",
+    "parentNoneBoth": "Reports no direct or ultimate parent to GLEIF: {{reasons}}.",
+    "parentNoneHint": "GLEIF asks who consolidates this company's accounts — not who holds its shares.",
+    "parentNoneHintOwners": "GLEIF asks who consolidates this company's accounts — not who holds its shares. The shareholders listed above are a separate question.",
+    "parentReference": "View reference"
   },
   "report": {
     "button": "Report",
@@ -247,6 +254,18 @@
     "owned": "Owned",
     "specialVoting": "Special voting",
     "specialVotingHint": "Voting power far exceeds the economic stake (golden share / super-voting class)"
+  },
+  "parentReason": {
+    "NATURAL_PERSONS": "controlled by natural persons, with no intermediate company that counts as a parent",
+    "NON_CONSOLIDATING": "controlled by companies that do not prepare consolidated accounts",
+    "NO_KNOWN_PERSON": "no known controlling person — for example, widely dispersed shareholding",
+    "NO_LEI": "the parent does not consent to having an LEI",
+    "NON_PUBLIC": "the relationship must not be disclosed publicly",
+    "LEGAL_OBSTACLES": "law or regulation in its jurisdiction prevents publishing this",
+    "CONSENT_NOT_OBTAINED": "the parent did not consent, or could not be reached",
+    "BINDING_LEGAL_COMMITMENTS": "a contract or the company's own articles prevent publishing this",
+    "DISCLOSURE_DETRIMENTAL": "publishing it would harm the company or the parent",
+    "DETRIMENT_NOT_EXCLUDED": "the company could not confirm that publishing it would do no harm"
   },
   "tooltip": {
     "type": "Type",
