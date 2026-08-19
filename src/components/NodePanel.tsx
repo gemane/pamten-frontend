@@ -419,9 +419,16 @@ export function parentExceptionLines(entity: Entity): ParentExceptionLine[] {
 }
 
 /**
- * The panel section. Its own heading, deliberately, rather than a footnote under
- * "Owned by": printed beneath 37 owner rows, an unheaded line about parents reads
- * as a qualification of that list. `hasOwners` only chooses which hint to show.
+ * The block itself, rendered inside "Details" beside the other GLEIF-derived
+ * facts — legal form, registration, address.
+ *
+ * It keeps a heading of its own even there, because Details is otherwise a
+ * label/value table and this is prose: the heading marks where the format
+ * changes and names what the sentence is about. And it is deliberately *not* a
+ * `MetaRow` — a reason runs to a line and a half and would be squeezed into the
+ * value column, beside a 70px label, with a reference link after it.
+ *
+ * `hasOwners` only chooses which hint to show.
  */
 function ParentExceptionSection({ entity, hasOwners }: { entity: Entity; hasOwners: boolean }) {
   const { t } = useTranslation()
@@ -456,15 +463,25 @@ function ParentExceptionSection({ entity, hasOwners }: { entity: Entity; hasOwne
 // Collapsible "Details" — a small container for factual fields (legal form, where the
 // entity is registered, its registered address) that aren't part of the primary meta
 // or the relationship sections. Hidden entirely when the entity has none of them.
-function DetailsSection({ entity }: { entity: Entity }) {
+function DetailsSection({ entity, hasOwners }: { entity: Entity; hasOwners: boolean }) {
   const { t } = useTranslation()
   const rows = entityDetailRows(entity)
-  if (!rows.length) return null
+  // The parent statement counts towards "does this section have anything to say".
+  // `entityDetailRows` only knows about legal form, registration, founding date and
+  // address, so a company that filed a reason and has none of those would otherwise
+  // render no Details section — and lose the statement with it.
+  const hasParentStatement = parentExceptionLines(entity).length > 0
+  if (!rows.length && !hasParentStatement) return null
   return (
     <CollapsibleSection title={t('panel.details')}>
-      <div className="panel-meta">
-        {rows.map((r, i) => <MetaRow key={i} icon={r.icon} label={t(r.labelKey)} value={r.value} />)}
-      </div>
+      {rows.length > 0 && (
+        <div className="panel-meta">
+          {rows.map((r, i) => <MetaRow key={i} icon={r.icon} label={t(r.labelKey)} value={r.value} />)}
+        </div>
+      )}
+      {/* A sibling of `.panel-meta`, not a row inside it: that is what gives it the
+          full panel width instead of the value column. */}
+      <ParentExceptionSection entity={entity} hasOwners={hasOwners} />
     </CollapsibleSection>
   )
 }
@@ -937,11 +954,6 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      {/* Not inside "Owned by", and not gated on it: GLEIF's parent question is a
-          different question from who holds the shares, and 84% of the companies
-          that answer it have owners listed above. */}
-      <ParentExceptionSection entity={entity} hasOwners={owners.length > 0} />
-
       {cross_holdings.length > 0 && (
         <Section title={t('panel.crossHoldings')}>
           <div className="ownership-warning">↻ {t('panel.crossHoldingsHint')}</div>
@@ -1057,7 +1069,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      <DetailsSection entity={entity} />
+      <DetailsSection entity={entity} hasOwners={owners.length > 0} />
       {onReScrape && (
         <div className="panel-rescrape">
           <button type="button" className="panel-rescrape__btn"

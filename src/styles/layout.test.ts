@@ -194,3 +194,20 @@ describe('where the start screen breaks its rows', () => {
     }
   })
 })
+
+describe('a section nested inside another does not end in dead space', () => {
+  it('drops the trailing margins that would otherwise stack', () => {
+    // The GLEIF parent statement is a `.panel-section` inside the Details
+    // collapsible. Left alone, its own 18px bottom margin and its last
+    // paragraph's 16px stack into ~34px of empty panel below the text.
+    expect(ruleFor('.panel-section .panel-section:last-child')).toMatch(/margin-bottom:\s*0/)
+    expect(ruleFor('.panel-section .panel-section > .panel-desc:last-child'))
+      .toMatch(/margin-bottom:\s*0/)
+  })
+
+  it('leaves the spacing between top-level sections alone', () => {
+    // Scoped to the nested case on purpose: a blanket `.panel-section:last-child`
+    // would close the gap under the last section of every panel.
+    expect(ruleFor('.panel-section')).toMatch(/margin-bottom:\s*18px/)
+  })
+})

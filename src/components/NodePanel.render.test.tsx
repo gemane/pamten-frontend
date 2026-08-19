@@ -662,8 +662,14 @@ describe('current positions versus the whole career', () => {
  * reason on the dev graph also have shareholders listed, Apple with 37 of them.
  * A design that hid the section when owners existed, or that worded it as "no
  * owners", would be wrong for the large majority of the cases it exists for.
+ *
+ * It lives inside the collapsible "Details" section, beside the other GLEIF facts,
+ * so every positive assertion here has to open that first — `CollapsibleSection`
+ * unmounts its children rather than hiding them.
  */
 describe('why a company reports no parent', () => {
+  /** Render, then open Details — the statement lives inside it and
+   *  `CollapsibleSection` unmounts its children rather than hiding them. */
   const withEntity = async (extra: Partial<Entity>, owners: unknown[] = []) => {
     mockProfile.mockResolvedValue({ data: {
       entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false, ...extra } as Entity,
@@ -671,10 +677,15 @@ describe('why a company reports no parent', () => {
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
     await screen.findByText('Acme Corp')
+    const toggle = screen.queryByText(/^Details$/)
+    if (toggle) await userEvent.click(toggle)
   }
 
   const owner = (name: string, pct: number) =>
     ({ owner: { id: name, name, type: 'company' }, relationship: { stake_percent: pct } })
+
+  const detailsSection = () =>
+    screen.getByText(/^Details$/).closest('.panel-section') as HTMLElement
 
   it('shows the reason even when the company has shareholders', async () => {
     // The Apple case, which is the majority case.
@@ -691,22 +702,55 @@ describe('why a company reports no parent', () => {
     expect(screen.queryByText(/no shareholders/i)).toBeNull()
   })
 
-  it('keeps the statement out of the Owned by section', async () => {
-    // Printed under the owner rows it reads as a qualification of them.
+  it('lives inside Details, not in the Owned by section', async () => {
     await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS' }, [owner('Vanguard Group', 8.3)])
+    expect(within(detailsSection()).getByText(/controlled by natural persons/)).toBeInTheDocument()
     const ownedBy = screen.getByText('Owned by').closest('.panel-section') as HTMLElement
-    expect(within(ownedBy).queryByText(/Reports no direct parent/)).toBeNull()
+    expect(within(ownedBy).queryByText(/controlled by natural persons/)).toBeNull()
+  })
+
+  it('spans the panel rather than sitting in the value column', async () => {
+    // A reason runs to a line and a half. Inside `.panel-meta` it would be squeezed
+    // into the value column beside a 70px label — the whole point of the move.
+    await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS', legal_form: 'Corporation' })
+    const meta = detailsSection().querySelector('.panel-meta') as HTMLElement
+    expect(within(meta).getByText('Corporation')).toBeInTheDocument()   // the table is there
+    expect(within(meta).queryByText(/controlled by natural persons/)).toBeNull()
+  })
+
+  it('stays behind the Details toggle until it is opened', async () => {
+    // The cost of the move, asserted rather than assumed: CollapsibleSection
+    // unmounts its children, so nothing about the parent is in the DOM until asked.
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false,
+                no_direct_parent_reason: 'NATURAL_PERSONS' } as Entity,
+      owners: [], subsidiaries: [], executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+
+    expect(screen.queryByText(/controlled by natural persons/)).toBeNull()
+    await userEvent.click(screen.getByText(/^Details$/))
+    expect(screen.getByText(/controlled by natural persons/)).toBeInTheDocument()
+  })
+
+  it('opens a Details section for a company that has no other detail fields', async () => {
+    // Every one of these fixtures is that shape: no legal form, no registration, no
+    // address. Details used to render nothing at all for them, which would have
+    // swallowed the statement entirely.
+    await withEntity({ no_direct_parent_reason: 'NO_KNOWN_PERSON' })
+    expect(screen.getByText('Parent company')).toBeInTheDocument()
   })
 
   it('says the shareholders are a separate question when there are some', async () => {
     await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS' }, [owner('Vanguard Group', 8.3)])
-    expect(screen.getByText(/shareholders listed above are a separate question/)).toBeInTheDocument()
+    expect(screen.getByText(/shareholders listed on this panel are a separate question/)).toBeInTheDocument()
   })
 
   it('drops that sentence when there are none', async () => {
     await withEntity({ no_direct_parent_reason: 'NO_KNOWN_PERSON' })
     expect(screen.getByText(/who consolidates this company's accounts/)).toBeInTheDocument()
-    expect(screen.queryByText(/listed above/)).toBeNull()
+    expect(screen.queryByText(/listed on this panel/)).toBeNull()
   })
 
   it('still shows the section when the company has no owners at all', async () => {
@@ -718,8 +762,11 @@ describe('why a company reports no parent', () => {
   })
 
   it('says nothing at all when the company filed no exception', async () => {
+    // And does not conjure an empty Details section to say it in: the guard widened
+    // to include the statement, not to always render.
     await withEntity({}, [owner('Vanguard Group', 8.3)])
     expect(screen.queryByText('Parent company')).toBeNull()
+    expect(screen.queryByText(/^Details$/)).toBeNull()
   })
 
   it('states both answers when they differ', async () => {

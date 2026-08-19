@@ -155,7 +155,7 @@
     "parentNoneUltimate": "Reports no ultimate parent to GLEIF: {{reasons}}.",
     "parentNoneBoth": "Reports no direct or ultimate parent to GLEIF: {{reasons}}.",
     "parentNoneHint": "GLEIF asks who consolidates this company's accounts — not who holds its shares.",
-    "parentNoneHintOwners": "GLEIF asks who consolidates this company's accounts — not who holds its shares. The shareholders listed above are a separate question.",
+    "parentNoneHintOwners": "GLEIF asks who consolidates this company's accounts — not who holds its shares. The shareholders listed on this panel are a separate question.",
     "parentReference": "View reference"
   },
   "report": {
