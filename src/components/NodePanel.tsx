@@ -328,6 +328,131 @@ export function entityDetailRows(entity: Entity): DetailRow[] {
   return candidates.filter((r): r is DetailRow => !!r.value)
 }
 
+/**
+ * Why a company reports no parent — GLEIF's *reporting exceptions*.
+ *
+ * An LEI holder must name its parent company or file a reason why not; silence is
+ * not an allowed answer. So "no parent" splits into two very different facts, and
+ * this is the second: asked, and declined, in public, with a reason attached.
+ *
+ * The trap this is written around: GLEIF asks who **consolidates the accounts**,
+ * not who holds the shares. 53 of the 63 companies carrying a reason on the dev
+ * graph also have owners — Apple lists 37 from SEC filings *and* reports
+ * NATURAL_PERSONS. So this cannot be shown as "no owners", and it cannot be
+ * gated on the owners list being empty, which would hide it in 84% of cases.
+ *
+ * Pure and i18n-free like `entityDetailRows`, so the awkward parts — collapsing a
+ * duplicated pair, a multi-reason field, an unsafe reference — are unit tested
+ * without rendering anything.
+ */
+export interface ParentExceptionReason {
+  /** GLEIF's wire token, upper-cased: the `parentReason.*` translation key. */
+  key: string
+  /** The token humanised, for a code GLEIF adds that we have no copy for yet. */
+  fallback: string
+}
+export interface ParentExceptionLine {
+  scope: 'direct' | 'ultimate' | 'both'
+  reasons: ParentExceptionReason[]
+  /** The filer's pointer at the parent it would not name, exactly as published. */
+  reference: string | null
+  /** Set only when `reference` is a safe http(s) URL — see `_safeHref`. */
+  href: string | null
+}
+
+/** Reasons from one comma-joined field: trimmed, uppercased, de-duplicated, in order. */
+function parseReasons(raw?: string | null): ParentExceptionReason[] {
+  const seen = new Set<string>()
+  const out: ParentExceptionReason[] = []
+  for (const part of (raw ?? '').split(',')) {
+    const key = part.trim().toUpperCase()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push({ key, fallback: key.toLowerCase().replace(/_/g, ' ') })
+  }
+  return out
+}
+
+/** A reference we are willing to turn into a link.
+ *
+ *  http(s) only, and no scheme-guessing: prepending `https://` to a register's
+ *  free text would fabricate a destination we were never given. Anything else —
+ *  `javascript:`, a bare `www.…`, a sentence naming a filing — is still shown,
+ *  as text. */
+function safeHref(reference: string | null): string | null {
+  if (!reference) return null
+  try {
+    const url = new URL(reference)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? reference : null
+  } catch {
+    return null
+  }
+}
+
+const trimmed = (v?: string | null): string | null => v?.trim() || null
+
+export function parentExceptionLines(entity: Entity): ParentExceptionLine[] {
+  const line = (scope: 'direct' | 'ultimate' | 'both',
+                reasons: ParentExceptionReason[], reference: string | null): ParentExceptionLine =>
+    ({ scope, reasons, reference, href: safeHref(reference) })
+
+  const direct = parseReasons(entity.no_direct_parent_reason)
+  const ultimate = parseReasons(entity.no_ultimate_parent_reason)
+  const directRef = trimmed(entity.no_direct_parent_reason_reference)
+  const ultimateRef = trimmed(entity.no_ultimate_parent_reason_reference)
+
+  if (!direct.length && !ultimate.length) return []
+  if (!ultimate.length) return [line('direct', direct, directRef)]
+  if (!direct.length) return [line('ultimate', ultimate, ultimateRef)]
+
+  // Most filers answer both questions the same way (14 of the 14 that answer both,
+  // on the dev graph), and saying it twice reads as a bug. Collapse only on a true
+  // match: the reason *sets* — order is not meaning — and the references, because
+  // two different pointers are two different statements however alike the reasons.
+  const same = (a: ParentExceptionReason[], b: ParentExceptionReason[]) =>
+    a.length === b.length &&
+    a.map(r => r.key).sort().join(',') === b.map(r => r.key).sort().join(',')
+  if (same(direct, ultimate) && directRef === ultimateRef) {
+    return [line('both', direct, directRef)]
+  }
+  return [line('direct', direct, directRef), line('ultimate', ultimate, ultimateRef)]
+}
+
+/**
+ * The panel section. Its own heading, deliberately, rather than a footnote under
+ * "Owned by": printed beneath 37 owner rows, an unheaded line about parents reads
+ * as a qualification of that list. `hasOwners` only chooses which hint to show.
+ */
+function ParentExceptionSection({ entity, hasOwners }: { entity: Entity; hasOwners: boolean }) {
+  const { t } = useTranslation()
+  const lines = parentExceptionLines(entity)
+  if (!lines.length) return null
+
+  const SENTENCE = { direct: 'panel.parentNoneDirect', ultimate: 'panel.parentNoneUltimate',
+                     both: 'panel.parentNoneBoth' } as const
+
+  return (
+    <Section title={t('panel.parentCompany')}>
+      {lines.map((line, i) => (
+        <p className="panel-desc" key={i}>
+          {t(SENTENCE[line.scope], {
+            reasons: line.reasons
+              .map(r => t(`parentReason.${r.key}`, { defaultValue: r.fallback }))
+              .join('; '),
+          })}
+          {line.href
+            ? <> <a className="panel-link" href={line.href} target="_blank" rel="noreferrer"
+                   title={line.reference ?? undefined}>{t('panel.parentReference')}</a></>
+            : line.reference && <span className="rel-item__name--muted"> {line.reference}</span>}
+        </p>
+      ))}
+      <p className="panel-desc">
+        {hasOwners ? t('panel.parentNoneHintOwners') : t('panel.parentNoneHint')}
+      </p>
+    </Section>
+  )
+}
+
 // Collapsible "Details" — a small container for factual fields (legal form, where the
 // entity is registered, its registered address) that aren't part of the primary meta
 // or the relationship sections. Hidden entirely when the entity has none of them.
@@ -811,6 +936,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
           )}
         </Section>
       )}
+
+      {/* Not inside "Owned by", and not gated on it: GLEIF's parent question is a
+          different question from who holds the shares, and 84% of the companies
+          that answer it have owners listed above. */}
+      <ParentExceptionSection entity={entity} hasOwners={owners.length > 0} />
 
       {cross_holdings.length > 0 && (
         <Section title={t('panel.crossHoldings')}>

@@ -149,7 +149,14 @@
     "registeredIn": "Registriert in",
     "age": "Alter",
     "years_one": "{{count}} Jahr",
-    "years_other": "{{count}} Jahre"
+    "years_other": "{{count}} Jahre",
+    "parentCompany": "Muttergesellschaft",
+    "parentNoneDirect": "Meldet GLEIF keine direkte Muttergesellschaft: {{reasons}}.",
+    "parentNoneUltimate": "Meldet GLEIF keine oberste Muttergesellschaft: {{reasons}}.",
+    "parentNoneBoth": "Meldet GLEIF weder eine direkte noch eine oberste Muttergesellschaft: {{reasons}}.",
+    "parentNoneHint": "GLEIF fragt, wer den Abschluss dieses Unternehmens konsolidiert — nicht, wem die Anteile gehören.",
+    "parentNoneHintOwners": "GLEIF fragt, wer den Abschluss dieses Unternehmens konsolidiert — nicht, wem die Anteile gehören. Die oben genannten Anteilseigner sind eine andere Frage.",
+    "parentReference": "Beleg ansehen"
   },
   "report": {
     "button": "Melden",
@@ -247,6 +254,18 @@
     "owned": "Beteiligung",
     "specialVoting": "Sonderstimmrecht",
     "specialVotingHint": "Stimmrechte übersteigen den wirtschaftlichen Anteil deutlich (goldene Aktie / Mehrstimmrecht)"
+  },
+  "parentReason": {
+    "NATURAL_PERSONS": "von natürlichen Personen kontrolliert, ohne zwischengeschaltete Gesellschaft, die als Mutter gälte",
+    "NON_CONSOLIDATING": "von Gesellschaften kontrolliert, die keinen Konzernabschluss aufstellen",
+    "NO_KNOWN_PERSON": "keine bekannte kontrollierende Person — etwa bei breit gestreutem Anteilsbesitz",
+    "NO_LEI": "die Muttergesellschaft willigt nicht in einen LEI ein",
+    "NON_PUBLIC": "die Beziehung darf nicht öffentlich gemacht werden",
+    "LEGAL_OBSTACLES": "Gesetz oder Verordnung der Rechtsordnung verhindern die Veröffentlichung",
+    "CONSENT_NOT_OBTAINED": "die Muttergesellschaft hat nicht eingewilligt oder war nicht erreichbar",
+    "BINDING_LEGAL_COMMITMENTS": "ein Vertrag oder die eigene Satzung verhindern die Veröffentlichung",
+    "DISCLOSURE_DETRIMENTAL": "eine Veröffentlichung würde dem Unternehmen oder der Mutter schaden",
+    "DETRIMENT_NOT_EXCLUDED": "das Unternehmen konnte einen Schaden durch die Veröffentlichung nicht ausschließen"
   },
   "tooltip": {
     "type": "Typ",

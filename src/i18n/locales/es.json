@@ -149,7 +149,14 @@
     "registeredIn": "Registrada en",
     "age": "Edad",
     "years_one": "{{count}} año",
-    "years_other": "{{count}} años"
+    "years_other": "{{count}} años",
+    "parentCompany": "Sociedad matriz",
+    "parentNoneDirect": "No declara matriz directa a GLEIF: {{reasons}}.",
+    "parentNoneUltimate": "No declara matriz última a GLEIF: {{reasons}}.",
+    "parentNoneBoth": "No declara matriz directa ni última a GLEIF: {{reasons}}.",
+    "parentNoneHint": "GLEIF pregunta quién consolida las cuentas de esta empresa, no quién posee sus acciones.",
+    "parentNoneHintOwners": "GLEIF pregunta quién consolida las cuentas de esta empresa, no quién posee sus acciones. Los accionistas indicados arriba son una cuestión distinta.",
+    "parentReference": "Ver referencia"
   },
   "report": {
     "button": "Reportar",
@@ -247,6 +254,18 @@
     "owned": "Participación",
     "specialVoting": "Voto especial",
     "specialVotingHint": "El poder de voto supera con creces la participación económica (acción de oro / voto múltiple)"
+  },
+  "parentReason": {
+    "NATURAL_PERSONS": "controlada por personas físicas, sin sociedad intermedia que cuente como matriz",
+    "NON_CONSOLIDATING": "controlada por sociedades que no formulan cuentas consolidadas",
+    "NO_KNOWN_PERSON": "no se conoce persona que la controle — por ejemplo, accionariado muy disperso",
+    "NO_LEI": "la matriz no consiente en tener un LEI",
+    "NON_PUBLIC": "la relación no puede divulgarse públicamente",
+    "LEGAL_OBSTACLES": "una ley o norma de su jurisdicción impide publicarlo",
+    "CONSENT_NOT_OBTAINED": "la matriz no dio su consentimiento o no fue localizable",
+    "BINDING_LEGAL_COMMITMENTS": "un contrato o los propios estatutos impiden publicarlo",
+    "DISCLOSURE_DETRIMENTAL": "publicarlo perjudicaría a la empresa o a la matriz",
+    "DETRIMENT_NOT_EXCLUDED": "la empresa no pudo descartar que publicarlo causara perjuicio"
   },
   "tooltip": {
     "type": "Tipo",
