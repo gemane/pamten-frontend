@@ -379,15 +379,19 @@ describe('the \u22ee beside the name', () => {
 })
 
 describe('a relationship row', () => {
-  const withSubsidiary = async (sourceUrl?: string | null) => {
+  const withSubsidiary = async (sourceUrl?: string | null,
+                                source?: { id: string; name: string } | null) => {
     mockProfile.mockResolvedValue({ data: {
       entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
       owners: [], executives: [],
       subsidiaries: [{
         entity: { id: 'e2', name: 'Beta Ltd', type: 'company', verified: false } as Entity,
-        relationship: { ownership_type: 'full', stake_percent: 100, source_url: sourceUrl } as never,
+        relationship: { ownership_type: 'full', stake_percent: 100, source_url: sourceUrl,
+                        source_id: source?.id } as never,
       }],
     } } as never)
+    mockSources.mockResolvedValue({ data: source ? [{ ...source, credibility_score: 98,
+                                                      type: 'official' }] : [] } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
     return await screen.findByText('Beta Ltd')
   }
@@ -398,7 +402,7 @@ describe('a relationship row', () => {
     const row = rowOf(await withSubsidiary('https://search.gleif.org/#/record/X'))
     fireEvent.contextMenu(row)
     expect(screen.getByText(/Report relationship/i)).toBeInTheDocument()
-    expect(screen.getByText(/View source/i)).toBeInTheDocument()
+    expect(screen.getByText('search.gleif.org')).toBeInTheDocument()
   })
 
   it('offers no source when the relationship has none', async () => {
@@ -406,17 +410,87 @@ describe('a relationship row', () => {
     const row = rowOf(await withSubsidiary(null))
     fireEvent.contextMenu(row)
     expect(screen.getByText(/Report relationship/i)).toBeInTheDocument()
-    expect(screen.queryByText(/View source/i)).toBeNull()
+    expect(screen.queryByRole('menuitem', { name: /gleif|sec\.gov|View source/i })).toBeNull()
   })
 
   it('opens that relationship\'s record, not the company\'s', async () => {
     const open = vi.spyOn(window, 'open').mockImplementation(() => null)
     const row = rowOf(await withSubsidiary('https://www.sec.gov/Archives/edgar/data/1/x-index.htm'))
     fireEvent.contextMenu(row)
-    await userEvent.click(screen.getByText(/View source/i))
+    await userEvent.click(screen.getByText('sec.gov'))
     expect(open).toHaveBeenCalledWith(
       'https://www.sec.gov/Archives/edgar/data/1/x-index.htm', '_blank', 'noopener,noreferrer')
     open.mockRestore()
+  })
+
+  describe('what the menu says, and in what order', () => {
+    it('names the source that asserted the relationship', async () => {
+      const row = rowOf(await withSubsidiary('https://www.sec.gov/x.htm',
+                                             { id: 'src-1', name: 'SEC EDGAR' }))
+      fireEvent.contextMenu(row)
+      expect(screen.getByText('SEC EDGAR')).toBeInTheDocument()
+    })
+
+    it('reads source, then link, then report', async () => {
+      // The order you would read it in: where did this come from, let me see it,
+      // this is wrong.
+      const row = rowOf(await withSubsidiary('https://www.sec.gov/x.htm',
+                                             { id: 'src-1', name: 'SEC EDGAR' }))
+      fireEvent.contextMenu(row)
+      const menu = document.querySelector('.action-menu__list') as HTMLElement
+      const lines = (menu.textContent ?? '')
+      expect(lines.indexOf('SEC EDGAR')).toBeLessThan(lines.indexOf('sec.gov'))
+      expect(lines.indexOf('sec.gov')).toBeLessThan(lines.indexOf('Report'))
+    })
+
+    it('does not make the source name clickable', async () => {
+      // It is context, not an action. A name that looks like a button and does
+      // nothing is worse than a caption.
+      const row = rowOf(await withSubsidiary('https://www.sec.gov/x.htm',
+                                             { id: 'src-1', name: 'SEC EDGAR' }))
+      fireEvent.contextMenu(row)
+      expect(screen.queryByRole('menuitem', { name: 'SEC EDGAR' })).toBeNull()
+      expect(document.querySelector('.action-menu__header')?.textContent).toBe('SEC EDGAR')
+    })
+
+    it('still shows the link when the source is not named', async () => {
+      // An edge can cite a URL from a source the node list does not carry.
+      const row = rowOf(await withSubsidiary('https://www.sec.gov/x.htm'))
+      fireEvent.contextMenu(row)
+      expect(document.querySelector('.action-menu__header')).toBeNull()
+      expect(screen.getByText('sec.gov')).toBeInTheDocument()
+    })
+
+    it('names the source on an owner row as well as a subsidiary one', async () => {
+      // Seven call sites pass this through by hand. Testing one of them proves
+      // the menu works, not that the wiring is there — the owners row is the one
+      // the bug was reported against.
+      mockProfile.mockResolvedValue({ data: {
+        entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company', verified: false } as Entity,
+        subsidiaries: [], executives: [],
+        owners: [{
+          owner: { id: 'p1', full_name: 'Larry Page' },
+          relationship: { stake_percent: 6.12, ownership_type: 'minority',
+                          source_url: 'https://www.wikidata.org/wiki/Q20800404',
+                          source_id: 'src-w' },
+        }],
+      } } as never)
+      mockSources.mockResolvedValue({ data: [{ id: 'src-w', name: 'Wikidata',
+                                               credibility_score: 80, type: 'community' }] } as never)
+      render(<NodePanel node={entityNode('e1', 'Alphabet Inc.')} refreshKey={0} />)
+      const row = rowOf(await screen.findByText('Larry Page'))
+      fireEvent.contextMenu(row)
+
+      expect(document.querySelector('.action-menu__header')?.textContent).toBe('Wikidata')
+      expect(screen.getByText('wikidata.org')).toBeInTheDocument()
+    })
+
+    it('names the source even when there is no record to open', async () => {
+      const row = rowOf(await withSubsidiary(null, { id: 'src-1', name: 'Wikidata' }))
+      fireEvent.contextMenu(row)
+      expect(screen.getByText('Wikidata')).toBeInTheDocument()
+      expect(screen.getByText(/Report relationship/i)).toBeInTheDocument()
+    })
   })
 
   it('has no flag icon any more', async () => {

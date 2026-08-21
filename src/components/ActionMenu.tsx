@@ -45,6 +45,10 @@ export interface MenuItem {
 
 interface ActionMenuProps {
   items: MenuItem[]
+  /** Context shown above the items — not a menu item, so not focusable and not
+   *  clickable. The relationship menu uses it to name where the fact came from
+   *  before offering to open or dispute it. */
+  header?: ReactNode
   /** The button that opens it. Omit when opening at a point. */
   trigger?: ReactNode
   triggerLabel?: string
@@ -55,7 +59,7 @@ interface ActionMenuProps {
 }
 
 export default function ActionMenu({
-  items, trigger, triggerLabel, position, onClose, className = '',
+  items, header, trigger, triggerLabel, position, onClose, className = '',
 }: ActionMenuProps) {
   const anchored = position === undefined
   const [open, setOpen] = useState(false)
@@ -98,7 +102,7 @@ export default function ActionMenu({
     ))
   }, [anchored, px, py])
 
-  if (items.length === 0) return null
+  if (items.length === 0 && !header) return null
 
   const menu = showing && (
     <div className="action-menu__list" role="menu" ref={listRef}
@@ -115,6 +119,7 @@ export default function ActionMenu({
            top: placed?.top ?? position!.y,
            left: placed?.left ?? position!.x,
          }}>
+      {header && <div className="action-menu__header">{header}</div>}
       {items.map(item => (
         <button key={item.key} role="menuitem" onClick={() => { close(); item.onSelect() }}>
           {item.icon}{item.label}

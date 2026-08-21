@@ -191,3 +191,34 @@ describe('nothing to offer', () => {
     expect(container).toBeEmptyDOMElement()
   })
 })
+
+describe('the header', () => {
+  it('shows context above the items', () => {
+    render(<ActionMenu items={items()} header="SEC EDGAR" position={{ x: 10, y: 10 }}
+                       onClose={vi.fn()} />)
+    const list = document.querySelector('.action-menu__list') as HTMLElement
+    expect(list.textContent?.indexOf('SEC EDGAR')).toBe(0)
+  })
+
+  it('is not a menu item', () => {
+    // Context, not an action. A caption that looks clickable and is not is worse
+    // than no caption.
+    render(<ActionMenu items={items()} header="SEC EDGAR" position={{ x: 10, y: 10 }}
+                       onClose={vi.fn()} />)
+    expect(screen.queryByRole('menuitem', { name: 'SEC EDGAR' })).toBeNull()
+  })
+
+  it('renders on its own when there is nothing to offer', () => {
+    // Naming the source is worth showing even with no link and no action —
+    // otherwise the guard that skips an empty menu swallows it.
+    render(<ActionMenu items={[]} header="SEC EDGAR" position={{ x: 10, y: 10 }}
+                       onClose={vi.fn()} />)
+    expect(screen.getByText('SEC EDGAR')).toBeInTheDocument()
+  })
+
+  it('still renders nothing when there is neither', () => {
+    const { container } = render(<ActionMenu items={[]} position={{ x: 10, y: 10 }}
+                                             onClose={vi.fn()} />)
+    expect(container.querySelector('.action-menu__list')).toBeNull()
+  })
+})
