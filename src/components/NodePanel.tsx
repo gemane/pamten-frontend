@@ -522,6 +522,10 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
   // the duplicate bug we just fixed. Dated and set apart, they read as a career.
   // Filtering happens here rather than on the server so the timeline — and any
   // other caller — still gets everything.
+  // Which source asserted each relationship, for the row menu's header. Built
+  // once per render rather than per row: the list is short but the lookup is not
+  // free, and every position and holding wants it.
+  const sourceName = sourceNames(sources)
   const allPositions = profile?.positions ?? []
   const allHoldings  = profile?.holdings  ?? []
   const positions = allPositions.filter(p => !p.role?.until)
@@ -585,7 +589,8 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
             <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
               rel={{ targetKind: 'role', fromId: node.id, toId: p.entity.id,
                      role: p.role?.role, label: p.entity.name,
-                     sourceUrl: p.role?.source_url }}>
+                     sourceUrl: p.role?.source_url,
+                     sourceName: sourceName.get(p.role?.source_id ?? '') }}>
               <span className="rel-item__name">{p.entity.name}</span>
               <span className="role-badge">{p.role?.role}</span>
             </RelRow>
@@ -599,7 +604,8 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
             <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
               rel={{ targetKind: 'role', fromId: node.id, toId: p.entity.id,
                      role: p.role?.role, label: p.entity.name,
-                     sourceUrl: p.role?.source_url }}>
+                     sourceUrl: p.role?.source_url,
+                     sourceName: sourceName.get(p.role?.source_id ?? '') }}>
               <span className="rel-item__name">{p.entity.name}</span>
               <span className="role-badge role-badge--former">{p.role?.role}</span>
               <span className="rel-item__year">{tenure(p.role, t)}</span>
@@ -613,7 +619,8 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
           {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '')).map((h, i) => (
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
               rel={{ targetKind: 'owns', fromId: node.id, toId: h.entity.id,
-                     label: h.entity.name, sourceUrl: h.relationship?.source_url }}>
+                     label: h.entity.name, sourceUrl: h.relationship?.source_url,
+                     sourceName: sourceName.get(h.relationship?.source_id ?? '') }}>
               <span className="rel-item__name">{h.entity.name}</span>
               <OwnershipBadge
                 type={h.relationship?.ownership_type}
@@ -687,6 +694,30 @@ export interface RelTarget {
   role?: string
   label: string
   sourceUrl?: string | null
+  /** The source that asserted THIS relationship — the edge's own `source_id`
+   *  resolved to a name, not the node's list. An edge is attributed to whoever
+   *  created it even when several sources agree, so naming the wrong one would
+   *  be worse than naming none. */
+  sourceName?: string | null
+}
+
+
+/** Where a link goes, in as few characters as will still tell you. Menus are
+ *  narrow and a filing URL is not, so the host stands in for the whole thing;
+ *  an unparseable value falls back to the generic label. */
+export function linkHost(url?: string | null): string | null {
+  if (!url) return null
+  try {
+    return new URL(url).host.replace(/^www\./, '') || null
+  } catch {
+    return null
+  }
+}
+
+
+/** A lookup from source id to name, for `sourceName` above. */
+export function sourceNames(sources: { id: string; name: string }[]): Map<string, string> {
+  return new Map(sources.map(s => [s.id, s.name]))
 }
 
 function RelRow({ node, onNavigate, rel, children }: {
@@ -710,21 +741,26 @@ function RelRow({ node, onNavigate, rel, children }: {
     : <div className="rel-item">{body}</div>
   if (!rel) return row
 
+  // Provenance first, then the record, then the complaint — the order you would
+  // read it in: where did this come from, let me see it, this is wrong.
   const items = [
-    { key: 'report', label: t('menu.reportRelationship'), icon: <FiFlag size={12} />,
-      onSelect: () => setReporting(true) },
     // Omitted rather than disabled when the relationship has no record to open:
     // a dead menu item invites a click that does nothing.
     ...(rel.sourceUrl ? [{
-      key: 'source', label: t('menu.viewSource'), icon: <FiExternalLink size={12} />,
+      key: 'source',
+      label: linkHost(rel.sourceUrl) ?? t('menu.viewSource'),
+      icon: <FiExternalLink size={12} />,
       onSelect: () => window.open(rel.sourceUrl as string, '_blank', 'noopener,noreferrer'),
     }] : []),
+    { key: 'report', label: t('menu.reportRelationship'), icon: <FiFlag size={12} />,
+      onSelect: () => setReporting(true) },
   ]
 
   return (
     <div className="rel-row" {...press}>
       {row}
-      <ActionMenu items={items} position={menuAt} onClose={() => setMenuAt(null)} />
+      <ActionMenu items={items} header={rel.sourceName || undefined}
+                  position={menuAt} onClose={() => setMenuAt(null)} />
       {reporting && (
         <ReportModal targetKind={rel.targetKind} targetLabel={rel.label}
                      fromId={rel.fromId} toId={rel.toId} role={rel.role}
@@ -819,6 +855,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [] } = profile
+  // Which source asserted each relationship, for the row menu's header — the
+  // edge's own source_id, not the node's source list.
+  const sourceName = sourceNames(sources)
   const imgSrc = useWikidataImage(entity.wikidata_id)
 
   // Surface founders in their own section rather than buried among executives.
@@ -925,7 +964,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               rel={o.owner
                 ? { targetKind: 'owns', fromId: o.owner.id, toId: entity.id,
                     label: ('name' in o.owner ? o.owner.name : o.owner.full_name),
-                    sourceUrl: o.relationship?.source_url }
+                    sourceUrl: o.relationship?.source_url,
+                    sourceName: sourceName.get(o.relationship?.source_id ?? '') }
                 : undefined}>
               <span className="rel-item__name">
                 {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
@@ -1003,7 +1043,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
             <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}
               rel={{ targetKind: 'role', fromId: f.person.id, toId: entity.id,
                      role: f.role?.role || 'Founder', label: f.person.full_name,
-                     sourceUrl: f.role?.source_url }}>
+                     sourceUrl: f.role?.source_url,
+                     sourceName: sourceName.get(f.role?.source_id ?? '') }}>
               <span className="rel-item__name">{f.person.full_name}</span>
             </RelRow>
           ))}
@@ -1018,7 +1059,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
             const row = (s: SubsidiaryEntry, i: number) => (
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
                 rel={{ targetKind: 'owns', fromId: entity.id, toId: s.entity.id,
-                       label: s.entity.name, sourceUrl: s.relationship?.source_url }}>
+                       label: s.entity.name, sourceUrl: s.relationship?.source_url,
+                       sourceName: sourceName.get(s.relationship?.source_id ?? '') }}>
                 <span className="rel-item__name">{s.entity.name}</span>
                 <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
               </RelRow>
@@ -1061,7 +1103,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
               rel={{ targetKind: 'role', fromId: e.person.id, toId: entity.id,
                      role: e.role?.role, label: e.person.full_name,
-                     sourceUrl: e.role?.source_url }}>
+                     sourceUrl: e.role?.source_url,
+                     sourceName: sourceName.get(e.role?.source_id ?? '') }}>
               <span className="rel-item__name">{e.person.full_name}</span>
               <span className="role-badge">{e.role?.role}</span>
             </RelRow>

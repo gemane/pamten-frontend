@@ -2973,6 +2973,24 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 .action-menu__list button:hover { background: #252545; color: #fff; }
 
+/* Context above the items: which source asserted the thing you right-clicked.
+   Styled to read as a caption rather than a disabled item, so nobody clicks it
+   waiting for something to happen — the item below it is the one that opens. */
+.action-menu__header {
+  padding: 8px 14px 6px;
+  border-bottom: 1px solid #2d2d50;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7a90;
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-theme="light"] .action-menu__header { color: #718096; border-bottom-color: #e2e8f0; }
+
 /* The name and its ⋮. `.panel-name` is an h2 filling the width, so it needs a
    row of its own to sit anything beside it. */
 .panel-header-row {

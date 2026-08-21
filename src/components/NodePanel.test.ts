@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames } from './NodePanel'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
@@ -447,5 +447,49 @@ describe('parentExceptionLines', () => {
       expect(line.reference).toBeNull()
       expect(line.href).toBeNull()
     })
+  })
+})
+
+
+describe('linkHost', () => {
+  // The relationship menu labels its link with where the link goes. Menus are
+  // narrow and a filing URL is not, so the host stands in for the whole thing.
+
+  it('strips the scheme and www', () => {
+    expect(linkHost('https://www.sec.gov/Archives/edgar/data/1/x-index.htm')).toBe('sec.gov')
+  })
+
+  it('keeps a meaningful subdomain', () => {
+    // `search.gleif.org` says more about where you are going than `gleif.org`.
+    expect(linkHost('https://search.gleif.org/#/record/X')).toBe('search.gleif.org')
+  })
+
+  it('handles a port', () => {
+    expect(linkHost('http://localhost:8000/x')).toBe('localhost:8000')
+  })
+
+  it('gives nothing back for a non-URL, so the caller can fall back', () => {
+    expect(linkHost('Companies House filing 12345')).toBeNull()
+    expect(linkHost('')).toBeNull()
+    expect(linkHost(null)).toBeNull()
+    expect(linkHost(undefined)).toBeNull()
+  })
+})
+
+describe('sourceNames', () => {
+  it('maps an id to its name', () => {
+    const m = sourceNames([{ id: 'a', name: 'SEC EDGAR' }, { id: 'b', name: 'Wikidata' }])
+    expect(m.get('a')).toBe('SEC EDGAR')
+    expect(m.get('b')).toBe('Wikidata')
+  })
+
+  it('returns undefined for a source the node does not list', () => {
+    // An edge is attributed to whoever created it, which need not be among the
+    // sources the node itself carries — better no name than the wrong one.
+    expect(sourceNames([{ id: 'a', name: 'SEC EDGAR' }]).get('zzz')).toBeUndefined()
+  })
+
+  it('copes with an empty list', () => {
+    expect(sourceNames([]).size).toBe(0)
   })
 })
