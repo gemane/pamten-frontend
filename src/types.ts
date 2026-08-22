@@ -113,6 +113,11 @@ export interface OwnsRelationship {
   source_id?: string
   credibility_score?: number
   source_url?: string | null   // deep link to the record that asserted it
+  /** How many distinct sources assert this relationship (from the claims table),
+   *  and their names. 0 + [] means "no claim rows" — edges older than claims —
+   *  which is different from unknown, so the backend always sends both. */
+  corroborations?: number
+  asserted_by?: string[]
 }
 
 export interface RoleRelationship {
@@ -122,6 +127,11 @@ export interface RoleRelationship {
   source_id?: string
   credibility_score?: number
   source_url?: string | null   // deep link to the record that asserted it
+  /** How many distinct sources assert this relationship (from the claims table),
+   *  and their names. 0 + [] means "no claim rows" — edges older than claims —
+   *  which is different from unknown, so the backend always sends both. */
+  corroborations?: number
+  asserted_by?: string[]
 }
 
 // API response types

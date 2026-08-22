@@ -1370,6 +1370,27 @@ button.rel-item--clickable:hover { background: #253454; }
 
 [data-theme="light"] .rel-item__year { color: #718096; }
 
+/* Trust cues on a relationship row. Confirmed is quiet green — reassurance, not
+   celebration; community is the grey of the rest of the muted vocabulary, a
+   texture difference rather than a warning. */
+.corroboration-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.corroboration-badge--confirmed {
+  color: #2ECC71;
+  border: 1px solid rgba(46,204,113,0.4);
+}
+.corroboration-badge--community {
+  color: #8b95a7;
+  border: 1px dashed rgba(139,149,167,0.5);
+}
+[data-theme="light"] .corroboration-badge--community { color: #718096; }
+
 /* Computed (not sourced) rows/badges — e.g. free-float residual */
 .rel-item__name--muted { color: #8b95a7; font-style: italic; font-weight: 400; }
 [data-theme="light"] .rel-item__name--muted { color: #718096; }
