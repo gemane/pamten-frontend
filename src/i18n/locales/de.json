@@ -267,6 +267,11 @@
     "DISCLOSURE_DETRIMENTAL": "eine Veröffentlichung würde dem Unternehmen oder der Mutter schaden",
     "DETRIMENT_NOT_EXCLUDED": "das Unternehmen konnte einen Schaden durch die Veröffentlichung nicht ausschließen"
   },
+  "trust": {
+    "community": "Community",
+    "communityHint": "Nur eine Community-Quelle (Wikidata) nennt diese Beziehung — kein Register und keine Pflichtmeldung bestätigt sie bisher.",
+    "corroboratedHint": "Unabhängig bestätigt durch: {{sources}}"
+  },
   "tooltip": {
     "type": "Typ",
     "stake": "Anteil",

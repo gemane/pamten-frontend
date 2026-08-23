@@ -6,6 +6,7 @@ import { countryName } from '../utils/isoCountries'
 import { ageFrom } from '../utils/age'
 import { isSubdivision, subdivisionName } from '../utils/isoSubdivisions'
 import { colorFor, typeLabelKey } from '../utils/entityColors'
+import CorroborationBadge from './CorroborationBadge'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
@@ -622,6 +623,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
                      label: h.entity.name, sourceUrl: h.relationship?.source_url,
                      sourceName: sourceName.get(h.relationship?.source_id ?? '') }}>
               <span className="rel-item__name">{h.entity.name}</span>
+              <CorroborationBadge rel={h.relationship} />
               <OwnershipBadge
                 type={h.relationship?.ownership_type}
                 percent={h.relationship?.stake_percent}
@@ -699,6 +701,10 @@ export interface RelTarget {
    *  created it even when several sources agree, so naming the wrong one would
    *  be worse than naming none. */
   sourceName?: string | null
+  /** Every source asserting it, from the claims table — shown in the menu
+   *  header when there is more than one, because "SEC EDGAR + Wikidata" answers
+   *  the trust question better than either name alone. */
+  assertedBy?: string[]
 }
 
 
@@ -759,7 +765,10 @@ function RelRow({ node, onNavigate, rel, children }: {
   return (
     <div className="rel-row" {...press}>
       {row}
-      <ActionMenu items={items} header={rel.sourceName || undefined}
+      <ActionMenu items={items}
+                  header={(rel.assertedBy && rel.assertedBy.length > 1
+                            ? rel.assertedBy.join(' + ')
+                            : rel.sourceName) || undefined}
                   position={menuAt} onClose={() => setMenuAt(null)} />
       {reporting && (
         <ReportModal targetKind={rel.targetKind} targetLabel={rel.label}
@@ -965,7 +974,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                 ? { targetKind: 'owns', fromId: o.owner.id, toId: entity.id,
                     label: ('name' in o.owner ? o.owner.name : o.owner.full_name),
                     sourceUrl: o.relationship?.source_url,
-                    sourceName: sourceName.get(o.relationship?.source_id ?? '') }
+                    sourceName: sourceName.get(o.relationship?.source_id ?? ''),
+                    assertedBy: o.relationship?.asserted_by }
                 : undefined}>
               <span className="rel-item__name">
                 {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
@@ -973,6 +983,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                   <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
                 )}
               </span>
+              <CorroborationBadge rel={o.relationship} />
               <OwnershipBadge
                 type={o.relationship?.ownership_type}
                 percent={o.relationship?.stake_percent}
@@ -1060,8 +1071,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
                 rel={{ targetKind: 'owns', fromId: entity.id, toId: s.entity.id,
                        label: s.entity.name, sourceUrl: s.relationship?.source_url,
-                       sourceName: sourceName.get(s.relationship?.source_id ?? '') }}>
+                       sourceName: sourceName.get(s.relationship?.source_id ?? ''),
+                       assertedBy: s.relationship?.asserted_by }}>
                 <span className="rel-item__name">{s.entity.name}</span>
+                <CorroborationBadge rel={s.relationship} />
                 <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
               </RelRow>
             )

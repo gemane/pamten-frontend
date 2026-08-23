@@ -886,3 +886,51 @@ describe('why a company reports no parent', () => {
     expect(screen.getByText(/does not consent to having an LEI/)).toBeInTheDocument()
   })
 })
+
+
+describe('the trust cue on an owner row', () => {
+  const withOwner = async (relationship: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company', verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'p1', full_name: 'Sergey Brin' },
+                 relationship: { stake_percent: 6.16, ownership_type: 'minority',
+                                 ...relationship } }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Alphabet Inc.')} refreshKey={0} />)
+    await screen.findByText('Sergey Brin')
+  }
+
+  it('marks a corroborated holding with its count', async () => {
+    await withOwner({ corroborations: 2, asserted_by: ['SEC EDGAR', 'Wikidata'] })
+    expect(screen.getByText(/✓\s*2/)).toBeInTheDocument()
+  })
+
+  it('marks a Wikidata-only holding as community', async () => {
+    await withOwner({ corroborations: 1, asserted_by: ['Wikidata'] })
+    expect(screen.getByText('community')).toBeInTheDocument()
+  })
+
+  it('stays silent on a register-backed holding', async () => {
+    // The normal case must not grow a badge, or every row becomes noise.
+    await withOwner({ corroborations: 1, asserted_by: ['SEC EDGAR'] })
+    expect(screen.queryByText('community')).toBeNull()
+    expect(screen.queryByText(/✓/)).toBeNull()
+  })
+
+  it('stays silent when the backend sent no claim data', async () => {
+    await withOwner({})
+    expect(screen.queryByText('community')).toBeNull()
+  })
+
+  it('lists every asserting source in the row menu header', async () => {
+    // "SEC EDGAR + Wikidata" answers the trust question better than either name
+    // alone — and better than the edge's single attributed source.
+    await withOwner({ corroborations: 2, asserted_by: ['SEC EDGAR', 'Wikidata'],
+                      source_id: 'src-sec', source_url: 'https://www.sec.gov/f/1' })
+    const row = screen.getByText('Sergey Brin').closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    expect(document.querySelector('.action-menu__header')?.textContent)
+      .toBe('SEC EDGAR + Wikidata')
+  })
+})

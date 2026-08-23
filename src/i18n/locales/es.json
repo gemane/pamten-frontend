@@ -267,6 +267,11 @@
     "DISCLOSURE_DETRIMENTAL": "publicarlo perjudicaría a la empresa o a la matriz",
     "DETRIMENT_NOT_EXCLUDED": "la empresa no pudo descartar que publicarlo causara perjuicio"
   },
+  "trust": {
+    "community": "comunidad",
+    "communityHint": "Solo una fuente comunitaria (Wikidata) afirma esta relación — ningún registro ni declaración obligatoria la confirma todavía.",
+    "corroboratedHint": "Confirmada de forma independiente por: {{sources}}"
+  },
   "tooltip": {
     "type": "Tipo",
     "stake": "Participación",

@@ -267,6 +267,11 @@
     "DISCLOSURE_DETRIMENTAL": "publishing it would harm the company or the parent",
     "DETRIMENT_NOT_EXCLUDED": "the company could not confirm that publishing it would do no harm"
   },
+  "trust": {
+    "community": "community",
+    "communityHint": "Only a community source (Wikidata) asserts this relationship — no register or filing confirms it yet.",
+    "corroboratedHint": "Confirmed independently by: {{sources}}"
+  },
   "tooltip": {
     "type": "Type",
     "stake": "Stake",
