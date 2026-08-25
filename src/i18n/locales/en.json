@@ -270,7 +270,8 @@
   "trust": {
     "community": "community",
     "communityHint": "Only a community source (Wikidata) asserts this relationship — no register or filing confirms it yet.",
-    "corroboratedHint": "Confirmed independently by: {{sources}}"
+    "corroboratedHint": "Confirmed independently by: {{sources}}",
+    "staleHint": "Not confirmed by any source for over six months — shown dimmed, kept until a source confirms or retracts it."
   },
   "tooltip": {
     "type": "Type",

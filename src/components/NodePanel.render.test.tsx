@@ -934,3 +934,50 @@ describe('the trust cue on an owner row', () => {
       .toBe('SEC EDGAR + Wikidata')
   })
 })
+
+
+describe('a stale community assertion', () => {
+  const withOwnerRel = async (relationship: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Held Co', type: 'company', verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'o1', name: 'Community Holdings', type: 'company' },
+                 relationship }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Held Co')} refreshKey={0} />)
+    return (await screen.findByText('Community Holdings')).closest('.rel-item') as HTMLElement
+  }
+
+  it('is dimmed, with the reason on hover', async () => {
+    const row = await withOwnerRel({ stale: true })
+    expect(row.className).toContain('rel-item--stale')
+    expect(row.getAttribute('title')).toMatch(/not confirmed by any source/i)
+  })
+
+  it('is still there and still navigable', async () => {
+    // Dimming is a statement about confidence, not a removal: nobody stated the
+    // relationship ended, so nothing may act as though it did.
+    const onNavigate = vi.fn()
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Held Co', type: 'company', verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'o1', name: 'Community Holdings', type: 'company' },
+                 relationship: { stale: true } }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Held Co')} onNavigate={onNavigate} refreshKey={0} />)
+    await userEvent.click(await screen.findByText('Community Holdings'))
+    expect(onNavigate).toHaveBeenCalled()
+  })
+
+  it('an ordinary row is not dimmed', async () => {
+    const row = await withOwnerRel({ stale: false })
+    expect(row.className).not.toContain('rel-item--stale')
+    expect(row.getAttribute('title')).toBeNull()
+  })
+
+  it('an unmarked row is not dimmed either', async () => {
+    // Absent means the pass has not judged it — not that it is stale.
+    const row = await withOwnerRel({})
+    expect(row.className).not.toContain('rel-item--stale')
+  })
+})

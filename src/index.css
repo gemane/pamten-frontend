@@ -1370,6 +1370,11 @@ button.rel-item--clickable:hover { background: #253454; }
 
 [data-theme="light"] .rel-item__year { color: #718096; }
 
+/* A stale community assertion: dimmed, still present, still clickable. Removal
+   would assert something no source stated; full opacity would vouch for a fact
+   nobody has confirmed in months. */
+.rel-item--stale { opacity: 0.5; }
+
 /* Trust cues on a relationship row. Confirmed is quiet green — reassurance, not
    celebration; community is the grey of the rest of the muted vocabulary, a
    texture difference rather than a warning. */
