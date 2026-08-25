@@ -621,7 +621,8 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
               rel={{ targetKind: 'owns', fromId: node.id, toId: h.entity.id,
                      label: h.entity.name, sourceUrl: h.relationship?.source_url,
-                     sourceName: sourceName.get(h.relationship?.source_id ?? '') }}>
+                     sourceName: sourceName.get(h.relationship?.source_id ?? ''),
+                     stale: h.relationship?.stale }}>
               <span className="rel-item__name">{h.entity.name}</span>
               <CorroborationBadge rel={h.relationship} />
               <OwnershipBadge
@@ -705,6 +706,9 @@ export interface RelTarget {
    *  header when there is more than one, because "SEC EDGAR + Wikidata" answers
    *  the trust question better than either name alone. */
   assertedBy?: string[]
+  /** The staleness mark: a community assertion nothing has confirmed for
+   *  months. Dims the row — kept, never hidden. */
+  stale?: boolean | null
 }
 
 
@@ -742,9 +746,15 @@ function RelRow({ node, onNavigate, rel, children }: {
   // No node means there is no entity to describe (free float, a missing owner),
   // so no marker rather than a meaningless grey one.
   const body = <>{node ? <TypeMarker node={node} /> : null}{children}</>
+  // Dimmed when the staleness pass has marked the assertion, with the reason on
+  // hover. Still clickable, still reportable: dimming is a statement about
+  // confidence, not a removal.
+  const staleCls = rel?.stale ? ' rel-item--stale' : ''
+  const staleTitle = rel?.stale ? t('trust.staleHint') : undefined
   const row = (node && node.id && onNavigate)
-    ? <button type="button" className="rel-item rel-item--clickable" onClick={() => onNavigate(node)}>{body}</button>
-    : <div className="rel-item">{body}</div>
+    ? <button type="button" className={`rel-item rel-item--clickable${staleCls}`}
+              title={staleTitle} onClick={() => onNavigate(node)}>{body}</button>
+    : <div className={`rel-item${staleCls}`} title={staleTitle}>{body}</div>
   if (!rel) return row
 
   // Provenance first, then the record, then the complaint — the order you would
@@ -975,7 +985,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                     label: ('name' in o.owner ? o.owner.name : o.owner.full_name),
                     sourceUrl: o.relationship?.source_url,
                     sourceName: sourceName.get(o.relationship?.source_id ?? ''),
-                    assertedBy: o.relationship?.asserted_by }
+                    assertedBy: o.relationship?.asserted_by,
+                    stale: o.relationship?.stale }
                 : undefined}>
               <span className="rel-item__name">
                 {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
@@ -1072,7 +1083,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                 rel={{ targetKind: 'owns', fromId: entity.id, toId: s.entity.id,
                        label: s.entity.name, sourceUrl: s.relationship?.source_url,
                        sourceName: sourceName.get(s.relationship?.source_id ?? ''),
-                       assertedBy: s.relationship?.asserted_by }}>
+                       assertedBy: s.relationship?.asserted_by,
+                       stale: s.relationship?.stale }}>
                 <span className="rel-item__name">{s.entity.name}</span>
                 <CorroborationBadge rel={s.relationship} />
                 <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />

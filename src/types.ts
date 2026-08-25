@@ -96,6 +96,11 @@ export interface Source {
 
 // Relationship types
 export interface OwnsRelationship {
+  /** Set by the backend staleness pass: a community-tier assertion nothing has
+   *  re-confirmed for months. Wikidata has no retirement signal — a deleted
+   *  statement just stops being seen — so age is the only evidence, and it is
+   *  weak evidence, which is why this dims the row rather than removing it. */
+  stale?: boolean | null
   /** GLEIF RR: 'direct' = the immediate parent, 'indirect' = the ultimate parent
    *  (a shortcut edge duplicating a path the graph already contains). Absent on
    *  Wikidata and SEC edges, which never state the distinction. */

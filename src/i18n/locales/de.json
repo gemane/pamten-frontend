@@ -270,7 +270,8 @@
   "trust": {
     "community": "Community",
     "communityHint": "Nur eine Community-Quelle (Wikidata) nennt diese Beziehung — kein Register und keine Pflichtmeldung bestätigt sie bisher.",
-    "corroboratedHint": "Unabhängig bestätigt durch: {{sources}}"
+    "corroboratedHint": "Unabhängig bestätigt durch: {{sources}}",
+    "staleHint": "Seit über sechs Monaten von keiner Quelle bestätigt — abgeblendet dargestellt, bleibt bestehen, bis eine Quelle sie bestätigt oder zurückzieht."
   },
   "tooltip": {
     "type": "Typ",
