@@ -30,3 +30,27 @@ describe('OwnershipBadge (render)', () => {
     expect(screen.queryByText(/Special voting/)).not.toBeInTheDocument()
   })
 })
+
+describe('a voting bloc', () => {
+  it('flags a holder who votes far more than it owns', () => {
+    // The AB InBev shape: Altria owns 8.05% and votes a 51.7% agreement bloc.
+    // Not a golden share — the hint must not claim one specific cause.
+    render(<OwnershipBadge type="minority" percent={8.05} votingPct={51.7} />)
+    expect(screen.getByText(/8.05%/)).toBeInTheDocument()
+    expect(screen.getByText(/51.7%/)).toBeInTheDocument()
+    const flag = screen.getByText(/Special voting/i)
+    expect(flag.getAttribute('title')).toMatch(/voting agreement with other shareholders/i)
+  })
+
+  it('flags a bloc voter with no stake of its own', () => {
+    // BRC: no attributable stake, 52.3% bloc.
+    render(<OwnershipBadge type={null} percent={null} votingPct={52.3} />)
+    expect(screen.getByText(/52.3%/)).toBeInTheDocument()
+    expect(screen.getByText(/Special voting/i)).toBeInTheDocument()
+  })
+
+  it('stays quiet when voting matches the stake', () => {
+    render(<OwnershipBadge type="minority" percent={5.9} votingPct={null} />)
+    expect(screen.queryByText(/Special voting/i)).toBeNull()
+  })
+})

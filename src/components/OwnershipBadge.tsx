@@ -14,8 +14,10 @@ const TYPE_COLORS: Record<string, string> = {
   controlling: '#E74C3C',
 }
 
-// Voting control disproportionate to the economic stake — a golden share /
-// super-voting class (e.g. 0.01% owned but 51% of the votes).
+// Voting control disproportionate to the economic stake. Three causes, all
+// real: a golden share, a super-voting share class, or — the AB InBev case —
+// a voting agreement under which the holder votes a bloc far larger than its
+// own shareholding (Altria: 8% owned, 51.7% voted).
 export function isSpecialVoting(percent?: number | null, votingPct?: number | null): boolean {
   if (votingPct == null) return false
   return (percent == null && votingPct >= 25) || (percent != null && votingPct - percent >= 25)

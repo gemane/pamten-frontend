@@ -253,7 +253,7 @@
     "controlling": "Controlling",
     "owned": "Owned",
     "specialVoting": "Special voting",
-    "specialVotingHint": "Voting power far exceeds the economic stake (golden share / super-voting class)"
+    "specialVotingHint": "Voting power far exceeds the economic stake — a golden share, a super-voting class, or a voting agreement with other shareholders"
   },
   "parentReason": {
     "NATURAL_PERSONS": "controlled by natural persons, with no intermediate company that counts as a parent",
