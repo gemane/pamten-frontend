@@ -253,7 +253,7 @@
     "controlling": "Control",
     "owned": "Participación",
     "specialVoting": "Voto especial",
-    "specialVotingHint": "El poder de voto supera con creces la participación económica (acción de oro / voto múltiple)"
+    "specialVotingHint": "El poder de voto supera con creces la participación económica — acción de oro, clase con voto múltiple o un acuerdo de voto con otros accionistas"
   },
   "parentReason": {
     "NATURAL_PERSONS": "controlada por personas físicas, sin sociedad intermedia que cuente como matriz",
