@@ -99,6 +99,8 @@ export interface OwnsRelationship {
   /** Which security this percentage is a percentage OF — from the filing's
    *  cover page. Absent on pre-2024 SEC filings and on non-SEC sources. */
   share_class?: string | null
+  /** When the record behind this edge was filed/published by its source. */
+  source_date?: string | null
   /** Set by the backend staleness pass: a community-tier assertion nothing has
    *  re-confirmed for months. Wikidata has no retirement signal — a deleted
    *  statement just stops being seen — so age is the only evidence, and it is

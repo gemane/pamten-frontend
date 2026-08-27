@@ -622,7 +622,11 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
               rel={{ targetKind: 'owns', fromId: node.id, toId: h.entity.id,
                      label: h.entity.name, sourceUrl: h.relationship?.source_url,
                      sourceName: sourceName.get(h.relationship?.source_id ?? ''),
-                     stale: h.relationship?.stale }}>
+                     stale: h.relationship?.stale,
+                     shareClass: h.relationship?.share_class,
+                     stake: h.relationship?.stake_percent,
+                     votingPct: h.relationship?.voting_power_pct,
+                     filedDate: h.relationship?.source_date }}>
               <span className="rel-item__name">{h.entity.name}</span>
               <CorroborationBadge rel={h.relationship} />
               <OwnershipBadge
@@ -709,6 +713,14 @@ export interface RelTarget {
   /** The staleness mark: a community assertion nothing has confirmed for
    *  months. Dims the row — kept, never hidden. */
   stale?: boolean | null
+  /** Facts belonging to this one filing, shown in its menu rather than on the
+   *  row: which security the percentage measures (a 13D/G percent is always a
+   *  percent of a class), the stake and any voting bloc, and when it was
+   *  filed. Too long and too rare for a row; essential once you ask. */
+  shareClass?: string | null
+  stake?: number | null
+  votingPct?: number | null
+  filedDate?: string | null
 }
 
 
@@ -757,6 +769,18 @@ function RelRow({ node, onNavigate, rel, children }: {
     : <div className={`rel-item${staleCls}`} title={staleTitle}>{body}</div>
   if (!rel) return row
 
+  // What this particular filing says. Each line appears only if the filing
+  // stated it, so a Wikidata edge shows none of them and its menu is unchanged.
+  const details: { label: string; value: string }[] = []
+  if (rel.shareClass) details.push({ label: t('menu.class'), value: rel.shareClass })
+  if (rel.stake != null) details.push({ label: t('menu.stake'), value: `${rel.stake}%` })
+  // Only when it differs from the stake: on a lone filer the two are the same
+  // number and repeating it would imply a distinction that isn't there.
+  if (rel.votingPct != null && rel.votingPct !== rel.stake) {
+    details.push({ label: t('menu.voting'), value: `${rel.votingPct}%` })
+  }
+  if (rel.filedDate) details.push({ label: t('menu.filed'), value: rel.filedDate.slice(0, 10) })
+
   // Provenance first, then the record, then the complaint — the order you would
   // read it in: where did this come from, let me see it, this is wrong.
   const items = [
@@ -775,7 +799,7 @@ function RelRow({ node, onNavigate, rel, children }: {
   return (
     <div className="rel-row" {...press}>
       {row}
-      <ActionMenu items={items}
+      <ActionMenu items={items} details={details}
                   header={(rel.assertedBy && rel.assertedBy.length > 1
                             ? rel.assertedBy.join(' + ')
                             : rel.sourceName) || undefined}
@@ -986,7 +1010,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                     sourceUrl: o.relationship?.source_url,
                     sourceName: sourceName.get(o.relationship?.source_id ?? ''),
                     assertedBy: o.relationship?.asserted_by,
-                    stale: o.relationship?.stale }
+                    stale: o.relationship?.stale,
+                    shareClass: o.relationship?.share_class,
+                    stake: o.relationship?.stake_percent,
+                    votingPct: o.relationship?.voting_power_pct,
+                    filedDate: o.relationship?.source_date }
                 : undefined}>
               <span className="rel-item__name">
                 {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
@@ -1013,23 +1041,14 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               ⚠ {t('panel.ownershipExceeds', { pct: ownership.disclosed_pct })}
             </div>
           )}
-          {/* Several securities, several denominators. Showing one total here
-              would be adding fractions of different wholes — Grupo Televisa's
-              Series A/B shares and its CPOs summed to 115% of the company. */}
-          {ownership?.multi_class && (ownership.by_class?.length ?? 0) > 0 && (
-            <div className="share-classes" title={t('panel.multiClassHint')}>
-              <span className="share-classes__label">{t('panel.shareClasses')}</span>
-              {ownership.by_class!.map((c, i) => (
-                <div className="share-classes__row" key={i}>
-                  <span className="share-classes__name">
-                    {c.share_class ?? <em>{t('panel.unnamedClass')}</em>}
-                  </span>
-                  <span className="ownership-badge ownership-badge--computed">
-                    {c.disclosed_pct}%
-                  </span>
-                </div>
-              ))}
-            </div>
+          {/* Several securities, several denominators — so there is no total to
+              show. Say that in place of the total rather than listing per-class
+              figures: the class titles are long, and normalisation deliberately
+              over-splits them (Televisa names its CPOs four ways), which makes
+              a list read as more classes than the company has. Which security a
+              given percentage measures is on that relationship's own menu. */}
+          {ownership?.multi_class && (
+            <div className="ownership-note">{t('panel.multiClassHint')}</div>
           )}
         </Section>
       )}
@@ -1102,7 +1121,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                        label: s.entity.name, sourceUrl: s.relationship?.source_url,
                        sourceName: sourceName.get(s.relationship?.source_id ?? ''),
                        assertedBy: s.relationship?.asserted_by,
-                       stale: s.relationship?.stale }}>
+                       stale: s.relationship?.stale,
+                       shareClass: s.relationship?.share_class,
+                       stake: s.relationship?.stake_percent,
+                       votingPct: s.relationship?.voting_power_pct,
+                       filedDate: s.relationship?.source_date }}>
                 <span className="rel-item__name">{s.entity.name}</span>
                 <CorroborationBadge rel={s.relationship} />
                 <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
