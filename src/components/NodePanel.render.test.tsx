@@ -1095,27 +1095,30 @@ describe("a relationship's own facts, in its menu", () => {
 
 
 describe('a voting group', () => {
-  const render_ = async (type: string) => {
+  const render_ = async (type: string, extra: Record<string, unknown> = {}) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'g1', name: 'Voting group — Anheuser-Busch InBev',
-                type, verified: false } as Entity,
-      owners: [{ owner: { id: 'm1', name: 'Stichting Anheuser-Busch InBev', type: 'nonprofit' },
-                 relationship: {} }],
+      entity: { id: 'g1', name: 'Voting group · 9 parties', type, verified: false } as Entity,
+      owners: [], executives: [],
       subsidiaries: [{ entity: { id: 'abi', name: 'Anheuser-Busch InBev', type: 'company' },
                        relationship: { voting_power_pct: 52.3 } }],
-      executives: [],
+      group_members: [
+        { kind: 'entity', party: { id: 'm1', name: 'Stichting Anheuser-Busch InBev',
+                                   type: 'nonprofit' } },
+        { kind: 'person', party: { id: 'm2', full_name: 'Jorge Paulo Lemann' } },
+      ],
+      ...extra,
     } } as never)
-    render(<NodePanel node={entityNode('g1', 'Voting group — Anheuser-Busch InBev')}
-                      refreshKey={0} />)
-    await screen.findByText('Stichting Anheuser-Busch InBev')
+    render(<NodePanel node={entityNode('g1', 'Voting group · 9 parties')} refreshKey={0} />)
+    await screen.findByText('Anheuser-Busch InBev')
   }
 
-  it('calls its owners the parties to the agreement', async () => {
-    // They are signatories, not shareholders of the group — nothing owns a
-    // contract.
+  it('lists the parties to the agreement', async () => {
+    // They join over RELATED_TO, so the owners query cannot see them — this
+    // section shipped empty the first time for exactly that reason.
     await render_('voting_group')
     expect(screen.getByText(/Parties to the agreement/i)).toBeInTheDocument()
-    expect(screen.queryByText(/^Owned by$/i)).toBeNull()
+    expect(screen.getByText('Stichting Anheuser-Busch InBev')).toBeInTheDocument()
+    expect(screen.getByText('Jorge Paulo Lemann')).toBeInTheDocument()
   })
 
   it('calls what it holds "Controls", not subsidiaries', async () => {
@@ -1123,9 +1126,37 @@ describe('a voting group', () => {
     expect(screen.getByText(/^Controls$/i)).toBeInTheDocument()
   })
 
-  it("leaves an ordinary company wording alone", async () => {
+  it('leaves an ordinary company alone', async () => {
     await render_('company')
     expect(screen.queryByText(/Parties to the agreement/i)).toBeNull()
     expect(screen.queryByText(/^Controls$/i)).toBeNull()
+  })
+
+  it('does not flag a voting group for voting', async () => {
+    // "This voting group votes more than it owns" is what a voting group is.
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company',
+                verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'g1', name: 'Voting group · 9 parties', type: 'voting_group' },
+                 relationship: { voting_power_pct: 52.3 } }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Anheuser-Busch InBev')} refreshKey={0} />)
+    await screen.findByText('Voting group · 9 parties')
+    expect(screen.queryByLabelText(/Special voting/i)).toBeNull()
+  })
+
+  it('still flags an ordinary holder whose votes outrun its shares', async () => {
+    // Altria: 8.1% owned, 51.9% voted. The marker earns its place there.
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company',
+                verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'a1', name: 'Altria', type: 'company' },
+                 relationship: { stake_percent: 8.1, voting_power_pct: 51.9 } }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Anheuser-Busch InBev')} refreshKey={0} />)
+    await screen.findByText('Altria')
+    expect(screen.getByLabelText(/Special voting/i)).toBeInTheDocument()
   })
 })

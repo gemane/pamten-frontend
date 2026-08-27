@@ -187,6 +187,8 @@ export interface FullProfile {
   replaces?: SuccessionEntry[]        // entities this one replaced (its predecessors)
   ownership?: OwnershipSummary        // computed free-float residual + data-quality flag
   cross_holdings?: Entity[]           // entities in a reciprocal (circular) ownership with this one
+  /** Parties to a filing group. Only present on a voting_group entity. */
+  group_members?: GroupParty[]
 }
 
 // Derived (not sourced) ownership breakdown, computed on read from the owners.
@@ -208,6 +210,13 @@ export interface ShareClassTotal {
   share_class?: string | null     // null = the filing did not name one
   disclosed_pct: number
   owners: number
+}
+
+/** A party to a filing group. They join by RELATED_TO, not OWNS — membership is
+ *  not ownership — so they arrive in their own list rather than among owners. */
+export interface GroupParty {
+  party: Entity & Partial<Person>
+  kind: 'entity' | 'person'
 }
 
 // A succession neighbour (predecessor/successor) plus when it took effect.
