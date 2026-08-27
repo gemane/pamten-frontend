@@ -95,7 +95,8 @@
     "edgeWidth": "Grosor de arista",
     "lowPct": "% bajo",
     "highPct": "% alto",
-    "ultimateParent": "Matriz última (sin cadena directa)"
+    "ultimateParent": "Matriz última (sin cadena directa)",
+    "voting_group": "Grupo de voto"
   },
   "panel": {
     "empty": "Haz clic en cualquier nodo del grafo\npara ver sus detalles aquí",
@@ -157,7 +158,9 @@
     "parentNoneHint": "GLEIF pregunta quién consolida las cuentas de esta empresa, no quién posee sus acciones.",
     "parentNoneHintOwners": "GLEIF pregunta quién consolida las cuentas de esta empresa, no quién posee sus acciones. Los accionistas indicados en este panel son una cuestión distinta.",
     "parentReference": "Ver referencia",
-    "multiClassHint": "Las declaraciones de esta empresa informan porcentajes de valores distintos, por lo que no pueden sumarse."
+    "multiClassHint": "Las declaraciones de esta empresa informan porcentajes de valores distintos, por lo que no pueden sumarse.",
+    "groupMembers": "Partes del acuerdo",
+    "groupControls": "Controla"
   },
   "report": {
     "button": "Reportar",

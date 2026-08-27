@@ -912,6 +912,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   })
   const otherExecutives = executives.filter(e => e.role?.role !== 'Founder')
 
+  // The panel's only branch on entity type. A voting group's "owners" are the
+  // parties to the agreement and its "subsidiaries" are the company the bloc
+  // controls — the sections hold the right things, only their titles would lie.
+  const isGroup = entity.type === 'voting_group'
+
   const fmt = (n: number) =>
     n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${n}`
 
@@ -998,7 +1003,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       </div>
 
       {owners.length > 0 && (
-        <Section title={t('panel.ownedBy')}>
+        <Section title={isGroup ? t('panel.groupMembers') : t('panel.ownedBy')}>
           {[...owners].sort(byStakeDesc(
             o => o.relationship?.stake_percent,
             o => o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '',
@@ -1111,7 +1116,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {subsidiaries.length > 0 && (
-        <Section title={t('panel.subsidiaries')} count={counts?.subsidiaries}>
+        <Section title={isGroup ? t('panel.groupControls') : t('panel.subsidiaries')}
+                 count={counts?.subsidiaries}>
           {(() => {
             const sorted = [...subsidiaries].sort(
               byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? ''))

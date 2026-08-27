@@ -34,6 +34,10 @@ export const ENTITY_COLORS: Record<string, NodeColor> = {
   foundation: { fill: '#16A085', border: '#0e6b59' },
   fund:       { fill: '#B7950B', border: '#7d6608' },
   nonprofit:  { fill: '#C0398B', border: '#84265f' },
+  // Not an organisation but an agreement between them: a set of parties
+  // filing one SEC Schedule 13D. Amber, to read as a construct rather than
+  // another firm.
+  voting_group: { fill: '#b7791f', border: '#ecc94b' },
   person:     { fill: '#27AE60', border: '#1a7a42' },
 }
 
