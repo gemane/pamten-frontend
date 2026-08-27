@@ -981,3 +981,62 @@ describe('a stale community assertion', () => {
     expect(row.className).not.toContain('rel-item--stale')
   })
 })
+
+
+describe('a company with several share classes', () => {
+  const withSummary = async (ownership: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Grupo Televisa', type: 'company', verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'o1', name: 'Fintech Latam', type: 'company' },
+                 relationship: { stake_percent: 9.7, share_class: 'CPOs' } }],
+      ownership,
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Grupo Televisa')} refreshKey={0} />)
+    await screen.findByText('Fintech Latam')
+  }
+
+  it('lists a total per security instead of one sum', async () => {
+    // Televisa's real shape: 22.3% of the A/B/Preferred shares beside 9.7% of
+    // the CPOs. Added together that was 115.9% of the company.
+    await withSummary({
+      disclosed_pct: null, multi_class: true, unknown_owners: 0, exceeds_100: false,
+      by_class: [
+        { share_class: 'Series A Shares; Series B Shares', disclosed_pct: 32.3, owners: 4 },
+        { share_class: 'CPOs', disclosed_pct: 9.7, owners: 1 },
+      ],
+    })
+    expect(screen.getByText('Series A Shares; Series B Shares')).toBeInTheDocument()
+    expect(screen.getByText('32.3%')).toBeInTheDocument()
+    expect(screen.getByText('9.7%')).toBeInTheDocument()
+  })
+
+  it('says why the percentages cannot be added', async () => {
+    await withSummary({
+      disclosed_pct: null, multi_class: true, unknown_owners: 0, exceeds_100: false,
+      by_class: [{ share_class: 'CPOs', disclosed_pct: 9.7, owners: 1 }],
+    })
+    const block = screen.getByText('CPOs').closest('.share-classes') as HTMLElement
+    expect(block.getAttribute('title')).toMatch(/different securities/i)
+  })
+
+  it('names the unnamed class rather than showing a blank row', async () => {
+    await withSummary({
+      disclosed_pct: null, multi_class: true, unknown_owners: 0, exceeds_100: false,
+      by_class: [
+        { share_class: 'CPOs', disclosed_pct: 9.7, owners: 1 },
+        { share_class: null, disclosed_pct: 44.2, owners: 1 },
+      ],
+    })
+    expect(screen.getByText(/class not stated/i)).toBeInTheDocument()
+    expect(screen.getByText('44.2%')).toBeInTheDocument()
+  })
+
+  it('shows nothing extra for an ordinary single-class company', async () => {
+    await withSummary({
+      disclosed_pct: 12, free_float_pct: 88, multi_class: false, unknown_owners: 0,
+      exceeds_100: false, by_class: [{ share_class: 'Common Stock', disclosed_pct: 12, owners: 2 }],
+    })
+    expect(document.querySelector('.share-classes')).toBeNull()
+  })
+})

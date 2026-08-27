@@ -96,6 +96,9 @@ export interface Source {
 
 // Relationship types
 export interface OwnsRelationship {
+  /** Which security this percentage is a percentage OF — from the filing's
+   *  cover page. Absent on pre-2024 SEC filings and on non-SEC sources. */
+  share_class?: string | null
   /** Set by the backend staleness pass: a community-tier assertion nothing has
    *  re-confirmed for months. Wikidata has no retirement signal — a deleted
    *  statement just stops being seen — so age is the only evidence, and it is
@@ -190,6 +193,19 @@ export interface OwnershipSummary {
   free_float_pct?: number | null  // 100 − disclosed, when every owner's stake is known
   unknown_owners?: number         // owners with an unknown %
   exceeds_100?: boolean           // disclosed stakes sum past 100% (overlapping sources/dates)
+  /** The filings name more than one security, so their percentages measure
+   *  different wholes and no single total is meaningful. `disclosed_pct` is
+   *  null when this is set; `by_class` carries the per-security totals. */
+  multi_class?: boolean
+  by_class?: ShareClassTotal[]
+}
+
+/** Disclosed ownership of ONE security. A 13D/G percentage is always a percent
+ *  of a class, so a company with several classes has several denominators. */
+export interface ShareClassTotal {
+  share_class?: string | null     // null = the filing did not name one
+  disclosed_pct: number
+  owners: number
 }
 
 // A succession neighbour (predecessor/successor) plus when it took effect.

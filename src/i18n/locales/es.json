@@ -156,7 +156,10 @@
     "parentNoneBoth": "No declara matriz directa ni última a GLEIF: {{reasons}}.",
     "parentNoneHint": "GLEIF pregunta quién consolida las cuentas de esta empresa, no quién posee sus acciones.",
     "parentNoneHintOwners": "GLEIF pregunta quién consolida las cuentas de esta empresa, no quién posee sus acciones. Los accionistas indicados en este panel son una cuestión distinta.",
-    "parentReference": "Ver referencia"
+    "parentReference": "Ver referencia",
+    "shareClasses": "Por clase de acción",
+    "multiClassHint": "Las declaraciones de esta empresa informan porcentajes de valores distintos, por lo que no pueden sumarse.",
+    "unnamedClass": "clase no indicada"
   },
   "report": {
     "button": "Reportar",

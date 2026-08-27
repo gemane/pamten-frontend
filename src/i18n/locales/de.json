@@ -156,7 +156,10 @@
     "parentNoneBoth": "Meldet GLEIF weder eine direkte noch eine oberste Muttergesellschaft: {{reasons}}.",
     "parentNoneHint": "GLEIF fragt, wer den Abschluss dieses Unternehmens konsolidiert — nicht, wem die Anteile gehören.",
     "parentNoneHintOwners": "GLEIF fragt, wer den Abschluss dieses Unternehmens konsolidiert — nicht, wem die Anteile gehören. Die auf dieser Seite genannten Anteilseigner sind eine andere Frage.",
-    "parentReference": "Beleg ansehen"
+    "parentReference": "Beleg ansehen",
+    "shareClasses": "Nach Aktiengattung",
+    "multiClassHint": "Die Meldungen dieses Unternehmens beziehen sich auf verschiedene Wertpapiere; ihre Prozentsätze lassen sich nicht addieren.",
+    "unnamedClass": "Gattung nicht angegeben"
   },
   "report": {
     "button": "Melden",
