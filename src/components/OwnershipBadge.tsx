@@ -35,13 +35,15 @@ export default function OwnershipBadge({ type, percent, votingPct }: OwnershipBa
       <span className="ownership-badge" style={{ borderColor: color, color }}>
         {label}{percent != null ? ` · ${percent}%` : ''}
       </span>
-      {votingPct != null && (
-        <span className="voting-badge">⚡ {votingPct}%</span>
-      )}
+      {/* A marker, not a reading. The row's job is to make an owner who votes
+          far more than it owns noticeable while scanning; the figures and the
+          reason are one press away, in the relationship's own menu, which
+          already lists Stake and Voting. Two badges here said the same thing
+          the menu says, at the cost of a crowded row. */}
       {isSpecialVoting(percent, votingPct) && (
-        <span className="special-voting-badge" title={t('ownershipType.specialVotingHint')}>
-          ◆ {t('ownershipType.specialVoting')}
-        </span>
+        <span className="voting-badge voting-badge--marker"
+              title={t('ownershipType.specialVotingHint')}
+              aria-label={t('ownershipType.specialVoting')}>⚡</span>
       )}
     </span>
   )

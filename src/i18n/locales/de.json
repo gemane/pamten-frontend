@@ -530,6 +530,7 @@
     "class": "Gattung",
     "stake": "Anteil",
     "voting": "Stimmrechte",
-    "filed": "Gemeldet"
+    "filed": "Gemeldet",
+    "votingExceeds": "{{pct}}% — mehr als die gehaltenen {{stake}}%"
   }
 }
