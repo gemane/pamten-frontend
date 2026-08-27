@@ -1370,6 +1370,24 @@ button.rel-item--clickable:hover { background: #253454; }
 
 [data-theme="light"] .rel-item__year { color: #718096; }
 
+/* Per-security ownership totals, shown instead of a single figure when a
+   company's filings measure different wholes. */
+.share-classes { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(139,149,167,0.3); }
+.share-classes__label {
+  display: block; font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.04em; color: #8b95a7; margin-bottom: 4px;
+}
+.share-classes__row {
+  display: flex; align-items: center; gap: 8px;
+  justify-content: space-between; padding: 2px 0;
+}
+.share-classes__name {
+  font-size: 11px; color: #8b95a7; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="light"] .share-classes__label,
+[data-theme="light"] .share-classes__name { color: #718096; }
+
 /* A stale community assertion: dimmed, still present, still clickable. Removal
    would assert something no source stated; full opacity would vouch for a fact
    nobody has confirmed in months. */

@@ -1013,6 +1013,24 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               ⚠ {t('panel.ownershipExceeds', { pct: ownership.disclosed_pct })}
             </div>
           )}
+          {/* Several securities, several denominators. Showing one total here
+              would be adding fractions of different wholes — Grupo Televisa's
+              Series A/B shares and its CPOs summed to 115% of the company. */}
+          {ownership?.multi_class && (ownership.by_class?.length ?? 0) > 0 && (
+            <div className="share-classes" title={t('panel.multiClassHint')}>
+              <span className="share-classes__label">{t('panel.shareClasses')}</span>
+              {ownership.by_class!.map((c, i) => (
+                <div className="share-classes__row" key={i}>
+                  <span className="share-classes__name">
+                    {c.share_class ?? <em>{t('panel.unnamedClass')}</em>}
+                  </span>
+                  <span className="ownership-badge ownership-badge--computed">
+                    {c.disclosed_pct}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
       )}
 
