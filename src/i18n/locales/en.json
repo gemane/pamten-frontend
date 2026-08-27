@@ -533,6 +533,7 @@
     "class": "Class",
     "stake": "Stake",
     "voting": "Voting",
-    "filed": "Filed"
+    "filed": "Filed",
+    "votingExceeds": "{{pct}}% — more than the {{stake}}% held"
   }
 }

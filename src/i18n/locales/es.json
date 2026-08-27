@@ -533,6 +533,7 @@
     "class": "Clase",
     "stake": "Participación",
     "voting": "Votos",
-    "filed": "Presentado"
+    "filed": "Presentado",
+    "votingExceeds": "{{pct}}% — más que el {{stake}}% en cartera"
   }
 }

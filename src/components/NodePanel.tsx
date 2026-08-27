@@ -775,9 +775,17 @@ function RelRow({ node, onNavigate, rel, children }: {
   if (rel.shareClass) details.push({ label: t('menu.class'), value: rel.shareClass })
   if (rel.stake != null) details.push({ label: t('menu.stake'), value: `${rel.stake}%` })
   // Only when it differs from the stake: on a lone filer the two are the same
-  // number and repeating it would imply a distinction that isn't there.
+  // number and repeating it would imply a distinction that isn't there. When it
+  // exceeds the stake the row shows a ⚡ marker and nothing else, so this line
+  // carries the comparison the marker stands for — Altria votes 51.9% of AB
+  // InBev while holding 8.1% of it.
   if (rel.votingPct != null && rel.votingPct !== rel.stake) {
-    details.push({ label: t('menu.voting'), value: `${rel.votingPct}%` })
+    const exceeds = rel.stake != null && rel.votingPct > rel.stake
+    details.push({
+      label: t('menu.voting'),
+      value: exceeds ? t('menu.votingExceeds', { pct: rel.votingPct, stake: rel.stake })
+                     : `${rel.votingPct}%`,
+    })
   }
   if (rel.filedDate) details.push({ label: t('menu.filed'), value: rel.filedDate.slice(0, 10) })
 

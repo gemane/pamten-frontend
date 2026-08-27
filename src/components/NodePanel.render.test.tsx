@@ -1060,6 +1060,19 @@ describe("a relationship's own facts, in its menu", () => {
     expect(d?.textContent).toContain('51.9%')
   })
 
+  it('says what the row\'s ⚡ marker stands for', async () => {
+    // The row shows a bolt and no figures, so the comparison has to be here.
+    const d = await openMenuFor({ stake_percent: 8.1, voting_power_pct: 51.9 })
+    expect(d?.textContent).toMatch(/more than the 8\.1% held/i)
+  })
+
+  it('states a lower voting figure plainly, without the comparison', async () => {
+    // Voting below the stake is not the ⚡ case and must not borrow its wording.
+    const d = await openMenuFor({ stake_percent: 30, voting_power_pct: 10 })
+    expect(d?.textContent).toContain('10%')
+    expect(d?.textContent).not.toMatch(/more than/i)
+  })
+
   it('does not repeat the same number as a voting bloc', async () => {
     // A lone filer votes exactly what it owns; printing it twice would imply a
     // distinction that isn't there. One render per test — two in the same test
