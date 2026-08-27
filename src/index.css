@@ -1370,23 +1370,14 @@ button.rel-item--clickable:hover { background: #253454; }
 
 [data-theme="light"] .rel-item__year { color: #718096; }
 
-/* Per-security ownership totals, shown instead of a single figure when a
-   company's filings measure different wholes. */
-.share-classes { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(139,149,167,0.3); }
-.share-classes__label {
-  display: block; font-size: 10px; text-transform: uppercase;
-  letter-spacing: 0.04em; color: #8b95a7; margin-bottom: 4px;
+/* Said in place of a total the data cannot support — e.g. filings measuring
+   different share classes, whose percentages are not addable. */
+.ownership-note {
+  margin-top: 8px; padding-top: 6px;
+  border-top: 1px dashed rgba(139,149,167,0.3);
+  font-size: 11px; line-height: 1.4; color: #8b95a7;
 }
-.share-classes__row {
-  display: flex; align-items: center; gap: 8px;
-  justify-content: space-between; padding: 2px 0;
-}
-.share-classes__name {
-  font-size: 11px; color: #8b95a7; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-}
-[data-theme="light"] .share-classes__label,
-[data-theme="light"] .share-classes__name { color: #718096; }
+[data-theme="light"] .ownership-note { color: #718096; }
 
 /* A stale community assertion: dimmed, still present, still clickable. Removal
    would assert something no source stated; full opacity would vouch for a fact
@@ -3035,6 +3026,26 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 [data-theme="light"] .action-menu__header { color: #718096; border-bottom-color: #e2e8f0; }
 
+/* Facts about the one relationship you pressed. Unlike the header these WRAP:
+   a share-class title runs to "Certificados de Participacion Ordinarios (CPOs)
+   and Global D Shares", and half of that is worse than none. */
+.action-menu__details {
+  margin: 0; padding: 6px 14px 8px;
+  border-bottom: 1px solid #2d2d50; max-width: 260px;
+}
+.action-menu__detail { display: flex; gap: 8px; align-items: baseline; padding: 1px 0; }
+.action-menu__detail dt {
+  flex: 0 0 auto; min-width: 46px; font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #6b7a90;
+}
+.action-menu__detail dd {
+  margin: 0; font-size: 11px; color: #c8d0dc;
+  overflow-wrap: anywhere; white-space: normal;
+}
+[data-theme="light"] .action-menu__details { border-bottom-color: #e2e8f0; }
+[data-theme="light"] .action-menu__detail dt { color: #718096; }
+[data-theme="light"] .action-menu__detail dd { color: #2d3748; }
+
 /* The name and its ⋮. `.panel-name` is an h2 filling the width, so it needs a
    row of its own to sit anything beside it. */
 .panel-header-row {
@@ -3047,6 +3058,18 @@ a.source-item__name:hover { color: #4A90D9; }
 /* A relationship row is long-pressable on touch. Without this the browser
    offers its own text-selection menu on top of ours. */
 .rel-row { -webkit-touch-callout: none; }
+
+/* A long press on a relationship opens its menu (see useLongPress), but the
+   browser also starts selecting the row's text — the label highlights and the
+   selection handles fight the menu appearing over them. Suppress it, but only
+   where a long press is the gesture: on a mouse the menu comes from the
+   context-menu event instead, and selecting an owner's name to copy it is a
+   fair thing to want. Keyed on the input device rather than the viewport,
+   because a touch laptop at full width has the same conflict and a narrow
+   desktop window does not. */
+@media (pointer: coarse) {
+  .rel-row { user-select: none; -webkit-user-select: none; }
+}
 
 /* ── Graph threshold slider ────────────────────────────── */
 

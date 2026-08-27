@@ -157,9 +157,7 @@
     "parentNoneHint": "GLEIF pregunta quién consolida las cuentas de esta empresa, no quién posee sus acciones.",
     "parentNoneHintOwners": "GLEIF pregunta quién consolida las cuentas de esta empresa, no quién posee sus acciones. Los accionistas indicados en este panel son una cuestión distinta.",
     "parentReference": "Ver referencia",
-    "shareClasses": "Por clase de acción",
-    "multiClassHint": "Las declaraciones de esta empresa informan porcentajes de valores distintos, por lo que no pueden sumarse.",
-    "unnamedClass": "clase no indicada"
+    "multiClassHint": "Las declaraciones de esta empresa informan porcentajes de valores distintos, por lo que no pueden sumarse."
   },
   "report": {
     "button": "Reportar",
@@ -528,6 +526,10 @@
     "share": "Compartir",
     "report": "Reportar",
     "reportRelationship": "Reportar relación",
-    "viewSource": "Ver fuente"
+    "viewSource": "Ver fuente",
+    "class": "Clase",
+    "stake": "Participación",
+    "voting": "Votos",
+    "filed": "Presentado"
   }
 }

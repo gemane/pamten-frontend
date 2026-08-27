@@ -49,6 +49,11 @@ interface ActionMenuProps {
    *  clickable. The relationship menu uses it to name where the fact came from
    *  before offering to open or dispute it. */
   header?: ReactNode
+  /** Label/value facts under the header, for detail that belongs to the one
+   *  thing you pressed rather than to every row. The relationship menu states
+   *  which security a percentage measures here — a fact too long and too rare
+   *  to sit on the row itself, and meaningless anywhere but on its own edge. */
+  details?: { label: string; value: string }[]
   /** The button that opens it. Omit when opening at a point. */
   trigger?: ReactNode
   triggerLabel?: string
@@ -59,7 +64,7 @@ interface ActionMenuProps {
 }
 
 export default function ActionMenu({
-  items, header, trigger, triggerLabel, position, onClose, className = '',
+  items, header, details, trigger, triggerLabel, position, onClose, className = '',
 }: ActionMenuProps) {
   const anchored = position === undefined
   const [open, setOpen] = useState(false)
@@ -120,6 +125,15 @@ export default function ActionMenu({
            left: placed?.left ?? position!.x,
          }}>
       {header && <div className="action-menu__header">{header}</div>}
+      {details && details.length > 0 && (
+        <dl className="action-menu__details">
+          {details.map(d => (
+            <div className="action-menu__detail" key={d.label}>
+              <dt>{d.label}</dt><dd>{d.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
       {items.map(item => (
         <button key={item.key} role="menuitem" onClick={() => { close(); item.onSelect() }}>
           {item.icon}{item.label}

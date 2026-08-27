@@ -117,6 +117,23 @@ const graphSource = readFileSync(
  *  A slice runs past the closing brace, and then a rule sitting just *after* the
  *  media query reads as though it were inside it — which is exactly the mistake
  *  this helper exists to detect. */
+/** The rule body for a selector inside a named `@media` query. Same brace
+ *  counting as `mobileRuleFor`, for queries keyed on something other than width. */
+function ruleInQuery(query: string, selector: string): string {
+  for (let from = css.indexOf(query); from !== -1; from = css.indexOf(query, from + 1)) {
+    let depth = 0
+    let end = from
+    for (let i = css.indexOf('{', from); i < css.length; i++) {
+      if (css[i] === '{') depth++
+      else if (css[i] === '}' && --depth === 0) { end = i; break }
+    }
+    const block = css.slice(from, end)
+    const found = block.indexOf(`${selector} {`)
+    if (found !== -1) return block.slice(found, block.indexOf('}', found))
+  }
+  return ''
+}
+
 function mobileRuleFor(selector: string): string {
   for (let from = css.indexOf('@media (max-width: 640px)'); from !== -1;
        from = css.indexOf('@media (max-width: 640px)', from + 1)) {
@@ -209,5 +226,31 @@ describe('a section nested inside another does not end in dead space', () => {
     // Scoped to the nested case on purpose: a blanket `.panel-section:last-child`
     // would close the gap under the last section of every panel.
     expect(ruleFor('.panel-section')).toMatch(/margin-bottom:\s*18px/)
+  })
+})
+
+describe('holding a relationship on a touch screen', () => {
+  // These assert the CSS rule is present and correctly scoped — nothing more.
+  // Whether a long press *feels* right is not observable in jsdom; that needs a
+  // phone. What can regress silently is the rule being dropped or escaping its
+  // media query, and that is what these catch.
+
+  it('does not let the press select the row text', () => {
+    // A long press opens the relationship menu (useLongPress); without this the
+    // browser also starts a selection, and the handles fight the menu.
+    const rule = ruleInQuery('@media (pointer: coarse)', '.rel-row')
+    expect(rule).toMatch(/user-select:\s*none/)
+    expect(rule).toMatch(/-webkit-user-select:\s*none/)
+  })
+
+  it('leaves pointer devices able to select and copy a name', () => {
+    // Keyed on the input device, not the viewport: a mouse opens the menu from
+    // the context-menu event, so suppressing selection there would cost
+    // copy-paste for nothing. A narrow desktop window must stay selectable.
+    expect(mobileRuleFor('.rel-row')).not.toMatch(/user-select/)
+    const outsideQueries = css
+      .split('@media (pointer: coarse)')[0]
+      .match(/\.rel-row\s*\{[^}]*\}/g) ?? []
+    expect(outsideQueries.join(' ')).not.toMatch(/user-select:\s*none/)
   })
 })

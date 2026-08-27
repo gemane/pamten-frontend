@@ -983,60 +983,99 @@ describe('a stale community assertion', () => {
 })
 
 
-describe('a company with several share classes', () => {
-  const withSummary = async (ownership: Record<string, unknown>) => {
+describe('a company whose filings measure different securities', () => {
+  const withSummary = async (ownership: Record<string, unknown>, rel = {}) => {
     mockProfile.mockResolvedValue({ data: {
       entity: { id: 'e1', name: 'Grupo Televisa', type: 'company', verified: false } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'o1', name: 'Fintech Latam', type: 'company' },
-                 relationship: { stake_percent: 9.7, share_class: 'CPOs' } }],
+                 relationship: { stake_percent: 9.7, ...rel } }],
       ownership,
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Grupo Televisa')} refreshKey={0} />)
     await screen.findByText('Fintech Latam')
   }
 
-  it('lists a total per security instead of one sum', async () => {
-    // Televisa's real shape: 22.3% of the A/B/Preferred shares beside 9.7% of
-    // the CPOs. Added together that was 115.9% of the company.
-    await withSummary({
-      disclosed_pct: null, multi_class: true, unknown_owners: 0, exceeds_100: false,
-      by_class: [
-        { share_class: 'Series A Shares; Series B Shares', disclosed_pct: 32.3, owners: 4 },
-        { share_class: 'CPOs', disclosed_pct: 9.7, owners: 1 },
-      ],
-    })
-    expect(screen.getByText('Series A Shares; Series B Shares')).toBeInTheDocument()
-    expect(screen.getByText('32.3%')).toBeInTheDocument()
-    expect(screen.getByText('9.7%')).toBeInTheDocument()
+  it('says why there is no total, in place of the total', async () => {
+    // Televisa's filers report 22.3% of its A/B/Preferred shares beside 9.7%
+    // of its CPOs; added together that was 115.9% of the company.
+    await withSummary({ disclosed_pct: null, multi_class: true, unknown_owners: 0,
+                        exceeds_100: false })
+    expect(screen.getByText(/different securities/i)).toBeInTheDocument()
   })
 
-  it('says why the percentages cannot be added', async () => {
+  it('does not list the classes', async () => {
+    // Normalisation over-splits on purpose (Televisa names its CPOs four ways),
+    // so a list reads as more classes than the company has. The class belongs
+    // on the relationship's own menu instead.
     await withSummary({
       disclosed_pct: null, multi_class: true, unknown_owners: 0, exceeds_100: false,
-      by_class: [{ share_class: 'CPOs', disclosed_pct: 9.7, owners: 1 }],
-    })
-    const block = screen.getByText('CPOs').closest('.share-classes') as HTMLElement
-    expect(block.getAttribute('title')).toMatch(/different securities/i)
-  })
-
-  it('names the unnamed class rather than showing a blank row', async () => {
-    await withSummary({
-      disclosed_pct: null, multi_class: true, unknown_owners: 0, exceeds_100: false,
-      by_class: [
-        { share_class: 'CPOs', disclosed_pct: 9.7, owners: 1 },
-        { share_class: null, disclosed_pct: 44.2, owners: 1 },
-      ],
-    })
-    expect(screen.getByText(/class not stated/i)).toBeInTheDocument()
-    expect(screen.getByText('44.2%')).toBeInTheDocument()
-  })
-
-  it('shows nothing extra for an ordinary single-class company', async () => {
-    await withSummary({
-      disclosed_pct: 12, free_float_pct: 88, multi_class: false, unknown_owners: 0,
-      exceeds_100: false, by_class: [{ share_class: 'Common Stock', disclosed_pct: 12, owners: 2 }],
+      by_class: [{ share_class: 'CPOs', disclosed_pct: 9.7, owners: 1 },
+                 { share_class: null, disclosed_pct: 44.2, owners: 1 }],
     })
     expect(document.querySelector('.share-classes')).toBeNull()
+    expect(screen.queryByText('44.2%')).toBeNull()
+  })
+
+  it('stays silent for an ordinary single-class company', async () => {
+    await withSummary({ disclosed_pct: 12, free_float_pct: 88, multi_class: false,
+                        unknown_owners: 0, exceeds_100: false })
+    expect(document.querySelector('.ownership-note')).toBeNull()
+  })
+})
+
+describe("a relationship's own facts, in its menu", () => {
+  const openMenuFor = async (relationship: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Grupo Televisa', type: 'company', verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'o1', name: 'Fintech Latam', type: 'company' },
+                 relationship }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Grupo Televisa')} refreshKey={0} />)
+    const row = (await screen.findByText('Fintech Latam')).closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    return document.querySelector('.action-menu__details')
+  }
+
+  it('names the security the percentage measures', async () => {
+    const d = await openMenuFor({ stake_percent: 9.7,
+      share_class: 'Certificados de Participacion Ordinarios (CPOs) and Global D Shares' })
+    expect(d?.textContent).toContain('Certificados de Participacion Ordinarios')
+    expect(d?.textContent).toContain('9.7%')
+  })
+
+  it('lets a long class title wrap instead of truncating it', async () => {
+    // The header above is nowrap with an ellipsis; half a class title is worse
+    // than none, so these rows must not inherit that.
+    const d = await openMenuFor({ stake_percent: 9.7, share_class: 'A very long class title' })
+    const dd = d?.querySelector('dd') as HTMLElement
+    expect(getComputedStyle(dd).whiteSpace).not.toBe('nowrap')
+  })
+
+  it('shows a voting bloc when it differs from the stake', async () => {
+    // Altria's shape: 8.1% owned, 51.9% voted under a shareholders' agreement.
+    const d = await openMenuFor({ stake_percent: 8.1, voting_power_pct: 51.9 })
+    expect(d?.textContent).toContain('8.1%')
+    expect(d?.textContent).toContain('51.9%')
+  })
+
+  it('does not repeat the same number as a voting bloc', async () => {
+    // A lone filer votes exactly what it owns; printing it twice would imply a
+    // distinction that isn't there. One render per test — two in the same test
+    // leaves the first menu in the DOM for querySelector to find.
+    const d = await openMenuFor({ stake_percent: 5.7, voting_power_pct: 5.7 })
+    expect(d?.textContent?.match(/5\.7%/g) ?? []).toHaveLength(1)
+  })
+
+  it('shows the filing date without its timestamp', async () => {
+    const d = await openMenuFor({ stake_percent: 9.7, source_date: '2025-02-14T00:00:00Z' })
+    expect(d?.textContent).toContain('2025-02-14')
+    expect(d?.textContent).not.toContain('T00:00')
+  })
+
+  it('adds nothing for a relationship with no such facts', async () => {
+    // A Wikidata edge states none of this; its menu must look as it always did.
+    expect(await openMenuFor({})).toBeNull()
   })
 })
