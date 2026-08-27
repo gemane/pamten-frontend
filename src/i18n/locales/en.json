@@ -95,7 +95,8 @@
     "edgeWidth": "Edge width",
     "lowPct": "Low %",
     "highPct": "High %",
-    "ultimateParent": "Ultimate parent (no direct chain)"
+    "ultimateParent": "Ultimate parent (no direct chain)",
+    "voting_group": "Voting group"
   },
   "panel": {
     "empty": "Click any node in the graph\nto see its details here",
@@ -157,7 +158,9 @@
     "parentNoneHint": "GLEIF asks who consolidates this company's accounts — not who holds its shares.",
     "parentNoneHintOwners": "GLEIF asks who consolidates this company's accounts — not who holds its shares. The shareholders listed on this panel are a separate question.",
     "parentReference": "View reference",
-    "multiClassHint": "This company's filings report percentages of different securities, so they cannot be added together."
+    "multiClassHint": "This company's filings report percentages of different securities, so they cannot be added together.",
+    "groupMembers": "Parties to the agreement",
+    "groupControls": "Controls"
   },
   "report": {
     "button": "Report",

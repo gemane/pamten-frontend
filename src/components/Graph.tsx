@@ -58,6 +58,13 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       },
     })),
     {
+      // A voting group is an agreement between parties, not a firm — a diamond
+      // says so at a glance. The generated subtype selectors above set colour
+      // only, so the shape needs a rule of its own.
+      selector: 'node[entitySubtype = "voting_group"]',
+      style: { shape: 'diamond', 'border-style': 'dashed' },
+    },
+    {
       // Last, so a person wins over any subtype that happens to be set on it.
       selector: 'node[nodeType = "person"]',
       style: {

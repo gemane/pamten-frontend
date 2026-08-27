@@ -95,7 +95,8 @@
     "edgeWidth": "Kantenbreite",
     "lowPct": "Niedriger %",
     "highPct": "Hoher %",
-    "ultimateParent": "Oberste Muttergesellschaft (keine direkte Kette)"
+    "ultimateParent": "Oberste Muttergesellschaft (keine direkte Kette)",
+    "voting_group": "Stimmrechtsgruppe"
   },
   "panel": {
     "empty": "Klicken Sie auf einen Knoten im Graph,\num die Details hier zu sehen",
@@ -157,7 +158,9 @@
     "parentNoneHint": "GLEIF fragt, wer den Abschluss dieses Unternehmens konsolidiert — nicht, wem die Anteile gehören.",
     "parentNoneHintOwners": "GLEIF fragt, wer den Abschluss dieses Unternehmens konsolidiert — nicht, wem die Anteile gehören. Die auf dieser Seite genannten Anteilseigner sind eine andere Frage.",
     "parentReference": "Beleg ansehen",
-    "multiClassHint": "Die Meldungen dieses Unternehmens beziehen sich auf verschiedene Wertpapiere; ihre Prozentsätze lassen sich nicht addieren."
+    "multiClassHint": "Die Meldungen dieses Unternehmens beziehen sich auf verschiedene Wertpapiere; ihre Prozentsätze lassen sich nicht addieren.",
+    "groupMembers": "Parteien der Vereinbarung",
+    "groupControls": "Kontrolliert"
   },
   "report": {
     "button": "Melden",

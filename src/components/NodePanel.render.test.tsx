@@ -1079,3 +1079,40 @@ describe("a relationship's own facts, in its menu", () => {
     expect(await openMenuFor({})).toBeNull()
   })
 })
+
+
+describe('a voting group', () => {
+  const render_ = async (type: string) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'g1', name: 'Voting group — Anheuser-Busch InBev',
+                type, verified: false } as Entity,
+      owners: [{ owner: { id: 'm1', name: 'Stichting Anheuser-Busch InBev', type: 'nonprofit' },
+                 relationship: {} }],
+      subsidiaries: [{ entity: { id: 'abi', name: 'Anheuser-Busch InBev', type: 'company' },
+                       relationship: { voting_power_pct: 52.3 } }],
+      executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('g1', 'Voting group — Anheuser-Busch InBev')}
+                      refreshKey={0} />)
+    await screen.findByText('Stichting Anheuser-Busch InBev')
+  }
+
+  it('calls its owners the parties to the agreement', async () => {
+    // They are signatories, not shareholders of the group — nothing owns a
+    // contract.
+    await render_('voting_group')
+    expect(screen.getByText(/Parties to the agreement/i)).toBeInTheDocument()
+    expect(screen.queryByText(/^Owned by$/i)).toBeNull()
+  })
+
+  it('calls what it holds "Controls", not subsidiaries', async () => {
+    await render_('voting_group')
+    expect(screen.getByText(/^Controls$/i)).toBeInTheDocument()
+  })
+
+  it("leaves an ordinary company wording alone", async () => {
+    await render_('company')
+    expect(screen.queryByText(/Parties to the agreement/i)).toBeNull()
+    expect(screen.queryByText(/^Controls$/i)).toBeNull()
+  })
+})

@@ -41,6 +41,8 @@ export default function GraphLegend() {
                   background: ENTITY_COLORS[type].fill,
                   borderColor: ENTITY_COLORS[type].border,
                   ...(type === 'person' ? { borderRadius: '50%' } : {}),
+                  // Mirrors the diamond the graph draws for a voting group.
+                  ...(type === 'voting_group' ? { transform: 'rotate(45deg)' } : {}),
                 }}
               />
               {t(`legend.${type}`)}
