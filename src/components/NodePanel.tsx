@@ -905,7 +905,8 @@ function SourceStatements({ ids }: { ids?: string[] }) {
 function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
-          succeeded_by = [], replaces = [], ownership, cross_holdings = [] } = profile
+          succeeded_by = [], replaces = [], ownership, cross_holdings = [],
+          group_members: groupParties = [] } = profile
   // Which source asserted each relationship, for the row menu's header — the
   // edge's own source_id, not the node's source list.
   const sourceName = sourceNames(sources)
@@ -1010,8 +1011,27 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         )}
       </div>
 
+      {/* Parties to a filing group. Their own section because membership is not
+          ownership — they arrive over RELATED_TO, and the owners query cannot
+          see them, which is how this section first shipped empty. */}
+      {isGroup && (groupParties?.length ?? 0) > 0 && (
+        <Section title={t('panel.groupMembers')}>
+          {groupParties!.map((m, i) => (
+            <RelRow key={i}
+                    node={m.kind === 'person'
+                            ? personToNode(m.party as unknown as Person)
+                            : entityToNode(m.party)}
+                    onNavigate={onNavigate}>
+              <span className="rel-item__name">
+                {m.party.name ?? (m.party as { full_name?: string }).full_name}
+              </span>
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
       {owners.length > 0 && (
-        <Section title={isGroup ? t('panel.groupMembers') : t('panel.ownedBy')}>
+        <Section title={t('panel.ownedBy')}>
           {[...owners].sort(byStakeDesc(
             o => o.relationship?.stake_percent,
             o => o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '',
@@ -1039,7 +1059,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               <OwnershipBadge
                 type={o.relationship?.ownership_type}
                 percent={o.relationship?.stake_percent}
-                votingPct={o.relationship?.voting_power_pct}
+                // Not on a voting group's own row: "this voting group votes more
+                // than it owns" is what a voting group is. The bloc figure is in
+                // the row's menu, where it says something.
+                votingPct={(o.owner as { type?: string })?.type === 'voting_group'
+                             ? null : o.relationship?.voting_power_pct}
               />
             </RelRow>
           ))}
