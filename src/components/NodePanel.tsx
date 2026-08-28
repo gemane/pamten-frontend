@@ -1164,7 +1164,15 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                        filedDate: s.relationship?.source_date }}>
                 <span className="rel-item__name">{s.entity.name}</span>
                 <CorroborationBadge rel={s.relationship} />
-                <OwnershipBadge type={s.relationship?.ownership_type} percent={s.relationship?.stake_percent} />
+                {/* The marker belongs on this side too. Altria's panel lists AB
+                    InBev as something it holds 8.1% of — while voting 51.9% —
+                    and without this the disproportion is visible only from AB
+                    InBev's side. Suppressed on a voting group's own panel for
+                    the same reason it is suppressed on its row: "this voting
+                    group's control is voting" says nothing. */}
+                <OwnershipBadge type={s.relationship?.ownership_type}
+                                percent={s.relationship?.stake_percent}
+                                votingPct={isGroup ? null : s.relationship?.voting_power_pct} />
               </RelRow>
             )
 
