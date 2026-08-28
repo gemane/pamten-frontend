@@ -61,3 +61,14 @@ describe('a voting bloc', () => {
     expect(screen.queryByLabelText(/Special voting/i)).toBeNull()
   })
 })
+
+describe('badge order', () => {
+  it('puts the voting marker before the stake it qualifies', () => {
+    // "⚡ 8.1%" reads as "votes more than this"; "8.1% ⚡" states the figure and
+    // qualifies it as an afterthought.
+    const { container } = render(
+      <OwnershipBadge type="minority" percent={8.1} votingPct={51.9} />)
+    const text = (container.textContent ?? '')
+    expect(text.indexOf('⚡')).toBeLessThan(text.indexOf('8.1'))
+  })
+})

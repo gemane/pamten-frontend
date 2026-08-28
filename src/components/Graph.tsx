@@ -58,6 +58,17 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       },
     })),
     {
+      // Membership in a filing group: not ownership, so it must not look like
+      // an OWNS edge. Thin, dotted, and in the group's own amber, with no
+      // percentage on it — there is no share to state.
+      selector: 'edge[edgeType = "member"]',
+      style: {
+        'line-color': '#b7791f', 'line-style': 'dotted', width: 1.5,
+        'target-arrow-color': '#b7791f', 'target-arrow-shape': 'none',
+        opacity: 0.85,
+      },
+    },
+    {
       // A voting group is an agreement between parties, not a firm — a diamond
       // says so at a glance. The generated subtype selectors above set colour
       // only, so the shape needs a rule of its own.

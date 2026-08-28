@@ -263,3 +263,91 @@ describe('buildElements and ownership shortcuts', () => {
     expect(ids(buildElementsDownward(profile(), new Set()))).toEqual(['d', 'l', 'u'])
   })
 })
+
+// ── Voting groups on the canvas ─────────────────────────────────────────────
+
+describe('the voting relationship is drawn from both ends', () => {
+  const rel = (o: Partial<OwnsRelationship>): OwnsRelationship => o as OwnsRelationship
+
+  it('draws a votes edge when the bloc is an owner', () => {
+    const els = buildElements(makeProfile(entity('abi', 'AB InBev'), {
+      owners: [{ owner: entity('altria', 'Altria'),
+                 relationship: rel({ stake_percent: 8.1, voting_power_pct: 51.9 }) }],
+    }), new Set())
+    const kinds = els.map(e => (e.data as EdgeData).edgeType).filter(Boolean)
+    expect(kinds).toContain('votes')
+  })
+
+  it('draws it when the same pair is seen from the other side', () => {
+    // Centring Altria used to show an 8.1% holding and no bloc at all: the
+    // subsidiary loop never emitted the parallel edge the owners loop did, so
+    // the same fact was visible or invisible depending on where you stood.
+    const els = buildElements(makeProfile(entity('altria', 'Altria'), {
+      subsidiaries: [{ entity: entity('abi', 'AB InBev'),
+                       relationship: rel({ stake_percent: 8.1, voting_power_pct: 51.9 }) }],
+    }), new Set())
+    const votes = els.filter(e => (e.data as EdgeData).edgeType === 'votes')
+    expect(votes).toHaveLength(1)
+    expect((votes[0].data as EdgeData).votingPowerPct).toBe(51.9)
+  })
+
+  it('adds no votes edge when voting equals the stake', () => {
+    const els = buildElements(makeProfile(entity('altria'), {
+      subsidiaries: [{ entity: entity('abi'),
+                       relationship: rel({ stake_percent: 5.7, voting_power_pct: 5.7 }) }],
+    }), new Set())
+    expect(els.some(e => (e.data as EdgeData).edgeType === 'votes')).toBe(false)
+  })
+})
+
+describe('filing-group membership on the canvas', () => {
+  it('draws the parties when the group is the centre', () => {
+    const profile = {
+      ...makeProfile(entity('g1', 'Voting group · 9 parties')),
+      group_members: [
+        { kind: 'entity' as const, party: entity('m1', 'Stichting') },
+        { kind: 'person' as const, party: person('m2', 'Jorge Paulo Lemann') },
+      ],
+    }
+    const els = buildElements(profile, new Set())
+    const members = els.filter(e => (e.data as EdgeData).edgeType === 'member')
+    expect(members).toHaveLength(2)
+    // Membership points at the group, never the other way — nobody owns an
+    // agreement.
+    expect(members.every(e => (e.data as EdgeData).target === 'g1')).toBe(true)
+    expect(els.some(e => e.data.id === 'm2' && (e.data as { nodeType?: string }).nodeType === 'person')).toBe(true)
+  })
+
+  it('draws the group when a party is the centre', () => {
+    // The mirror. Clicking a member from the group's panel used to land on a
+    // graph with no sign of the bloc it had just come from.
+    const profile = {
+      ...makeProfile(entity('m1', 'Stichting')),
+      voting_groups: [{ group: { ...entity('g1', 'Voting group · 9 parties'),
+                                 type: 'voting_group' as const } }],
+    }
+    const els = buildElements(profile, new Set())
+    const edge = els.find(e => (e.data as EdgeData).edgeType === 'member')
+    expect(edge).toBeDefined()
+    expect((edge!.data as EdgeData).source).toBe('m1')
+    expect((edge!.data as EdgeData).target).toBe('g1')
+    const node = els.find(e => e.data.id === 'g1')
+    expect((node!.data as { entitySubtype?: string }).entitySubtype).toBe('voting_group')
+  })
+
+  it('carries no stake, so no filter or sum can treat it as ownership', () => {
+    const profile = {
+      ...makeProfile(entity('g1', 'Voting group · 3 parties')),
+      group_members: [{ kind: 'entity' as const, party: entity('m1') }],
+    }
+    const edge = buildElements(profile, new Set())
+      .find(e => (e.data as EdgeData).edgeType === 'member')
+    expect((edge!.data as EdgeData).stakePct).toBeNull()
+    expect((edge!.data as EdgeData).label).toBe('')
+  })
+
+  it('adds nothing for an ordinary company', () => {
+    const els = buildElements(makeProfile(entity('c1')), new Set())
+    expect(els.some(e => (e.data as EdgeData).edgeType === 'member')).toBe(false)
+  })
+})

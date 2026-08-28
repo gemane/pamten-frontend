@@ -189,6 +189,9 @@ export interface FullProfile {
   cross_holdings?: Entity[]           // entities in a reciprocal (circular) ownership with this one
   /** Parties to a filing group. Only present on a voting_group entity. */
   group_members?: GroupParty[]
+  /** The filing groups this entity is a party to — the mirror of the above,
+   *  present on a member's profile so the graph can draw the bloc it votes in. */
+  voting_groups?: { group: Entity }[]
 }
 
 // Derived (not sourced) ownership breakdown, computed on read from the owners.
@@ -215,7 +218,10 @@ export interface ShareClassTotal {
 /** A party to a filing group. They join by RELATED_TO, not OWNS — membership is
  *  not ownership — so they arrive in their own list rather than among owners. */
 export interface GroupParty {
-  party: Entity & Partial<Person>
+  /** Either shape — a member may be a company or a human being, and the filing
+   *  says which via `kind`. Not `Entity & Partial<Person>`: that demands a
+   *  `name` and a `type`, which a Person has neither of. */
+  party: Partial<Entity> & Partial<Person> & { id: string }
   kind: 'entity' | 'person'
 }
 
@@ -266,7 +272,7 @@ export interface EdgeData {
   source: string
   target: string
   label: string
-  edgeType: 'owns' | 'role' | 'votes'
+  edgeType: 'owns' | 'role' | 'votes' | 'member'
   edgeDir?: 'in' | 'out'
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null
