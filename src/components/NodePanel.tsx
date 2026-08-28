@@ -532,6 +532,10 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
   const positions = allPositions.filter(p => !p.role?.until)
   const formerPositions = allPositions.filter(p => p.role?.until)
   const holdings  = allHoldings.filter(h => !h.relationship?.until)
+
+  // The blocs this person votes in. Three of AB InBev's nine parties are
+  // people, and their pages showed no sign of the agreement.
+  const votingGroups = profile?.voting_groups ?? []
   const [activeView, setActiveView] = useState<string>('overview')
   // Only offer the timeline when something is dated. Roughly half the people in
   // the graph have no dated position at all — their roles come from a reverse
@@ -583,6 +587,16 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         />
         <MetaRow icon={FiTag} label={t('panel.alsoKnownAs')} value={aka.length ? aka.join(', ') : null} />
       </div>
+
+      {votingGroups.length > 0 && (
+        <Section title={t('panel.votesIn')}>
+          {votingGroups.map((g, i) => (
+            <RelRow key={i} node={entityToNode(g.group)} onNavigate={onNavigate}>
+              <span className="rel-item__name">{g.group.name}</span>
+            </RelRow>
+          ))}
+        </Section>
+      )}
 
       {positions.length > 0 && (
         <Section title={t('panel.positions')}>

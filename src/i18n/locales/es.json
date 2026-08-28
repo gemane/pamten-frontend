@@ -160,7 +160,8 @@
     "parentReference": "Ver referencia",
     "multiClassHint": "Las declaraciones de esta empresa informan porcentajes de valores distintos, por lo que no pueden sumarse.",
     "groupMembers": "Partes del acuerdo",
-    "groupControls": "Controla"
+    "groupControls": "Controla",
+    "votesIn": "Vota en"
   },
   "report": {
     "button": "Reportar",

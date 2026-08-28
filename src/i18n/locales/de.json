@@ -160,7 +160,8 @@
     "parentReference": "Beleg ansehen",
     "multiClassHint": "Die Meldungen dieses Unternehmens beziehen sich auf verschiedene Wertpapiere; ihre Prozentsätze lassen sich nicht addieren.",
     "groupMembers": "Parteien der Vereinbarung",
-    "groupControls": "Kontrolliert"
+    "groupControls": "Kontrolliert",
+    "votesIn": "Stimmt ab in"
   },
   "report": {
     "button": "Melden",

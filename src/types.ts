@@ -253,6 +253,9 @@ export interface PersonProfile {
   person: Person
   positions: PositionEntry[]   // HAS_ROLE → entity (CEO, Founder, Chairman, ...)
   holdings: HoldingEntry[]     // OWNS → entity
+  /** Filing groups this person is a party to. A bloc's members are as often
+   *  people as companies — AB InBev's includes Lemann, Sicupira and Telles. */
+  voting_groups?: { group: Entity }[]
 }
 
 export interface HistoryEntry {

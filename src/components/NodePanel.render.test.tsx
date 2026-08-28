@@ -1260,3 +1260,34 @@ describe('the count behind a voting bloc', () => {
     expect(d?.textContent ?? '').not.toMatch(/Voted shares/i)
   })
 })
+
+describe("a person's own page shows the bloc they vote in", () => {
+  // Three of AB InBev's nine parties are people. PersonView is a separate
+  // component from EntityOverview and had no group section at all — the fifth
+  // and sixth places this same field had to be added.
+  const node: NodeData = {
+    id: 'p1', label: 'Jorge Paulo Lemann', nodeType: 'person',
+    raw: { id: 'p1', full_name: 'Jorge Paulo Lemann' } as never,
+  }
+
+  const renderPerson = async (voting_groups: unknown[]) => {
+    vi.mocked(getPersonProfile).mockResolvedValue({ data: {
+      person: { id: 'p1', full_name: 'Jorge Paulo Lemann' },
+      positions: [], holdings: [], voting_groups,
+    } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+    render(<NodePanel node={node} />)
+    await screen.findByText('Jorge Paulo Lemann')
+  }
+
+  it('lists the group', async () => {
+    await renderPerson([{ group: { id: 'g1', name: 'Voting group · 9 parties',
+                                   type: 'voting_group' } }])
+    expect(await screen.findByText('Voting group · 9 parties')).toBeInTheDocument()
+  })
+
+  it('shows no section for someone in no group', async () => {
+    await renderPerson([])
+    expect(screen.queryByText(/Votes in/i)).toBeNull()
+  })
+})
