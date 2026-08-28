@@ -101,6 +101,12 @@ export interface OwnsRelationship {
   share_class?: string | null
   /** When the record behind this edge was filed/published by its source. */
   source_date?: string | null
+  /** The counts behind the percentage: a stake is `shares / shares_outstanding`.
+   *  Kept because a count is what the filing states, while a percentage is a
+   *  division against a denominator that moves — Bevco's went stale when AB
+   *  InBev issued more shares, though its holding never changed. */
+  shares?: number | null
+  shares_outstanding?: number | null
   /** Set by the backend staleness pass: a community-tier assertion nothing has
    *  re-confirmed for months. Wikidata has no retirement signal — a deleted
    *  statement just stops being seen — so age is the only evidence, and it is

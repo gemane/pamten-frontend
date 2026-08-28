@@ -534,6 +534,8 @@
     "stake": "Anteil",
     "voting": "Stimmrechte",
     "filed": "Gemeldet",
-    "votingExceeds": "{{pct}}% — mehr als die gehaltenen {{stake}}%"
+    "votingExceeds": "{{pct}}% — mehr als die gehaltenen {{stake}}%",
+    "shares": "Aktien",
+    "sharesOf": "{{shares}} von {{total}}"
   }
 }

@@ -534,6 +534,8 @@
     "stake": "Stake",
     "voting": "Voting",
     "filed": "Filed",
-    "votingExceeds": "{{pct}}% — more than the {{stake}}% held"
+    "votingExceeds": "{{pct}}% — more than the {{stake}}% held",
+    "shares": "Shares",
+    "sharesOf": "{{shares}} of {{total}}"
   }
 }
