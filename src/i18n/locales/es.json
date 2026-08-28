@@ -536,6 +536,7 @@
     "filed": "Presentado",
     "votingExceeds": "{{pct}}% — más que el {{stake}}% en cartera",
     "shares": "Acciones",
-    "sharesOf": "{{shares}} de {{total}}"
+    "sharesOf": "{{shares}} de {{total}}",
+    "votingShares": "Acciones votadas"
   }
 }

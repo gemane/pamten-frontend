@@ -107,6 +107,9 @@ export interface OwnsRelationship {
    *  InBev issued more shares, though its holding never changed. */
   shares?: number | null
   shares_outstanding?: number | null
+  /** The count behind `voting_power_pct`. Belongs to the GROUP and is repeated
+   *  by every member — display it, never sum it. */
+  voting_shares?: number | null
   /** Set by the backend staleness pass: a community-tier assertion nothing has
    *  re-confirmed for months. Wikidata has no retirement signal — a deleted
    *  statement just stops being seen — so age is the only evidence, and it is

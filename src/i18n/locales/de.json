@@ -536,6 +536,7 @@
     "filed": "Gemeldet",
     "votingExceeds": "{{pct}}% — mehr als die gehaltenen {{stake}}%",
     "shares": "Aktien",
-    "sharesOf": "{{shares}} von {{total}}"
+    "sharesOf": "{{shares}} von {{total}}",
+    "votingShares": "Stimmrechtsaktien"
   }
 }
