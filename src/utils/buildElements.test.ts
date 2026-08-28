@@ -351,3 +351,58 @@ describe('filing-group membership on the canvas', () => {
     expect(els.some(e => (e.data as EdgeData).edgeType === 'member')).toBe(false)
   })
 })
+
+describe('expanding a voting group', () => {
+  const groupProfile = () => ({
+    ...makeProfile({ ...entity('g1', 'Voting group · 9 parties'),
+                     type: 'voting_group' as const }),
+    group_members: [
+      { kind: 'entity' as const, party: entity('m1', 'Stichting') },
+      { kind: 'person' as const, party: person('m2', 'Jorge Paulo Lemann') },
+    ],
+  })
+
+  // Expand routes through the DIRECTIONAL builders, not buildElements. A group
+  // whose only edge is to the company it votes takes the upward path, where it
+  // has no owners — so before this it found nothing and said "no new
+  // connections", while "open as center" worked fine.
+  it('brings in the parties when expanded upward', () => {
+    const els = buildElementsUpward(groupProfile(), new Set())
+    const members = els.filter(e => (e.data as EdgeData).edgeType === 'member')
+    expect(members).toHaveLength(2)
+  })
+
+  it('brings them in downward too', () => {
+    const els = buildElementsDownward(groupProfile(), new Set())
+    expect(els.filter(e => (e.data as EdgeData).edgeType === 'member')).toHaveLength(2)
+  })
+
+  it('all three builders agree', () => {
+    const count = (f: typeof buildElements) =>
+      f(groupProfile(), new Set()).filter(e => (e.data as EdgeData).edgeType === 'member').length
+    expect(count(buildElements)).toBe(2)
+    expect(count(buildElementsUpward)).toBe(2)
+    expect(count(buildElementsDownward)).toBe(2)
+  })
+
+  it('does not re-add what the canvas already holds', () => {
+    // Expanding twice must not duplicate an edge or a node.
+    const seen = new Set<string>()
+    const first = buildElementsUpward(groupProfile(), seen)
+    const second = buildElementsUpward(groupProfile(), seen)
+    expect(first.length).toBeGreaterThan(0)
+    expect(second).toHaveLength(0)
+  })
+
+  it('draws the group when a member is expanded', () => {
+    const memberProfile = {
+      ...makeProfile(entity('m1', 'Stichting')),
+      voting_groups: [{ group: { ...entity('g1', 'Voting group · 9 parties'),
+                                 type: 'voting_group' as const } }],
+    }
+    const els = buildElementsUpward(memberProfile, new Set())
+    const edge = els.find(e => (e.data as EdgeData).edgeType === 'member')
+    expect((edge!.data as EdgeData).source).toBe('m1')
+    expect((edge!.data as EdgeData).target).toBe('g1')
+  })
+})

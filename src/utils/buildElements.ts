@@ -1,4 +1,4 @@
-import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person } from '../types'
+import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person, GroupParty } from '../types'
 
 // Cytoscape element builders. Each takes a `loadedIds`/`seen` set and only
 // emits nodes/edges whose id isn't already present, so a graph can be grown
@@ -31,6 +31,60 @@ export function isDrawableOwnership(
   rel: { shortcut?: boolean | null } | null | undefined,
 ): boolean {
   return rel?.shortcut !== true
+}
+
+/** Nodes and edges for a filing group's membership, in whichever direction the
+ *  profile supplies it.
+ *
+ *  Shared by all three builders. `buildElements` alone knew about membership at
+ *  first, which meant "open as center" showed a group's parties and "expand"
+ *  did not — expand routes through the directional builders, and a group whose
+ *  only edge is to the company it votes takes the upward path, where it found
+ *  no owners and reported "no new connections".
+ *
+ *  Membership is not directional in the ownership sense, so it is emitted on
+ *  both paths: it is the group's defining relation, and expanding a group
+ *  without it returns nothing worth having.
+ */
+function membershipElements(
+  profile: { entity?: { id: string }; person?: { id: string }
+             group_members?: GroupParty[]; voting_groups?: { group: Entity }[] },
+  loadedIds: Set<string>,
+): GraphElement[] {
+  const selfId = profile.entity?.id ?? profile.person?.id
+  if (!selfId) return []
+  const els: GraphElement[] = []
+  const edge = (memberId: string, groupId: string) => {
+    const id = `${memberId}__member__${groupId}`
+    if (loadedIds.has(id)) return
+    loadedIds.add(id)
+    els.push({ data: { id, source: memberId, target: groupId, label: '',
+                       edgeType: 'member', edgeDir: 'out', stakePct: null } })
+  }
+  for (const m of profile.group_members ?? []) {
+    const party = m.party
+    if (!loadedIds.has(party.id)) {
+      loadedIds.add(party.id)
+      els.push({ data: {
+        id: party.id, label: (party.name ?? party.full_name) || '?',
+        nodeType: m.kind === 'person' ? 'person' : 'entity',
+        entitySubtype: m.kind === 'person' ? null : (party.type ?? null),
+        raw: party as Entity | Person,
+      } })
+    }
+    edge(party.id, selfId)
+  }
+  for (const g of profile.voting_groups ?? []) {
+    if (!loadedIds.has(g.group.id)) {
+      loadedIds.add(g.group.id)
+      els.push({ data: {
+        id: g.group.id, label: g.group.name, nodeType: 'entity',
+        entitySubtype: g.group.type ?? null, raw: g.group,
+      } })
+    }
+    edge(selfId, g.group.id)
+  }
+  return els
 }
 
 export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
@@ -105,44 +159,7 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
     }
   }
 
-  // Membership in a filing group, drawn from whichever end you are standing at.
-  // Not ownership — nobody owns an agreement — so it gets its own edge kind
-  // rather than being squeezed into an OWNS edge that would then be summed,
-  // filtered and coloured as though it were a shareholding.
-  const addMembership = (memberId: string, groupId: string) => addEdge({
-    id:       `${memberId}__member__${groupId}`,
-    source:   memberId,
-    target:   groupId,
-    label:    '',
-    edgeType: 'member',
-    edgeDir:  'out',
-    stakePct: null,
-  })
-
-  for (const m of group_members) {
-    const party = m.party
-    addNode({
-      id:            party.id,
-      label:         (party.name ?? party.full_name) || '?',
-      nodeType:      m.kind === 'person' ? 'person' : 'entity',
-      entitySubtype: m.kind === 'person' ? null : (party.type ?? null),
-      // The party arrives as whichever shape the filing described; the node's
-      // `raw` is only read back for display and navigation.
-      raw:           party as Entity | Person,
-    })
-    addMembership(party.id, entity.id)
-  }
-
-  for (const g of voting_groups) {
-    addNode({
-      id:            g.group.id,
-      label:         g.group.name,
-      nodeType:      'entity',
-      entitySubtype: g.group.type ?? null,
-      raw:           g.group,
-    })
-    addMembership(entity.id, g.group.id)
-  }
+  els.push(...membershipElements(profile, loadedIds))
 
   for (const own of owners) {
     const owner = own.owner
@@ -187,7 +204,7 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
 }
 
 export function buildElementsUpward(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
-  const els: GraphElement[] = []
+  const els: GraphElement[] = [...membershipElements(profile, loadedIds)]
   const { entity, owners = [] } = profile
   for (const own of owners) {
     const owner = own.owner
@@ -223,7 +240,7 @@ export function buildElementsUpward(profile: FullProfile, loadedIds: Set<string>
 }
 
 export function buildElementsDownward(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
-  const els: GraphElement[] = []
+  const els: GraphElement[] = [...membershipElements(profile, loadedIds)]
   const { entity, subsidiaries = [] } = profile
   for (const sub of subsidiaries) {
     // Same rule as buildElements — expanding a node must not reintroduce the
