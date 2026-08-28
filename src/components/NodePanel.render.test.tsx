@@ -1160,3 +1160,33 @@ describe('a voting group', () => {
     expect(screen.getByLabelText(/Special voting/i)).toBeInTheDocument()
   })
 })
+
+describe('the voting marker on what an owner holds', () => {
+  const withSubsidiary = async (entityType: string, relationship: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Altria', type: entityType, verified: false } as Entity,
+      owners: [], executives: [],
+      subsidiaries: [{ entity: { id: 'abi', name: 'Anheuser-Busch InBev', type: 'company' },
+                       relationship }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Altria')} refreshKey={0} />)
+    await screen.findByText('Anheuser-Busch InBev')
+  }
+
+  it('flags a holding whose votes outrun the shares', async () => {
+    // Altria's own panel: 8.1% held, 51.9% voted. Without this the
+    // disproportion was visible only from AB InBev's side.
+    await withSubsidiary('company', { stake_percent: 8.1, voting_power_pct: 51.9 })
+    expect(screen.getByLabelText(/Special voting/i)).toBeInTheDocument()
+  })
+
+  it('stays quiet when the holding votes what it owns', async () => {
+    await withSubsidiary('company', { stake_percent: 5.7, voting_power_pct: 5.7 })
+    expect(screen.queryByLabelText(/Special voting/i)).toBeNull()
+  })
+
+  it('stays quiet on a voting group, whose control is voting by definition', async () => {
+    await withSubsidiary('voting_group', { stake_percent: null, voting_power_pct: 52.3 })
+    expect(screen.queryByLabelText(/Special voting/i)).toBeNull()
+  })
+})
