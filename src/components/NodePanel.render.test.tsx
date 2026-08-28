@@ -1190,3 +1190,37 @@ describe('the voting marker on what an owner holds', () => {
     expect(screen.queryByLabelText(/Special voting/i)).toBeNull()
   })
 })
+
+describe('the counts behind a percentage', () => {
+  const openMenu = async (relationship: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company',
+                verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'a1', name: 'Altria', type: 'company' }, relationship }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Anheuser-Busch InBev')} refreshKey={0} />)
+    const row = (await screen.findByText('Altria')).closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    return document.querySelector('.action-menu__details')
+  }
+
+  it('shows the holding and the total it is a fraction of', async () => {
+    // So the 8.05% above can be checked rather than taken on trust.
+    const d = await openMenu({ stake_percent: 8.0534, shares: 159121937,
+                               shares_outstanding: 1975847422 })
+    expect(d?.textContent).toContain('159,121,937')
+    expect(d?.textContent).toContain('1,975,847,422')
+  })
+
+  it('shows the holding alone when no total was stated', async () => {
+    const d = await openMenu({ stake_percent: null, shares: 771096582 })
+    expect(d?.textContent).toContain('771,096,582')
+    expect(d?.textContent).not.toMatch(/\bof\b/)
+  })
+
+  it('says nothing when the filing gave no count', async () => {
+    const d = await openMenu({ stake_percent: 5.9 })
+    expect(d?.textContent ?? '').not.toMatch(/Shares/i)
+  })
+})
