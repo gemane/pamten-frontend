@@ -342,6 +342,20 @@ body {
   margin: 0 0 10px;
 }
 
+/* Legal links: a quiet column, since they must be reachable but are read once. */
+.settings-legal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.settings-legal a {
+  font-size: 13px;
+  color: #8aa3b8;
+  text-decoration: none;
+  width: fit-content;
+}
+.settings-legal a:hover { color: #cfe3f2; text-decoration: underline; }
+
 .settings-theme-row {
   display: flex;
   align-items: center;
@@ -3492,6 +3506,8 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .map-basis-btn:hover { color: #1a202c; }
 [data-theme="light"] .map-basis-btn--active { background: #e6edf6; color: #1a202c; }
 [data-theme="light"] .settings-section__title { color: #718096; }
+[data-theme="light"] .settings-legal a { color: #4a6b85; }
+[data-theme="light"] .settings-legal a:hover { color: #1a202c; }
 [data-theme="light"] .settings-theme-label { color: #4a5568; }
 [data-theme="light"] .settings-account__info { color: #4a5568; }
 [data-theme="light"] .settings-account__email { color: #1a202c; }

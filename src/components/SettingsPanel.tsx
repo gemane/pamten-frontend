@@ -202,7 +202,40 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
       {/* Last, and after the admin panel: destructive and irreversible. */}
       {user && <DeleteAccountSection onDeleted={onLogout} />}
 
+      <LegalSection />
+
       {showQueue && <ModeratorQueue onClose={() => setShowQueue(false)} />}
+    </div>
+  )
+}
+
+/**
+ * Links to the standalone legal pages.
+ *
+ * They are plain HTML under /legal/, not app views: an app-store reviewer, a
+ * regulator or a text browser has to be able to read them without the SPA
+ * booting, and the URLs given to the stores must not depend on our navigation.
+ *
+ * This lives in Settings rather than a footer or its own nav icon because
+ * Settings is the one tab that is always present, signed in or out, on desktop
+ * and mobile alike — so §5 ECG's "easily and directly accessible" is met in two
+ * clicks from anywhere, without spending a pixel of graph space.
+ */
+function LegalSection() {
+  const { t, i18n } = useTranslation()
+  // Only German has its own translations; everything else reads the English set.
+  const suffix = i18n.language?.toLowerCase().startsWith('de') ? '.de' : ''
+  const page = (name: string) => `/legal/${name}${suffix}.html`
+
+  return (
+    <div className="settings-section">
+      <h4 className="settings-section__title">{t('settings.legal')}</h4>
+      <div className="settings-legal">
+        <a href={page('privacy')} target="_blank" rel="noreferrer">{t('settings.legalPrivacy')}</a>
+        <a href={page('imprint')} target="_blank" rel="noreferrer">{t('settings.legalImprint')}</a>
+        <a href={page('terms')} target="_blank" rel="noreferrer">{t('settings.legalTerms')}</a>
+        <a href={page('data-sources')} target="_blank" rel="noreferrer">{t('settings.legalSources')}</a>
+      </div>
     </div>
   )
 }
