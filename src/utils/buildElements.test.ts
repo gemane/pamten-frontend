@@ -406,3 +406,31 @@ describe('expanding a voting group', () => {
     expect((edge!.data as EdgeData).target).toBe('g1')
   })
 })
+
+describe("a person's graph shows the bloc they vote in", () => {
+  // buildPersonProfileElements was the fifth builder to need this, after
+  // buildElements and its two directional variants. Three of AB InBev's nine
+  // parties are people.
+  const profile = () => ({
+    person: person('p1', 'Jorge Paulo Lemann'),
+    positions: [],
+    holdings: [],
+    voting_groups: [{ group: { ...entity('g1', 'Voting group · 9 parties'),
+                               type: 'voting_group' as const } }],
+  })
+
+  it('draws the group and the edge to it', () => {
+    const els = buildPersonProfileElements(profile(), new Set())
+    const edge = els.find(e => (e.data as EdgeData).edgeType === 'member')
+    expect(edge).toBeDefined()
+    expect((edge!.data as EdgeData).source).toBe('p1')
+    expect((edge!.data as EdgeData).target).toBe('g1')
+    expect(els.some(e => e.data.id === 'g1')).toBe(true)
+  })
+
+  it('draws nothing extra for a person in no group', () => {
+    const els = buildPersonProfileElements(
+      { person: person('p1'), positions: [], holdings: [] }, new Set())
+    expect(els.some(e => (e.data as EdgeData).edgeType === 'member')).toBe(false)
+  })
+})

@@ -276,7 +276,13 @@ export interface OwnershipItem {
 // not the graph. Passing a shared loadedIds set lets the person be expanded
 // incrementally into an existing graph.
 export function buildPersonProfileElements(profile: PersonProfile, loadedIds: Set<string> = new Set()): GraphElement[] {
-  return buildPersonElements({ person: profile.person }, profile.holdings, loadedIds)
+  return [
+    ...buildPersonElements({ person: profile.person }, profile.holdings, loadedIds),
+    // A person can be a party to a filing group — three of AB InBev's nine are
+    // — and this is the fifth builder that had to be told so. The helper is
+    // shared precisely so the answer is the same from every entry point.
+    ...membershipElements(profile, loadedIds),
+  ]
 }
 
 export function buildPersonElements(
