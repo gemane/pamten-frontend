@@ -50,7 +50,8 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
     }
   }
 
-  const { entity, subsidiaries = [], owners = [] } = profile
+  const { entity, subsidiaries = [], owners = [],
+          group_members = [], voting_groups = [] } = profile
 
   addNode({
     id:            entity.id,
@@ -81,8 +82,66 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
       // Kept on the edge so the graph can draw an ultimate-parent link dashed:
       // it survived the filter because nothing else reaches that company, but it
       // is still not a direct holding and should not look like one.
+      votingPowerPct: sub.relationship?.voting_power_pct ?? null,
       directOrIndirect: sub.relationship?.direct_or_indirect ?? '',
     })
+    // The same parallel edge the owners loop draws. Without it the voting
+    // relationship existed in one direction only: centring AB InBev showed
+    // Altria's 51.9% bloc, centring Altria showed an 8.1% holding and no bloc
+    // at all — the same fact, visible or not depending on where you stood.
+    const subStake = sub.relationship?.stake_percent
+    const subVote  = sub.relationship?.voting_power_pct
+    if (subVote != null && subVote !== subStake) {
+      addEdge({
+        id:             `${entity.id}__votes__${sub.entity.id}`,
+        source:         entity.id,
+        target:         sub.entity.id,
+        label:          `${subVote}%`,
+        edgeType:       'votes',
+        edgeDir:        'out',
+        votingPowerPct: subVote,
+        stakePct:       subStake ?? null,
+      })
+    }
+  }
+
+  // Membership in a filing group, drawn from whichever end you are standing at.
+  // Not ownership — nobody owns an agreement — so it gets its own edge kind
+  // rather than being squeezed into an OWNS edge that would then be summed,
+  // filtered and coloured as though it were a shareholding.
+  const addMembership = (memberId: string, groupId: string) => addEdge({
+    id:       `${memberId}__member__${groupId}`,
+    source:   memberId,
+    target:   groupId,
+    label:    '',
+    edgeType: 'member',
+    edgeDir:  'out',
+    stakePct: null,
+  })
+
+  for (const m of group_members) {
+    const party = m.party
+    addNode({
+      id:            party.id,
+      label:         (party.name ?? party.full_name) || '?',
+      nodeType:      m.kind === 'person' ? 'person' : 'entity',
+      entitySubtype: m.kind === 'person' ? null : (party.type ?? null),
+      // The party arrives as whichever shape the filing described; the node's
+      // `raw` is only read back for display and navigation.
+      raw:           party as Entity | Person,
+    })
+    addMembership(party.id, entity.id)
+  }
+
+  for (const g of voting_groups) {
+    addNode({
+      id:            g.group.id,
+      label:         g.group.name,
+      nodeType:      'entity',
+      entitySubtype: g.group.type ?? null,
+      raw:           g.group,
+    })
+    addMembership(entity.id, g.group.id)
   }
 
   for (const own of owners) {

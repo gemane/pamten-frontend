@@ -32,19 +32,19 @@ export default function OwnershipBadge({ type, percent, votingPct }: OwnershipBa
     : t('ownershipType.owned')
   return (
     <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-      <span className="ownership-badge" style={{ borderColor: color, color }}>
-        {label}{percent != null ? ` · ${percent}%` : ''}
-      </span>
-      {/* A marker, not a reading. The row's job is to make an owner who votes
-          far more than it owns noticeable while scanning; the figures and the
-          reason are one press away, in the relationship's own menu, which
-          already lists Stake and Voting. Two badges here said the same thing
-          the menu says, at the cost of a crowded row. */}
+      {/* Before the stake, not after. It qualifies the number that follows —
+          "8.1%, but it votes far more than that" — and reading the figure first
+          and the caveat second gets the emphasis backwards. A marker, not a
+          reading: the figures and the reason are one press away in the
+          relationship's own menu, which already lists Stake and Voting. */}
       {isSpecialVoting(percent, votingPct) && (
         <span className="voting-badge voting-badge--marker"
               title={t('ownershipType.specialVotingHint')}
               aria-label={t('ownershipType.specialVoting')}>⚡</span>
       )}
+      <span className="ownership-badge" style={{ borderColor: color, color }}>
+        {label}{percent != null ? ` · ${percent}%` : ''}
+      </span>
     </span>
   )
 }

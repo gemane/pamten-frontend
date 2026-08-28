@@ -1019,12 +1019,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
           {groupParties!.map((m, i) => (
             <RelRow key={i}
                     node={m.kind === 'person'
-                            ? personToNode(m.party as unknown as Person)
-                            : entityToNode(m.party)}
+                            ? personToNode(m.party as Person)
+                            : entityToNode(m.party as Entity)}
                     onNavigate={onNavigate}>
-              <span className="rel-item__name">
-                {m.party.name ?? (m.party as { full_name?: string }).full_name}
-              </span>
+              <span className="rel-item__name">{m.party.name ?? m.party.full_name}</span>
             </RelRow>
           ))}
         </Section>
