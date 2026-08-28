@@ -1224,3 +1224,39 @@ describe('the counts behind a percentage', () => {
     expect(d?.textContent ?? '').not.toMatch(/Shares/i)
   })
 })
+
+describe('the count behind a voting bloc', () => {
+  const openMenu = async (relationship: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company',
+                verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'a1', name: 'Altria', type: 'company' }, relationship }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Anheuser-Busch InBev')} refreshKey={0} />)
+    const row = (await screen.findByText('Altria')).closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    return document.querySelector('.action-menu__details')
+  }
+
+  it('shows the bloc count beside its percentage', async () => {
+    const d = await openMenu({ stake_percent: 8.05, shares: 159121937,
+                               voting_power_pct: 51.9, voting_shares: 1020598157 })
+    expect(d?.textContent).toContain('1,020,598,157')
+    expect(d?.textContent).toContain('51.9%')
+  })
+
+  it('distinguishes the holding from the bloc', async () => {
+    // Both numbers on one filing, and they are not the same fact: 159 million
+    // owned, a billion voted.
+    const d = await openMenu({ stake_percent: 8.05, shares: 159121937,
+                               voting_power_pct: 51.9, voting_shares: 1020598157 })
+    expect(d?.textContent).toContain('159,121,937')
+    expect(d?.textContent).toContain('1,020,598,157')
+  })
+
+  it('shows nothing for a lone filer with no bloc', async () => {
+    const d = await openMenu({ stake_percent: 5.7, shares: 32416315 })
+    expect(d?.textContent ?? '').not.toMatch(/Voted shares/i)
+  })
+})

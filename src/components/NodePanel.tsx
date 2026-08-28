@@ -628,7 +628,8 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
                      votingPct: h.relationship?.voting_power_pct,
                      filedDate: h.relationship?.source_date,
                      shares: h.relationship?.shares,
-                     sharesOutstanding: h.relationship?.shares_outstanding }}>
+                     sharesOutstanding: h.relationship?.shares_outstanding,
+                     votingShares: h.relationship?.voting_shares }}>
               <span className="rel-item__name">{h.entity.name}</span>
               <CorroborationBadge rel={h.relationship} />
               <OwnershipBadge
@@ -725,6 +726,7 @@ export interface RelTarget {
   filedDate?: string | null
   shares?: number | null
   sharesOutstanding?: number | null
+  votingShares?: number | null
 }
 
 
@@ -801,6 +803,13 @@ function RelRow({ node, onNavigate, rel, children }: {
         ? t('menu.sharesOf', { shares: n, total: rel.sharesOutstanding.toLocaleString() })
         : n,
     })
+  }
+  // The bloc's own count, under the percentage it produces. Its own line
+  // rather than folded into the Voting one, which already carries a
+  // comparison and would become unreadable.
+  if (rel.votingShares != null) {
+    details.push({ label: t('menu.votingShares'),
+                   value: rel.votingShares.toLocaleString() })
   }
   if (rel.filedDate) details.push({ label: t('menu.filed'), value: rel.filedDate.slice(0, 10) })
 
@@ -1062,7 +1071,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                     votingPct: o.relationship?.voting_power_pct,
                     filedDate: o.relationship?.source_date,
                      shares: o.relationship?.shares,
-                     sharesOutstanding: o.relationship?.shares_outstanding }
+                     sharesOutstanding: o.relationship?.shares_outstanding,
+                     votingShares: o.relationship?.voting_shares }
                 : undefined}>
               <span className="rel-item__name">
                 {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
@@ -1180,7 +1190,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                        votingPct: s.relationship?.voting_power_pct,
                        filedDate: s.relationship?.source_date,
                      shares: s.relationship?.shares,
-                     sharesOutstanding: s.relationship?.shares_outstanding }}>
+                     sharesOutstanding: s.relationship?.shares_outstanding,
+                     votingShares: s.relationship?.voting_shares }}>
                 <span className="rel-item__name">{s.entity.name}</span>
                 <CorroborationBadge rel={s.relationship} />
                 {/* The marker belongs on this side too. Altria's panel lists AB

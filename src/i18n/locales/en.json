@@ -536,6 +536,7 @@
     "filed": "Filed",
     "votingExceeds": "{{pct}}% — more than the {{stake}}% held",
     "shares": "Shares",
-    "sharesOf": "{{shares}} of {{total}}"
+    "sharesOf": "{{shares}} of {{total}}",
+    "votingShares": "Voted shares"
   }
 }
