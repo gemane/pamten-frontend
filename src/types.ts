@@ -141,6 +141,12 @@ export interface OwnsRelationship {
 
 export interface RoleRelationship {
   role: RoleType
+  /** When the record behind this role was filed/published by its source. */
+  source_date?: string | null
+  /** The staleness mark, as on OWNS — a community-tier assertion nothing has
+   *  confirmed for months. Backends may not set it on roles yet; the panel
+   *  honours it if they do. */
+  stale?: boolean | null
   since?: string | null
   until?: string | null
   source_id?: string

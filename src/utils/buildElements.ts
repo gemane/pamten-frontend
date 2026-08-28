@@ -1,4 +1,4 @@
-import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person, GroupParty } from '../types'
+import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType } from '../types'
 
 // Cytoscape element builders. Each takes a `loadedIds`/`seen` set and only
 // emits nodes/edges whose id isn't already present, so a graph can be grown
@@ -87,118 +87,122 @@ function membershipElements(
   return els
 }
 
+/** One party of an ownership relationship, as the graph draws it. */
+interface OwnershipParty {
+  id: string
+  name?: string
+  full_name?: string
+  type?: EntityType | null
+  first_name?: string
+}
+
+/** Nodes and edges for ONE ownership relationship, whichever way it points.
+
+ *  The sixth extraction of this session's recurring lesson: five hand-written
+ *  loops each emitted "node + owns edge + conditional votes edge", and every
+ *  field added to one drifted from the others — `buildElementsDownward` had no
+ *  votes edge at all, the person builder's votes edge lacked `stakePct`,
+ *  `importance` and `isDrawableOwnership` each applied on one side only. One
+ *  emitter means one answer, from every entry point; the parity test in
+ *  buildElements.test.ts holds it there.
+ *
+ *  `dir` is the edge's direction relative to the CENTRE: 'in' when the other
+ *  party owns the centre, 'out' when the centre owns the other party.
+ */
+function ownershipElements(
+  centreId: string,
+  other: OwnershipParty,
+  rel: OwnsRelationship | undefined,
+  dir: 'in' | 'out',
+  loadedIds: Set<string>,
+): GraphElement[] {
+  // A proven-shortcut edge is omitted from BOTH sides — it used to be filtered
+  // on the subsidiary side only, so the same redundant edge was hidden from
+  // the parent's view and drawn from the child's.
+  if (!isDrawableOwnership(rel)) return []
+
+  const els: GraphElement[] = []
+  const stake = rel?.stake_percent
+  const vote  = rel?.voting_power_pct
+  const importance = vote ?? stake ?? 0
+  const [source, target] = dir === 'in' ? [other.id, centreId] : [centreId, other.id]
+
+  if (!loadedIds.has(other.id)) {
+    loadedIds.add(other.id)
+    els.push({ data: {
+      id:            other.id,
+      label:         (other.name ?? other.full_name) || '?',
+      // A Person carries full_name; an Entity carries name. The profile's
+      // owner objects have exactly one of the two.
+      nodeType:      other.full_name !== undefined ? 'person' : 'entity',
+      entitySubtype: other.type ?? null,
+      raw:           other as Entity | Person,
+      // Sized by control on either side — a subsidiary was never sized before.
+      importance:    importance > 0 ? importance : undefined,
+    } })
+  }
+
+  const ownsId = `${source}__owns__${target}`
+  if (!loadedIds.has(ownsId)) {
+    loadedIds.add(ownsId)
+    els.push({ data: {
+      id:             ownsId,
+      source, target,
+      label:          stake != null ? `${stake}%` : '',
+      edgeType:       'owns',
+      edgeDir:        dir,
+      ownershipType:  rel?.ownership_type || '',
+      stakePct:       stake ?? null,
+      votingPowerPct: vote ?? null,
+      directOrIndirect: rel?.direct_or_indirect ?? '',
+    } })
+  }
+
+  if (vote != null && vote !== stake) {
+    const votesId = `${source}__votes__${target}`
+    if (!loadedIds.has(votesId)) {
+      loadedIds.add(votesId)
+      els.push({ data: {
+        id:             votesId,
+        source, target,
+        label:          `${vote}%`,
+        edgeType:       'votes',
+        edgeDir:        dir,
+        votingPowerPct: vote,
+        stakePct:       stake ?? null,
+      } })
+    }
+  }
+  return els
+}
+
 export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
   const els: GraphElement[] = []
-
-  const addNode = (data: NodeData) => {
-    if (!loadedIds.has(data.id)) {
-      loadedIds.add(data.id)
-      els.push({ data })
-    }
-  }
-
-  const addEdge = (data: GraphElement['data']) => {
-    if (!loadedIds.has(data.id)) {
-      loadedIds.add(data.id)
-      els.push({ data } as GraphElement)
-    }
-  }
 
   const { entity, subsidiaries = [], owners = [],
           group_members = [], voting_groups = [] } = profile
 
-  addNode({
-    id:            entity.id,
-    label:         entity.name,
-    nodeType:      'entity',
-    entitySubtype: entity.type,
-    raw:           entity,
-  })
+  if (!loadedIds.has(entity.id)) {
+    loadedIds.add(entity.id)
+    els.push({ data: {
+      id:            entity.id,
+      label:         entity.name,
+      nodeType:      'entity',
+      entitySubtype: entity.type,
+      raw:           entity,
+    } })
+  }
 
   for (const sub of subsidiaries) {
-    if (!isDrawableOwnership(sub.relationship)) continue
-    addNode({
-      id:            sub.entity.id,
-      label:         sub.entity.name,
-      nodeType:      'entity',
-      entitySubtype: sub.entity.type,
-      raw:           sub.entity,
-    })
-    addEdge({
-      id:            `${entity.id}__owns__${sub.entity.id}`,
-      source:        entity.id,
-      target:        sub.entity.id,
-      label:         sub.relationship?.stake_percent != null ? `${sub.relationship.stake_percent}%` : '',
-      edgeType:      'owns',
-      edgeDir:       'out',
-      ownershipType: sub.relationship?.ownership_type || '',
-      stakePct:      sub.relationship?.stake_percent ?? null,
-      // Kept on the edge so the graph can draw an ultimate-parent link dashed:
-      // it survived the filter because nothing else reaches that company, but it
-      // is still not a direct holding and should not look like one.
-      votingPowerPct: sub.relationship?.voting_power_pct ?? null,
-      directOrIndirect: sub.relationship?.direct_or_indirect ?? '',
-    })
-    // The same parallel edge the owners loop draws. Without it the voting
-    // relationship existed in one direction only: centring AB InBev showed
-    // Altria's 51.9% bloc, centring Altria showed an 8.1% holding and no bloc
-    // at all — the same fact, visible or not depending on where you stood.
-    const subStake = sub.relationship?.stake_percent
-    const subVote  = sub.relationship?.voting_power_pct
-    if (subVote != null && subVote !== subStake) {
-      addEdge({
-        id:             `${entity.id}__votes__${sub.entity.id}`,
-        source:         entity.id,
-        target:         sub.entity.id,
-        label:          `${subVote}%`,
-        edgeType:       'votes',
-        edgeDir:        'out',
-        votingPowerPct: subVote,
-        stakePct:       subStake ?? null,
-      })
-    }
+    els.push(...ownershipElements(entity.id, sub.entity, sub.relationship, 'out', loadedIds))
+  }
+
+  for (const own of owners) {
+    if (!own.owner) continue
+    els.push(...ownershipElements(entity.id, own.owner, own.relationship, 'in', loadedIds))
   }
 
   els.push(...membershipElements(profile, loadedIds))
-
-  for (const own of owners) {
-    const owner = own.owner
-    if (!owner) continue
-    const importance = own.relationship?.voting_power_pct ?? own.relationship?.stake_percent ?? 0
-    addNode({
-      id:            owner.id,
-      label:         ('name' in owner ? owner.name : owner.full_name) || '?',
-      nodeType:      'first_name' in owner ? 'person' : 'entity',
-      entitySubtype: 'type' in owner ? owner.type : null,
-      raw:           owner,
-      importance:    importance > 0 ? importance : undefined,
-    })
-    const stake = own.relationship?.stake_percent
-    const vote  = own.relationship?.voting_power_pct
-    addEdge({
-      id:             `${owner.id}__owns__${entity.id}`,
-      source:         owner.id,
-      target:         entity.id,
-      label:          stake != null ? `${stake}%` : '',
-      edgeType:       'owns',
-      edgeDir:        'in',
-      ownershipType:  own.relationship?.ownership_type || '',
-      votingPowerPct: vote ?? null,
-      stakePct:       stake ?? null,
-    })
-    if (vote != null && vote !== stake) {
-      addEdge({
-        id:             `${owner.id}__votes__${entity.id}`,
-        source:         owner.id,
-        target:         entity.id,
-        label:          `${vote}%`,
-        edgeType:       'votes',
-        edgeDir:        'in',
-        votingPowerPct: vote,
-        stakePct:       stake ?? null,
-      })
-    }
-  }
 
   return els
 }
@@ -207,34 +211,8 @@ export function buildElementsUpward(profile: FullProfile, loadedIds: Set<string>
   const els: GraphElement[] = [...membershipElements(profile, loadedIds)]
   const { entity, owners = [] } = profile
   for (const own of owners) {
-    const owner = own.owner
-    if (!owner) continue
-    const importance = own.relationship?.voting_power_pct ?? own.relationship?.stake_percent ?? 0
-    if (!loadedIds.has(owner.id)) {
-      loadedIds.add(owner.id)
-      els.push({ data: {
-        id:            owner.id,
-        label:         ('name' in owner ? owner.name : owner.full_name) || '?',
-        nodeType:      ('first_name' in owner ? 'person' : 'entity') as 'person' | 'entity',
-        entitySubtype: 'type' in owner ? owner.type : null,
-        raw:           owner,
-        importance:    importance > 0 ? importance : undefined,
-      } })
-    }
-    const stake = own.relationship?.stake_percent
-    const vote  = own.relationship?.voting_power_pct
-    const edgeId = `${owner.id}__owns__${entity.id}`
-    if (!loadedIds.has(edgeId)) {
-      loadedIds.add(edgeId)
-      els.push({ data: { id: edgeId, source: owner.id, target: entity.id, label: stake != null ? `${stake}%` : '', edgeType: 'owns', edgeDir: 'in', ownershipType: own.relationship?.ownership_type || '', votingPowerPct: vote ?? null, stakePct: stake ?? null } } as GraphElement)
-    }
-    if (vote != null && vote !== stake) {
-      const votesId = `${owner.id}__votes__${entity.id}`
-      if (!loadedIds.has(votesId)) {
-        loadedIds.add(votesId)
-        els.push({ data: { id: votesId, source: owner.id, target: entity.id, label: `${vote}%`, edgeType: 'votes', edgeDir: 'in', votingPowerPct: vote, stakePct: stake ?? null } } as GraphElement)
-      }
-    }
+    if (!own.owner) continue
+    els.push(...ownershipElements(entity.id, own.owner, own.relationship, 'in', loadedIds))
   }
   return els
 }
@@ -243,18 +221,7 @@ export function buildElementsDownward(profile: FullProfile, loadedIds: Set<strin
   const els: GraphElement[] = [...membershipElements(profile, loadedIds)]
   const { entity, subsidiaries = [] } = profile
   for (const sub of subsidiaries) {
-    // Same rule as buildElements — expanding a node must not reintroduce the
-    // shortcut edges the initial render left out.
-    if (!isDrawableOwnership(sub.relationship)) continue
-    if (!loadedIds.has(sub.entity.id)) {
-      loadedIds.add(sub.entity.id)
-      els.push({ data: { id: sub.entity.id, label: sub.entity.name, nodeType: 'entity', entitySubtype: sub.entity.type, raw: sub.entity } })
-    }
-    const edgeId = `${entity.id}__owns__${sub.entity.id}`
-    if (!loadedIds.has(edgeId)) {
-      loadedIds.add(edgeId)
-      els.push({ data: { id: edgeId, source: entity.id, target: sub.entity.id, label: sub.relationship?.stake_percent != null ? `${sub.relationship.stake_percent}%` : '', edgeType: 'owns', edgeDir: 'out', ownershipType: sub.relationship?.ownership_type || '', stakePct: sub.relationship?.stake_percent ?? null } } as GraphElement)
-    }
+    els.push(...ownershipElements(entity.id, sub.entity, sub.relationship, 'out', loadedIds))
   }
   return els
 }
@@ -267,7 +234,10 @@ export interface PersonData {
 export interface OwnershipItem {
   entity?: Entity
   owned_entity?: Entity
-  relationship?: { stake_percent?: number | null; ownership_type?: string | null }
+  // The full relationship, not a two-field redeclaration: a narrowed copy was
+  // the fourth parallel shape of OwnsRelationship, and its narrowness forced
+  // an inline cast wherever a third field was needed.
+  relationship?: OwnsRelationship
 }
 
 // Build the graph around a person from their full-profile: the person node plus
@@ -292,39 +262,19 @@ export function buildPersonElements(
 ): GraphElement[] {
   const person = personData.person || (personData as unknown as Person)
   const els: GraphElement[] = []
-  const seen   = loadedIds   // node/edge ids already in the graph — only emit new ones
 
-  const addNode = (data: NodeData) => {
-    if (!seen.has(data.id)) { seen.add(data.id); els.push({ data }) }
-  }
-  const addEdge = (data: GraphElement['data']) => {
-    if (!seen.has(data.id)) { seen.add(data.id); els.push({ data } as GraphElement) }
+  if (!loadedIds.has(person.id)) {
+    loadedIds.add(person.id)
+    els.push({ data: { id: person.id, label: person.full_name, nodeType: 'person', raw: person } })
   }
 
-  addNode({ id: person.id, label: person.full_name, nodeType: 'person', raw: person })
-
-  // Entities the person owns
+  // Entities the person owns — the same shared emitter as every other builder,
+  // so a person's holding carries exactly the fields a company's would.
   const ownList = Array.isArray(ownerships) ? ownerships : []
   for (const item of ownList) {
     const entity = item.entity || item.owned_entity
     if (!entity?.id) continue
-    addNode({ id: entity.id, label: entity.name, nodeType: 'entity', entitySubtype: entity.type, raw: entity })
-    const stake = item.relationship?.stake_percent
-    const vote  = (item.relationship as { voting_power_pct?: number | null })?.voting_power_pct
-    addEdge({
-      id: `${person.id}__owns__${entity.id}`, source: person.id, target: entity.id, edgeType: 'owns',
-      edgeDir:        'out',   // entity is the outer node → label (stake %) near it
-      label:          stake != null ? `${stake}%` : '',
-      ownershipType:  item.relationship?.ownership_type || '',
-      votingPowerPct: vote ?? null,
-      stakePct:       stake ?? null,
-    })
-    if (vote != null && vote !== stake) {
-      addEdge({
-        id: `${person.id}__votes__${entity.id}`, source: person.id, target: entity.id,
-        label: `${vote}%`, edgeType: 'votes', edgeDir: 'out', votingPowerPct: vote,
-      })
-    }
+    els.push(...ownershipElements(person.id, entity, item.relationship, 'out', loadedIds))
   }
 
   return els

@@ -434,3 +434,92 @@ describe("a person's graph shows the bloc they vote in", () => {
     expect(els.some(e => (e.data as EdgeData).edgeType === 'member')).toBe(false)
   })
 })
+
+describe('every builder emits the same edge, whichever way you stand', () => {
+  // The generalisation of "all three builders agree". Seven bugs came from a
+  // field emitted on one path and not its siblings; this test renders ONE
+  // maximal relationship through every builder and requires the same key set
+  // and the same values on the resulting edges — so the next field added to
+  // one builder fails here, before a person has to notice it on two screens.
+  const REL: OwnsRelationship = {
+    stake_percent: 8.05, voting_power_pct: 51.9, ownership_type: 'minority',
+    direct_or_indirect: 'direct',
+  } as OwnsRelationship
+
+  const abi = entity('abi', 'AB InBev')
+  const altria = entity('altria', 'Altria')
+
+  const edgesOf = (els: ReturnType<typeof buildElements>) => {
+    const owns = els.find(e => (e.data as EdgeData).edgeType === 'owns')!.data as EdgeData
+    const votes = els.find(e => (e.data as EdgeData).edgeType === 'votes')?.data as EdgeData
+    return { owns, votes }
+  }
+
+  const fromEveryBuilder = () => ({
+    centre_owned: edgesOf(buildElements(makeProfile(abi, {
+      owners: [{ owner: altria, relationship: REL }] }), new Set())),
+    centre_owns: edgesOf(buildElements(makeProfile(altria, {
+      subsidiaries: [{ entity: abi, relationship: REL }] }), new Set())),
+    upward: edgesOf(buildElementsUpward(makeProfile(abi, {
+      owners: [{ owner: altria, relationship: REL }] }), new Set())),
+    downward: edgesOf(buildElementsDownward(makeProfile(altria, {
+      subsidiaries: [{ entity: abi, relationship: REL }] }), new Set())),
+    person: edgesOf(buildPersonElements({ person: person('p1', 'Somebody') },
+      [{ entity: abi, relationship: REL }], new Set())),
+  })
+
+  it('the owns edge carries identical keys and values everywhere', () => {
+    const all = fromEveryBuilder()
+    const reference = all.centre_owned.owns
+    for (const [name, { owns }] of Object.entries(all)) {
+      expect(Object.keys(owns).sort(), `${name}: key set differs`)
+        .toEqual(Object.keys(reference).sort())
+      for (const k of ['stakePct', 'votingPowerPct', 'ownershipType',
+                       'directOrIndirect', 'label'] as const) {
+        expect(owns[k], `${name}.${k}`).toEqual(reference[k])
+      }
+    }
+    // Parity alone is not enough — five builders dropping a field EQUALLY
+    // still agree with each other. Anchor the reference to the input.
+    expect(reference.stakePct).toBe(8.05)
+    expect(reference.votingPowerPct).toBe(51.9)
+    expect(reference.ownershipType).toBe('minority')
+    expect(reference.directOrIndirect).toBe('direct')
+    expect(reference.label).toBe('8.05%')
+  })
+
+  it('the votes edge exists everywhere the bloc differs from the stake', () => {
+    // buildElementsDownward emitted NO votes edge until the audit; this is the
+    // regression pin for that entire bug class.
+    const all = fromEveryBuilder()
+    for (const [name, { votes }] of Object.entries(all)) {
+      expect(votes, `${name}: no votes edge`).toBeDefined()
+      expect(votes!.votingPowerPct, `${name}`).toBe(51.9)
+      expect(votes!.stakePct, `${name}: the person builder used to drop this`)
+        .toBe(8.05)
+    }
+  })
+
+  it('the shortcut filter applies from both sides', () => {
+    // It used to apply on the subsidiary side only, so a proven-shortcut edge
+    // was hidden from the parent's view and drawn from the child's.
+    const shortcutRel = { ...REL, shortcut: true } as OwnsRelationship
+    const asOwner = buildElements(makeProfile(abi, {
+      owners: [{ owner: altria, relationship: shortcutRel }] }), new Set())
+    const asSub = buildElements(makeProfile(altria, {
+      subsidiaries: [{ entity: abi, relationship: shortcutRel }] }), new Set())
+    expect(asOwner.some(e => (e.data as EdgeData).edgeType === 'owns')).toBe(false)
+    expect(asSub.some(e => (e.data as EdgeData).edgeType === 'owns')).toBe(false)
+  })
+
+  it('both sides get sized by control', () => {
+    // `importance` existed on the owners loop only, so a subsidiary was never
+    // sized however large the holding.
+    const all = fromEveryBuilder()
+    void all
+    const els = buildElements(makeProfile(altria, {
+      subsidiaries: [{ entity: abi, relationship: REL }] }), new Set())
+    const node = els.find(e => e.data.id === 'abi')!.data as { importance?: number }
+    expect(node.importance).toBe(51.9)
+  })
+})
