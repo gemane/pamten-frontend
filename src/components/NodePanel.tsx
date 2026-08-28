@@ -14,7 +14,7 @@ import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
-import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship } from '../types'
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
 // otherwise render in arbitrary backend order.
@@ -602,10 +602,10 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         <Section title={t('panel.positions')}>
           {[...positions].sort(byName(p => p.entity?.name ?? '')).map((p, i) => (
             <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
-              rel={{ targetKind: 'role', fromId: node.id, toId: p.entity.id,
-                     role: p.role?.role, label: p.entity.name,
-                     sourceUrl: p.role?.source_url,
-                     sourceName: sourceName.get(p.role?.source_id ?? '') }}>
+              rel={relFromRole(p.role, {
+                     fromId: node.id, toId: p.entity.id,
+                     role: p.role?.role ?? '', label: p.entity.name,
+                     sourceName: sourceName.get(p.role?.source_id ?? '') })}>
               <span className="rel-item__name">{p.entity.name}</span>
               <span className="role-badge">{p.role?.role}</span>
             </RelRow>
@@ -617,10 +617,10 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         <Section title={t('panel.formerPositions')}>
           {[...formerPositions].sort(byTenureDesc).map((p, i) => (
             <RelRow key={i} node={entityToNode(p.entity)} onNavigate={onNavigate}
-              rel={{ targetKind: 'role', fromId: node.id, toId: p.entity.id,
-                     role: p.role?.role, label: p.entity.name,
-                     sourceUrl: p.role?.source_url,
-                     sourceName: sourceName.get(p.role?.source_id ?? '') }}>
+              rel={relFromRole(p.role, {
+                     fromId: node.id, toId: p.entity.id,
+                     role: p.role?.role ?? '', label: p.entity.name,
+                     sourceName: sourceName.get(p.role?.source_id ?? '') })}>
               <span className="rel-item__name">{p.entity.name}</span>
               <span className="role-badge role-badge--former">{p.role?.role}</span>
               <span className="rel-item__year">{tenure(p.role, t)}</span>
@@ -633,17 +633,9 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
         <Section title={t('panel.ownerships')}>
           {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '')).map((h, i) => (
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
-              rel={{ targetKind: 'owns', fromId: node.id, toId: h.entity.id,
-                     label: h.entity.name, sourceUrl: h.relationship?.source_url,
-                     sourceName: sourceName.get(h.relationship?.source_id ?? ''),
-                     stale: h.relationship?.stale,
-                     shareClass: h.relationship?.share_class,
-                     stake: h.relationship?.stake_percent,
-                     votingPct: h.relationship?.voting_power_pct,
-                     filedDate: h.relationship?.source_date,
-                     shares: h.relationship?.shares,
-                     sharesOutstanding: h.relationship?.shares_outstanding,
-                     votingShares: h.relationship?.voting_shares }}>
+              rel={relFromOwns(h.relationship, {
+                     fromId: node.id, toId: h.entity.id, label: h.entity.name,
+                     sourceName: sourceName.get(h.relationship?.source_id ?? '') })}>
               <span className="rel-item__name">{h.entity.name}</span>
               <CorroborationBadge rel={h.relationship} />
               <OwnershipBadge
@@ -716,7 +708,7 @@ export interface RelTarget {
   fromId: string
   toId: string
   role?: string
-  label: string
+  label?: string
   sourceUrl?: string | null
   /** The source that asserted THIS relationship — the edge's own `source_id`
    *  resolved to a name, not the node's list. An edge is attributed to whoever
@@ -760,6 +752,50 @@ export function linkHost(url?: string | null): string | null {
 /** A lookup from source id to name, for `sourceName` above. */
 export function sourceNames(sources: { id: string; name: string }[]): Map<string, string> {
   return new Map(sources.map(s => [s.id, s.name]))
+}
+
+/** RelTarget from an OWNS relationship — ONE camelCase mapping instead of the
+ *  seven hand-copied field lists this replaces. The holdings copy had drifted
+ *  (no `assertedBy`, so a person's rows never showed the multi-source header),
+ *  and two other copies still carried the indentation of the block they were
+ *  pasted from. A field added to OwnsRelationship now reaches every row by
+ *  being added here, once. */
+function relFromOwns(rel: OwnsRelationship | undefined, ids: {
+  fromId: string; toId: string; label?: string; sourceName?: string | null
+}): RelTarget {
+  return {
+    targetKind: 'owns',
+    fromId: ids.fromId, toId: ids.toId, label: ids.label,
+    sourceUrl: rel?.source_url,
+    sourceName: ids.sourceName ?? undefined,
+    assertedBy: rel?.asserted_by,
+    stale: rel?.stale,
+    shareClass: rel?.share_class,
+    stake: rel?.stake_percent,
+    votingPct: rel?.voting_power_pct,
+    filedDate: rel?.source_date,
+    shares: rel?.shares,
+    sharesOutstanding: rel?.shares_outstanding,
+    votingShares: rel?.voting_shares,
+  }
+}
+
+/** RelTarget from a HAS_ROLE relationship. Role rows previously omitted
+ *  `stale` and `assertedBy` although RoleRelationship carries both — so a
+ *  stale or corroborated role could never dim or show its sources. */
+function relFromRole(rel: RoleRelationship | undefined, ids: {
+  fromId: string; toId: string; role: string; label?: string
+  sourceName?: string | null
+}): RelTarget {
+  return {
+    targetKind: 'role',
+    fromId: ids.fromId, toId: ids.toId, role: ids.role, label: ids.label,
+    sourceUrl: rel?.source_url,
+    sourceName: ids.sourceName ?? undefined,
+    assertedBy: rel?.asserted_by,
+    stale: rel?.stale,
+    filedDate: rel?.source_date,
+  }
 }
 
 function RelRow({ node, onNavigate, rel, children }: {
@@ -851,7 +887,7 @@ function RelRow({ node, onNavigate, rel, children }: {
                             : rel.sourceName) || undefined}
                   position={menuAt} onClose={() => setMenuAt(null)} />
       {reporting && (
-        <ReportModal targetKind={rel.targetKind} targetLabel={rel.label}
+        <ReportModal targetKind={rel.targetKind} targetLabel={rel.label ?? ''}
                      fromId={rel.fromId} toId={rel.toId} role={rel.role}
                      onClose={() => setReporting(false)} />
       )}
@@ -1074,19 +1110,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
           )).map((o, i) => (
             <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}
               rel={o.owner
-                ? { targetKind: 'owns', fromId: o.owner.id, toId: entity.id,
+                ? relFromOwns(o.relationship, {
+                    fromId: o.owner.id, toId: entity.id,
                     label: ('name' in o.owner ? o.owner.name : o.owner.full_name),
-                    sourceUrl: o.relationship?.source_url,
-                    sourceName: sourceName.get(o.relationship?.source_id ?? ''),
-                    assertedBy: o.relationship?.asserted_by,
-                    stale: o.relationship?.stale,
-                    shareClass: o.relationship?.share_class,
-                    stake: o.relationship?.stake_percent,
-                    votingPct: o.relationship?.voting_power_pct,
-                    filedDate: o.relationship?.source_date,
-                     shares: o.relationship?.shares,
-                     sharesOutstanding: o.relationship?.shares_outstanding,
-                     votingShares: o.relationship?.voting_shares }
+                    sourceName: sourceName.get(o.relationship?.source_id ?? '') })
                 : undefined}>
               <span className="rel-item__name">
                 {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
@@ -1176,10 +1203,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         <Section title={t('panel.foundedBy')}>
           {[...founders].sort(byName(f => f.person?.full_name ?? '')).map((f, i) => (
             <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}
-              rel={{ targetKind: 'role', fromId: f.person.id, toId: entity.id,
+              rel={relFromRole(f.role, {
+                     fromId: f.person.id, toId: entity.id,
                      role: f.role?.role || 'Founder', label: f.person.full_name,
-                     sourceUrl: f.role?.source_url,
-                     sourceName: sourceName.get(f.role?.source_id ?? '') }}>
+                     sourceName: sourceName.get(f.role?.source_id ?? '') })}>
               <span className="rel-item__name">{f.person.full_name}</span>
             </RelRow>
           ))}
@@ -1194,18 +1221,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? ''))
             const row = (s: SubsidiaryEntry, i: number) => (
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
-                rel={{ targetKind: 'owns', fromId: entity.id, toId: s.entity.id,
-                       label: s.entity.name, sourceUrl: s.relationship?.source_url,
-                       sourceName: sourceName.get(s.relationship?.source_id ?? ''),
-                       assertedBy: s.relationship?.asserted_by,
-                       stale: s.relationship?.stale,
-                       shareClass: s.relationship?.share_class,
-                       stake: s.relationship?.stake_percent,
-                       votingPct: s.relationship?.voting_power_pct,
-                       filedDate: s.relationship?.source_date,
-                     shares: s.relationship?.shares,
-                     sharesOutstanding: s.relationship?.shares_outstanding,
-                     votingShares: s.relationship?.voting_shares }}>
+                rel={relFromOwns(s.relationship, {
+                       fromId: entity.id, toId: s.entity.id, label: s.entity.name,
+                       sourceName: sourceName.get(s.relationship?.source_id ?? '') })}>
                 <span className="rel-item__name">{s.entity.name}</span>
                 <CorroborationBadge rel={s.relationship} />
                 {/* The marker belongs on this side too. Altria's panel lists AB
@@ -1255,10 +1273,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         <Section title={t('panel.executives')} count={counts?.executives}>
           {[...otherExecutives].sort(byRoleImportance(e => e.role?.role, e => e.person?.full_name ?? '')).map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
-              rel={{ targetKind: 'role', fromId: e.person.id, toId: entity.id,
-                     role: e.role?.role, label: e.person.full_name,
-                     sourceUrl: e.role?.source_url,
-                     sourceName: sourceName.get(e.role?.source_id ?? '') }}>
+              rel={relFromRole(e.role, {
+                     fromId: e.person.id, toId: entity.id,
+                     role: e.role?.role ?? '', label: e.person.full_name,
+                     sourceName: sourceName.get(e.role?.source_id ?? '') })}>
               <span className="rel-item__name">{e.person.full_name}</span>
               <span className="role-badge">{e.role?.role}</span>
             </RelRow>

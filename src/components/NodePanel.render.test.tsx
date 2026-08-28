@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, within, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import NodePanel from './NodePanel'
 import type { NodeData, FullProfile, Entity } from '../types'
@@ -1289,5 +1289,88 @@ describe("a person's own page shows the bloc they vote in", () => {
   it('shows no section for someone in no group', async () => {
     await renderPerson([])
     expect(screen.queryByText(/Votes in/i)).toBeNull()
+  })
+})
+
+describe('one relationship reads the same from every section', () => {
+  // The panel parity test. Seven hand-copied rel={} literals drifted — the
+  // holdings copy lost `assertedBy`, so a person's rows never showed the
+  // multi-source header. One mapper now feeds all of them, and this pins it:
+  // the same relationship rendered through owners, subsidiaries and holdings
+  // must produce byte-identical menu content.
+  const REL = {
+    stake_percent: 8.05, voting_power_pct: 51.9, ownership_type: 'minority',
+    share_class: 'Ordinary Shares', shares: 159121937,
+    shares_outstanding: 1975847422, voting_shares: 1020598157,
+    source_url: 'https://sec.example.test/f1', source_id: 'src-1',
+    source_date: '2025-02-07', asserted_by: ['SEC EDGAR', 'Wikidata'],
+    corroborations: 2,
+  }
+
+  const menuText = async (kind: 'owners' | 'subsidiaries' | 'holdings') => {
+    cleanup()
+    if (kind === 'holdings') {
+      vi.mocked(getPersonProfile).mockResolvedValue({ data: {
+        person: { id: 'p1', full_name: 'Somebody' },
+        positions: [],
+        holdings: [{ entity: { id: 'x', name: 'Target Co', type: 'company' },
+                     relationship: REL }],
+      } } as never)
+      vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+      render(<NodePanel node={{ id: 'p1', label: 'Somebody', nodeType: 'person',
+                                raw: { id: 'p1', full_name: 'Somebody' } as never }} />)
+    } else {
+      mockProfile.mockResolvedValue({ data: {
+        entity: { id: 'e1', name: 'Centre', type: 'company', verified: false } as Entity,
+        owners: kind === 'owners'
+          ? [{ owner: { id: 'x', name: 'Target Co', type: 'company' }, relationship: REL }] : [],
+        subsidiaries: kind === 'subsidiaries'
+          ? [{ entity: { id: 'x', name: 'Target Co', type: 'company' }, relationship: REL }] : [],
+        executives: [],
+      } } as never)
+      render(<NodePanel node={entityNode('e1', 'Centre')} refreshKey={0} />)
+    }
+    const row = (await screen.findByText('Target Co')).closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    const details = document.querySelector('.action-menu__details')?.textContent ?? ''
+    const header = document.querySelector('.action-menu__header')?.textContent ?? ''
+    return { details, header }
+  }
+
+  it('menu details are identical across the three sections', async () => {
+    const owners = await menuText('owners')
+    const subs = await menuText('subsidiaries')
+    const holdings = await menuText('holdings')
+    expect(subs.details).toBe(owners.details)
+    expect(holdings.details, 'holdings drifted from owners once already')
+      .toBe(owners.details)
+  })
+
+  it('the multi-source header shows in all three', async () => {
+    for (const kind of ['owners', 'subsidiaries', 'holdings'] as const) {
+      const { header } = await menuText(kind)
+      expect(header, `${kind}`).toBe('SEC EDGAR + Wikidata')
+    }
+  })
+})
+
+describe('a role row carries its sources too', () => {
+  it('shows the multi-source header on an executive row', async () => {
+    // The four role literals all omitted assertedBy and stale, although
+    // RoleRelationship carries both — so a corroborated role could never show
+    // its sources. The shared mapper fixed it; this keeps it fixed.
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Centre', type: 'company', verified: false } as Entity,
+      owners: [], subsidiaries: [],
+      executives: [{ person: { id: 'p1', full_name: 'A Boss' },
+                     role: { role: 'CEO', source_id: 'src-1',
+                             asserted_by: ['SEC EDGAR', 'Wikidata'],
+                             corroborations: 2 } }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Centre')} refreshKey={0} />)
+    const row = (await screen.findByText('A Boss')).closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    expect(document.querySelector('.action-menu__header')?.textContent)
+      .toBe('SEC EDGAR + Wikidata')
   })
 })
