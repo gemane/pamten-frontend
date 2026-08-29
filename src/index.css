@@ -975,6 +975,11 @@ body {
 
 .search-item:hover { background: #253454; }
 
+/* The node badge is shared with the panel header, where it sits on its own line
+   above the name and needs the gap below it. In a search row it is one flex item
+   of three, so drop the margin and stop it being squashed by a long name. */
+.search-item .node-type-badge { margin-bottom: 0; flex-shrink: 0; }
+
 /* No-results "scrape X?" affordance + its sign-in hint */
 .search-item--scrape { color: #6aaae3; font-weight: 600; }
 .search-item--hint { cursor: default; color: #8892a4; font-size: 13px; }
@@ -1088,20 +1093,6 @@ body {
   font-size: 10px;
   color: #4a5568;
 }
-
-/* ── Type badges ───────────────────────────────────────── */
-.type-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 99px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  flex-shrink: 0;
-}
-
-.type-badge--entity  { background: rgba(74,144,217,0.2); color: #4A90D9; }
-.type-badge--person  { background: rgba(39,174, 96,0.2); color: #27AE60; }
 
 /* ── Node panel ────────────────────────────────────────── */
 .panel-empty {

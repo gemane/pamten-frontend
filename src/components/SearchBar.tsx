@@ -192,9 +192,25 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
 
   useImperativeHandle(ref, () => ({ clearAndFocus: handleClear }))
 
-  const badge = (type: string) => (
-    <span className={`type-badge type-badge--${type.toLowerCase()}`}>{type}</span>
-  )
+  // The badge says what the node IS — company, holding, fund, voting group —
+  // not the coarse Entity/Person split the API groups results by. Every entity
+  // in the dropdown said "Entity" while the panel it opened said "Holding", and
+  // the kind is the useful part when a search returns twenty similar names.
+  //
+  // Same classes, same translation keys and the same 'company' fallback as the
+  // node panel, so a type added there is styled and named here without a second
+  // edit. GLEIF entities that never got a type inferred fall back to 'company',
+  // which is what the panel shows them as too.
+  const badge = (r: SearchResult) => {
+    const kind = r.type === 'Person'
+      ? 'person'
+      : (('type' in r.node && r.node.type) || 'company')
+    return (
+      <span className={`node-type-badge node-type-badge--${kind}`}>
+        {t(`legend.${kind}`, { defaultValue: kind })}
+      </span>
+    )
+  }
 
   const filteredCountries = countries.filter(c =>
     countryName(c.country, i18n.language).toLowerCase().includes(countryQuery.toLowerCase())
@@ -337,7 +353,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
               // fourth result, the ranking is wrong and this is how that shows up.
               onMouseDown={() => handleSelect(r, i)}
             >
-              {badge(r.type)}
+              {badge(r)}
               <span className="search-item__name">
                 {'name' in r.node ? r.node.name : ('full_name' in r.node ? r.node.full_name : '')}
               </span>
