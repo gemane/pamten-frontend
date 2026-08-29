@@ -195,3 +195,60 @@ describe('the chosen country travels with the scrape', () => {
     await waitFor(() => expect(search).toHaveBeenCalledWith('alphabet', 'DE'))
   })
 })
+
+describe('the result badge names what the node IS', () => {
+  const typed = (id: string, name: string, type: string): SearchResult => ({
+    type: 'Entity', score: 1,
+    node: { id, name, type } as SearchResult['node'],
+  })
+
+  it('shows the specific kind, not the coarse Entity grouping', async () => {
+    resolveSearch([
+      typed('e1', 'Alphabet Inc.', 'company'),
+      typed('e2', 'Exor N.V.', 'holding'),
+      typed('e3', 'Wellcome Trust', 'foundation'),
+      typed('e4', 'The Vanguard Group', 'fund'),
+      typed('e5', 'Voting group · 9 parties', 'voting_group'),
+    ])
+    render(<SearchBar onSelect={vi.fn()} countries={[]} canScrape />)
+    await type('alphabet')
+
+    await screen.findByText('Alphabet Inc.')
+    for (const label of ['Company', 'Holding', 'Foundation', 'Fund', 'Voting group']) {
+      expect(screen.getByText(label)).toBeTruthy()
+    }
+    expect(screen.queryByText('Entity')).toBeNull()
+  })
+
+  it('still says Person for people', async () => {
+    resolveSearch([{
+      type: 'Person', score: 1,
+      node: { id: 'p1', full_name: 'Larry Page' } as SearchResult['node'],
+    }])
+    render(<SearchBar onSelect={vi.fn()} countries={[]} canScrape />)
+    await type('larry')
+
+    await screen.findByText('Larry Page')
+    expect(screen.getByText('Person')).toBeTruthy()
+  })
+
+  it('falls back to Company when the type was never inferred', async () => {
+    // GLEIF imports plenty of these; the node panel shows them as Company too,
+    // so the dropdown must not disagree with the panel it opens.
+    resolveSearch([entityResult('e9', 'ALPHABET CAPITAL US LLC')])
+    render(<SearchBar onSelect={vi.fn()} countries={[]} canScrape />)
+    await type('alphabet')
+
+    await screen.findByText('ALPHABET CAPITAL US LLC')
+    expect(screen.getByText('Company')).toBeTruthy()
+  })
+
+  it('carries the type through to the CSS class the legend colours use', async () => {
+    resolveSearch([typed('e2', 'Exor N.V.', 'holding')])
+    const { container } = render(<SearchBar onSelect={vi.fn()} countries={[]} canScrape />)
+    await type('exor')
+
+    await screen.findByText('Exor N.V.')
+    expect(container.querySelector('.node-type-badge--holding')).toBeTruthy()
+  })
+})
