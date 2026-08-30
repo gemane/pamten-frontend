@@ -28,11 +28,18 @@ export function isSpecialVoting(percent?: number | null, votingPct?: number | nu
   return (percent == null && votingPct >= 25) || (percent != null && votingPct - percent >= 25)
 }
 
+// Below this, a percentage stops informing: "0.0001%" says less than the
+// share count behind it. User's rule — the shares presentation starts under
+// 0.001%. A tiny percent with NO share count still shows the percent, because
+// a number beats nothing.
+export const PCT_DISPLAY_FLOOR = 0.001
+
 export default function OwnershipBadge({ type, percent, votingPct, shares }: OwnershipBadgeProps) {
   const { t, i18n } = useTranslation()
+  const pctShown = percent != null && (percent >= PCT_DISPLAY_FLOOR || shares == null)
   // 3,365,400 → "3.4M" — a badge is a glance, the exact figure is one press
   // away in the row's own menu. Locale-aware (German says "Mio.").
-  const compactShares = percent == null && shares != null
+  const compactShares = !pctShown && shares != null
     ? new Intl.NumberFormat(i18n.language, { notation: 'compact',
                                              maximumFractionDigits: 1 }).format(shares)
     : null
@@ -55,7 +62,7 @@ export default function OwnershipBadge({ type, percent, votingPct, shares }: Own
       )}
       <span className="ownership-badge" style={{ borderColor: color, color }}>
         {label}
-        {percent != null ? ` · ${percent}%`
+        {pctShown ? ` · ${percent}%`
           : compactShares != null ? ` · ${t('ownershipType.sharesCompact', { n: compactShares })}` : ''}
       </span>
     </span>

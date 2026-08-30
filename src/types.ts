@@ -92,6 +92,7 @@ export interface Source {
   // Per-entry provenance (for later verification, e.g. by journalists):
   source_date?: string      // date the fact was recorded/published in the source
   last_scraped_at?: string  // when we last confirmed it against the source
+  filing_type?: string      // which KIND of record: "13F", "13G/A", "RR", "PSC"…
 }
 
 // Relationship types

@@ -100,3 +100,23 @@ describe('a countable holding with no statable percentage', () => {
     expect(screen.getByText(/250 shares/)).toBeTruthy()
   })
 })
+
+describe('the display floor', () => {
+  // "the presentation with shares should already start with a percentage less
+  // than 0.001%" — a figure like 0.0001% says less than the count behind it.
+  it('a sub-floor percent with a known count shows the count', () => {
+    render(<OwnershipBadge type="minority" percent={0.0009} shares={120000} />)
+    expect(screen.getByText(/120\s?K shares/i)).toBeTruthy()
+    expect(screen.queryByText(/0\.0009%/)).toBeNull()
+  })
+
+  it('exactly at the floor the percent still shows', () => {
+    render(<OwnershipBadge type="minority" percent={0.001} shares={120000} />)
+    expect(screen.getByText(/0\.001%/)).toBeTruthy()
+  })
+
+  it('a sub-floor percent with NO count keeps the percent — a number beats nothing', () => {
+    render(<OwnershipBadge type="minority" percent={0.0009} shares={null} />)
+    expect(screen.getByText(/0\.0009%/)).toBeTruthy()
+  })
+})
