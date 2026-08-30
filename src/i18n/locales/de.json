@@ -258,7 +258,8 @@
     "controlling": "Kontrollierend",
     "owned": "Beteiligung",
     "specialVoting": "Sonderstimmrecht",
-    "specialVotingHint": "Die Stimmrechte übersteigen die wirtschaftliche Beteiligung deutlich — goldene Aktie, Mehrstimmrechtsaktien oder eine Stimmbindungsvereinbarung mit anderen Aktionären"
+    "specialVotingHint": "Die Stimmrechte übersteigen die wirtschaftliche Beteiligung deutlich — goldene Aktie, Mehrstimmrechtsaktien oder eine Stimmbindungsvereinbarung mit anderen Aktionären",
+    "sharesCompact": "{{n}} Aktien"
   },
   "parentReason": {
     "NATURAL_PERSONS": "von natürlichen Personen kontrolliert, ohne zwischengeschaltete Gesellschaft, die als Mutter gälte",
