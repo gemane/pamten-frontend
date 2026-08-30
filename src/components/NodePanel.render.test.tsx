@@ -1391,3 +1391,46 @@ describe('a percentage-less holder row still states its size', () => {
     expect(await screen.findByText(/3\.4\s?M shares/i)).toBeTruthy()
   })
 })
+
+describe('section counts and source filing types', () => {
+  it('Owned by and Founded by carry count pills; executives excludes founders', async () => {
+    const p = profile('e1', 'Counted Co')
+    p.owners = [{ owner: { id: 'o1', name: 'Owner A', type: 'company' } as never,
+                  relationship: { ownership_type: 'minority', stake_percent: 10 } as never }]
+    p.executives = [
+      { person: { id: 'p1', full_name: 'Fay Founder' } as never,
+        role: { role: 'Founder' } as never },
+      { person: { id: 'p2', full_name: 'Eve Exec' } as never,
+        role: { role: 'CEO' } as never },
+    ]
+    p.counts = { owners: 42, subsidiaries: 0, executives: 2 } as never
+    mockProfile.mockResolvedValue({ data: p } as never)
+    render(<NodePanel node={entityNode('e1', 'Counted Co')} refreshKey={0} />)
+
+    await screen.findByText('Owner A')
+    expect(screen.getByText('42')).toBeTruthy()      // owners count, from the payload
+    // founders pill = 1; executives pill = 2 total − 1 founder = 1
+    const pills = screen.getAllByText('1')
+    expect(pills.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('a source row shows its filing type after the name', async () => {
+    const p = profile('e1', 'Filed Co')
+    mockProfile.mockResolvedValue({ data: p } as never)
+    mockSources.mockResolvedValue({ data: [
+      { id: 's1', name: 'SEC EDGAR', type: 'register', credibility_score: 98,
+        url: 'https://example.test/f', filing_type: '13F' },
+      { id: 's2', name: 'GLEIF', type: 'register', credibility_score: 92 },
+    ] } as never)
+    const { container } = render(<NodePanel node={entityNode('e1', 'Filed Co')} refreshKey={0} />)
+
+    // Sources is a collapsed section; open it first.
+    const toggle = await screen.findByRole('button', { name: /Sources/i })
+    await userEvent.click(toggle)
+    // The name sits beside an icon element, so match on the row's textContent.
+    const names = [...container.querySelectorAll('.source-item__name')]
+      .map(el => el.textContent?.trim())
+    expect(names).toContain('SEC EDGAR · 13F')
+    expect(names).toContain('GLEIF')                 // no filing type → plain name
+  })
+})

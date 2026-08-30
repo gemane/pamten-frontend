@@ -493,3 +493,34 @@ describe('sourceNames', () => {
     expect(sourceNames([]).size).toBe(0)
   })
 })
+
+describe('byStakeDesc with the shares tier', () => {
+  type Row = { s: number | null; sh: number | null; name: string }
+  const cmp = byStakeDesc<Row>(x => x.s, x => x.name, x => x.sh)
+
+  it('percent rows come first, then shares-only rows by size, then names', () => {
+    const rows: Row[] = [
+      { s: null, sh: null,      name: 'Nameless Co' },
+      { s: null, sh: 707796,    name: 'BNP' },
+      { s: 0.93, sh: 122764805, name: 'Nvidia' },
+      { s: null, sh: 171826745, name: 'Gigafund' },
+      { s: 4.18, sh: 551189500, name: 'Alphabet' },
+    ]
+    expect([...rows].sort(cmp).map(r => r.name))
+      .toEqual(['Alphabet', 'Nvidia', 'Gigafund', 'BNP', 'Nameless Co'])
+  })
+
+  it('a percent always outranks a bigger bare count — no denominator, no comparison', () => {
+    const rows: Row[] = [
+      { s: null, sh: 9_999_999_999, name: 'Huge Count' },
+      { s: 0.0001, sh: null,        name: 'Tiny Percent' },
+    ]
+    expect([...rows].sort(cmp).map(r => r.name)).toEqual(['Tiny Percent', 'Huge Count'])
+  })
+
+  it('without a shares accessor it behaves exactly as before', () => {
+    const plain = byStakeDesc<Row>(x => x.s, x => x.name)
+    const rows: Row[] = [{ s: null, sh: 5, name: 'B' }, { s: null, sh: 9, name: 'A' }]
+    expect([...rows].sort(plain).map(r => r.name)).toEqual(['A', 'B'])
+  })
+})

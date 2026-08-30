@@ -21,12 +21,26 @@ import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, Subs
 // - byStakeDesc: largest ownership stake first (the most meaningful order for an
 //   ownership map); rows with no known stake sort last, ties alphabetical.
 // - byName: plain A→Z, for people/relationships without a stake.
-export function byStakeDesc<T>(getStake: (x: T) => number | null | undefined, getName: (x: T) => string) {
+export function byStakeDesc<T>(getStake: (x: T) => number | null | undefined,
+                               getName: (x: T) => string,
+                               getShares?: (x: T) => number | null | undefined) {
+  // Three tiers: rows with a percentage (desc), then rows that only know a
+  // share count (desc — a 13F holding in a company with no known shares
+  // outstanding is still bigger or smaller than its neighbours), then name.
+  // Percent and shares are never compared with each other: a percent needs a
+  // denominator and a bare count doesn't have one, so ordering across the two
+  // would be a guess dressed as a ranking.
   return (a: T, b: T) => {
     const sa = getStake(a), sb = getStake(b)
     if (sa != null && sb != null && sa !== sb) return sb - sa
     if (sa != null && sb == null) return -1
     if (sa == null && sb != null) return 1
+    if (sa == null && sb == null) {
+      const ha = getShares?.(a), hb = getShares?.(b)
+      if (ha != null && hb != null && ha !== hb) return hb - ha
+      if (ha != null && hb == null) return -1
+      if (ha == null && hb != null) return 1
+    }
     return getName(a).localeCompare(getName(b))
   }
 }
@@ -631,7 +645,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
 
       {holdings.length > 0 && (
         <Section title={t('panel.ownerships')}>
-          {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '')).map((h, i) => (
+          {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '', h => h.relationship?.shares)).map((h, i) => (
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
               rel={relFromOwns(h.relationship, {
                      fromId: node.id, toId: h.entity.id, label: h.entity.name,
@@ -924,14 +938,18 @@ function SourcesSection({ sources }: { sources: Source[] }) {
       {sources.map((s, i) => {
         const reported    = formatProvenanceDate(s.source_date)
         const lastChecked = formatProvenanceDate(s.last_scraped_at)
+        // "SEC EDGAR · 13F" — a source can contribute several KINDS of record
+        // (a 13G stake beside a 13F position), and the kind is what tells a
+        // reader which register rules the fact lives under.
+        const label = s.filing_type ? `${s.name} · ${s.filing_type}` : s.name
         return (
           <div key={`${s.id}-${s.url ?? ''}-${i}`} className="source-item">
             <div className="source-item__header">
               {s.url
                 ? <a className="source-item__name" href={s.url} target="_blank" rel="noreferrer">
-                    <FiExternalLink size={11} /> {s.name}
+                    <FiExternalLink size={11} /> {label}
                   </a>
-                : <span className="source-item__name">{s.name}</span>
+                : <span className="source-item__name">{label}</span>
               }
               <span className="source-type-badge">{s.type}</span>
             </div>
@@ -1104,10 +1122,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {owners.length > 0 && (
-        <Section title={t('panel.ownedBy')}>
+        <Section title={t('panel.ownedBy')} count={counts?.owners}>
           {[...owners].sort(byStakeDesc(
             o => o.relationship?.stake_percent,
             o => o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '',
+            o => o.relationship?.shares,
           )).map((o, i) => (
             <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}
               rel={o.owner
@@ -1202,7 +1221,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {founders.length > 0 && (
-        <Section title={t('panel.foundedBy')}>
+        <Section title={t('panel.foundedBy')} count={founders.length}>
           {[...founders].sort(byName(f => f.person?.full_name ?? '')).map((f, i) => (
             <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}
               rel={relFromRole(f.role, {
@@ -1220,7 +1239,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                  count={counts?.subsidiaries}>
           {(() => {
             const sorted = [...subsidiaries].sort(
-              byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? ''))
+              byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? '',
+                          s => s.relationship?.shares))
             const row = (s: SubsidiaryEntry, i: number) => (
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
                 rel={relFromOwns(s.relationship, {
@@ -1273,7 +1293,13 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {otherExecutives.length > 0 && (
-        <Section title={t('panel.executives')} count={counts?.executives}>
+        // counts.executives counts every current HAS_ROLE person, founders
+        // included — but this list renders otherExecutives, so the raw count
+        // over-stated it whenever founders existed.
+        <Section title={t('panel.executives')}
+                 count={counts?.executives != null
+                          ? Math.max(counts.executives - founders.length, 0)
+                          : undefined}>
           {[...otherExecutives].sort(byRoleImportance(e => e.role?.role, e => e.person?.full_name ?? '')).map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
               rel={relFromRole(e.role, {
