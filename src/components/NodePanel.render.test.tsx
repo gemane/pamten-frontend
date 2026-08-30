@@ -1374,3 +1374,20 @@ describe('a role row carries its sources too', () => {
       .toBe('SEC EDGAR + Wikidata')
   })
 })
+
+describe('a percentage-less holder row still states its size', () => {
+  it('owners rows show the share count when no percent exists', async () => {
+    // The 13F case: counts known, denominator honestly unknown. "Minority"
+    // alone read as missing data — which is how this was reported.
+    const p = profile('e1', 'Grupo Televisa')
+    p.owners = [{
+      owner: { id: 'o1', name: 'Discovery Capital', type: 'fund' } as never,
+      relationship: { ownership_type: 'minority', stake_percent: null,
+                      shares: 3365400, source_id: 's1' } as never,
+    }]
+    mockProfile.mockResolvedValue({ data: p } as never)
+    mockSources.mockResolvedValue({ data: [] } as never)
+    render(<NodePanel node={entityNode('e1', 'Grupo Televisa')} refreshKey={0} />)
+    expect(await screen.findByText(/3\.4\s?M shares/i)).toBeTruthy()
+  })
+})

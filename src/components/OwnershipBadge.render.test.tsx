@@ -72,3 +72,31 @@ describe('badge order', () => {
     expect(text.indexOf('⚡')).toBeLessThan(text.indexOf('8.1'))
   })
 })
+
+describe('a countable holding with no statable percentage', () => {
+  // The 13F path: a private issuer has no XBRL shares outstanding, so the edge
+  // knows exactly how many shares are held but honestly no percent — and a
+  // badge saying just "Minority" reads as missing data, which is how the gap
+  // was reported.
+  it('shows a compact share count when percent is absent', () => {
+    render(<OwnershipBadge type="minority" percent={null} shares={3365400} />)
+    expect(screen.getByText(/3\.4\s?M shares/i)).toBeTruthy()
+  })
+
+  it('the percentage always wins when both are known', () => {
+    render(<OwnershipBadge type="minority" percent={8.05} shares={159121937} />)
+    expect(screen.getByText(/8\.05%/)).toBeTruthy()
+    expect(screen.queryByText(/shares/i)).toBeNull()
+  })
+
+  it('neither known still shows the plain type label', () => {
+    render(<OwnershipBadge type="minority" percent={null} shares={null} />)
+    expect(screen.getByText('Minority')).toBeTruthy()
+    expect(screen.queryByText(/shares/i)).toBeNull()
+  })
+
+  it('small counts are not compacted into nonsense', () => {
+    render(<OwnershipBadge type="minority" percent={null} shares={250} />)
+    expect(screen.getByText(/250 shares/)).toBeTruthy()
+  })
+})

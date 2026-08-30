@@ -5,6 +5,11 @@ interface OwnershipBadgeProps {
   type?: OwnershipType | string | null
   percent?: number | null
   votingPct?: number | null
+  /** Share count, shown compactly when no percentage can be stated — a 13F
+   *  position in a company with no known shares outstanding, or a real holding
+   *  below the rounding floor. "Minority" alone reads as missing data when the
+   *  edge in fact knows exactly how many shares are held. */
+  shares?: number | null
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -23,8 +28,14 @@ export function isSpecialVoting(percent?: number | null, votingPct?: number | nu
   return (percent == null && votingPct >= 25) || (percent != null && votingPct - percent >= 25)
 }
 
-export default function OwnershipBadge({ type, percent, votingPct }: OwnershipBadgeProps) {
-  const { t } = useTranslation()
+export default function OwnershipBadge({ type, percent, votingPct, shares }: OwnershipBadgeProps) {
+  const { t, i18n } = useTranslation()
+  // 3,365,400 → "3.4M" — a badge is a glance, the exact figure is one press
+  // away in the row's own menu. Locale-aware (German says "Mio.").
+  const compactShares = percent == null && shares != null
+    ? new Intl.NumberFormat(i18n.language, { notation: 'compact',
+                                             maximumFractionDigits: 1 }).format(shares)
+    : null
   const resolved = (type && type !== 'unknown') ? type : null
   const color    = TYPE_COLORS[resolved ?? ''] || '#8892a4'
   const label    = resolved
@@ -43,7 +54,9 @@ export default function OwnershipBadge({ type, percent, votingPct }: OwnershipBa
               aria-label={t('ownershipType.specialVoting')}>⚡</span>
       )}
       <span className="ownership-badge" style={{ borderColor: color, color }}>
-        {label}{percent != null ? ` · ${percent}%` : ''}
+        {label}
+        {percent != null ? ` · ${percent}%`
+          : compactShares != null ? ` · ${t('ownershipType.sharesCompact', { n: compactShares })}` : ''}
       </span>
     </span>
   )

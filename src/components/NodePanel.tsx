@@ -642,6 +642,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
                 type={h.relationship?.ownership_type}
                 percent={h.relationship?.stake_percent}
                 votingPct={h.relationship?.voting_power_pct}
+                shares={h.relationship?.shares}
               />
             </RelRow>
           ))}
@@ -1125,6 +1126,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               <OwnershipBadge
                 type={o.relationship?.ownership_type}
                 percent={o.relationship?.stake_percent}
+                shares={o.relationship?.shares}
                 // Not on a voting group's own row: "this voting group votes more
                 // than it owns" is what a voting group is. The bloc figure is in
                 // the row's menu, where it says something.
@@ -1234,6 +1236,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                     group's control is voting" says nothing. */}
                 <OwnershipBadge type={s.relationship?.ownership_type}
                                 percent={s.relationship?.stake_percent}
+                                shares={s.relationship?.shares}
                                 votingPct={isGroup ? null : s.relationship?.voting_power_pct} />
               </RelRow>
             )
