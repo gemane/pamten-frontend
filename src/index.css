@@ -1207,6 +1207,9 @@ body {
 .meta-icon { color: #4a5568; font-size: 13px; flex-shrink: 0; }
 .meta-label { color: #8892a4; min-width: 70px; }
 .meta-value { color: #cbd5e1; font-weight: 500; }
+.meta-value--link { color: #6aaae3; text-decoration: none; display: inline-flex;
+                    align-items: center; gap: 3px; }
+.meta-value--link:hover { text-decoration: underline; }
 .panel-map-link {
   margin-left: 8px;
   padding: 0;
@@ -3523,6 +3526,7 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .meta-icon { color: #718096; }
 [data-theme="light"] .meta-label { color: #4a5568; }
 [data-theme="light"] .meta-value { color: #2d3748; }
+[data-theme="light"] .meta-value--link { color: #2563ab; }
 [data-theme="light"] .panel-section__title { color: #718096; }
 [data-theme="light"] .rel-item { background: #eef2f7; }
 [data-theme="light"] .rel-item__name { color: #1a202c; }

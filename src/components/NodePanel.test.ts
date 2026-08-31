@@ -524,3 +524,37 @@ describe('byStakeDesc with the shares tier', () => {
     expect([...rows].sort(plain).map(r => r.name)).toEqual(['A', 'B'])
   })
 })
+
+describe('the website detail row', () => {
+  const base = { id: 'e1', name: 'Apple Inc.', type: 'company', verified: false } as Record<string, unknown>
+
+  it('shows the bare host and links the full url', () => {
+    const rows = entityDetailRows({ ...base, website: 'https://www.apple.com/' } as never)
+    const row = rows.find(r => r.labelKey === 'panel.website')
+    expect(row?.value).toBe('apple.com')
+    expect(row?.href).toBe('https://www.apple.com/')
+  })
+
+  it('no website, no row', () => {
+    const rows = entityDetailRows(base as never)
+    expect(rows.find(r => r.labelKey === 'panel.website')).toBeUndefined()
+  })
+
+  it('an unsafe scheme yields no row at all, not dead text', () => {
+    const rows = entityDetailRows({ ...base, website: 'javascript:alert(1)' } as never)
+    expect(rows.find(r => r.labelKey === 'panel.website')).toBeUndefined()
+  })
+
+  it('a non-http scheme WITH a host is still rejected', () => {
+    // javascript: URLs happen to have no host, so linkHost alone filters them
+    // by accident — ftp:// has one, and only the safeHref gate stops it.
+    const rows = entityDetailRows({ ...base, website: 'ftp://files.test' } as never)
+    expect(rows.find(r => r.labelKey === 'panel.website')).toBeUndefined()
+  })
+
+  it('the website row comes first in the details', () => {
+    const rows = entityDetailRows({ ...base, website: 'https://a.test',
+                                    legal_form: 'PLC' } as never)
+    expect(rows[0].labelKey).toBe('panel.website')
+  })
+})
