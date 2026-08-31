@@ -318,13 +318,17 @@ export function computeArcPositions(
   return pos
 }
 
+// Full parent names, not shorthand: a bare group name resolves to whatever
+// ranks best, and for these three that was the wrong company outright —
+// "Heineken" landed on HEINEKEN Mexico, "Bertelsmann" on the US subsidiary.
+// Kept in step with scripts/scrape-companies.sh, which scrapes the same list.
 const ALL_EXAMPLE_QUERIES = [
-  'AB InBev',
-  'Heineken',
+  'Anheuser-Busch InBev',
+  'Heineken International',
   'Carlsberg',
   'Nestlé',
   'Unilever',
-  'Bertelsmann',
+  'Bertelsmann SE',
   'Axel Springer',
   'Alphabet',
   'Microsoft',
