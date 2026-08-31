@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash } from 'react-icons/fi'
+import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import { ageFrom } from '../utils/age'
@@ -268,15 +268,21 @@ interface MetaRowProps {
   icon: React.ElementType
   label: string
   value?: string | number | null
+  href?: string
 }
 
-function MetaRow({ icon: Icon, label, value }: MetaRowProps) {
+function MetaRow({ icon: Icon, label, value, href }: MetaRowProps) {
   if (!value) return null
   return (
     <div className="meta-row">
       <Icon className="meta-icon" />
       <span className="meta-label">{label}</span>
-      <span className="meta-value">{value}</span>
+      {href
+        ? <a className="meta-value meta-value--link" href={href}
+             target="_blank" rel="noreferrer">
+            {value} <FiExternalLink size={11} />
+          </a>
+        : <span className="meta-value">{value}</span>}
     </div>
   )
 }
@@ -330,11 +336,26 @@ function CollapsibleSection({ title, count, defaultOpen = false, children }: {
 // order, skipping any the entity doesn't have. Pure (no i18n/React) so it's unit
 // tested directly; `labelKey` maps to a `panel.*` translation. Easy to extend with
 // more detail fields later — add an entry here.
-export interface DetailRow { icon: React.ElementType; labelKey: string; value: string }
+export interface DetailRow {
+  icon: React.ElementType
+  labelKey: string
+  value: string
+  /** When present, the value renders as an external link. Always pass a
+   *  safeHref()-gated URL — the property is scraped data and gets no scheme
+   *  trust, however plausible it looks. */
+  href?: string
+}
 export function entityDetailRows(entity: Entity): DetailRow[] {
   const registeredAt = [entity.registration_authority, entity.registration_number]
     .filter(Boolean).join(' · ')
-  const candidates: { icon: React.ElementType; labelKey: string; value?: string | null }[] = [
+  // The row shows the bare host ("apple.com") and links the full URL: a badge
+  // is a glance, and the scheme/path add noise without information. No safe
+  // href → no row at all, rather than dead text.
+  const websiteHref = safeHref(entity.website ?? null)
+  const candidates: { icon: React.ElementType; labelKey: string; value?: string | null;
+                      href?: string }[] = [
+    { icon: FiGlobe,     labelKey: 'panel.website',      value: websiteHref ? linkHost(entity.website) : null,
+      href: websiteHref ?? undefined },
     { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
     { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
     { icon: FiCalendar,  labelKey: 'panel.founded',      value: entity.founded_date },
@@ -491,7 +512,7 @@ function DetailsSection({ entity, hasOwners }: { entity: Entity; hasOwners: bool
     <CollapsibleSection title={t('panel.details')}>
       {rows.length > 0 && (
         <div className="panel-meta">
-          {rows.map((r, i) => <MetaRow key={i} icon={r.icon} label={t(r.labelKey)} value={r.value} />)}
+          {rows.map((r, i) => <MetaRow key={i} icon={r.icon} label={t(r.labelKey)} value={r.value} href={r.href} />)}
         </div>
       )}
       {/* A sibling of `.panel-meta`, not a row inside it: that is what gives it the

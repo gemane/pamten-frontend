@@ -161,7 +161,8 @@
     "multiClassHint": "Las declaraciones de esta empresa informan porcentajes de valores distintos, por lo que no pueden sumarse.",
     "groupMembers": "Partes del acuerdo",
     "groupControls": "Controla",
-    "votesIn": "Vota en"
+    "votesIn": "Vota en",
+    "website": "Sitio web"
   },
   "report": {
     "button": "Reportar",

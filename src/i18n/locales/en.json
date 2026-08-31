@@ -161,7 +161,8 @@
     "multiClassHint": "This company's filings report percentages of different securities, so they cannot be added together.",
     "groupMembers": "Parties to the agreement",
     "groupControls": "Controls",
-    "votesIn": "Votes in"
+    "votesIn": "Votes in",
+    "website": "Website"
   },
   "report": {
     "button": "Report",
