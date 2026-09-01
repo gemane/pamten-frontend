@@ -162,7 +162,8 @@
     "groupMembers": "Parteien der Vereinbarung",
     "groupControls": "Kontrolliert",
     "votesIn": "Stimmt ab in",
-    "website": "Webseite"
+    "website": "Webseite",
+    "webSearch": "Websuche"
   },
   "report": {
     "button": "Melden",

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe } from 'react-icons/fi'
+import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import { ageFrom } from '../utils/age'
@@ -348,14 +348,8 @@ export interface DetailRow {
 export function entityDetailRows(entity: Entity): DetailRow[] {
   const registeredAt = [entity.registration_authority, entity.registration_number]
     .filter(Boolean).join(' · ')
-  // The row shows the bare host ("apple.com") and links the full URL: a badge
-  // is a glance, and the scheme/path add noise without information. No safe
-  // href → no row at all, rather than dead text.
-  const websiteHref = safeHref(entity.website ?? null)
   const candidates: { icon: React.ElementType; labelKey: string; value?: string | null;
                       href?: string }[] = [
-    { icon: FiGlobe,     labelKey: 'panel.website',      value: websiteHref ? linkHost(entity.website) : null,
-      href: websiteHref ?? undefined },
     { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
     { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
     { icon: FiCalendar,  labelKey: 'panel.founded',      value: entity.founded_date },
@@ -423,6 +417,30 @@ function safeHref(reference: string | null): string | null {
   } catch {
     return null
   }
+}
+
+/** A search we offer, not a fact we assert. Constant prefix + encoded query,
+ *  so it cannot be a `javascript:` URI and needs no safeHref gate; persons get
+ *  the name quoted so Google treats it as a phrase, not four loose words. */
+export function googleSearchHref(name?: string | null, opts?: { quote?: boolean }): string | null {
+  const n = name?.trim()
+  if (!n) return null
+  return 'https://www.google.com/search?q=' + encodeURIComponent(opts?.quote ? `"${n}"` : n)
+}
+
+/** The panel's one web row: the entity's own site when a source stated one
+ *  (host as text, full URL as the link), otherwise a Google search for the
+ *  name. An unusable stored URL counts as absent — the search link is more
+ *  honest than a dead row. */
+export function webLinkRow(entity: Entity): DetailRow | null {
+  const websiteHref = safeHref(entity.website ?? null)
+  if (websiteHref) {
+    return { icon: FiGlobe, labelKey: 'panel.website',
+             value: linkHost(entity.website) ?? websiteHref, href: websiteHref }
+  }
+  const search = googleSearchHref(entity.name)
+  return search ? { icon: FiSearch, labelKey: 'panel.webSearch',
+                    value: 'Google', href: search } : null
 }
 
 const trimmed = (v?: string | null): string | null => v?.trim() || null
@@ -621,6 +639,9 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
           value={nationalities.join(', ') || null}
         />
         <MetaRow icon={FiTag} label={t('panel.alsoKnownAs')} value={aka.length ? aka.join(', ') : null} />
+        <MetaRow icon={FiSearch} label={t('panel.webSearch')}
+                 value={googleSearchHref(raw.full_name, { quote: true }) ? 'Google' : null}
+                 href={googleSearchHref(raw.full_name, { quote: true }) ?? undefined} />
       </div>
 
       {votingGroups.length > 0 && (
@@ -1078,6 +1099,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // from the Location node's street/city/state/zip/country.
   const address   = entity.hq_address || ''
   const hasCoords = entity.hq_lat != null && entity.hq_lng != null
+  const webRow    = webLinkRow(entity)
 
   return (
     <div className="panel-body">
@@ -1122,6 +1144,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
               )}
             </span>
           </div>
+        )}
+        {webRow && (
+          <MetaRow icon={webRow.icon} label={t(webRow.labelKey)}
+                   value={webRow.value} href={webRow.href} />
         )}
       </div>
 

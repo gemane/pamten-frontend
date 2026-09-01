@@ -526,6 +526,13 @@ describe('refreshing a person', () => {
     expect(onReScrape).toHaveBeenCalledWith(personNode)
   })
 
+  it('the person meta offers a QUOTED Google search', async () => {
+    const { container } = render(<NodePanel node={personNode} />)
+    await screen.findAllByText('Larry Page')
+    const a = container.querySelector('.panel-meta .meta-value--link') as HTMLAnchorElement
+    expect(a?.getAttribute('href')).toBe('https://www.google.com/search?q=%22Larry%20Page%22')
+  })
+
   it('offers nothing when the caller cannot scrape', async () => {
     render(<NodePanel node={personNode} />)
     await screen.findByText('Larry Page')
@@ -1435,18 +1442,26 @@ describe('section counts and source filing types', () => {
   })
 })
 
-describe('the website link renders as a real anchor', () => {
-  it('opens in a new tab with the host as text', async () => {
+describe('the web link renders at the panel top, not in the details', () => {
+  it('a stated website is an anchor in the meta block, no toggle needed', async () => {
     const p = profile('e1', 'Linked Co')
     ;(p.entity as { website?: string }).website = 'https://www.linked.test/about'
     mockProfile.mockResolvedValue({ data: p } as never)
     const { container } = render(<NodePanel node={entityNode('e1', 'Linked Co')} refreshKey={0} />)
     await screen.findByText('Linked Co')
-    const toggle = screen.getByRole('button', { name: /Details/i })
-    await userEvent.click(toggle)
-    const a = container.querySelector('.meta-value--link') as HTMLAnchorElement
+    const a = container.querySelector('.panel-meta .meta-value--link') as HTMLAnchorElement
     expect(a?.getAttribute('href')).toBe('https://www.linked.test/about')
     expect(a?.getAttribute('target')).toBe('_blank')
     expect(a?.textContent).toContain('linked.test')
+  })
+
+  it('without a website the same spot offers a Google search for the name', async () => {
+    mockProfile.mockResolvedValue({ data: profile('e1', 'Linkless Co') } as never)
+    const { container } = render(<NodePanel node={entityNode('e1', 'Linkless Co')} refreshKey={0} />)
+    await screen.findByText('Linkless Co')
+    const a = container.querySelector('.panel-meta .meta-value--link') as HTMLAnchorElement
+    expect(a?.getAttribute('href')).toBe('https://www.google.com/search?q=Linkless%20Co')
+    expect(a?.getAttribute('target')).toBe('_blank')
+    expect(a?.textContent).toContain('Google')
   })
 })
