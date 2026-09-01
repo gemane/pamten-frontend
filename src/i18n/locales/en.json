@@ -162,7 +162,8 @@
     "groupMembers": "Parties to the agreement",
     "groupControls": "Controls",
     "votesIn": "Votes in",
-    "website": "Website"
+    "website": "Website",
+    "webSearch": "Web search"
   },
   "report": {
     "button": "Report",

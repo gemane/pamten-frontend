@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames } from './NodePanel'
+import { pickClaim, formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRow, googleSearchHref } from './NodePanel'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
@@ -525,36 +525,59 @@ describe('byStakeDesc with the shares tier', () => {
   })
 })
 
-describe('the website detail row', () => {
+describe('the web link row at the panel top', () => {
   const base = { id: 'e1', name: 'Apple Inc.', type: 'company', verified: false } as Record<string, unknown>
 
-  it('shows the bare host and links the full url', () => {
-    const rows = entityDetailRows({ ...base, website: 'https://www.apple.com/' } as never)
-    const row = rows.find(r => r.labelKey === 'panel.website')
+  it('a stated website shows the bare host and links the full url', () => {
+    const row = webLinkRow({ ...base, website: 'https://www.apple.com/' } as never)
+    expect(row?.labelKey).toBe('panel.website')
     expect(row?.value).toBe('apple.com')
     expect(row?.href).toBe('https://www.apple.com/')
   })
 
-  it('no website, no row', () => {
-    const rows = entityDetailRows(base as never)
-    expect(rows.find(r => r.labelKey === 'panel.website')).toBeUndefined()
+  it('no website falls back to a Google search for the name', () => {
+    const row = webLinkRow(base as never)
+    expect(row?.labelKey).toBe('panel.webSearch')
+    expect(row?.href).toBe('https://www.google.com/search?q=Apple%20Inc.')
   })
 
-  it('an unsafe scheme yields no row at all, not dead text', () => {
-    const rows = entityDetailRows({ ...base, website: 'javascript:alert(1)' } as never)
-    expect(rows.find(r => r.labelKey === 'panel.website')).toBeUndefined()
+  it('an unsafe scheme counts as absent — search, not a dead website row', () => {
+    const row = webLinkRow({ ...base, website: 'javascript:alert(1)' } as never)
+    expect(row?.labelKey).toBe('panel.webSearch')
   })
 
   it('a non-http scheme WITH a host is still rejected', () => {
     // javascript: URLs happen to have no host, so linkHost alone filters them
     // by accident — ftp:// has one, and only the safeHref gate stops it.
-    const rows = entityDetailRows({ ...base, website: 'ftp://files.test' } as never)
-    expect(rows.find(r => r.labelKey === 'panel.website')).toBeUndefined()
+    const row = webLinkRow({ ...base, website: 'ftp://files.test' } as never)
+    expect(row?.labelKey).toBe('panel.webSearch')
   })
 
-  it('the website row comes first in the details', () => {
+  it('no website AND no name yields no row at all', () => {
+    expect(webLinkRow({ id: 'e1', verified: false } as never)).toBeNull()
+  })
+
+  it('the website never appears in the details rows anymore', () => {
     const rows = entityDetailRows({ ...base, website: 'https://a.test',
                                     legal_form: 'PLC' } as never)
-    expect(rows[0].labelKey).toBe('panel.website')
+    expect(rows.find(r => r.labelKey === 'panel.website')).toBeUndefined()
+    expect(rows[0].labelKey).toBe('panel.legalForm')
+  })
+})
+
+describe('googleSearchHref', () => {
+  it('encodes the query', () => {
+    expect(googleSearchHref('AT&T Inc.'))
+      .toBe('https://www.google.com/search?q=AT%26T%20Inc.')
+  })
+
+  it('quotes a person name as a phrase', () => {
+    expect(googleSearchHref('Larry Page', { quote: true }))
+      .toBe('https://www.google.com/search?q=%22Larry%20Page%22')
+  })
+
+  it('blank or missing names yield no link', () => {
+    expect(googleSearchHref('   ')).toBeNull()
+    expect(googleSearchHref(null)).toBeNull()
   })
 })
