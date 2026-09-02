@@ -1442,6 +1442,34 @@ describe('section counts and source filing types', () => {
   })
 })
 
+describe('the company logo', () => {
+  const LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/T.svg/250px-T.svg.png'
+
+  it('a stored logo_url renders directly, with no Wikidata lookup', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const p = profile('e1', 'Logo Co')
+    ;(p.entity as { logo_url?: string }).logo_url = LOGO
+    mockProfile.mockResolvedValue({ data: p } as never)
+    const { container } = render(<NodePanel node={entityNode('e1', 'Logo Co')} refreshKey={0} />)
+    await screen.findByText('Logo Co')
+    const img = container.querySelector('.panel-logo') as HTMLImageElement
+    expect(img?.getAttribute('src')).toBe(LOGO)
+    expect(fetchSpy.mock.calls.map(c => String(c[0]))
+      .filter(u => u.includes('wikidata.org'))).toHaveLength(0)
+    fetchSpy.mockRestore()
+  })
+
+  it('an unsafe stored value is ignored, not rendered', async () => {
+    const p = profile('e1', 'Junk Co')
+    ;(p.entity as { logo_url?: string }).logo_url = 'javascript:alert(1)'
+    mockProfile.mockResolvedValue({ data: p } as never)
+    const { container } = render(<NodePanel node={entityNode('e1', 'Junk Co')} refreshKey={0} />)
+    await screen.findByText('Junk Co')
+    const img = container.querySelector('.panel-logo')
+    expect(img?.getAttribute('src') ?? '').not.toContain('javascript')
+  })
+})
+
 describe('the web link renders at the panel top, not in the details', () => {
   it('a stated website is an anchor in the meta block, no toggle needed', async () => {
     const p = profile('e1', 'Linked Co')

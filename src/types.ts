@@ -44,7 +44,8 @@ export interface Entity {
   is_nominee?: boolean      // holder of record (nominee/custodian), not a beneficial owner
   // GLEIF LEI-CDF detail fields (surfaced in the node Details section)
   legal_form?: string       // resolved ISO 20275 ELF name, e.g. "Private Limited Company"
-  website?: string                 // official site — Wikidata P856 / SEC submissions
+  website?: string
+  logo_url?: string                 // official site — Wikidata P856 / SEC submissions
   registration_authority?: string  // register name, e.g. "Companies Register"
   registration_number?: string     // the entity's id at that authority
   address?: string          // human-readable registered (legal) address
