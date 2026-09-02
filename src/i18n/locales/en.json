@@ -304,6 +304,7 @@
   },
   "toast": {
     "personGraphError": "Could not load person graph.",
+    "sec13fHolders": "13F: {{count}} institutional holders loaded",
     "entityLoadError": "Could not load entity. Please try again.",
     "nodeLoadError": "Could not load node.",
     "noNewConnections": "No new connections found.",
