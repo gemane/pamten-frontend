@@ -28,11 +28,13 @@ vi.mock('./components/NodePanel', () => ({
   ),
 }))
 
-// Signed-in, email-verified user so on-demand scraping is allowed.
+// Signed-in, email-verified user so on-demand scraping is allowed. The role is
+// mutable so a test can be a contributor (the 13F follow-up is role-gated).
+const auth = vi.hoisted(() => ({ role: 'viewer' }))
 vi.mock('./context/AuthContext', () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useAuth: () => ({
-    user: { id: 'u1', email: 'x@example.com', role: 'viewer', email_verified: true },
+    user: { id: 'u1', email: 'x@example.com', role: auth.role, email_verified: true },
     logout: vi.fn(),
   }),
 }))
@@ -43,6 +45,7 @@ vi.mock('./services/api', () => ({
   reportEvent: vi.fn(),
   search: vi.fn(),
   ensureScrape: vi.fn(),
+  runSec13f: vi.fn(),
   getFullProfile: vi.fn(),
   getPersonProfile: vi.fn(),
   getEntitiesByCountry: vi.fn(),
@@ -53,11 +56,12 @@ vi.mock('./services/api', () => ({
 }))
 
 import App from './App'
-import { search, ensureScrape, getFullProfile, getCountries } from './services/api'
+import { search, ensureScrape, getFullProfile, getCountries, runSec13f } from './services/api'
 
 const mockSearch = vi.mocked(search)
 const mockEnsure = vi.mocked(ensureScrape)
 const mockProfile = vi.mocked(getFullProfile)
+const mock13f = vi.mocked(runSec13f)
 
 const entity = (id: string, name: string, country?: string): Entity =>
   ({ id, name, type: 'company', verified: false, ...(country ? { country } : {}) } as Entity)
@@ -72,6 +76,9 @@ beforeEach(() => {
   mockSearch.mockReset()
   mockEnsure.mockReset()
   mockProfile.mockReset()
+  mock13f.mockReset()
+  mock13f.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
+  auth.role = 'viewer'
   mockProfile.mockResolvedValue({ data: fullProfile('e1', 'Microsoft Corporation') } as never)
   mockEnsure.mockResolvedValue({
     data: { scraped: false, reason: 'fresh', entity_id: 'e1', depth_reached: 1, sources_run: [], profile: null },
@@ -252,5 +259,42 @@ describe('a search that turns out to be a person', () => {
     // shorter wait would pass whether or not it was scheduled.
     await new Promise(r => setTimeout(r, 1800))
     expect(mockEnsure.mock.calls.every(c => c[1] !== 2)).toBe(true)
+  })
+})
+
+
+describe('the explicit refresh brings the 13F holders along', () => {
+  const openAndRefresh = async (res: SearchResult) => {
+    mockSearch.mockResolvedValue({ data: [res] } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'acme', { delay: null })
+    await userEvent.click(await screen.findByText((res.node as Entity).name))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+    mockEnsure.mockClear()
+    await userEvent.click(await screen.findByRole('button', { name: 'refresh-from-sources' }))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+  }
+
+  it('a viewer refresh never touches the contributor endpoint', async () => {
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    expect(mock13f).not.toHaveBeenCalled()
+  })
+
+  it('a contributor refresh runs 13F and pulls the fresh profile in', async () => {
+    auth.role = 'contributor'
+    mock13f.mockResolvedValue({ data: { status: 'ok', total: 89 } } as never)
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    await waitFor(() => expect(mock13f).toHaveBeenCalledWith('Acme GmbH'))
+    // The holders were written server-side; the profile is re-read WITHOUT
+    // force so the new edges appear with no second scrape.
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
+  })
+
+  it('a fresh quarter answer changes nothing and re-reads nothing', async () => {
+    auth.role = 'contributor'
+    mock13f.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    await waitFor(() => expect(mock13f).toHaveBeenCalled())
+    expect(mockEnsure.mock.calls.filter(c => c[2] === false)).toHaveLength(0)
   })
 })

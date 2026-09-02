@@ -36,12 +36,13 @@ import {
   setUnauthorizedHandler,
   authVerifyEmail,
   ensureScrape,
+  runSec13f,
   reportEvent,
 } from './services/api'
 import { readMapBasis, MAP_BASIS_KEY, NO_COUNTRY, type MapBasis } from './utils/mapBasis'
 import { isSubdivision } from './utils/isoSubdivisions'
 import { buildContextCountries } from './utils/contextCountries'
-import { canScrape } from './utils/scrapeAccess'
+import { canScrape, canManageScrapes } from './utils/scrapeAccess'
 import { scheduleIdle } from './utils/idle'
 import { isPersonResult } from './types'
 import type {
@@ -281,8 +282,28 @@ function AppInner() {
     // The company's own country, so a refresh cannot walk off to a same-named
     // company somewhere else — the sources would happily hand one over.
     const country = (node.raw as { country?: string | null } | undefined)?.country || undefined
-    void enrichExisting(node.label, node.id, true, country)
-  }, [enrichExisting])
+    void (async () => {
+      await enrichExisting(node.label, node.id, true, country)
+      // The explicit company refresh brings the 13F holders along for anyone
+      // the endpoint would allow (contributor+). Fired AFTER the instant
+      // sources so a first-ever refresh stamps the CIK the 13F ingest needs,
+      // and safe to repeat — the server's quarterly deadline gate answers
+      // "fresh" and fetches nothing. Minutes, not seconds, when it does run
+      // (one EDGAR fetch per holder), so the result arrives as a toast and a
+      // profile update rather than holding the overlay open.
+      if (node.nodeType === 'person' || !canManageScrapes(user)) return
+      try {
+        const { data } = await runSec13f(node.label)
+        if (data.status === 'ok' && (data.total ?? 0) > 0) {
+          showToast(t('toast.sec13fHolders', { count: data.total }), 'info')
+          const { data: fresh } = await ensureScrape(node.label, 1, false, country)
+          if (fresh.profile && !isPersonResult(fresh)) {
+            appendProfile(fresh.profile as FullProfile)
+          }
+        }
+      } catch { /* 409 (schedules not run yet) or transient — best-effort */ }
+    })()
+  }, [enrichExisting, user, showToast, t, appendProfile])
 
   const handleScrapeQuery = useCallback(async (query: string, country?: string) => {
     if (!canScrape(user)) { setShowAuth(true); return }

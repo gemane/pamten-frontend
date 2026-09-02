@@ -304,6 +304,7 @@
   },
   "toast": {
     "personGraphError": "Personendiagramm konnte nicht geladen werden.",
+    "sec13fHolders": "13F: {{count}} institutionelle Anteilseigner geladen",
     "entityLoadError": "Eintrag konnte nicht geladen werden. Bitte erneut versuchen.",
     "nodeLoadError": "Knoten konnte nicht geladen werden.",
     "noNewConnections": "Keine neuen Verbindungen gefunden.",

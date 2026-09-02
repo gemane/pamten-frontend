@@ -483,6 +483,18 @@ export const runScraperAll = (company: string, depth = 2): Promise<AxiosResponse
 // `country` (ISO-2) narrows both halves of the lookup: which company in the DB
 // counts as the answer, and what the sources are allowed to answer with. Without
 // it, "Alphabet" searched under Germany comes back as Alphabet Inc.
+// Institutional holders from Form 13F — contributor-only, quarterly-gated
+// server-side (a repeat call inside the quarter answers `fresh` and fetches
+// nothing), 409 until the SEC EDGAR scrape stamped the company's CIK. Slow by
+// nature: one EDGAR fetch per holder, minutes for a widely-held issuer.
+export interface Sec13fResult {
+  status: 'ok' | 'fresh' | 'no_results' | string
+  total?: number
+  next_deadline?: string
+}
+export const runSec13f = (company: string): Promise<AxiosResponse<Sec13fResult>> =>
+  client.post('/scraper/sec-13f/run', null, { params: { company } })
+
 export const ensureScrape = (
   query: string, depth = 1, force = false, country?: string,
 ): Promise<AxiosResponse<EnsureResult>> =>

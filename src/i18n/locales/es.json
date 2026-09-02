@@ -304,6 +304,7 @@
   },
   "toast": {
     "personGraphError": "No se pudo cargar el grafo de la persona.",
+    "sec13fHolders": "13F: {{count}} accionistas institucionales cargados",
     "entityLoadError": "No se pudo cargar la entidad. Inténtalo de nuevo.",
     "nodeLoadError": "No se pudo cargar el nodo.",
     "noNewConnections": "No se encontraron nuevas conexiones.",
