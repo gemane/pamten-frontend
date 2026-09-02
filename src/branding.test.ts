@@ -49,6 +49,10 @@ describe('the web manifest', () => {
 
   it('names the app for a home screen', () => {
     expect(manifest.name).toBeTruthy()
+  })
+
+  it('locks the installed app to portrait — rotating the phone must not rotate the view', () => {
+    expect(manifest.orientation).toBe('portrait')
     // Truncated under an icon at about a dozen characters.
     expect(manifest.short_name.length).toBeLessThanOrEqual(12)
   })
