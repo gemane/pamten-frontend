@@ -116,13 +116,6 @@ export function ownerToNode(owner: Entity | Person): NodeData {
   return 'name' in owner ? entityToNode(owner) : personToNode(owner)
 }
 
-export function pickClaim(claims: Record<string, { rank: string; mainsnak: { datavalue?: { value: unknown } } }[]> | undefined, prop: string): string | null {
-  const list = claims?.[prop]
-  if (!list?.length) return null
-  const preferred = list.find(c => c.rank === 'preferred') ?? list.find(c => c.rank === 'normal')
-  return (preferred?.mainsnak?.datavalue?.value as string) ?? null
-}
-
 const PROV_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 // Format a provenance date/timestamp ('YYYY-MM-DD' or a full ISO string) into a
@@ -162,30 +155,6 @@ export function personDisplayDetails(p: Person, lang: string) {
     nationalities,
     aka: (p.alias ?? []).filter(Boolean),
   }
-}
-
-function useWikidataImage(wikidataId: string | undefined): string | null {
-  const [src, setSrc] = useState<string | null>(null)
-  useEffect(() => {
-    if (!wikidataId) { setSrc(null); return }
-    setSrc(null)
-    fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wikidataId}&props=claims&format=json&origin=*`)
-      .then(r => r.json())
-      .then(data => {
-        const claims = data?.entities?.[wikidataId]?.claims
-        if (!claims) return
-        for (const prop of ['P154', 'P18']) {
-          const val = pickClaim(claims, prop)
-          if (val) {
-            const filename = val.replace(/ /g, '_')
-            setSrc(`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=200`)
-            return
-          }
-        }
-      })
-      .catch(() => {})
-  }, [wikidataId])
-  return src
 }
 
 function usePersonImage(fullName: string | undefined, wikipediaUrl?: string): string | null {
@@ -1045,14 +1014,12 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // Which source asserted each relationship, for the row menu's header — the
   // edge's own source_id, not the node's source list.
   const sourceName = sourceNames(sources)
-  // The stored direct-thumb URL wins (upload.wikimedia.org — the host that
-  // works where Special:FilePath's new redirect does not, e.g. mobile). The
-  // client-side Wikidata lookup remains only as the transition fallback for
-  // entities not yet re-scraped; safeHref-gated because logo_url is scraped
-  // data going into a src attribute.
-  const storedLogo = safeHref(entity.logo_url ?? null)
-  const fetchedLogo = useWikidataImage(storedLogo ? undefined : entity.wikidata_id)
-  const imgSrc = storedLogo ?? fetchedLogo
+  // The stored direct-thumb URL (upload.wikimedia.org — the host that works
+  // where Special:FilePath's new redirect does not, e.g. mobile), resolved
+  // server-side during the scrape. No client-side lookup: still-dev data, so
+  // an entity without logo_url simply has no logo until its next scrape.
+  // safeHref-gated because logo_url is scraped data going into src.
+  const imgSrc = safeHref(entity.logo_url ?? null)
 
   // Surface founders in their own section rather than buried among executives.
   const seenFounders = new Set<string>()
