@@ -1045,7 +1045,14 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // Which source asserted each relationship, for the row menu's header — the
   // edge's own source_id, not the node's source list.
   const sourceName = sourceNames(sources)
-  const imgSrc = useWikidataImage(entity.wikidata_id)
+  // The stored direct-thumb URL wins (upload.wikimedia.org — the host that
+  // works where Special:FilePath's new redirect does not, e.g. mobile). The
+  // client-side Wikidata lookup remains only as the transition fallback for
+  // entities not yet re-scraped; safeHref-gated because logo_url is scraped
+  // data going into a src attribute.
+  const storedLogo = safeHref(entity.logo_url ?? null)
+  const fetchedLogo = useWikidataImage(storedLogo ? undefined : entity.wikidata_id)
+  const imgSrc = storedLogo ?? fetchedLogo
 
   // Surface founders in their own section rather than buried among executives.
   const seenFounders = new Set<string>()
