@@ -1,39 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <defs>
-    <linearGradient id="grad" gradientUnits="userSpaceOnUse" x1="79.44" y1="943.56" x2="944.56" y2="78.44"><stop offset="0%" stop-color="#6373D6"/><stop offset="50%" stop-color="#9B56A9"/><stop offset="75%" stop-color="#CC4E5C"/><stop offset="88%" stop-color="#E34A3C"/><stop offset="100%" stop-color="#E34A3C"/></linearGradient>
-    <clipPath id="tr"><polygon points="-2000,-2000 6000,-2000 6000,6000"/></clipPath>
-    <clipPath id="bl"><polygon points="-2000,-2000 -2000,6000 6000,6000"/></clipPath>
-    <clipPath id="frame">
-      <rect x="79.44" y="78.44" width="865.12" height="865.12"/>
-    </clipPath>
-    <mask id="slits">
-      <rect x="-500" y="-500" width="2048" height="2048" fill="#fff"/>
-      <g fill="#000">
-        <g clip-path="url(#tr)"><polygon points="-3202.51,4000 4797.49,-4000 4939.48,-4000 -3060.52,4000"/></g>
-        <g clip-path="url(#bl)"><polygon points="-2893.48,4000 5106.52,-4000 5248.51,-4000 -2751.49,4000"/></g>
-      </g>
-    </mask>
-    <clipPath id="frameb">
-      <rect x="73.44" y="72.44" width="877.12" height="877.12"/>
-    </clipPath>
-    <mask id="slitsb">
-      <rect x="-500" y="-500" width="2048" height="2048" fill="#fff"/>
-      <g fill="#000">
-        <g clip-path="url(#tr)"><polygon points="-3194.02,4000 4805.98,-4000 4930.99,-4000 -3069.01,4000"/></g>
-        <g clip-path="url(#bl)"><polygon points="-2884.99,4000 5115.01,-4000 5240.02,-4000 -2759.98,4000"/></g>
-      </g>
-    </mask>
-  </defs>
-  <g mask="url(#slitsb)" fill="#1B222B">
-    <path fill-rule="evenodd" d="M73.44,72.44H950.56V949.56H73.44Z M203.56,202.56V819.44H820.44V202.56Z"/>
-    <g clip-path="url(#frameb)"><polygon points="-3069.01,4000 4930.99,-4000 5115.01,-4000 -2884.99,4000"/></g>
+  <g fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <g stroke="#1B222B" stroke-width="130">
+      <path d="M885.5,138.5 L885.5,885.5 L362,885.5"/>
+      <path d="M662,138.5 L138.5,138.5 L138.5,885.5 L885.5,138.5"/>
+    </g>
   </g>
-  <path fill="#1B222B" fill-rule="evenodd" d="M246.08,245.12H466.92V422.89L422.93,466.88H246.08Z M323.4,322.44H388.68V387.72H323.4Z"/>
-  <path fill="#1B222B" fill-rule="evenodd" d="M557.08,776.88H777.92V555.12H601.07L557.08,599.11Z M635.32,634.28H700.6V699.56H635.32Z"/>
-  <g mask="url(#slits)" fill="url(#grad)">
-    <path fill-rule="evenodd" d="M79.44,78.44H944.56V943.56H79.44Z M197.56,196.56V825.44H826.44V196.56Z"/>
-    <g clip-path="url(#frame)"><polygon points="-3060.52,4000 4939.48,-4000 5106.52,-4000 -2893.48,4000"/></g>
+  <!-- flat sides as filled shapes; each corner split by the miter line from
+       the inner corner to the outer corner -->
+  <g>
+    <path fill="#6373D6" d="M197.50,197.50 L96.78,96.78 A59.0 59.0 0 0 1 138.5,79.5 L662,79.5 A59.0 59.0 0 0 1 662,197.5 Z"/>
+    <path fill="#6373D6" d="M826.50,826.50 L927.22,927.22 A59.0 59.0 0 0 1 885.5,944.5 L362,944.5 A59.0 59.0 0 0 1 362,826.5 Z"/>
+    <path fill="#CC4E5C" d="M197.50,197.50 L96.78,96.78 A59.0 59.0 0 0 0 79.5,138.5 L79.5,885.5 A59.0 59.0 0 0 0 115.92,940.01 L197.50,743.06 Z"/>
+    <path fill="#CC4E5C" d="M826.50,280.94 L908.08,83.99 A59.0 59.0 0 0 1 944.5,138.5 L944.5,885.5 A59.0 59.0 0 0 1 927.22,927.22 L826.50,826.50 Z"/>
+    <path fill="#9B56A9" d="M197.50,743.06 L843.78,96.78 A59.0 59.0 0 0 1 908.08,83.99 L826.50,280.94 L180.22,927.22 A59.0 59.0 0 0 1 115.92,940.01 Z"/>
   </g>
-  <path fill="#35A06C" fill-rule="evenodd" d="M252.08,251.12H460.92V420.4L420.44,460.88H252.08Z M317.4,316.44H394.68V393.72H317.4Z"/>
-  <path fill="#2E77AA" fill-rule="evenodd" d="M563.08,770.88H771.92V561.12H603.56L563.08,601.6Z M629.32,628.28H706.6V705.56H629.32Z"/>
+  <!-- green square: dark under-layer stroked for the outline, colour on top -->
+  <g fill-rule="evenodd">
+    <path fill="#1B222B" stroke="#1B222B" stroke-width="12" stroke-linejoin="round" d="
+      M278,251 L435,251 Q461,251 461,277 L461,409 Q461,420 453.2,427.8 L427.8,453.2 Q420,461 409,461 L278,461 Q252,461 252,435 L252,277 Q252,251 278,251 Z
+      M331.4,316.4 L380.7,316.4 Q394.7,316.4 394.7,330.4 L394.7,379.7 Q394.7,393.7 380.7,393.7 L331.4,393.7 Q317.4,393.7 317.4,379.7 L317.4,330.4 Q317.4,316.4 331.4,316.4 Z"/>
+    <path fill="#35A06C" d="
+      M278,251 L435,251 Q461,251 461,277 L461,409 Q461,420 453.2,427.8 L427.8,453.2 Q420,461 409,461 L278,461 Q252,461 252,435 L252,277 Q252,251 278,251 Z
+      M331.4,316.4 L380.7,316.4 Q394.7,316.4 394.7,330.4 L394.7,379.7 Q394.7,393.7 380.7,393.7 L331.4,393.7 Q317.4,393.7 317.4,379.7 L317.4,330.4 Q317.4,316.4 331.4,316.4 Z"/>
+  </g>
+  <!-- blue square, chamfer on its top-left, mirrored construction -->
+  <g fill-rule="evenodd">
+    <path fill="#1B222B" stroke="#1B222B" stroke-width="12" stroke-linejoin="round" d="
+      M589,771 L746,771 Q772,771 772,745 L772,587 Q772,561 746,561 L615,561 Q604,561 596.2,568.8 L570.8,594.2 Q563,602 563,613 L563,745 Q563,771 589,771 Z
+      M643.3,628.3 L692.6,628.3 Q706.6,628.3 706.6,642.3 L706.6,691.6 Q706.6,705.6 692.6,705.6 L643.3,705.6 Q629.3,705.6 629.3,691.6 L629.3,642.3 Q629.3,628.3 643.3,628.3 Z"/>
+    <path fill="#2E77AA" d="
+      M589,771 L746,771 Q772,771 772,745 L772,587 Q772,561 746,561 L615,561 Q604,561 596.2,568.8 L570.8,594.2 Q563,602 563,613 L563,745 Q563,771 589,771 Z
+      M643.3,628.3 L692.6,628.3 Q706.6,628.3 706.6,642.3 L706.6,691.6 Q706.6,705.6 692.6,705.6 L643.3,705.6 Q629.3,705.6 629.3,691.6 L629.3,642.3 Q629.3,628.3 643.3,628.3 Z"/>
+  </g>
 </svg>
