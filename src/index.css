@@ -3930,3 +3930,39 @@ a.source-item__name:hover { color: #4A90D9; }
 .scr-run__target { color: #eaeaea; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scr-run__meta { color: #8892a4; font-size: 11px; white-space: nowrap; }
 .scr-run__error { grid-column: 2 / -1; color: #e0837a; font-size: 11px; word-break: break-word; }
+
+/* ── Per-source health (the OpenCorporates lesson: plumbing is the product) ── */
+.src-health { margin: 14px 0; border: 1px solid #2a3a5a; border-radius: 10px; padding: 12px; background: #12203c; }
+.src-health__head { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: #eaeaea; margin-bottom: 8px; }
+.src-health__lock { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #d0a24a; background: #2c2410; padding: 2px 8px; border-radius: 10px; }
+.src-health__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.src-health__row { display: grid; grid-template-columns: 18px auto auto 1fr; align-items: center; gap: 8px; font-size: 12px; padding: 4px 8px; border-left: 2px solid transparent; border-radius: 4px; }
+.src-health__row--ok { border-left-color: #2e6a3f; }
+.src-health__row--failed { border-left-color: #e0524a; }
+.src-health__row--stale { border-left-color: #d0a24a; }
+.src-health__row--running { border-left-color: #3d7cef; }
+.src-health__row--never { border-left-color: #2a3a5a; }
+.src-health__row--dataset { border-left-color: #22304a; }
+.src-health__row--ok .src-health__status { color: #7ee29b; }
+.src-health__row--failed .src-health__status { color: #e0837a; }
+.src-health__row--stale .src-health__status { color: #d0a24a; }
+.src-health__row--running .src-health__status { color: #7aa2e0; }
+.src-health__row--never .src-health__status { color: #4a5568; }
+.src-health__row--dataset .src-health__status { color: #9db0d0; }
+.src-health__name { font-weight: 600; color: #eaeaea; white-space: nowrap; }
+.src-health__kind { font-size: 9.5px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; color: #9db0d0; background: #22304a; }
+.src-health__meta { color: #8892a4; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src-health__streak { grid-column: 4; justify-self: end; font-size: 9.5px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; color: #d0a24a; background: #2c2410; }
+.src-health__error { grid-column: 2 / -1; font-size: 11px; color: #e0837a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-theme="light"] .src-health { border-color: #d5dbe6; background: #f6f8fb; }
+[data-theme="light"] .src-health__head { color: #1c2733; }
+[data-theme="light"] .src-health__name { color: #1c2733; }
+[data-theme="light"] .src-health__meta { color: #5a6678; }
+[data-theme="light"] .src-health__kind { color: #44506a; background: #e4e9f2; }
+[data-theme="light"] .src-health__row--ok .src-health__status { color: #1e8449; }
+[data-theme="light"] .src-health__row--failed .src-health__status { color: #c0392b; }
+[data-theme="light"] .src-health__row--stale .src-health__status,
+[data-theme="light"] .src-health__streak { color: #9a6a10; }
+[data-theme="light"] .src-health__streak { background: #f4e8cf; }
+[data-theme="light"] .src-health__lock { color: #9a6a10; background: #f4e8cf; }
+[data-theme="light"] .src-health__error { color: #c0392b; }

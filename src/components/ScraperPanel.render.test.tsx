@@ -16,6 +16,7 @@ vi.mock('../services/api', () => ({
 vi.mock('./DuplicatesModal', () => ({ default: () => null }))
 vi.mock('./FederationPanel', () => ({ default: () => <div data-testid="federation" /> }))
 vi.mock('./ScraperActivity', () => ({ default: () => <div data-testid="activity" /> }))
+vi.mock('./SourceHealth', () => ({ default: () => <div data-testid="health" /> }))
 import { getScraperStatus, getScraperSources } from '../services/api'
 
 const status: ScraperStatus = { enabled: true, sec_edgar_enabled: false, open_corporates_enabled: false }
@@ -117,6 +118,17 @@ describe('ScraperPanel visibility by role', () => {
     const form = await screen.findByPlaceholderText(/Company name/i)
     const feed = screen.getByTestId('activity')
     expect(feed.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('puts source health right after where-the-data-comes-from', async () => {
+    // The user's placement choice: first what the sources ARE (the
+    // catalogue), then how they are DOING (the health panel).
+    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
+    const catalogue = await screen.findByText(/Where the data comes from/i)
+    const health = screen.getByTestId('health')
+    expect(catalogue.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const form = screen.getByPlaceholderText(/Company name/i)
+    expect(health.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('puts the run controls above the admin-only bulk datasets', async () => {
