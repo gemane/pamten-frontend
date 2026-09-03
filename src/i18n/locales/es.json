@@ -543,5 +543,21 @@
     "shares": "Acciones",
     "sharesOf": "{{shares}} de {{total}}",
     "votingShares": "Acciones votadas"
+  },
+  "health": {
+    "title": "Estado de las fuentes",
+    "neverRan": "nunca ejecutado",
+    "items": "{{count}} elementos",
+    "lastOk": "último éxito {{when}}",
+    "failing": "×{{count}} fallando",
+    "dataAsOf": "datos al {{date}}",
+    "behindDays": "{{count}} días de retraso",
+    "records": "{{count}} registros",
+    "notLoaded": "no cargado",
+    "lockHeld": "importación en curso",
+    "scope": {
+      "full": "completo",
+      "subset": "subconjunto de prueba"
+    }
   }
 }

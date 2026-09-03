@@ -467,6 +467,38 @@ export interface ScrapeResult {
   scraped: Array<{ name: string; type: string }>
 }
 
+export interface SourceHealthEntry {
+  name: string
+  label: string
+  kind?: 'instant' | 'bulk' | null
+  quality?: string | null
+  enabled?: boolean | null
+  last_run_at?: string | null
+  last_status?: 'ok' | 'failed' | 'running' | 'stale' | string | null
+  last_total?: number | null
+  last_ok_at?: string | null
+  failure_streak: number
+  runs_24h: number
+  last_error?: string           // present only for contributor+
+}
+
+export interface DatasetHealth {
+  name: string
+  label: string
+  scope?: 'full' | 'subset' | string | null
+  loaded_at?: string | null
+  last_publish_date?: string | null
+  snapshot_date?: string | null
+  record_count?: number | null
+  behind_days?: number | null
+}
+
+export interface ScraperHealth {
+  sources: SourceHealthEntry[]
+  datasets: DatasetHealth[]
+  import_lock: { held: boolean; holder?: string; age_seconds?: number; stale?: boolean }
+}
+
 export interface ScrapeRun {
   id: string
   source: string

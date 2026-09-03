@@ -543,5 +543,21 @@
     "shares": "Aktien",
     "sharesOf": "{{shares}} von {{total}}",
     "votingShares": "Stimmrechtsaktien"
+  },
+  "health": {
+    "title": "Quellen-Status",
+    "neverRan": "nie gelaufen",
+    "items": "{{count}} Einträge",
+    "lastOk": "letzter Erfolg {{when}}",
+    "failing": "×{{count}} fehlgeschlagen",
+    "dataAsOf": "Datenstand {{date}}",
+    "behindDays": "{{count}} Tage zurück",
+    "records": "{{count}} Datensätze",
+    "notLoaded": "nicht geladen",
+    "lockHeld": "Import läuft",
+    "scope": {
+      "full": "vollständig",
+      "subset": "Test-Teilmenge"
+    }
   }
 }

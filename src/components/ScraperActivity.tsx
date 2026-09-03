@@ -2,18 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiLoader, FiCheckCircle, FiAlertTriangle, FiClock, FiActivity } from 'react-icons/fi'
 import { getScraperRuns } from '../services/api'
+import { ago } from '../utils/relativeTime'
 import type { ScrapeRun } from '../types'
 
 const SOURCE_LABEL: Record<string, string> = {
   wikidata: 'Wikidata', sec_edgar: 'SEC EDGAR', open_corporates: 'OpenCorporates', all: 'All sources',
-}
-
-function ago(iso: string, t: (k: string, o?: Record<string, unknown>) => string): string {
-  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000))
-  if (s < 60) return t('activity.secondsAgo', { count: s })
-  if (s < 3600) return t('activity.minutesAgo', { count: Math.round(s / 60) })
-  if (s < 86400) return t('activity.hoursAgo', { count: Math.round(s / 3600) })
-  return t('activity.daysAgo', { count: Math.round(s / 86400) })
 }
 
 export default function ScraperActivity() {

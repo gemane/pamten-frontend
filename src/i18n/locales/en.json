@@ -543,5 +543,21 @@
     "shares": "Shares",
     "sharesOf": "{{shares}} of {{total}}",
     "votingShares": "Voted shares"
+  },
+  "health": {
+    "title": "Source health",
+    "neverRan": "never ran",
+    "items": "{{count}} items",
+    "lastOk": "last success {{when}}",
+    "failing": "×{{count}} failing",
+    "dataAsOf": "data as of {{date}}",
+    "behindDays": "{{count}} days behind",
+    "records": "{{count}} records",
+    "notLoaded": "not loaded",
+    "lockHeld": "import running",
+    "scope": {
+      "full": "full",
+      "subset": "test subset"
+    }
   }
 }

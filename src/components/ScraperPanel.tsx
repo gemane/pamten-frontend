@@ -10,6 +10,7 @@ import DuplicatesModal from './DuplicatesModal'
 import FederationPanel from './FederationPanel'
 import ScraperActivity from './ScraperActivity'
 import SourceCatalogue from './SourceCatalogue'
+import SourceHealth from './SourceHealth'
 import { canManageScrapes, canAdministerScrapes } from '../utils/scrapeAccess'
 import { colorFor } from '../utils/entityColors'
 
@@ -290,6 +291,10 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
 
       {/* Public: what the platform draws on and how far to trust it. */}
       <SourceCatalogue sources={sources} />
+
+      {/* Per-source freshness, after "where the data comes from" — first what
+          the sources are, then how they are doing. */}
+      <SourceHealth />
 
       {canManage && !masterOn && masterStatus && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.enableRequired')}</div>

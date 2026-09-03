@@ -31,6 +31,7 @@ import type {
   FlagGroup,
   Suppression,
   Pin,
+  ScraperHealth,
 } from '../types'
 
 // The backend serves everything under /v1. It still answers on the unversioned
@@ -463,6 +464,11 @@ export const deleteUser     = (id: string): Promise<AxiosResponse<{ message: str
 export const getScraperStatus  = (): Promise<AxiosResponse<ScraperStatus>> => client.get('/scraper/status')
 export const getScraperRuns    = (limit = 50): Promise<AxiosResponse<{ count: number; runs: ScrapeRun[] }>> =>
   client.get('/scraper/runs', { params: { limit } })
+// Per-source freshness/health: last run, streaks, bulk-data age. Public;
+// last_error and the lock holder appear only for contributor+ (the backend
+// redacts by dropping the keys).
+export const getScraperHealth = (): Promise<AxiosResponse<ScraperHealth>> =>
+  client.get('/scraper/health')
 export const getScraperSources = (): Promise<AxiosResponse<ScraperSource[]>> => client.get('/scraper/sources')
 export const toggleScraperSource = (name: string): Promise<AxiosResponse<ScraperSource>> => client.patch(`/scraper/sources/${name}/toggle`)
 
