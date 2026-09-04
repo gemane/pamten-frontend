@@ -470,6 +470,11 @@ export const getScraperRuns    = (limit = 50): Promise<AxiosResponse<{ count: nu
 export const getScraperHealth = (): Promise<AxiosResponse<ScraperHealth>> =>
   client.get('/scraper/health')
 export const getScraperSources = (): Promise<AxiosResponse<ScraperSource[]>> => client.get('/scraper/sources')
+// Set a source's data mode: 'full' draws edges, 'claims_only' records claims
+// and enriches entities but never draws structure. Admin-only server-side.
+export const setScraperSourceMode = (name: string, mode: 'full' | 'claims_only') =>
+  client.patch(`/scraper/sources/${name}/mode`, null, { params: { mode } })
+
 export const toggleScraperSource = (name: string): Promise<AxiosResponse<ScraperSource>> => client.patch(`/scraper/sources/${name}/toggle`)
 
 export const runScraper = (query: string, depth = 2): Promise<AxiosResponse<ScrapeResult>> =>

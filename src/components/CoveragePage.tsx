@@ -101,6 +101,10 @@ export default function CoveragePage({ onShowScraper }: CoveragePageProps = {}) 
               {s.kind === 'instant' && !s.enabled && (
                 <span className="coverage__paused">{t('scraper.sourcePaused')}</span>
               )}
+              {/* This source asserts but does not draw ownership structure. */}
+              {s.data_mode === 'claims_only' && (
+                <span className="coverage__paused">{t('coverage.claimsOnly')}</span>
+              )}
               <Freshness source={s} health={health} />
             </div>
           </div>

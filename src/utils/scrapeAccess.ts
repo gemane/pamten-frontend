@@ -17,9 +17,11 @@ export function canScrape(user: AuthUser | null | undefined): boolean {
 // are public (`/scraper/status` and `/scraper/runs` need no auth), so they render
 // for everyone and need no predicate.
 
-// Bulk runs, the source selector, per-source toggles, and duplicate-person
+// Bulk runs, the source selector, and duplicate-person
 // review. Mirrors `require_contributor` on /scraper/run, /scraper/source/*/run
-// and the /persons/* dedup endpoints.
+// and the /persons/* dedup endpoints. NOTE: the per-source enable toggles and
+// data-mode controls are require_ADMIN, not contributor — they live behind
+// canAdministerScrapes in ScraperPanel, not this predicate.
 export function canManageScrapes(user: AuthUser | null | undefined): boolean {
   return user?.role === 'admin' || user?.role === 'contributor'
 }

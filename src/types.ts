@@ -363,6 +363,8 @@ export interface ScraperSource {
   region?: string | null
   /** One sentence: what this source is authoritative for. */
   coverage?: string | null
+  /** 'full' draws edges; 'claims_only' records claims/enrichment only. */
+  data_mode?: 'full' | 'claims_only' | null
 }
 
 export interface ScraperStatus {
