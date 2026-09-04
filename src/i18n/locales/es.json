@@ -454,7 +454,8 @@
       "instant": "Consultada por empresa",
       "bulk": "Importación masiva"
     },
-    "sourcePaused": "consultas bajo demanda en pausa"
+    "sourcePaused": "consultas bajo demanda en pausa",
+    "sourcesPointer": "De dónde vienen los datos — fuentes, cobertura y frescura en la pestaña Datos"
   },
   "activity": {
     "title": "Actividad reciente",

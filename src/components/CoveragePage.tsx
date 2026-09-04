@@ -82,6 +82,12 @@ export default function CoveragePage() {
                 </span>
               )}
               {s.kind && <span className="coverage__kind">{t(`scraper.sourceKind.${s.kind}`, { defaultValue: s.kind })}</span>}
+              {/* Absorbed from the old catalogue: only an instant source's
+                  off-toggle means "not used" — a bulk source's data is loaded
+                  and in use while its importer is switched off. */}
+              {s.kind === 'instant' && !s.enabled && (
+                <span className="coverage__paused">{t('scraper.sourcePaused')}</span>
+              )}
               <Freshness source={s} health={health} />
             </div>
           </div>

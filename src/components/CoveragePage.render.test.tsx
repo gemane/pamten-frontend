@@ -81,4 +81,11 @@ describe('CoveragePage', () => {
     await screen.findByText('SEC EDGAR')
     expect(screen.getByText(/never ran/)).toBeTruthy()
   })
+
+  it('a paused instant source wears the chip absorbed from the old catalogue', async () => {
+    mockSources.mockResolvedValue({ data: [src({ enabled: false })] } as never)
+    render(<CoveragePage />)
+    await screen.findByText('SEC EDGAR')
+    expect(screen.getByText(/on-demand lookups paused/)).toBeTruthy()
+  })
 })

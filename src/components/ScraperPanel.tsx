@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiUsers } from 'react-icons/fi'
+import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiUsers, FiBookOpen } from 'react-icons/fi'
 import {
   getScraperStatus, getScraperSources, toggleScraperSource,
   runScraper, runScraperSecEdgar, runScraperOpenCorporates, runScraperAll,
@@ -9,7 +9,6 @@ import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser } from '../ty
 import DuplicatesModal from './DuplicatesModal'
 import FederationPanel from './FederationPanel'
 import ScraperActivity from './ScraperActivity'
-import SourceCatalogue from './SourceCatalogue'
 import SourceHealth from './SourceHealth'
 import { canManageScrapes, canAdministerScrapes } from '../utils/scrapeAccess'
 import { colorFor } from '../utils/entityColors'
@@ -17,6 +16,8 @@ import { colorFor } from '../utils/entityColors'
 interface ScraperPanelProps {
   onLoadIntoGraph: (query: string) => void
   user: AuthUser | null
+  /** Navigate to the Data (coverage) tab — the catalogue lives there now. */
+  onShowCoverage?: () => void
 }
 
 // Was a three-entry copy of the palette, so funds, foundations, governments
@@ -144,7 +145,7 @@ function AllResultList({ result }: { result: AllResultData }) {
 
 // ── Main panel ────────────────────────────────────────────────────────────────
 
-export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProps) {
+export default function ScraperPanel({ onLoadIntoGraph, user, onShowCoverage }: ScraperPanelProps) {
   const { t } = useTranslation()
   // The panel is graduated rather than all-or-nothing: the status header and the
   // activity feed are public, `canManage` gates the things that write data, and
@@ -289,11 +290,15 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
           exception text for non-contributors, so this renders for everyone. */}
       <ScraperActivity />
 
-      {/* Public: what the platform draws on and how far to trust it. */}
-      <SourceCatalogue sources={sources} />
+      {/* The catalogue itself lives on the Data tab now (it grew region,
+          coverage and freshness there); this panel keeps the OPERATIONAL
+          view and points across rather than duplicating. */}
+      {onShowCoverage && (
+        <button type="button" className="scraper-coverage-link" onClick={onShowCoverage}>
+          <FiBookOpen size={13} /> {t('scraper.sourcesPointer')}
+        </button>
+      )}
 
-      {/* Per-source freshness, after "where the data comes from" — first what
-          the sources are, then how they are doing. */}
       <SourceHealth />
 
       {canManage && !masterOn && masterStatus && (

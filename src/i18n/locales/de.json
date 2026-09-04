@@ -454,7 +454,8 @@
       "instant": "Pro Unternehmen abgefragt",
       "bulk": "Massendaten-Import"
     },
-    "sourcePaused": "Abfragen auf Anfrage pausiert"
+    "sourcePaused": "Abfragen auf Anfrage pausiert",
+    "sourcesPointer": "Woher die Daten stammen — Quellen, Abdeckung und Aktualität im Daten-Tab"
   },
   "activity": {
     "title": "Letzte Aktivität",

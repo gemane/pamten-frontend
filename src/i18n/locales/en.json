@@ -454,7 +454,8 @@
       "instant": "Queried per company",
       "bulk": "Bulk dataset import"
     },
-    "sourcePaused": "on-demand lookups paused"
+    "sourcePaused": "on-demand lookups paused",
+    "sourcesPointer": "Where the data comes from — sources, coverage and freshness on the Data tab"
   },
   "activity": {
     "title": "Recent activity",

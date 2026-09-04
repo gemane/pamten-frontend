@@ -951,7 +951,7 @@ function AppInner() {
           )}
           {activeTab === 'scraper' && (
             <div className="left-panel__detail">
-              <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
+              <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} onShowCoverage={() => handleTabChange('coverage')} />
             </div>
           )}
           {activeTab === 'coverage' && (
@@ -1048,7 +1048,7 @@ function AppInner() {
             )}
             {activeTab === 'scraper' && (
               <div className="mobile-full-panel">
-                <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
+                <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} onShowCoverage={() => handleTabChange('coverage')} />
               </div>
             )}
             {activeTab === 'coverage' && (

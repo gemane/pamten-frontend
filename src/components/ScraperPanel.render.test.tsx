@@ -120,13 +120,13 @@ describe('ScraperPanel visibility by role', () => {
     expect(feed.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('puts source health right after where-the-data-comes-from', async () => {
-    // The user's placement choice: first what the sources ARE (the
-    // catalogue), then how they are DOING (the health panel).
-    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
-    const catalogue = await screen.findByText(/Where the data comes from/i)
+  it('puts source health after the coverage pointer, before the run form', async () => {
+    // First where the data comes from (now a pointer to the Data tab), then
+    // how the sources are doing, then the controls.
+    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} onShowCoverage={vi.fn()} />)
+    const pointer = await screen.findByText(/Where the data comes from/i)
     const health = screen.getByTestId('health')
-    expect(catalogue.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(pointer.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     const form = screen.getByPlaceholderText(/Company name/i)
     expect(health.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
@@ -168,16 +168,19 @@ describe('ScraperPanel intro and sources', () => {
     expect(screen.queryByText(/maps who ultimately owns and controls/i)).toBeNull()
   })
 
-  it('shows the source catalogue to a visitor', async () => {
-    render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} />)
-    expect(await screen.findByText(/Where the data comes from/i)).toBeInTheDocument()
-    // The fixture carries no `label`, so the catalogue falls back to the raw
-    // name — which is itself the behaviour worth pinning for older rows.
-    expect(await screen.findByText('wikidata')).toBeInTheDocument()
+  it('points every visitor at the Data tab instead of duplicating the catalogue', async () => {
+    // The catalogue itself lives on the coverage page now; the panel keeps
+    // the operational view and one pointer across.
+    const onShowCoverage = vi.fn()
+    render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} onShowCoverage={onShowCoverage} />)
+    const link = await screen.findByText(/Where the data comes from/i)
+    link.closest('button')!.click()
+    expect(onShowCoverage).toHaveBeenCalled()
   })
 
-  it('shows it to an admin too', async () => {
+  it('renders no pointer when the app gave no navigation callback', async () => {
     render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
-    expect(await screen.findByText(/Where the data comes from/i)).toBeInTheDocument()
+    await screen.findByPlaceholderText(/Company name/i)
+    expect(screen.queryByText(/Where the data comes from/i)).toBeNull()
   })
 })
