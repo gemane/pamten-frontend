@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiExternalLink } from 'react-icons/fi'
+import { FiExternalLink, FiActivity } from 'react-icons/fi'
 import { getScraperSources, getScraperHealth, getStats } from '../services/api'
 import { ago } from '../utils/relativeTime'
 import type { ScraperSource, ScraperHealth } from '../types'
@@ -32,7 +32,12 @@ function Freshness({ source, health }: { source: ScraperSource; health: ScraperH
   return <span className="coverage__fresh">{t('coverage.lastSuccess', { when: ago(h.last_ok_at, t) })}</span>
 }
 
-export default function CoveragePage() {
+interface CoveragePageProps {
+  /** Navigate to the scraper tab — live runs, health detail and controls. */
+  onShowScraper?: () => void
+}
+
+export default function CoveragePage({ onShowScraper }: CoveragePageProps = {}) {
   const { t } = useTranslation()
   const [sources, setSources] = useState<ScraperSource[]>([])
   const [health, setHealth] = useState<ScraperHealth | null>(null)
@@ -95,6 +100,12 @@ export default function CoveragePage() {
       </div>
 
       <p className="coverage__note">{t('coverage.note')}</p>
+
+      {onShowScraper && (
+        <button type="button" className="coverage__ops-link" onClick={onShowScraper}>
+          <FiActivity size={13} /> {t('coverage.opsLink')}
+        </button>
+      )}
     </div>
   )
 }

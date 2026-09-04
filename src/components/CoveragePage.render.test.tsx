@@ -88,4 +88,12 @@ describe('CoveragePage', () => {
     await screen.findByText('SEC EDGAR')
     expect(screen.getByText(/on-demand lookups paused/)).toBeTruthy()
   })
+
+  it('the ops link navigates to the scraper tab', async () => {
+    const onShowScraper = vi.fn()
+    render(<CoveragePage onShowScraper={onShowScraper} />)
+    const link = await screen.findByText(/Live scrape activity/)
+    link.closest('button')!.click()
+    expect(onShowScraper).toHaveBeenCalled()
+  })
 })

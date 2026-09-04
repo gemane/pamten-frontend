@@ -120,13 +120,13 @@ describe('ScraperPanel visibility by role', () => {
     expect(feed.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('puts source health after the coverage pointer, before the run form', async () => {
-    // First where the data comes from (now a pointer to the Data tab), then
-    // how the sources are doing, then the controls.
-    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} onShowCoverage={vi.fn()} />)
-    const pointer = await screen.findByText(/Where the data comes from/i)
+  it('puts source health after the activity feed, before the run form', async () => {
+    // Operational reading order: what ran, how the sources are doing, then
+    // the controls. The catalogue itself lives on the Data tab.
+    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
+    const feed = await screen.findByTestId('activity')
     const health = screen.getByTestId('health')
-    expect(pointer.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(feed.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     const form = screen.getByPlaceholderText(/Company name/i)
     expect(health.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
@@ -168,19 +168,9 @@ describe('ScraperPanel intro and sources', () => {
     expect(screen.queryByText(/maps who ultimately owns and controls/i)).toBeNull()
   })
 
-  it('points every visitor at the Data tab instead of duplicating the catalogue', async () => {
-    // The catalogue itself lives on the coverage page now; the panel keeps
-    // the operational view and one pointer across.
-    const onShowCoverage = vi.fn()
-    render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} onShowCoverage={onShowCoverage} />)
-    const link = await screen.findByText(/Where the data comes from/i)
-    link.closest('button')!.click()
-    expect(onShowCoverage).toHaveBeenCalled()
-  })
-
-  it('renders no pointer when the app gave no navigation callback', async () => {
-    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
-    await screen.findByPlaceholderText(/Company name/i)
+  it('carries no catalogue at all — the Data tab owns it, and links HERE', async () => {
+    render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} />)
+    await screen.findByTestId('activity')
     expect(screen.queryByText(/Where the data comes from/i)).toBeNull()
   })
 })

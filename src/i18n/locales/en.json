@@ -454,8 +454,7 @@
       "instant": "Queried per company",
       "bulk": "Bulk dataset import"
     },
-    "sourcePaused": "on-demand lookups paused",
-    "sourcesPointer": "Where the data comes from — sources, coverage and freshness on the Data tab"
+    "sourcePaused": "on-demand lookups paused"
   },
   "activity": {
     "title": "Recent activity",
@@ -569,6 +568,7 @@
     "title": "Data coverage",
     "intro": "Owlgraph maps who owns and controls companies, assembled from public registers and filings. Every fact carries its source; this page states what each source covers, how far to trust it, and how fresh its data is.",
     "lastSuccess": "last updated {{when}}",
-    "note": "This development instance carries a curated test subset of the full datasets — scope badges above say which. Counts grow as sources are re-read."
+    "note": "This development instance carries a curated test subset of the full datasets — scope badges above say which. Counts grow as sources are re-read.",
+    "opsLink": "Live scrape activity, source health and controls"
   }
 }

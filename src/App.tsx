@@ -908,8 +908,8 @@ function AppInner() {
               <div className="tab-toggle">
                 <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /></button>
                 <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /></button>
-                <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'coverage' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('coverage')} title={t('nav.coverage')}><FiBookOpen /></button>
+                <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
               </div>
             </div>
@@ -951,12 +951,12 @@ function AppInner() {
           )}
           {activeTab === 'scraper' && (
             <div className="left-panel__detail">
-              <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} onShowCoverage={() => handleTabChange('coverage')} />
+              <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
             </div>
           )}
           {activeTab === 'coverage' && (
             <div className="left-panel__detail">
-              <CoveragePage />
+              <CoveragePage onShowScraper={() => handleTabChange('scraper')} />
             </div>
           )}
           {activeTab === 'settings' && (
@@ -1048,12 +1048,12 @@ function AppInner() {
             )}
             {activeTab === 'scraper' && (
               <div className="mobile-full-panel">
-                <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} onShowCoverage={() => handleTabChange('coverage')} />
+                <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
               </div>
             )}
             {activeTab === 'coverage' && (
               <div className="mobile-full-panel">
-                <CoveragePage />
+                <CoveragePage onShowScraper={() => handleTabChange('scraper')} />
               </div>
             )}
             {activeTab === 'settings' && (
@@ -1119,11 +1119,11 @@ function AppInner() {
           <button className={`bottom-nav-btn ${activeTab === 'map' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('map')}>
             <FiGlobe /><span>{t('nav.map')}</span>
           </button>
-          <button className={`bottom-nav-btn ${activeTab === 'scraper' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('scraper')}>
-            <FiDatabase /><span>{t('scraper.title')}</span>
-          </button>
           <button className={`bottom-nav-btn ${activeTab === 'coverage' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('coverage')}>
             <FiBookOpen /><span>{t('nav.coverage')}</span>
+          </button>
+          <button className={`bottom-nav-btn ${activeTab === 'scraper' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('scraper')}>
+            <FiDatabase /><span>{t('scraper.title')}</span>
           </button>
           <button className={`bottom-nav-btn ${activeTab === 'settings' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('settings')}>
             <FiSettings /><span>{t('settings.title')}</span>
