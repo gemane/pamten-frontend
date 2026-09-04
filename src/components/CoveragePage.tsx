@@ -56,6 +56,14 @@ export default function CoveragePage({ onShowScraper }: CoveragePageProps = {}) 
       <h2 className="coverage__title">{t('coverage.title')}</h2>
       <p className="coverage__intro">{t('coverage.intro')}</p>
 
+      {/* On top on purpose: the source list below grows with every new
+          scraper, and the operator's door must not sink with it. */}
+      {onShowScraper && (
+        <button type="button" className="coverage__ops-link" onClick={onShowScraper}>
+          <FiActivity size={13} /> {t('coverage.opsLink')}
+        </button>
+      )}
+
       {stats && (
         <div className="coverage__stats">
           <div><strong>{stats.companies.toLocaleString()}</strong> {t('graph.statCompanies')}</div>
@@ -100,12 +108,6 @@ export default function CoveragePage({ onShowScraper }: CoveragePageProps = {}) 
       </div>
 
       <p className="coverage__note">{t('coverage.note')}</p>
-
-      {onShowScraper && (
-        <button type="button" className="coverage__ops-link" onClick={onShowScraper}>
-          <FiActivity size={13} /> {t('coverage.opsLink')}
-        </button>
-      )}
     </div>
   )
 }
