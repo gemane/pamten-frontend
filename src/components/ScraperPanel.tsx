@@ -9,7 +9,6 @@ import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser } from '../ty
 import DuplicatesModal from './DuplicatesModal'
 import FederationPanel from './FederationPanel'
 import ScraperActivity from './ScraperActivity'
-import SourceCatalogue from './SourceCatalogue'
 import SourceHealth from './SourceHealth'
 import { canManageScrapes, canAdministerScrapes } from '../utils/scrapeAccess'
 import { colorFor } from '../utils/entityColors'
@@ -289,11 +288,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
           exception text for non-contributors, so this renders for everyone. */}
       <ScraperActivity />
 
-      {/* Public: what the platform draws on and how far to trust it. */}
-      <SourceCatalogue sources={sources} />
-
-      {/* Per-source freshness, after "where the data comes from" — first what
-          the sources are, then how they are doing. */}
+      {/* The catalogue lives on the Data tab (region, coverage, freshness);
+          this panel is the OPERATIONAL view — and the Data tab links here,
+          not the other way round: readers land there, operators come here. */}
       <SourceHealth />
 
       {canManage && !masterOn && masterStatus && (

@@ -3,7 +3,7 @@ import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
 import { countryName } from './utils/isoCountries'
-import { FiSearch, FiDatabase, FiGlobe, FiSettings } from 'react-icons/fi'
+import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiBookOpen } from 'react-icons/fi'
 import SearchBar, { type SearchBarHandle } from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
@@ -13,6 +13,7 @@ import GraphLegend   from './components/GraphLegend'
 import NodePanel     from './components/NodePanel'
 import ScrapeOverlay from './components/ScrapeOverlay'
 import ScraperPanel  from './components/ScraperPanel'
+import CoveragePage from './components/CoveragePage'
 import SettingsPanel from './components/SettingsPanel'
 import MapView       from './components/MapView'
 import MapPanel      from './components/MapPanel'
@@ -907,6 +908,7 @@ function AppInner() {
               <div className="tab-toggle">
                 <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /></button>
                 <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /></button>
+                <button className={`tab-btn ${activeTab === 'coverage' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('coverage')} title={t('nav.coverage')}><FiBookOpen /></button>
                 <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
               </div>
@@ -950,6 +952,11 @@ function AppInner() {
           {activeTab === 'scraper' && (
             <div className="left-panel__detail">
               <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
+            </div>
+          )}
+          {activeTab === 'coverage' && (
+            <div className="left-panel__detail">
+              <CoveragePage onShowScraper={() => handleTabChange('scraper')} />
             </div>
           )}
           {activeTab === 'settings' && (
@@ -1044,6 +1051,11 @@ function AppInner() {
                 <ScraperPanel onLoadIntoGraph={handleLoadIntoGraph} user={user} />
               </div>
             )}
+            {activeTab === 'coverage' && (
+              <div className="mobile-full-panel">
+                <CoveragePage onShowScraper={() => handleTabChange('scraper')} />
+              </div>
+            )}
             {activeTab === 'settings' && (
               <div className="mobile-full-panel">
                 <SettingsPanel
@@ -1106,6 +1118,9 @@ function AppInner() {
           </button>
           <button className={`bottom-nav-btn ${activeTab === 'map' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('map')}>
             <FiGlobe /><span>{t('nav.map')}</span>
+          </button>
+          <button className={`bottom-nav-btn ${activeTab === 'coverage' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('coverage')}>
+            <FiBookOpen /><span>{t('nav.coverage')}</span>
           </button>
           <button className={`bottom-nav-btn ${activeTab === 'scraper' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('scraper')}>
             <FiDatabase /><span>{t('scraper.title')}</span>

@@ -4,7 +4,8 @@
     "map": "Map",
     "login": "Login",
     "logout": "Logout",
-    "home": "Return to home"
+    "home": "Return to home",
+    "coverage": "Data"
   },
   "share": {
     "title": "Share this view",
@@ -558,6 +559,16 @@
     "scope": {
       "full": "full",
       "subset": "test subset"
-    }
+    },
+    "behindDays_one": "{{count}} day behind",
+    "items_one": "{{count}} item",
+    "records_one": "{{count}} record"
+  },
+  "coverage": {
+    "title": "Data coverage",
+    "intro": "Owlgraph maps who owns and controls companies, assembled from public registers and filings. Every fact carries its source; this page states what each source covers, how far to trust it, and how fresh its data is.",
+    "lastSuccess": "last updated {{when}}",
+    "note": "This development instance carries a curated test subset of the full datasets — scope badges above say which. Counts grow as sources are re-read.",
+    "opsLink": "Live scrape activity, source health and controls"
   }
 }

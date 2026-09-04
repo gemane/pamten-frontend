@@ -120,13 +120,13 @@ describe('ScraperPanel visibility by role', () => {
     expect(feed.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('puts source health right after where-the-data-comes-from', async () => {
-    // The user's placement choice: first what the sources ARE (the
-    // catalogue), then how they are DOING (the health panel).
+  it('puts source health after the activity feed, before the run form', async () => {
+    // Operational reading order: what ran, how the sources are doing, then
+    // the controls. The catalogue itself lives on the Data tab.
     render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
-    const catalogue = await screen.findByText(/Where the data comes from/i)
+    const feed = await screen.findByTestId('activity')
     const health = screen.getByTestId('health')
-    expect(catalogue.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(feed.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     const form = screen.getByPlaceholderText(/Company name/i)
     expect(health.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
@@ -168,16 +168,9 @@ describe('ScraperPanel intro and sources', () => {
     expect(screen.queryByText(/maps who ultimately owns and controls/i)).toBeNull()
   })
 
-  it('shows the source catalogue to a visitor', async () => {
+  it('carries no catalogue at all — the Data tab owns it, and links HERE', async () => {
     render(<ScraperPanel user={null} onLoadIntoGraph={vi.fn()} />)
-    expect(await screen.findByText(/Where the data comes from/i)).toBeInTheDocument()
-    // The fixture carries no `label`, so the catalogue falls back to the raw
-    // name — which is itself the behaviour worth pinning for older rows.
-    expect(await screen.findByText('wikidata')).toBeInTheDocument()
-  })
-
-  it('shows it to an admin too', async () => {
-    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
-    expect(await screen.findByText(/Where the data comes from/i)).toBeInTheDocument()
+    await screen.findByTestId('activity')
+    expect(screen.queryByText(/Where the data comes from/i)).toBeNull()
   })
 })

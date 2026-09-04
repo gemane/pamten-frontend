@@ -4,7 +4,8 @@
     "map": "Mapa",
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
-    "home": "Volver al inicio"
+    "home": "Volver al inicio",
+    "coverage": "Datos"
   },
   "share": {
     "title": "Compartir esta vista",
@@ -558,6 +559,16 @@
     "scope": {
       "full": "completo",
       "subset": "subconjunto de prueba"
-    }
+    },
+    "behindDays_one": "{{count}} día de retraso",
+    "items_one": "{{count}} elemento",
+    "records_one": "{{count}} registro"
+  },
+  "coverage": {
+    "title": "Cobertura de datos",
+    "intro": "Owlgraph mapea quién posee y controla empresas, a partir de registros públicos y presentaciones obligatorias. Cada dato lleva su fuente; esta página indica qué cubre cada fuente, cuánta confianza merece y qué tan frescos son sus datos.",
+    "lastSuccess": "última actualización {{when}}",
+    "note": "Esta instancia de desarrollo contiene un subconjunto de prueba de los conjuntos de datos completos — las etiquetas de alcance lo indican. Los recuentos crecen con cada lectura.",
+    "opsLink": "Actividad de extracción en vivo, estado de fuentes y controles"
   }
 }

@@ -28,7 +28,7 @@ export interface ViewState {
   nodeId?: string
 }
 
-const TABS = new Set(['graph', 'map', 'scraper', 'settings'])
+const TABS = new Set(['graph', 'map', 'scraper', 'settings', 'coverage'])
 
 export function buildHash(view: ViewState): string {
   if (view.tab === 'graph' && view.entityId) {
