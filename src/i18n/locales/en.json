@@ -409,7 +409,7 @@
     }
   },
   "scraper": {
-    "title": "Scraper",
+    "title": "Scraper Status",
     "masterOn": "Master on",
     "masterOff": "Master off",
     "geocodingOn": "Geocoding on",

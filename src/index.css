@@ -3968,7 +3968,7 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .src-health__error { color: #c0392b; }
 
 /* ── Coverage page: what data is here, from where, how fresh ── */
-.coverage { padding: 4px 2px; }
+.coverage { padding: 20px 16px; }
 .coverage__title { font-size: 18px; margin: 4px 0 8px; color: #eaeaea; }
 .coverage__intro { font-size: 13px; line-height: 1.5; color: #8892a4; margin: 0 0 14px; }
 .coverage__stats { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 12px; color: #8892a4; border: 1px solid #2a3a5a; border-radius: 10px; background: #12203c; padding: 10px 14px; margin-bottom: 14px; }

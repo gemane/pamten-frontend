@@ -55,7 +55,7 @@ describe('ScraperPanel (render)', () => {
 
   it('shows the scraper controls for an admin', async () => {
     render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
-    expect(screen.getByText('Scraper')).toBeInTheDocument()
+    expect(screen.getByText('Scraper Status')).toBeInTheDocument()
     expect(screen.queryByText(/Only contributors and admins can run/i)).toBeNull()
     // The source toggle from getScraperSources renders.
     expect(await screen.findByText('Wikidata')).toBeInTheDocument()
