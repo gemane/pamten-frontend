@@ -4,7 +4,8 @@
     "map": "Karte",
     "login": "Anmelden",
     "logout": "Abmelden",
-    "home": "Zurück zur Startseite"
+    "home": "Zurück zur Startseite",
+    "coverage": "Daten"
   },
   "share": {
     "title": "Diese Ansicht teilen",
@@ -558,6 +559,15 @@
     "scope": {
       "full": "vollständig",
       "subset": "Test-Teilmenge"
-    }
+    },
+    "behindDays_one": "{{count}} Tag zurück",
+    "items_one": "{{count}} Eintrag",
+    "records_one": "{{count}} Datensatz"
+  },
+  "coverage": {
+    "title": "Datenabdeckung",
+    "intro": "Owlgraph kartiert, wem Unternehmen gehören und wer sie kontrolliert — zusammengesetzt aus öffentlichen Registern und Pflichtmeldungen. Jeder Fakt trägt seine Quelle; diese Seite zeigt, was jede Quelle abdeckt, wie weit man ihr trauen kann und wie aktuell ihre Daten sind.",
+    "lastSuccess": "zuletzt aktualisiert {{when}}",
+    "note": "Diese Entwicklungsinstanz enthält eine kuratierte Test-Teilmenge der vollständigen Datensätze — die Scope-Angaben oben zeigen welche. Die Zahlen wachsen mit jedem Durchlauf."
   }
 }

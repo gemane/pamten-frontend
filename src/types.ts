@@ -359,6 +359,10 @@ export interface ScraperSource {
   credibility?: number | null
   /** Band the credibility belongs to — what the UI shows alongside the number. */
   quality?: 'statutory' | 'official' | 'aggregated' | 'community' | null
+  /** Short jurisdiction tag ("Global", "US", "GB", …) for the coverage page. */
+  region?: string | null
+  /** One sentence: what this source is authoritative for. */
+  coverage?: string | null
 }
 
 export interface ScraperStatus {

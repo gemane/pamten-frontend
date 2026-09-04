@@ -71,3 +71,11 @@ describe('parseHash', () => {
     expect(parseHash('#map/c/')).toEqual({ tab: 'map' })
   })
 })
+
+
+describe('the coverage tab round-trips', () => {
+  it('#coverage parses and rebuilds', () => {
+    expect(parseHash('#coverage')).toEqual({ tab: 'coverage' })
+    expect(buildHash({ tab: 'coverage' })).toBe('#coverage')
+  })
+})
