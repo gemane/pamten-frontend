@@ -460,10 +460,7 @@
       "claims_only": "nur Belege",
       "hint": "Voll zeichnet Eigentumskanten; nur-Belege erfasst Belege ohne zu zeichnen",
       "label": "Modus"
-    },
-    "sweep": "Kanten entfernen",
-    "sweepHint": "Die bereits gezeichneten Kanten dieser Quelle löschen (Belege und Knoten bleiben)",
-    "sweepConfirm": "Alle von {{name}} gezeichneten Kanten löschen? Belege und Knoten bleiben erhalten. Nicht umkehrbar."
+    }
   },
   "activity": {
     "title": "Letzte Aktivität",

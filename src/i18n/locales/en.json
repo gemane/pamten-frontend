@@ -460,10 +460,7 @@
       "claims_only": "claims only",
       "hint": "Full draws ownership edges; claims-only records claims without drawing",
       "label": "Mode"
-    },
-    "sweep": "Sweep edges",
-    "sweepHint": "Delete the edges this source already drew (claims and nodes stay)",
-    "sweepConfirm": "Delete every edge {{name}} drew? Claims and nodes are kept. This cannot be undone."
+    }
   },
   "activity": {
     "title": "Recent activity",

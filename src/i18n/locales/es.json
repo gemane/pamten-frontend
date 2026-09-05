@@ -460,10 +460,7 @@
       "claims_only": "solo declaraciones",
       "hint": "Completo dibuja aristas de propiedad; solo-declaraciones registra sin dibujar",
       "label": "Modo"
-    },
-    "sweep": "Eliminar aristas",
-    "sweepHint": "Eliminar las aristas que esta fuente ya dibujó (declaraciones y nodos permanecen)",
-    "sweepConfirm": "¿Eliminar todas las aristas que dibujó {{name}}? Las declaraciones y los nodos se conservan. No se puede deshacer."
+    }
   },
   "activity": {
     "title": "Actividad reciente",

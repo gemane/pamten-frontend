@@ -8,7 +8,6 @@ vi.mock('../services/api', () => ({
   getScraperSources: vi.fn(),
   toggleScraperSource: vi.fn(),
   setScraperSourceMode: vi.fn(),
-  sweepSourceEdges: vi.fn(),
   runScraper: vi.fn(),
   runScraperSecEdgar: vi.fn(),
   runScraperOpenCorporates: vi.fn(),
@@ -19,7 +18,7 @@ vi.mock('./DuplicatesModal', () => ({ default: () => null }))
 vi.mock('./FederationPanel', () => ({ default: () => <div data-testid="federation" /> }))
 vi.mock('./ScraperActivity', () => ({ default: () => <div data-testid="activity" /> }))
 vi.mock('./SourceHealth', () => ({ default: () => <div data-testid="health" /> }))
-import { getScraperStatus, getScraperSources, setScraperSourceMode, sweepSourceEdges } from '../services/api'
+import { getScraperStatus, getScraperSources, setScraperSourceMode } from '../services/api'
 
 const status: ScraperStatus = { enabled: true, sec_edgar_enabled: false, open_corporates_enabled: false }
 const source = (name: string): ScraperSource => ({ name, description: 'a source', enabled: true })
@@ -181,7 +180,6 @@ describe('per-source data mode (admin)', () => {
   beforeEach(() => {
     vi.mocked(setScraperSourceMode).mockResolvedValue(
       { data: { name: 'wikidata', data_mode: 'claims_only' } } as never)
-    vi.mocked(sweepSourceEdges).mockResolvedValue({ data: { edges: {} } } as never)
   })
 
   it('flips a full source to claims-only and merges the result', async () => {
@@ -202,36 +200,7 @@ describe('per-source data mode (admin)', () => {
   })
 })
 
-describe('sweep + connection gating', () => {
-  it('a claims-only source shows a sweep button; a full one does not', async () => {
-    vi.mocked(getScraperSources).mockResolvedValue({ data: [
-      { name: 'wikidata', description: 'w', enabled: true, data_mode: 'claims_only' },
-      { name: 'sec_edgar', description: 's', enabled: true, data_mode: 'full' },
-    ] } as never)
-    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
-    expect(await screen.findByText('Sweep edges')).toBeInTheDocument()
-    expect(screen.getAllByText('Sweep edges')).toHaveLength(1)  // only the claims-only one
-  })
-
-  it('sweeps after confirmation, and does nothing when cancelled', async () => {
-    const { default: userEvent } = await import('@testing-library/user-event')
-    vi.mocked(getScraperSources).mockResolvedValue({ data: [
-      { name: 'wikidata', description: 'w', enabled: true, data_mode: 'claims_only' },
-    ] } as never)
-    const confirm = vi.spyOn(window, 'confirm')
-    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
-    const btn = await screen.findByText('Sweep edges')
-
-    confirm.mockReturnValueOnce(false)
-    await userEvent.click(btn)
-    expect(sweepSourceEdges).not.toHaveBeenCalled()
-
-    confirm.mockReturnValueOnce(true)
-    await userEvent.click(btn)
-    expect(sweepSourceEdges).toHaveBeenCalledWith('wikidata')
-    confirm.mockRestore()
-  })
-
+describe('connection gating', () => {
   it('hides federation when the backend status could not be loaded', async () => {
     vi.mocked(getScraperStatus).mockRejectedValueOnce(new Error('offline'))
     render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
