@@ -186,16 +186,25 @@ describe('per-source data mode (admin)', () => {
     const { default: userEvent } = await import('@testing-library/user-event')
     render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
     // the mode chip shows "edges" for a full source
-    const chip = await screen.findByText('edges')
+    const chip = await screen.findByText(/Mode: edges/)
     await userEvent.click(chip)
     expect(setScraperSourceMode).toHaveBeenCalledWith('wikidata', 'claims_only')
     // optimistic merge → the chip now reads "claims only"
-    expect(await screen.findByText('claims only')).toBeInTheDocument()
+    expect(await screen.findByText(/Mode: claims only/)).toBeInTheDocument()
   })
 
   it('a viewer sees no source toggles at all (admin-only)', async () => {
     render(<ScraperPanel user={viewer} onLoadIntoGraph={vi.fn()} />)
     await screen.findByTestId('activity')   // the public feed always renders
-    expect(screen.queryByText('edges')).toBeNull()
+    expect(screen.queryByText(/Mode: edges/)).toBeNull()
+  })
+})
+
+describe('connection gating', () => {
+  it('hides federation when the backend status could not be loaded', async () => {
+    vi.mocked(getScraperStatus).mockRejectedValueOnce(new Error('offline'))
+    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
+    await screen.findByTestId('activity')   // the public feed still renders
+    expect(federation()).toBeNull()          // …but the admin corner does not
   })
 })

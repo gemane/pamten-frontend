@@ -458,7 +458,8 @@
     "mode": {
       "full": "aristas",
       "claims_only": "solo declaraciones",
-      "hint": "Completo dibuja aristas de propiedad; solo-declaraciones registra sin dibujar"
+      "hint": "Completo dibuja aristas de propiedad; solo-declaraciones registra sin dibujar",
+      "label": "Modo"
     }
   },
   "activity": {
@@ -574,7 +575,6 @@
     "intro": "Owlgraph mapea quién posee y controla empresas, a partir de registros públicos y presentaciones obligatorias. Cada dato lleva su fuente; esta página indica qué cubre cada fuente, cuánta confianza merece y qué tan frescos son sus datos.",
     "lastSuccess": "última actualización {{when}}",
     "note": "Esta instancia de desarrollo contiene un subconjunto de prueba de los conjuntos de datos completos — las etiquetas de alcance lo indican. Los recuentos crecen con cada lectura.",
-    "opsLink": "Actividad de extracción en vivo, estado de fuentes y controles",
     "claimsOnly": "solo declaraciones"
   }
 }

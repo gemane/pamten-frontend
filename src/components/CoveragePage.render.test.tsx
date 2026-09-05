@@ -89,18 +89,6 @@ describe('CoveragePage', () => {
     expect(screen.getByText(/on-demand lookups paused/)).toBeTruthy()
   })
 
-  it('the ops link sits ABOVE the cards and navigates to the scraper tab', async () => {
-    // The card list grows with every new source; the operator's door must
-    // not sink with it.
-    const onShowScraper = vi.fn()
-    render(<CoveragePage onShowScraper={onShowScraper} />)
-    const link = await screen.findByText(/Live scrape activity/)
-    const card = await screen.findByText('SEC EDGAR')
-    expect(link.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    link.closest('button')!.click()
-    expect(onShowScraper).toHaveBeenCalled()
-  })
-
   it('a claims-only source wears the claims-only chip', async () => {
     mockSources.mockResolvedValue({ data: [src({ data_mode: 'claims_only' })] } as never)
     render(<CoveragePage />)

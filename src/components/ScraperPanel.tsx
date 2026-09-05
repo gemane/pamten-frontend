@@ -71,14 +71,15 @@ function SourceToggle({ source, onToggle, onSetMode, disabled }: SourceTogglePro
         <span className="source-row__name">{SOURCE_LABEL[source.name] || source.name}</span>
         <span className="source-row__desc">{source.description}</span>
       </div>
-      {/* Mode: full draws edges, claims-only asserts without drawing. */}
+      {/* Mode: full draws edges, claims-only asserts without drawing. Labelled
+          and styled as a pill button so it reads as clickable. */}
       <button
         className={`source-mode ${claimsOnly ? 'source-mode--claims' : 'source-mode--full'}`}
         onClick={flipMode}
         disabled={busy}
         title={t('scraper.mode.hint')}
       >
-        {claimsOnly ? t('scraper.mode.claims_only') : t('scraper.mode.full')}
+        {t('scraper.mode.label')}: {claimsOnly ? t('scraper.mode.claims_only') : t('scraper.mode.full')}
       </button>
       <button
         className={`source-toggle ${source.enabled ? 'source-toggle--on' : 'source-toggle--off'}`}
@@ -171,6 +172,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
   const canAdminister = canAdministerScrapes(user)
 
   const [masterStatus,   setMasterStatus]   = useState<ScraperStatus | null>(null)
+  const [connected,      setConnected]      = useState<boolean>(false)
   const [sources,        setSources]        = useState<ScraperSource[]>([])
   const [query,          setQuery]          = useState<string>('')
   const [depth,          setDepth]          = useState<number>(2)
@@ -181,8 +183,8 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
   const [showDuplicates, setShowDuplicates] = useState<boolean>(false)
 
   useEffect(() => {
-    getScraperStatus().then(({ data }) => setMasterStatus(data))
-      .catch(() => setMasterStatus({ enabled: false, sec_edgar_enabled: false, open_corporates_enabled: false }))
+    getScraperStatus().then(({ data }) => { setMasterStatus(data); setConnected(true) })
+      .catch(() => { setMasterStatus({ enabled: false, sec_edgar_enabled: false, open_corporates_enabled: false }); setConnected(false) })
     getScraperSources().then(({ data }) => setSources(data)).catch(() => setSources([]))
   }, [])
 
@@ -421,7 +423,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       )}
 
       {/* ── Bulk ownership datasets (imported server-side, not from the UI) ──── */}
-      {canAdminister && (
+      {canAdminister && connected && (
         <div className="scraper-bods">
           <div className="scraper-bods__divider" />
 
@@ -434,8 +436,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         </div>
       )}
 
-      {/* ── Trusted-peer federation ──────────────────────────────────────────── */}
-      {canAdminister && (
+      {/* ── Trusted-peer federation: only with a live backend; a failed status
+          load must not surface a panel whose every action would 500. ──────── */}
+      {canAdminister && connected && (
         <div className="scraper-bods">
           <div className="scraper-bods__divider" />
           <FederationPanel />

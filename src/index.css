@@ -4003,9 +4003,11 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .coverage__paused { color: #9a6a10; background: #f4e8cf; }
 
 /* Per-source data-mode chip beside the enable toggle */
-.source-mode { flex-shrink: 0; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; }
-.source-mode--full { color: #7ee29b; background: #16351f; }
-.source-mode--claims { color: #d0a24a; background: #2c2410; }
+.source-mode { flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: filter 0.12s; }
+/* Visible border + hover so it plainly reads as a button, not a badge. */
+.source-mode--full { color: #7ee29b; background: #16351f; border: 1px solid #2e6a3f; }
+.source-mode--claims { color: #d0a24a; background: #2c2410; border: 1px solid #6a5320; }
+.source-mode:hover:not(:disabled) { filter: brightness(1.35); }
 .source-mode:disabled { opacity: 0.4; cursor: not-allowed; }
-[data-theme="light"] .source-mode--full { color: #1e8449; background: #e4f4ea; }
-[data-theme="light"] .source-mode--claims { color: #9a6a10; background: #f4e8cf; }
+[data-theme="light"] .source-mode--full { color: #1e8449; background: #e4f4ea; border-color: #a9d8bb; }
+[data-theme="light"] .source-mode--claims { color: #9a6a10; background: #f4e8cf; border-color: #ddc48a; }
