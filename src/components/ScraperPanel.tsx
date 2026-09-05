@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiUsers } from 'react-icons/fi'
 import {
-  getScraperStatus, getScraperSources, toggleScraperSource,
+  getScraperStatus, getScraperSources, toggleScraperSource, setScraperSourceMode,
   runScraper, runScraperSecEdgar, runScraperOpenCorporates, runScraperAll,
 } from '../services/api'
 import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser } from '../types'
@@ -42,17 +42,26 @@ const SOURCE_ENV_VAR: Record<string, string> = {
 interface SourceToggleProps {
   source: ScraperSource
   onToggle: (name: string) => Promise<void>
+  onSetMode: (name: string, mode: 'full' | 'claims_only') => Promise<void>
   disabled: boolean
 }
 
-function SourceToggle({ source, onToggle, disabled }: SourceToggleProps) {
+function SourceToggle({ source, onToggle, onSetMode, disabled }: SourceToggleProps) {
   const { t } = useTranslation()
   const [busy, setBusy] = useState<boolean>(false)
+  const claimsOnly = source.data_mode === 'claims_only'
 
   const handle = async () => {
     if (disabled || busy) return
     setBusy(true)
     try { await onToggle(source.name) }
+    finally { setBusy(false) }
+  }
+
+  const flipMode = async () => {
+    if (busy) return
+    setBusy(true)
+    try { await onSetMode(source.name, claimsOnly ? 'full' : 'claims_only') }
     finally { setBusy(false) }
   }
 
@@ -62,6 +71,15 @@ function SourceToggle({ source, onToggle, disabled }: SourceToggleProps) {
         <span className="source-row__name">{SOURCE_LABEL[source.name] || source.name}</span>
         <span className="source-row__desc">{source.description}</span>
       </div>
+      {/* Mode: full draws edges, claims-only asserts without drawing. */}
+      <button
+        className={`source-mode ${claimsOnly ? 'source-mode--claims' : 'source-mode--full'}`}
+        onClick={flipMode}
+        disabled={busy}
+        title={t('scraper.mode.hint')}
+      >
+        {claimsOnly ? t('scraper.mode.claims_only') : t('scraper.mode.full')}
+      </button>
       <button
         className={`source-toggle ${source.enabled ? 'source-toggle--on' : 'source-toggle--off'}`}
         onClick={handle}
@@ -167,6 +185,13 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       .catch(() => setMasterStatus({ enabled: false, sec_edgar_enabled: false, open_corporates_enabled: false }))
     getScraperSources().then(({ data }) => setSources(data)).catch(() => setSources([]))
   }, [])
+
+  const handleSetMode = async (name: string, mode: 'full' | 'claims_only') => {
+    const { data } = await setScraperSourceMode(name, mode)
+    setSources(prev => prev.map(s => s.name === name
+      ? { ...s, data_mode: (data as { data_mode?: 'full' | 'claims_only' }).data_mode }
+      : s))
+  }
 
   const handleToggleSource = async (name: string) => {
     const { data } = await toggleScraperSource(name)
@@ -326,8 +351,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         <div className="scraper-disabled-msg"><FiAlertCircle /> {disabledReason}</div>
       )}
 
-      {/* Per-source toggles */}
-      {canManage && sources.length > 0 && (
+      {/* Per-source toggles + data mode — admin only: the PATCH endpoints
+          are require_admin, so a contributor seeing these got a silent 403. */}
+      {canAdminister && sources.length > 0 && (
         <div className="scraper-sources">
           <div className="scraper-sources__label">{t('scraper.sourceToggles')}</div>
           {sources.map(s => (
@@ -335,6 +361,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
               key={s.name}
               source={s}
               onToggle={handleToggleSource}
+              onSetMode={handleSetMode}
               disabled={!masterOn}
             />
           ))}

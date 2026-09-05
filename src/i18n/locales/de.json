@@ -454,7 +454,12 @@
       "instant": "Pro Unternehmen abgefragt",
       "bulk": "Massendaten-Import"
     },
-    "sourcePaused": "Abfragen auf Anfrage pausiert"
+    "sourcePaused": "Abfragen auf Anfrage pausiert",
+    "mode": {
+      "full": "Kanten",
+      "claims_only": "nur Belege",
+      "hint": "Voll zeichnet Eigentumskanten; nur-Belege erfasst Belege ohne zu zeichnen"
+    }
   },
   "activity": {
     "title": "Letzte Aktivität",
@@ -569,6 +574,7 @@
     "intro": "Owlgraph kartiert, wem Unternehmen gehören und wer sie kontrolliert — zusammengesetzt aus öffentlichen Registern und Pflichtmeldungen. Jeder Fakt trägt seine Quelle; diese Seite zeigt, was jede Quelle abdeckt, wie weit man ihr trauen kann und wie aktuell ihre Daten sind.",
     "lastSuccess": "zuletzt aktualisiert {{when}}",
     "note": "Diese Entwicklungsinstanz enthält eine kuratierte Test-Teilmenge der vollständigen Datensätze — die Scope-Angaben oben zeigen welche. Die Zahlen wachsen mit jedem Durchlauf.",
-    "opsLink": "Live-Scrape-Aktivität, Quellen-Status und Steuerung"
+    "opsLink": "Live-Scrape-Aktivität, Quellen-Status und Steuerung",
+    "claimsOnly": "nur Belege"
   }
 }

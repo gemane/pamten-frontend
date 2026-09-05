@@ -454,7 +454,12 @@
       "instant": "Queried per company",
       "bulk": "Bulk dataset import"
     },
-    "sourcePaused": "on-demand lookups paused"
+    "sourcePaused": "on-demand lookups paused",
+    "mode": {
+      "full": "edges",
+      "claims_only": "claims only",
+      "hint": "Full draws ownership edges; claims-only records claims without drawing"
+    }
   },
   "activity": {
     "title": "Recent activity",
@@ -569,6 +574,7 @@
     "intro": "Owlgraph maps who owns and controls companies, assembled from public registers and filings. Every fact carries its source; this page states what each source covers, how far to trust it, and how fresh its data is.",
     "lastSuccess": "last updated {{when}}",
     "note": "This development instance carries a curated test subset of the full datasets — scope badges above say which. Counts grow as sources are re-read.",
-    "opsLink": "Live scrape activity, source health and controls"
+    "opsLink": "Live scrape activity, source health and controls",
+    "claimsOnly": "claims only"
   }
 }

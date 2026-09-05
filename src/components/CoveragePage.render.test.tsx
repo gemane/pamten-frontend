@@ -100,4 +100,11 @@ describe('CoveragePage', () => {
     link.closest('button')!.click()
     expect(onShowScraper).toHaveBeenCalled()
   })
+
+  it('a claims-only source wears the claims-only chip', async () => {
+    mockSources.mockResolvedValue({ data: [src({ data_mode: 'claims_only' })] } as never)
+    render(<CoveragePage />)
+    await screen.findByText('SEC EDGAR')
+    expect(screen.getByText(/claims only/)).toBeTruthy()
+  })
 })
