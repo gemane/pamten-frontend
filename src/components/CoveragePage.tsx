@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiExternalLink, FiActivity } from 'react-icons/fi'
+import { FiExternalLink } from 'react-icons/fi'
 import { getScraperSources, getScraperHealth, getStats } from '../services/api'
 import { ago } from '../utils/relativeTime'
 import type { ScraperSource, ScraperHealth } from '../types'
@@ -32,12 +32,7 @@ function Freshness({ source, health }: { source: ScraperSource; health: ScraperH
   return <span className="coverage__fresh">{t('coverage.lastSuccess', { when: ago(h.last_ok_at, t) })}</span>
 }
 
-interface CoveragePageProps {
-  /** Navigate to the scraper tab — live runs, health detail and controls. */
-  onShowScraper?: () => void
-}
-
-export default function CoveragePage({ onShowScraper }: CoveragePageProps = {}) {
+export default function CoveragePage() {
   const { t } = useTranslation()
   const [sources, setSources] = useState<ScraperSource[]>([])
   const [health, setHealth] = useState<ScraperHealth | null>(null)
@@ -58,11 +53,7 @@ export default function CoveragePage({ onShowScraper }: CoveragePageProps = {}) 
 
       {/* On top on purpose: the source list below grows with every new
           scraper, and the operator's door must not sink with it. */}
-      {onShowScraper && (
-        <button type="button" className="coverage__ops-link" onClick={onShowScraper}>
-          <FiActivity size={13} /> {t('coverage.opsLink')}
-        </button>
-      )}
+
 
       {stats && (
         <div className="coverage__stats">

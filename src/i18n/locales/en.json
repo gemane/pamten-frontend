@@ -458,8 +458,12 @@
     "mode": {
       "full": "edges",
       "claims_only": "claims only",
-      "hint": "Full draws ownership edges; claims-only records claims without drawing"
-    }
+      "hint": "Full draws ownership edges; claims-only records claims without drawing",
+      "label": "Mode"
+    },
+    "sweep": "Sweep edges",
+    "sweepHint": "Delete the edges this source already drew (claims and nodes stay)",
+    "sweepConfirm": "Delete every edge {{name}} drew? Claims and nodes are kept. This cannot be undone."
   },
   "activity": {
     "title": "Recent activity",
@@ -574,7 +578,6 @@
     "intro": "Owlgraph maps who owns and controls companies, assembled from public registers and filings. Every fact carries its source; this page states what each source covers, how far to trust it, and how fresh its data is.",
     "lastSuccess": "last updated {{when}}",
     "note": "This development instance carries a curated test subset of the full datasets — scope badges above say which. Counts grow as sources are re-read.",
-    "opsLink": "Live scrape activity, source health and controls",
     "claimsOnly": "claims only"
   }
 }

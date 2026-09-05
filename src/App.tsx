@@ -956,7 +956,7 @@ function AppInner() {
           )}
           {activeTab === 'coverage' && (
             <div className="left-panel__detail">
-              <CoveragePage onShowScraper={() => handleTabChange('scraper')} />
+              <CoveragePage />
             </div>
           )}
           {activeTab === 'settings' && (
@@ -1053,7 +1053,7 @@ function AppInner() {
             )}
             {activeTab === 'coverage' && (
               <div className="mobile-full-panel">
-                <CoveragePage onShowScraper={() => handleTabChange('scraper')} />
+                <CoveragePage />
               </div>
             )}
             {activeTab === 'settings' && (

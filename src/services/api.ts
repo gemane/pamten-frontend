@@ -475,6 +475,11 @@ export const getScraperSources = (): Promise<AxiosResponse<ScraperSource[]>> => 
 export const setScraperSourceMode = (name: string, mode: 'full' | 'claims_only') =>
   client.patch(`/scraper/sources/${name}/mode`, null, { params: { mode } })
 
+// Delete every edge a claims-only (or any) source drew — nodes and claims stay.
+// Destructive: the backend requires confirm to equal the name exactly.
+export const sweepSourceEdges = (name: string) =>
+  client.post(`/scraper/sources/${name}/sweep-edges`, null, { params: { confirm: name } })
+
 export const toggleScraperSource = (name: string): Promise<AxiosResponse<ScraperSource>> => client.patch(`/scraper/sources/${name}/toggle`)
 
 export const runScraper = (query: string, depth = 2): Promise<AxiosResponse<ScrapeResult>> =>

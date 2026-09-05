@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiPlay, FiAlertCircle, FiCheckCircle, FiLoader, FiUsers } from 'react-icons/fi'
 import {
   getScraperStatus, getScraperSources, toggleScraperSource, setScraperSourceMode,
+  sweepSourceEdges,
   runScraper, runScraperSecEdgar, runScraperOpenCorporates, runScraperAll,
 } from '../services/api'
 import type { ScraperStatus, ScraperSource, ScrapeResult, AuthUser } from '../types'
@@ -43,10 +44,11 @@ interface SourceToggleProps {
   source: ScraperSource
   onToggle: (name: string) => Promise<void>
   onSetMode: (name: string, mode: 'full' | 'claims_only') => Promise<void>
+  onSweep: (name: string) => Promise<void>
   disabled: boolean
 }
 
-function SourceToggle({ source, onToggle, onSetMode, disabled }: SourceToggleProps) {
+function SourceToggle({ source, onToggle, onSetMode, onSweep, disabled }: SourceToggleProps) {
   const { t } = useTranslation()
   const [busy, setBusy] = useState<boolean>(false)
   const claimsOnly = source.data_mode === 'claims_only'
@@ -71,15 +73,23 @@ function SourceToggle({ source, onToggle, onSetMode, disabled }: SourceTogglePro
         <span className="source-row__name">{SOURCE_LABEL[source.name] || source.name}</span>
         <span className="source-row__desc">{source.description}</span>
       </div>
-      {/* Mode: full draws edges, claims-only asserts without drawing. */}
+      {/* Mode: full draws edges, claims-only asserts without drawing. Labelled
+          and styled as a pill button so it reads as clickable. */}
       <button
         className={`source-mode ${claimsOnly ? 'source-mode--claims' : 'source-mode--full'}`}
         onClick={flipMode}
         disabled={busy}
         title={t('scraper.mode.hint')}
       >
-        {claimsOnly ? t('scraper.mode.claims_only') : t('scraper.mode.full')}
+        {t('scraper.mode.label')}: {claimsOnly ? t('scraper.mode.claims_only') : t('scraper.mode.full')}
       </button>
+      {/* Only a claims-only source has drawn edges worth sweeping away. */}
+      {claimsOnly && (
+        <button className="source-sweep" onClick={() => onSweep(source.name)}
+                disabled={busy} title={t('scraper.sweepHint')}>
+          {t('scraper.sweep')}
+        </button>
+      )}
       <button
         className={`source-toggle ${source.enabled ? 'source-toggle--on' : 'source-toggle--off'}`}
         onClick={handle}
@@ -171,6 +181,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
   const canAdminister = canAdministerScrapes(user)
 
   const [masterStatus,   setMasterStatus]   = useState<ScraperStatus | null>(null)
+  const [connected,      setConnected]      = useState<boolean>(false)
   const [sources,        setSources]        = useState<ScraperSource[]>([])
   const [query,          setQuery]          = useState<string>('')
   const [depth,          setDepth]          = useState<number>(2)
@@ -181,10 +192,16 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
   const [showDuplicates, setShowDuplicates] = useState<boolean>(false)
 
   useEffect(() => {
-    getScraperStatus().then(({ data }) => setMasterStatus(data))
-      .catch(() => setMasterStatus({ enabled: false, sec_edgar_enabled: false, open_corporates_enabled: false }))
+    getScraperStatus().then(({ data }) => { setMasterStatus(data); setConnected(true) })
+      .catch(() => { setMasterStatus({ enabled: false, sec_edgar_enabled: false, open_corporates_enabled: false }); setConnected(false) })
     getScraperSources().then(({ data }) => setSources(data)).catch(() => setSources([]))
   }, [])
+
+  const handleSweep = async (name: string) => {
+    // Destructive — mirror the backend's retype guard with a confirm.
+    if (!window.confirm(t('scraper.sweepConfirm', { name }))) return
+    await sweepSourceEdges(name)
+  }
 
   const handleSetMode = async (name: string, mode: 'full' | 'claims_only') => {
     const { data } = await setScraperSourceMode(name, mode)
@@ -362,6 +379,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
               source={s}
               onToggle={handleToggleSource}
               onSetMode={handleSetMode}
+              onSweep={handleSweep}
               disabled={!masterOn}
             />
           ))}
@@ -421,7 +439,7 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
       )}
 
       {/* ── Bulk ownership datasets (imported server-side, not from the UI) ──── */}
-      {canAdminister && (
+      {canAdminister && connected && (
         <div className="scraper-bods">
           <div className="scraper-bods__divider" />
 
@@ -434,8 +452,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
         </div>
       )}
 
-      {/* ── Trusted-peer federation ──────────────────────────────────────────── */}
-      {canAdminister && (
+      {/* ── Trusted-peer federation: only with a live backend; a failed status
+          load must not surface a panel whose every action would 500. ──────── */}
+      {canAdminister && connected && (
         <div className="scraper-bods">
           <div className="scraper-bods__divider" />
           <FederationPanel />
