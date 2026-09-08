@@ -15,6 +15,7 @@ import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship } from '../types'
+import { keepsEdge, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
 // otherwise render in arbitrary backend order.
@@ -229,6 +230,9 @@ interface NodePanelProps {
   // Bumped by App when an on-demand scrape appends data → refetch this node's profile in
   // place (the effect is keyed on node.id, which doesn't change when the same node is enriched).
   refreshKey?: number
+  // Shared with the graph's stake filter, so one control hides small holdings
+  // in both views. Defaults to "any" when a caller does not pass it.
+  stakeFilter?: StakeFilter
 }
 
 
@@ -509,11 +513,12 @@ function DetailsSection({ entity, hasOwners }: { entity: Entity; hasOwners: bool
   )
 }
 
-function PersonView({ node, onNavigate, onShare, onReScrape }: {
+function PersonView({ node, onNavigate, onShare, onReScrape, stakeFilter = ANY_STAKE }: {
   node: NodeData
   onNavigate?: (n: NodeData) => void
   onShare?: () => void
   onReScrape?: (node: NodeData) => void
+  stakeFilter?: StakeFilter
 }) {
   const raw = node.raw as Person
   const { t, i18n } = useTranslation()
@@ -554,6 +559,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape }: {
   const positions = allPositions.filter(p => !p.role?.until)
   const formerPositions = allPositions.filter(p => p.role?.until)
   const holdings  = allHoldings.filter(h => !h.relationship?.until)
+    .filter(h => keepsEdge(h.relationship?.stake_percent, stakeFilter))
 
   // The blocs this person votes in. Three of AB InBev's nine parties are
   // people, and their pages showed no sign of the agreement.
@@ -924,6 +930,7 @@ function RelRow({ node, onNavigate, rel, children }: {
 interface EntityOverviewProps {
   profile: FullProfile
   sources: Source[]
+  stakeFilter?: StakeFilter
   onExportPng?: () => void
   onExportCsv?: () => void
   onViewOnMap?: () => void
@@ -1006,7 +1013,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape, stakeFilter = ANY_STAKE }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
@@ -1014,6 +1021,12 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // Which source asserted each relationship, for the row menu's header — the
   // edge's own source_id, not the node's source list.
   const sourceName = sourceNames(sources)
+
+  // The stake filter shared with the graph hides small DISCLOSED holdings from
+  // the list too (undisclosed stakes are kept — keepsEdge keeps null). The
+  // section count stays the server total, as it already does for capped lists.
+  const ownersShown = owners.filter(o => keepsEdge(o.relationship?.stake_percent, stakeFilter))
+  const subsidiariesShown = subsidiaries.filter(s => keepsEdge(s.relationship?.stake_percent, stakeFilter))
   // The stored direct-thumb URL (upload.wikimedia.org — the host that works
   // where Special:FilePath's new redirect does not, e.g. mobile), resolved
   // server-side during the scrape. No client-side lookup: still-dev data, so
@@ -1142,9 +1155,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      {owners.length > 0 && (
+      {ownersShown.length > 0 && (
         <Section title={t('panel.ownedBy')} count={counts?.owners}>
-          {[...owners].sort(byStakeDesc(
+          {[...ownersShown].sort(byStakeDesc(
             o => o.relationship?.stake_percent,
             o => o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '',
             o => o.relationship?.shares,
@@ -1255,11 +1268,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      {subsidiaries.length > 0 && (
+      {subsidiariesShown.length > 0 && (
         <Section title={isGroup ? t('panel.groupControls') : t('panel.subsidiaries')}
                  count={counts?.subsidiaries}>
           {(() => {
-            const sorted = [...subsidiaries].sort(
+            const sorted = [...subsidiariesShown].sort(
               byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? '',
                           s => s.relationship?.shares))
             const row = (s: SubsidiaryEntry, i: number) => (
@@ -1385,7 +1398,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshKey }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshKey, stakeFilter = ANY_STAKE }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1436,7 +1449,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
 
   if (node.nodeType === 'person') {
     return <PersonView node={node} onNavigate={onNavigate} onShare={onShare}
-                       onReScrape={onReScrape} />
+                       onReScrape={onReScrape} stakeFilter={stakeFilter} />
   }
 
   if (loading) {
@@ -1453,7 +1466,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} />
+        ? <EntityOverview profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )
