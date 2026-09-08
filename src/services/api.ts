@@ -506,6 +506,15 @@ export interface Sec13fResult {
 export const runSec13f = (company: string): Promise<AxiosResponse<Sec13fResult>> =>
   client.post('/scraper/sec-13f/run', null, { params: { company } })
 
+// Exhibit 21 — the statutory subsidiary list. Cheap next to 13F (one fetch of
+// the exhibit), and gated by "one annual filing = one ingest" server-side.
+export interface SecEx21Result {
+  status: 'ok' | 'fresh' | 'no_exhibit' | 'needs_sec_scrape' | 'no_results' | string
+  total?: number
+}
+export const runSecEx21 = (company: string): Promise<AxiosResponse<SecEx21Result>> =>
+  client.post('/scraper/sec-ex21/run', null, { params: { company } })
+
 export const ensureScrape = (
   query: string, depth = 1, force = false, country?: string,
 ): Promise<AxiosResponse<EnsureResult>> =>

@@ -38,6 +38,7 @@ import {
   authVerifyEmail,
   ensureScrape,
   runSec13f,
+  runSecEx21,
   reportEvent,
 } from './services/api'
 import { readMapBasis, MAP_BASIS_KEY, NO_COUNTRY, type MapBasis } from './utils/mapBasis'
@@ -293,16 +294,32 @@ function AppInner() {
       // (one EDGAR fetch per holder), so the result arrives as a toast and a
       // profile update rather than holding the overlay open.
       if (node.nodeType === 'person' || !canManageScrapes(user)) return
+      // Both SEC enrichments the schedules scrape has now unlocked (its CIK):
+      // 13F holders (who holds this company) and Exhibit 21 subsidiaries (what
+      // it owns). Each best-effort and independently gated server-side, so one
+      // finding nothing does not stop the other. Refresh the profile once at
+      // the end if either wrote.
+      let wrote = false
       try {
         const { data } = await runSec13f(node.label)
         if (data.status === 'ok' && (data.total ?? 0) > 0) {
           showToast(t('toast.sec13fHolders', { count: data.total }), 'info')
-          const { data: fresh } = await ensureScrape(node.label, 1, false, country)
-          if (fresh.profile && !isPersonResult(fresh)) {
-            appendProfile(fresh.profile as FullProfile)
-          }
+          wrote = true
         }
       } catch { /* 409 (schedules not run yet) or transient — best-effort */ }
+      try {
+        const { data } = await runSecEx21(node.label)
+        if (data.status === 'ok' && (data.total ?? 0) > 0) {
+          showToast(t('toast.secEx21Subsidiaries', { count: data.total }), 'info')
+          wrote = true
+        }
+      } catch { /* 409 or transient — best-effort */ }
+      if (wrote) {
+        const { data: fresh } = await ensureScrape(node.label, 1, false, country)
+        if (fresh.profile && !isPersonResult(fresh)) {
+          appendProfile(fresh.profile as FullProfile)
+        }
+      }
     })()
   }, [enrichExisting, user, showToast, t, appendProfile])
 
