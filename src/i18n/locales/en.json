@@ -320,7 +320,8 @@
     "scrapeCooldown": "This company was updated recently. You can refresh its sources again later.",
     "scrapeNoResultsIn": "Nothing found for \"{{query}}\" in {{country}}.",
     "scrapeAlreadyMissed": "Already searched the sources for \"{{query}}\" — nothing there. Try again later.",
-    "scrapeAlreadyMissedIn": "Already searched {{country}} sources for \"{{query}}\" — nothing there. Try again later."
+    "scrapeAlreadyMissedIn": "Already searched {{country}} sources for \"{{query}}\" — nothing there. Try again later.",
+    "secEx21Subsidiaries": "Exhibit 21: {{count}} subsidiaries loaded"
   },
   "map": {
     "resetView": "Reset view",
