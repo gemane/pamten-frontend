@@ -15,7 +15,7 @@ import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship } from '../types'
-import { keepsEdge, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
+import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
 // otherwise render in arbitrary backend order.
@@ -559,7 +559,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, stakeFilter = ANY_S
   const positions = allPositions.filter(p => !p.role?.until)
   const formerPositions = allPositions.filter(p => p.role?.until)
   const holdings  = allHoldings.filter(h => !h.relationship?.until)
-    .filter(h => keepsEdge(h.relationship?.stake_percent, stakeFilter))
+    .filter(h => keepsEdge(effectiveStakePct(h.relationship?.stake_percent, h.relationship?.shares, h.relationship?.shares_outstanding), stakeFilter))
 
   // The blocs this person votes in. Three of AB InBev's nine parties are
   // people, and their pages showed no sign of the agreement.
@@ -1025,8 +1025,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // The stake filter shared with the graph hides small DISCLOSED holdings from
   // the list too (undisclosed stakes are kept — keepsEdge keeps null). The
   // section count stays the server total, as it already does for capped lists.
-  const ownersShown = owners.filter(o => keepsEdge(o.relationship?.stake_percent, stakeFilter))
-  const subsidiariesShown = subsidiaries.filter(s => keepsEdge(s.relationship?.stake_percent, stakeFilter))
+  const ownersShown = owners.filter(o => keepsEdge(effectiveStakePct(o.relationship?.stake_percent, o.relationship?.shares, o.relationship?.shares_outstanding), stakeFilter))
+  const subsidiariesShown = subsidiaries.filter(s => keepsEdge(effectiveStakePct(s.relationship?.stake_percent, s.relationship?.shares, s.relationship?.shares_outstanding), stakeFilter))
   // The stored direct-thumb URL (upload.wikimedia.org — the host that works
   // where Special:FilePath's new redirect does not, e.g. mobile), resolved
   // server-side during the scrape. No client-side lookup: still-dev data, so

@@ -153,6 +153,10 @@ function ownershipElements(
       edgeDir:        dir,
       ownershipType:  rel?.ownership_type || '',
       stakePct:       stake ?? null,
+      // Carried so the filter can compute an effective % for a below-floor
+      // null stake (see effectiveStakePct); not displayed.
+      shares:            rel?.shares ?? null,
+      sharesOutstanding: rel?.shares_outstanding ?? null,
       votingPowerPct: vote ?? null,
       directOrIndirect: rel?.direct_or_indirect ?? '',
     } })

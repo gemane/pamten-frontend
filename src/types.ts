@@ -298,6 +298,10 @@ export interface EdgeData {
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null
   stakePct?: number | null
+  /** Counts behind the stake, carried so the filter can compute an effective
+   *  percentage for a below-floor null stake. Not displayed. */
+  shares?: number | null
+  sharesOutstanding?: number | null
   /** 'indirect' here means an ultimate-parent link that survived the shortcut
    *  filter because nothing else reaches that company — drawn dashed, since it is
    *  still not a direct holding. */

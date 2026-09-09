@@ -44,6 +44,24 @@ describe('NodePanel (render)', () => {
     expect(mockProfile).toHaveBeenCalledWith('e1')
   })
 
+  it('hides a tiny null-stake holder but keeps a truly undisclosed one', async () => {
+    const gte1 = STAKE_FILTERS.find(f => f.id === 'gte1')!
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Big Co', type: 'company', verified: false } as Entity,
+      owners: [
+        { owner: { id: 'o1', name: 'Tiny 13F Holder', type: 'company' } as Entity,
+          relationship: { stake_percent: null, shares: 5000, shares_outstanding: 12_000_000_000 } },
+        { owner: { id: 'o2', name: 'Undisclosed Holder', type: 'company' } as Entity,
+          relationship: { stake_percent: null } },
+      ],
+      subsidiaries: [], executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Big Co')} refreshKey={0} stakeFilter={gte1} />)
+    await screen.findByText('Big Co')
+    expect(screen.queryByText('Tiny 13F Holder')).toBeNull()          // 0.00004% < 1%
+    expect(screen.getByText('Undisclosed Holder')).toBeInTheDocument() // no shares → kept
+  })
+
   it('applies the stake filter to the subsidiary list', async () => {
     const gte1 = STAKE_FILTERS.find(f => f.id === 'gte1')!
     mockProfile.mockResolvedValue({ data: {
