@@ -63,4 +63,13 @@ describe('buildStylesheet — centered node sizing', () => {
     expect(px(center.padding)).toBeGreaterThan(34)
     expect(px(center['font-size'])).toBeGreaterThan(px(base['font-size']))
   })
+
+  it('gives the hub an explicit doubled width and matching wrap width', () => {
+    const center = ruleFor('node.center')?.style as Record<string, unknown>
+    const base   = ruleFor('node')?.style as Record<string, unknown>
+    // A fixed box (not label-sized) so a short company name is still a wide hub.
+    expect(center.width).toBe(240)
+    // The label may use the extra room instead of wrapping at the base width.
+    expect(px(center['text-max-width'])).toBeGreaterThan(px(base['text-max-width']))
+  })
 })

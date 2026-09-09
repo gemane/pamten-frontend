@@ -517,6 +517,15 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       cy.add(toAdd as cytoscape.ElementDefinition[])
     }
 
+    // Mark the hub BEFORE laying out and fitting: node.center is a fixed 240px
+    // box, much wider than its label, and fitting with the base width first
+    // left a lone company (Al Jazeera Media Network — no owners or
+    // subsidiaries) zoomed to maxZoom, then widened past the viewport edges.
+    // Fit must see the real size. (The effect below re-marks on a centre-only
+    // change; this covers the fresh-graph fit.)
+    cy.nodes().removeClass('center')
+    if (centerId) cy.$id(centerId).addClass('center')
+
     // Step 1: run concentric layout — this reliably fits the viewport (proven to work).
     // Step 2: on layoutstop, instantly move nodes to arc positions while viewport stays correct.
     const positions = computeArcPositions(elements, centerId ?? null)
