@@ -5,7 +5,7 @@ import cytoscape from 'cytoscape'
 import type { EdgeData, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
-import GraphStakeFilter, { ANY_STAKE, keepsEdge, type StakeFilter } from './GraphStakeFilter'
+import GraphStakeFilter, { keepsEdge, type StakeFilter } from './GraphStakeFilter'
 
 export interface GraphHandle {
   exportPng: () => void
@@ -371,10 +371,13 @@ interface GraphProps {
   onToast?: (message: string, variant?: string) => void
   expandingId?: string | null
   theme: 'dark' | 'light'
+  /** Shared with the node-panel list so one control filters both views. */
+  stakeFilter: StakeFilter
+  onStakeFilterChange: (filter: StakeFilter) => void
 }
 
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme }: GraphProps,
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
@@ -382,7 +385,6 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
   const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
-  const [stakeFilter, setStakeFilter] = useState<StakeFilter>(ANY_STAKE)
   const [examples, setExamples]   = useState(() => pickRandom(ALL_EXAMPLE_QUERIES, 3))
   const [taglineIdx, setTaglineIdx] = useState(0)
   const [stats, setStats]         = useState<StatsResponse | null>(null)
@@ -654,7 +656,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       )}
 
       {elements.length > 0 && (
-        <GraphStakeFilter value={stakeFilter} onChange={setStakeFilter}
+        <GraphStakeFilter value={stakeFilter} onChange={onStakeFilterChange}
                           stated={stakeCoverage.stated} total={stakeCoverage.total} />
       )}
 

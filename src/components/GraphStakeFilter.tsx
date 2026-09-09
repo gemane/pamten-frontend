@@ -26,6 +26,7 @@ export interface StakeFilter {
 
 export const STAKE_FILTERS: StakeFilter[] = [
   { id: 'any',   min: 0,  inclusive: true },
+  { id: 'gte1',  min: 1,  inclusive: true },
   { id: 'gte5',  min: 5,  inclusive: true },
   { id: 'gte25', min: 25, inclusive: true },
   { id: 'gt50',  min: 50, inclusive: false },
@@ -33,6 +34,13 @@ export const STAKE_FILTERS: StakeFilter[] = [
 ]
 
 export const ANY_STAKE = STAKE_FILTERS[0]
+
+// The default view hides only stakes stated BELOW 1% — the long tail of tiny
+// 13F positions (Nvidia's 0.9% of SpaceX and the like) that clutter both the
+// graph and the list without changing the ownership picture. Undisclosed
+// stakes are still kept (keepsEdge keeps null), so this hides nothing the
+// sources declined to quantify — it only trims the smallest disclosed ones.
+export const DEFAULT_STAKE = STAKE_FILTERS[1]
 
 /**
  * Whether a relationship survives the filter.

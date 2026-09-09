@@ -12,7 +12,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import GraphStakeFilter, {
-  STAKE_FILTERS, ANY_STAKE, keepsEdge, filterLabel,
+  STAKE_FILTERS, ANY_STAKE, DEFAULT_STAKE, keepsEdge, filterLabel,
 } from './GraphStakeFilter'
 
 const byId = (id: string) => STAKE_FILTERS.find(f => f.id === id)!
@@ -72,11 +72,18 @@ describe('the control', () => {
     expect(screen.queryByRole('menu')).toBeNull()
   })
 
-  it('offers the five bands, in order', async () => {
+  it('the default band is ≥1% and trims only smaller DISCLOSED stakes', () => {
+    expect(DEFAULT_STAKE.id).toBe('gte1')
+    expect(keepsEdge(0.9, DEFAULT_STAKE)).toBe(false)   // Nvidia's 0.9% of SpaceX
+    expect(keepsEdge(1, DEFAULT_STAKE)).toBe(true)
+    expect(keepsEdge(null, DEFAULT_STAKE)).toBe(true)   // undisclosed always kept
+  })
+
+  it('offers the six bands, in order', async () => {
     show()
     await userEvent.click(button())
     expect(screen.getAllByRole('menuitemradio').map(o => o.textContent))
-      .toEqual(['Any', '≥5%', '≥25%', '>50%', '>75%'])
+      .toEqual(['Any', '≥1%', '≥5%', '≥25%', '>50%', '>75%'])
   })
 
   it('reports the chosen band and closes', async () => {

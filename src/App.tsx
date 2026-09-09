@@ -1,4 +1,5 @@
 import { Component, useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { DEFAULT_STAKE, type StakeFilter } from './components/GraphStakeFilter'
 import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
@@ -107,6 +108,7 @@ function AppInner() {
   const [activeTab,       setActiveTab]       = useState<string>('graph')
 
   const [elements,        setElements]        = useState<GraphElement[]>([])
+  const [stakeFilter,     setStakeFilter]     = useState<StakeFilter>(DEFAULT_STAKE)
   const [centerId,        setCenterId]        = useState<string | null>(null)
   const [selectedNode,    setSelectedNode]    = useState<NodeData | null>(null)
   const [searchLabel,     setSearchLabel]     = useState<string | undefined>(undefined)
@@ -945,6 +947,7 @@ function AppInner() {
                   onShare={handleShare}
                   onNavigate={handleNavigateTo}
                   onReScrape={userCanScrape ? handleReScrape : undefined}
+                  stakeFilter={stakeFilter}
                 />
               </div>
             </>
@@ -1014,6 +1017,8 @@ function AppInner() {
                     expandingId={expandingId}
                     onToast={showToast}
                     theme={theme}
+                    stakeFilter={stakeFilter}
+                    onStakeFilterChange={setStakeFilter}
                   />
                 </div>
                 <div className="mobile-panel">
@@ -1027,6 +1032,7 @@ function AppInner() {
                     onShare={handleShare}
                     onNavigate={handleNavigateTo}
                     onReScrape={userCanScrape ? handleReScrape : undefined}
+                    stakeFilter={stakeFilter}
                   />
                 </div>
               </>
@@ -1120,6 +1126,8 @@ function AppInner() {
                     expandingId={expandingId}
                     onToast={showToast}
                     theme={theme}
+                    stakeFilter={stakeFilter}
+                    onStakeFilterChange={setStakeFilter}
                   />
               }
               {activeTab === 'graph' && scrapingCompany && <ScrapeOverlay company={scrapingCompany} />}

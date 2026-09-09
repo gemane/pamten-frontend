@@ -16,6 +16,7 @@ vi.mock('./NodeFlags', () => ({ default: () => null }))
 vi.mock('./TimelinePanel', () => ({ default: () => null }))
 
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
+import { STAKE_FILTERS } from './GraphStakeFilter'
 
 const mockProfile = vi.mocked(getFullProfile)
 const mockSources = vi.mocked(getEntitySources)
@@ -41,6 +42,27 @@ describe('NodePanel (render)', () => {
     expect(await screen.findByText('Acme Corp')).toBeInTheDocument()
     expect(mockProfile).toHaveBeenCalledTimes(1)
     expect(mockProfile).toHaveBeenCalledWith('e1')
+  })
+
+  it('applies the stake filter to the subsidiary list', async () => {
+    const gte1 = STAKE_FILTERS.find(f => f.id === 'gte1')!
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Parent Co', type: 'company', verified: false } as Entity,
+      owners: [], executives: [],
+      subsidiaries: [
+        { entity: { id: 's1', name: 'Big Sub', type: 'company' } as Entity,
+          relationship: { stake_percent: 40 } },
+        { entity: { id: 's2', name: 'Tiny Sub', type: 'company' } as Entity,
+          relationship: { stake_percent: 0.4 } },
+        { entity: { id: 's3', name: 'Undisclosed Sub', type: 'company' } as Entity,
+          relationship: {} },
+      ],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Parent Co')} refreshKey={0} stakeFilter={gte1} />)
+    await screen.findByText('Parent Co')
+    expect(screen.getByText('Big Sub')).toBeInTheDocument()
+    expect(screen.getByText('Undisclosed Sub')).toBeInTheDocument()   // null stake kept
+    expect(screen.queryByText('Tiny Sub')).toBeNull()                 // 0.4% < 1% hidden
   })
 
   it('refetches the SAME node when refreshKey bumps (enrichment landed)', async () => {
