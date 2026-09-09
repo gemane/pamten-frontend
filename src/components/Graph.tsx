@@ -90,9 +90,14 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
     },
     {
       // The focused (centered) corporation — render it the largest so it anchors the view,
-      // with rounder corners so it reads as the hub.
+      // with rounder corners so it reads as the hub. Explicit doubled width (the
+      // other nodes size to their label; the hub gets a fixed, wider box so it
+      // stands out from the subsidiaries and owners around it regardless of how
+      // short the company name is), with the wrap width widened to match so a
+      // long name uses the room instead of wrapping early.
       selector: 'node.center',
-      style: { padding: '38px', 'font-size': '16px', 'font-weight': 700, 'corner-radius': '34px' },
+      style: { width: 240, 'text-max-width': '210px', padding: '38px',
+               'font-size': '16px', 'font-weight': 700, 'corner-radius': '34px' },
     },
     {
       selector: 'node:selected',
@@ -511,6 +516,15 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (toAdd.length === 0) return
       cy.add(toAdd as cytoscape.ElementDefinition[])
     }
+
+    // Mark the hub BEFORE laying out and fitting: node.center is a fixed 240px
+    // box, much wider than its label, and fitting with the base width first
+    // left a lone company (Al Jazeera Media Network — no owners or
+    // subsidiaries) zoomed to maxZoom, then widened past the viewport edges.
+    // Fit must see the real size. (The effect below re-marks on a centre-only
+    // change; this covers the fresh-graph fit.)
+    cy.nodes().removeClass('center')
+    if (centerId) cy.$id(centerId).addClass('center')
 
     // Step 1: run concentric layout — this reliably fits the viewport (proven to work).
     // Step 2: on layoutstop, instantly move nodes to arc positions while viewport stays correct.
