@@ -5,7 +5,7 @@ import cytoscape from 'cytoscape'
 import type { EdgeData, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
-import GraphStakeFilter, { keepsEdge, type StakeFilter } from './GraphStakeFilter'
+import GraphStakeFilter, { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
 
 export interface GraphHandle {
   exportPng: () => void
@@ -553,7 +553,8 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const stakePct  = edge.data('stakePct')
       const edgeType  = edge.data('edgeType')
       if (edgeType === 'role') return
-      edge.style('display', keepsEdge(stakePct, stakeFilter) ? 'element' : 'none')
+      const effective = effectiveStakePct(stakePct, edge.data('shares'), edge.data('sharesOutstanding'))
+      edge.style('display', keepsEdge(effective, stakeFilter) ? 'element' : 'none')
     })
     cy.nodes().forEach(node => {
       if (node.id() === centerId) return

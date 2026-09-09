@@ -55,6 +55,26 @@ export function keepsEdge(stake: number | null | undefined, filter: StakeFilter)
   return filter.inclusive ? stake >= filter.min : stake > filter.min
 }
 
+/**
+ * The percentage to filter on. Uses the stored stake, but falls back to
+ * shares / shares_outstanding when the stake is null — because "null" hides
+ * two very different things: a genuinely undisclosed stake (keep it, we can't
+ * judge), and one the writer left null only because it fell below the
+ * percentage precision floor (a 13F holder with 5,000 of 12bn shares). The
+ * latter is knowably tiny, and without this the SMALLEST holders slip through
+ * the filter while larger ones are hidden. A truly undisclosed edge — no
+ * shares, no denominator — still returns null and is still kept.
+ */
+export function effectiveStakePct(
+  stake: number | null | undefined,
+  shares?: number | null,
+  sharesOutstanding?: number | null,
+): number | null {
+  if (stake != null) return stake
+  if (shares != null && sharesOutstanding) return (shares / sharesOutstanding) * 100
+  return null
+}
+
 /** "Any", "≥25%", ">50%" — the label on the button and in the list. */
 export function filterLabel(filter: StakeFilter, anyLabel: string): string {
   if (filter.min === 0) return anyLabel

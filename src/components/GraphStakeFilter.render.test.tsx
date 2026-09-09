@@ -12,7 +12,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import GraphStakeFilter, {
-  STAKE_FILTERS, ANY_STAKE, DEFAULT_STAKE, keepsEdge, filterLabel,
+  STAKE_FILTERS, ANY_STAKE, DEFAULT_STAKE, keepsEdge, effectiveStakePct, filterLabel,
 } from './GraphStakeFilter'
 
 const byId = (id: string) => STAKE_FILTERS.find(f => f.id === id)!
@@ -70,6 +70,19 @@ describe('the control', () => {
   it('starts closed', () => {
     show()
     expect(screen.queryByRole('menu')).toBeNull()
+  })
+
+  it('an effective stake is computed from shares when the stake is null', () => {
+    // A below-precision-floor 13F holder: 5,000 of 12.23bn shares. Null stake,
+    // but knowably tiny — must be computed so the ≥1% filter can hide it.
+    expect(effectiveStakePct(null, 5000, 12_230_000_000)).toBeCloseTo(0.00004, 5)
+    expect(keepsEdge(effectiveStakePct(null, 5000, 12_230_000_000), DEFAULT_STAKE)).toBe(false)
+    // A genuine 4.7% holder stored with shares: computed, kept.
+    expect(effectiveStakePct(null, 8_593_355, 182_981_979)).toBeCloseTo(4.7, 1)
+    // A stored stake always wins; a truly undisclosed edge stays null (kept).
+    expect(effectiveStakePct(2.5, 999, 1000)).toBe(2.5)
+    expect(effectiveStakePct(null, null, null)).toBeNull()
+    expect(keepsEdge(effectiveStakePct(null, null, null), DEFAULT_STAKE)).toBe(true)
   })
 
   it('the default band is ≥1% and trims only smaller DISCLOSED stakes', () => {
