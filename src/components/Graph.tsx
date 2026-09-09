@@ -90,9 +90,14 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
     },
     {
       // The focused (centered) corporation — render it the largest so it anchors the view,
-      // with rounder corners so it reads as the hub.
+      // with rounder corners so it reads as the hub. Explicit doubled width (the
+      // other nodes size to their label; the hub gets a fixed, wider box so it
+      // stands out from the subsidiaries and owners around it regardless of how
+      // short the company name is), with the wrap width widened to match so a
+      // long name uses the room instead of wrapping early.
       selector: 'node.center',
-      style: { padding: '38px', 'font-size': '16px', 'font-weight': 700, 'corner-radius': '34px' },
+      style: { width: 240, 'text-max-width': '210px', padding: '38px',
+               'font-size': '16px', 'font-weight': 700, 'corner-radius': '34px' },
     },
     {
       selector: 'node:selected',
