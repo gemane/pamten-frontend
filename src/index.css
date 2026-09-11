@@ -4032,3 +4032,14 @@ a.source-item__name:hover { color: #4A90D9; }
 .help-feedback-btn { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #7ec3ff; background: #16253c; border: 1px solid #2a4a6a; border-radius: 8px; padding: 8px 14px; text-decoration: none; }
 .help-feedback-btn:hover { filter: brightness(1.2); }
 [data-theme="light"] .help-feedback-btn { color: #1a5da8; background: #e8f1fa; border-color: #b3cfe8; }
+
+/* Settings groups: labelled clusters so the page reads as four topics */
+.settings-group { margin-bottom: 26px; }
+.settings-group__label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #5f6b7f; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #263248; }
+[data-theme="light"] .settings-group__label { color: #718096; border-bottom-color: #d5dde8; }
+.settings-group .settings-section { margin-bottom: 16px; }
+.settings-help__summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; }
+.settings-help__summary::before { content: "▸"; font-size: 11px; transition: transform 0.15s; }
+.settings-help[open] .settings-help__summary::before { transform: rotate(90deg); }
+.settings-help__summary::-webkit-details-marker { display: none; }
+.settings-help[open] .help-glossary { margin-top: 12px; }

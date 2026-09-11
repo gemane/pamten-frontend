@@ -120,3 +120,34 @@ describe('Help & feedback', () => {
     expect(a.getAttribute('href')).toContain('subject=Owlgraph%20feedback')
   })
 })
+
+
+describe('page organisation', () => {
+  it('reads as four labelled groups, in order, for an admin', () => {
+    renderPanel({ user: as('admin') })
+    const labels = [...document.querySelectorAll('.settings-group__label')].map(e => e.textContent)
+    expect(labels).toEqual(['Appearance', 'Account', 'Help & feedback', 'Administration'])
+  })
+
+  it('hides the Administration group from ordinary users', () => {
+    renderPanel({ user: verifiedUser })
+    const labels = [...document.querySelectorAll('.settings-group__label')].map(e => e.textContent)
+    expect(labels).toEqual(['Appearance', 'Account', 'Help & feedback'])
+  })
+
+  it('the help glossary is a disclosure, closed by default', () => {
+    renderPanel({ user: null })
+    const details = document.querySelector('details.settings-help') as HTMLDetailsElement
+    expect(details).toBeTruthy()
+    expect(details.open).toBe(false)
+    // content still in the DOM (searchable), just collapsed
+    expect(screen.getByText('dimmed entry')).toBeInTheDocument()
+  })
+
+  it('delete account stays last, after administration', () => {
+    renderPanel({ user: as('admin') })
+    const del = screen.getAllByText(/Delete account/i)[0]
+    const adminLabel = [...document.querySelectorAll('.settings-group__label')].pop()!
+    expect(adminLabel.compareDocumentPosition(del) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+})

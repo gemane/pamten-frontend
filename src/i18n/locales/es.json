@@ -420,6 +420,12 @@
       "title": "Comentarios",
       "text": "¿Algo mal, ausente o confuso? Un correo breve ayuda mucho.",
       "button": "Enviar comentarios"
+    },
+    "groups": {
+      "appearance": "Apariencia",
+      "account": "Cuenta",
+      "helpFeedback": "Ayuda y comentarios",
+      "admin": "Administración"
     }
   },
   "scraper": {
