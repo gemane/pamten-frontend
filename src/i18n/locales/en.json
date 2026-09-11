@@ -407,6 +407,19 @@
       "disablePrompt": "Enter a current code (or a recovery code) to turn two-factor off.",
       "error": "Something went wrong. Try again.",
       "badCode": "That code isn't valid. Try again."
+    },
+    "help": {
+      "title": "Help — reading the graph",
+      "colors": "Node colours tell the kind: company, person, fund, holding, government, foundation, nonprofit, brand, voting group",
+      "dimmedSample": "dimmed entry",
+      "corroborated": "Confirmed independently by that many sources — the count shows how many agree",
+      "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",
+      "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "text": "Found something wrong, missing or confusing? A short mail helps a lot.",
+      "button": "Send feedback"
     }
   },
   "scraper": {

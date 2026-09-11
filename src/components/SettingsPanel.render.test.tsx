@@ -100,3 +100,23 @@ describe('the moderation queue section', () => {
     expect(screen.getByTestId('queue')).toHaveAttribute('data-related-to', '')
   })
 })
+
+
+describe('Help & feedback', () => {
+  it('shows the glossary to everyone, logged in or not', () => {
+    renderPanel({ user: null })
+    expect(screen.getByText('Help — reading the graph')).toBeInTheDocument()
+    // the marquee samples: dimmed, the ✓ 2 check, the ⚡ marker, node dots
+    expect(screen.getByText('dimmed entry')).toBeInTheDocument()
+    expect(screen.getByText('✓ 2')).toBeInTheDocument()
+    expect(screen.getByText('⚡')).toBeInTheDocument()
+    expect(document.querySelectorAll('.help-dot').length).toBeGreaterThanOrEqual(9)
+  })
+
+  it('the feedback button is a mailto with a subject', () => {
+    renderPanel({ user: null })
+    const a = screen.getByText(/Send feedback/).closest('a')!
+    expect(a.getAttribute('href')).toContain('mailto:')
+    expect(a.getAttribute('href')).toContain('subject=Owlgraph%20feedback')
+  })
+})
