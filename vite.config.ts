@@ -51,6 +51,10 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
+      // A deterministic feedback address for the suite: CI has no .env, and
+      // the real address lives only in the Render build env — the tests pin
+      // behaviour against this reserved-domain example.
+      env: { VITE_FEEDBACK_EMAIL: 'feedback@example.com' },
       include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     },
     plugins: [react(), cspPlugin(apiUrl)],
