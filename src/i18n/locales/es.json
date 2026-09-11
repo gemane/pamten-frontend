@@ -407,6 +407,19 @@
       "disablePrompt": "Introduce un código actual (o de recuperación) para desactivar los dos factores.",
       "error": "Algo salió mal. Inténtalo de nuevo.",
       "badCode": "Ese código no es válido. Inténtalo de nuevo."
+    },
+    "help": {
+      "title": "Ayuda — leer el grafo",
+      "colors": "Los colores indican el tipo: empresa, persona, fondo, holding, gobierno, fundación, sin ánimo de lucro, marca, grupo de voto",
+      "dimmedSample": "entrada atenuada",
+      "corroborated": "Confirmado de forma independiente por ese número de fuentes — la cifra muestra cuántas coinciden",
+      "edgeWidth": "El grosor de la línea sigue la participación: fina para pequeñas, gruesa para grandes",
+      "votingEdge": "Línea punteada ámbar: derechos de voto, dibujados aparte cuando difieren de la participación económica"
+    },
+    "feedback": {
+      "title": "Comentarios",
+      "text": "¿Algo mal, ausente o confuso? Un correo breve ayuda mucho.",
+      "button": "Enviar comentarios"
     }
   },
   "scraper": {

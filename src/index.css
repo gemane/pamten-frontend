@@ -4011,3 +4011,24 @@ a.source-item__name:hover { color: #4A90D9; }
 .source-mode:disabled { opacity: 0.4; cursor: not-allowed; }
 [data-theme="light"] .source-mode--full { color: #1e8449; background: #e4f4ea; border-color: #a9d8bb; }
 [data-theme="light"] .source-mode--claims { color: #9a6a10; background: #f4e8cf; border-color: #ddc48a; }
+
+/* Settings → Help glossary */
+.help-glossary { display: flex; flex-direction: column; gap: 10px; }
+.help-item { display: flex; align-items: center; gap: 12px; }
+.help-sample { flex-shrink: 0; min-width: 96px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.help-text { font-size: 12.5px; color: #8892a4; line-height: 1.45; }
+[data-theme="light"] .help-text { color: #4a5568; }
+.help-dot { width: 13px; height: 13px; border-radius: 50%; border: 2px solid; display: inline-block; }
+.help-stale { opacity: 0.5; font-size: 12.5px; color: #c3cad6; }
+[data-theme="light"] .help-stale { color: #2d3748; }
+.help-marker { color: #ecc94b; font-size: 14px; }
+.help-edge { display: inline-block; width: 34px; border-top: 2px solid #7d8aa0; }
+.help-edge--thin  { border-top-width: 1.5px; }
+.help-edge--thick { border-top-width: 6px; border-top-color: #5a86b8; }
+.help-edge--dashed { border-top-style: dashed; }
+.help-edge--dotted { border-top-style: dotted; border-top-width: 3px; border-top-color: #b7791f; }
+.help-feedback-text { font-size: 12.5px; color: #8892a4; margin: 0 0 10px; }
+[data-theme="light"] .help-feedback-text { color: #4a5568; }
+.help-feedback-btn { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #7ec3ff; background: #16253c; border: 1px solid #2a4a6a; border-radius: 8px; padding: 8px 14px; text-decoration: none; }
+.help-feedback-btn:hover { filter: brightness(1.2); }
+[data-theme="light"] .help-feedback-btn { color: #1a5da8; background: #e8f1fa; border-color: #b3cfe8; }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown, FiFlag } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
+import { ENTITY_COLORS } from '../utils/entityColors'
 import MfaSection from './MfaSection'
 import ChangePasswordSection from './ChangePasswordSection'
 import DeleteAccountSection from './DeleteAccountSection'
@@ -163,6 +164,64 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
             <FiLogIn /> {t('nav.login')}
           </button>
         )}
+      </div>
+
+      {/* ── Help: the graph's visual language, gathered in one place ─────────── */}
+      <div className="settings-section">
+        <h4 className="settings-section__title">{t('settings.help.title')}</h4>
+        <div className="help-glossary">
+          <div className="help-item">
+            <span className="help-sample">
+              {(['company', 'person', 'fund', 'holding', 'government', 'foundation', 'nonprofit', 'brand', 'voting_group'] as const).map(k => (
+                <span key={k} className="help-dot" title={t(`legend.${k}`)}
+                      style={{ background: ENTITY_COLORS[k].fill, borderColor: ENTITY_COLORS[k].border }} />
+              ))}
+            </span>
+            <span className="help-text">{t('settings.help.colors')}</span>
+          </div>
+          <div className="help-item">
+            <span className="help-sample"><span className="help-stale">{t('settings.help.dimmedSample')}</span></span>
+            <span className="help-text">{t('trust.staleHint')}</span>
+          </div>
+          <div className="help-item">
+            <span className="help-sample"><span className="corroboration-badge corroboration-badge--confirmed">✓ 2</span></span>
+            <span className="help-text">{t('settings.help.corroborated')}</span>
+          </div>
+          <div className="help-item">
+            <span className="help-sample"><span className="corroboration-badge corroboration-badge--community">{t('trust.community')}</span></span>
+            <span className="help-text">{t('trust.communityHint')}</span>
+          </div>
+          <div className="help-item">
+            <span className="help-sample"><span className="help-marker">⚡</span></span>
+            <span className="help-text">{t('ownershipType.specialVotingHint')}</span>
+          </div>
+          <div className="help-item">
+            <span className="help-sample"><span className="nominee-badge">{t('panel.nominee')}</span></span>
+            <span className="help-text">{t('panel.nomineeHint')}</span>
+          </div>
+          <div className="help-item">
+            <span className="help-sample"><span className="help-edge help-edge--thin" /><span className="help-edge help-edge--thick" /></span>
+            <span className="help-text">{t('settings.help.edgeWidth')}</span>
+          </div>
+          <div className="help-item">
+            <span className="help-sample"><span className="help-edge help-edge--dashed" /></span>
+            <span className="help-text">{t('legend.ultimateParent')}</span>
+          </div>
+          <div className="help-item">
+            <span className="help-sample"><span className="help-edge help-edge--dotted" /></span>
+            <span className="help-text">{t('settings.help.votingEdge')}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Feedback ─────────────────────────────────────────────────────────── */}
+      <div className="settings-section">
+        <h4 className="settings-section__title">{t('settings.feedback.title')}</h4>
+        <p className="help-feedback-text">{t('settings.feedback.text')}</p>
+        <a className="help-feedback-btn"
+           href={`mailto:gerold.neuwirt@gmail.com?subject=${encodeURIComponent('Owlgraph feedback')}`}>
+          ✉ {t('settings.feedback.button')}
+        </a>
       </div>
 
       {user && <ChangePasswordSection />}

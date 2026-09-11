@@ -407,6 +407,19 @@
       "disablePrompt": "Gib einen aktuellen Code (oder einen Wiederherstellungscode) ein, um Zwei-Faktor zu deaktivieren.",
       "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
       "badCode": "Dieser Code ist ungültig. Bitte erneut versuchen."
+    },
+    "help": {
+      "title": "Hilfe — den Graphen lesen",
+      "colors": "Knotenfarben zeigen die Art: Unternehmen, Person, Fonds, Holding, Staat, Stiftung, Nonprofit, Marke, Stimmrechtsgruppe",
+      "dimmedSample": "gedimmter Eintrag",
+      "corroborated": "Unabhängig bestätigt durch so viele Quellen — die Zahl zeigt, wie viele übereinstimmen",
+      "edgeWidth": "Liniendicke folgt dem Anteil: dünn für kleine, dick für große Beteiligungen",
+      "votingEdge": "Gepunktete gelbe Linie: Stimmrechte, getrennt gezeichnet, wo sie vom wirtschaftlichen Anteil abweichen"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "text": "Etwas falsch, fehlend oder verwirrend? Eine kurze Mail hilft sehr.",
+      "button": "Feedback senden"
     }
   },
   "scraper": {
