@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { computeArcPositions, buildStylesheet } from './Graph'
+import { computeArcPositions, buildStylesheet, filterVisibleElements } from './Graph'
+import { STAKE_FILTERS, ANY_STAKE } from './GraphStakeFilter'
 import type { GraphElement } from '../types'
 
 const ruleFor = (selector: string) =>
@@ -71,5 +72,48 @@ describe('buildStylesheet — centered node sizing', () => {
     expect(center.width).toBe(240)
     // The label may use the extra room instead of wrapping at the base width.
     expect(px(center['text-max-width'])).toBeGreaterThan(px(base['text-max-width']))
+  })
+})
+
+
+describe('filterVisibleElements + re-layout — the filtered graph closes ranks', () => {
+  const gte1 = STAKE_FILTERS.find(f => f.id === 'gte1')!
+  const els = [
+    node('c', 'Centre Corp'), node('big', 'Big Owner'), node('tiny', 'Tiny Owner'),
+    node('mid', 'Mid Owner'),
+    ownsEdge('big', 'c', 8.3), ownsEdge('tiny', 'c', 0.03), ownsEdge('mid', 'c', 5.8),
+  ]
+
+  it('drops below-band edges and the nodes they orphan', () => {
+    const vis = filterVisibleElements(els, gte1, 'c')
+    const ids = vis.map(e => e.data.id)
+    expect(ids).toContain('big')
+    expect(ids).toContain('mid')
+    expect(ids).not.toContain('tiny')
+    expect(ids).not.toContain('tiny__c')
+  })
+
+  it('keeps everything under "any"', () => {
+    expect(filterVisibleElements(els, ANY_STAKE, 'c')).toHaveLength(els.length)
+  })
+
+  it('the surviving owners are re-placed adjacently, not marooned at the old slots', () => {
+    // With 3 owners the arc spans wide; with the tiny one filtered, the two
+    // survivors must sit at the 2-owner arc positions — the same x-spread a
+    // 2-owner graph gets natively — not at their old 3-owner extremes.
+    const filtered = filterVisibleElements(els, gte1, 'c')
+    const two = computeArcPositions(filtered, 'c')
+    const native = computeArcPositions([
+      node('c', 'Centre Corp'), node('big', 'Big Owner'), node('mid', 'Mid Owner'),
+      ownsEdge('big', 'c', 8.3), ownsEdge('mid', 'c', 5.8),
+    ], 'c')
+    expect(two.get('big')).toEqual(native.get('big'))
+    expect(two.get('mid')).toEqual(native.get('mid'))
+  })
+
+  it('the centre survives even when every edge is filtered', () => {
+    const strict = STAKE_FILTERS.find(f => f.id === 'gt75')!
+    const vis = filterVisibleElements(els, strict, 'c')
+    expect(vis.map(e => e.data.id)).toEqual(['c'])
   })
 })

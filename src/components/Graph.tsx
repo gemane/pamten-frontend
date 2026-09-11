@@ -204,6 +204,37 @@ const LEVEL_GAP    = 220            // vertical px between hop levels beyond the
 
 // Pure function — works on the React elements array, no Cytoscape required.
 // Returns a map of nodeId → {x, y} to use when calling cy.add().
+/** The elements that survive a stake filter: ownership edges below the band
+ *  go, nodes left with no visible edge go (the centre always stays), role
+ *  edges are never filtered. Pure, so the re-layout it feeds is testable. */
+export function filterVisibleElements(
+  elements: GraphElement[],
+  filter: StakeFilter,
+  centerId: string | null,
+): GraphElement[] {
+  const edgeVisible = (d: GraphElement['data']): boolean => {
+    if (!('source' in d)) return true
+    if (d.edgeType === 'role') return true
+    const eff = effectiveStakePct(d.stakePct ?? null, d.shares, d.sharesOutstanding)
+    return keepsEdge(eff, filter)
+  }
+  const nodeHasEdge = new Set<string>()
+  for (const el of elements) {
+    const d = el.data
+    if ('source' in d && edgeVisible(d)) {
+      nodeHasEdge.add(d.source)
+      nodeHasEdge.add(d.target)
+    }
+  }
+  const nodeVisible = (id: string) => id === centerId || nodeHasEdge.has(id)
+  return elements.filter(el => {
+    const d = el.data
+    if ('source' in d) return edgeVisible(d) && nodeVisible(d.source) && nodeVisible(d.target)
+    return nodeVisible(d.id)
+  })
+}
+
+
 export function computeArcPositions(
   elements: GraphElement[],
   centerId: string | null,
@@ -559,7 +590,12 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     if (centerId) cy.$id(centerId).addClass('center')
   }, [centerId, elements])
 
-  // Hide ownership below the chosen band; hide nodes left with nothing.
+  // Hide ownership below the chosen band; hide nodes left with nothing — and
+  // RE-PLACE the survivors. The arc positions were computed for the full node
+  // set, so filtering used to leave four owners marooned at their original
+  // slots on the far left and right with a gulf between them (Alphabet under
+  // ≥1%). Recomputing the arc over the visible elements closes the ranks, and
+  // a fit keeps the smaller graph filling the viewport.
   useEffect(() => {
     const cy = cyRef.current
     if (!cy || elements.length === 0) return
@@ -575,6 +611,16 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const visible = node.connectedEdges().some(e => e.style('display') !== 'none')
       node.style('display', visible ? 'element' : 'none')
     })
+
+    const positions = computeArcPositions(
+      filterVisibleElements(elements, stakeFilter, centerId ?? null), centerId ?? null)
+    if (positions.size > 0) {
+      cy.nodes().forEach(node => {
+        const p = positions.get(node.id())
+        if (p && node.style('display') !== 'none') node.position(p)
+      })
+      cy.fit(undefined, 80)
+    }
   }, [stakeFilter, elements, centerId])
 
   const centerLabel = elements.find(el => 'id' in el.data && el.data.id === centerId)
