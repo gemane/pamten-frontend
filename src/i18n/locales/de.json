@@ -420,6 +420,12 @@
       "title": "Feedback",
       "text": "Etwas falsch, fehlend oder verwirrend? Eine kurze Mail hilft sehr.",
       "button": "Feedback senden"
+    },
+    "groups": {
+      "appearance": "Darstellung",
+      "account": "Konto",
+      "helpFeedback": "Hilfe & Feedback",
+      "admin": "Verwaltung"
     }
   },
   "scraper": {

@@ -116,6 +116,9 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
 
   return (
     <div className="settings-panel">
+      {/* ── Appearance ───────────────────────────────────────────────────────── */}
+      <div className="settings-group">
+        <div className="settings-group__label">{t('settings.groups.appearance')}</div>
       <div className="settings-section">
         <h4 className="settings-section__title">{t('settings.language')}</h4>
         <div className="lang-switcher">
@@ -145,7 +148,11 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
           ))}
         </div>
       </div>
+      </div>
 
+      {/* ── Account: who you are, and its keys ───────────────────────────────── */}
+      <div className="settings-group">
+        <div className="settings-group__label">{t('settings.groups.account')}</div>
       <div className="settings-section">
         <h4 className="settings-section__title">{t('settings.account')}</h4>
         {user ? (
@@ -166,9 +173,17 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
         )}
       </div>
 
-      {/* ── Help: the graph's visual language, gathered in one place ─────────── */}
-      <div className="settings-section">
-        <h4 className="settings-section__title">{t('settings.help.title')}</h4>
+        {user && <ChangePasswordSection />}
+        {user && <MfaSection />}
+      </div>
+
+      {/* ── Help & feedback ──────────────────────────────────────────────────── */}
+      <div className="settings-group">
+        <div className="settings-group__label">{t('settings.groups.helpFeedback')}</div>
+        {/* The glossary is tall; a disclosure keeps the page scannable and the
+            markers one click away. Native details, so it needs no state. */}
+        <details className="settings-section settings-help">
+          <summary className="settings-section__title settings-help__summary">{t('settings.help.title')}</summary>
         <div className="help-glossary">
           <div className="help-item">
             <span className="help-sample">
@@ -212,22 +227,21 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
             <span className="help-text">{t('settings.help.votingEdge')}</span>
           </div>
         </div>
-      </div>
-
-      {/* ── Feedback ─────────────────────────────────────────────────────────── */}
-      <div className="settings-section">
-        <h4 className="settings-section__title">{t('settings.feedback.title')}</h4>
+        </details>
+        <div className="settings-section">
+          <h4 className="settings-section__title">{t('settings.feedback.title')}</h4>
         <p className="help-feedback-text">{t('settings.feedback.text')}</p>
         <a className="help-feedback-btn"
            href={`mailto:gerold.neuwirt@gmail.com?subject=${encodeURIComponent('Owlgraph feedback')}`}>
           ✉ {t('settings.feedback.button')}
         </a>
+        </div>
       </div>
 
-      {user && <ChangePasswordSection />}
-
-      {user && <MfaSection />}
-
+      {/* ── Administration (admins and moderators only) ──────────────────────── */}
+      {(user?.role === 'admin' || canModerate) && (
+        <div className="settings-group">
+          <div className="settings-group__label">{t('settings.groups.admin')}</div>
       {user?.role === 'admin' && (
         <div className="settings-section">
           <h4 className="settings-section__title">{t('settings.users')}</h4>
@@ -246,9 +260,6 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
         </div>
       )}
 
-      {/* The whole queue, every company. Unlike the button under a node's name
-          this one shows even when nothing is waiting — Settings is where you go
-          looking, and an empty queue should say so rather than vanish. */}
       {canModerate && (
         <div className="settings-section">
           <h4 className="settings-section__title">{t('modQueue.title')}</h4>
@@ -257,8 +268,10 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
           </button>
         </div>
       )}
+      </div>
+      )}
 
-      {/* Last, and after the admin panel: destructive and irreversible. */}
+      {/* Last, deliberately: destructive and irreversible. */}
       {user && <DeleteAccountSection onDeleted={onLogout} />}
 
       {showQueue && <ModeratorQueue onClose={() => setShowQueue(false)} />}

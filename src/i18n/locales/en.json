@@ -420,6 +420,12 @@
       "title": "Feedback",
       "text": "Found something wrong, missing or confusing? A short mail helps a lot.",
       "button": "Send feedback"
+    },
+    "groups": {
+      "appearance": "Appearance",
+      "account": "Account",
+      "helpFeedback": "Help & feedback",
+      "admin": "Administration"
     }
   },
   "scraper": {
