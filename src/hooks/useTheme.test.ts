@@ -26,3 +26,22 @@ describe('resolveTheme', () => {
     expect(resolveTheme('system', false)).toBe('dark')
   })
 })
+
+
+describe('browser-chrome sync (meta theme-color)', () => {
+  it('follows the applied theme, so light mode gets a light top bar', async () => {
+    const { renderHook, act } = await import('@testing-library/react')
+    const { useTheme } = await import('./useTheme')
+    const meta = document.createElement('meta')
+    meta.setAttribute('name', 'theme-color')
+    meta.setAttribute('content', '#ffffff')
+    document.head.appendChild(meta)
+
+    const { result } = renderHook(() => useTheme())
+    act(() => { result.current[2]('dark') })
+    expect(meta.getAttribute('content')).toBe('#1a1a2e')
+    act(() => { result.current[2]('light') })
+    expect(meta.getAttribute('content')).toBe('#ffffff')
+    meta.remove()
+  })
+})
