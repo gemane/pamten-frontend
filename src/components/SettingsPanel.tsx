@@ -67,6 +67,8 @@ function UserRow({ u, currentId, onRoleChange, onDelete }: {
   )
 }
 
+const FEEDBACK_EMAIL = (import.meta.env.VITE_FEEDBACK_EMAIL as string | undefined) || null
+
 export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin, onLogout }: SettingsPanelProps) {
   const { t, i18n } = useTranslation()
   const [users,    setUsers]    = useState<UserRecord[]>([])
@@ -228,14 +230,19 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
           </div>
         </div>
         </details>
-        <div className="settings-section">
-          <h4 className="settings-section__title">{t('settings.feedback.title')}</h4>
-        <p className="help-feedback-text">{t('settings.feedback.text')}</p>
-        <a className="help-feedback-btn"
-           href={`mailto:gerold.neuwirt@gmail.com?subject=${encodeURIComponent('Owlgraph feedback')}`}>
-          ✉ {t('settings.feedback.button')}
-        </a>
-        </div>
+        {/* Build-time address (VITE_FEEDBACK_EMAIL) so no personal address
+            lives in the repo; without one the section says nothing rather
+            than offering a dead mailto. */}
+        {FEEDBACK_EMAIL && (
+          <div className="settings-section">
+            <h4 className="settings-section__title">{t('settings.feedback.title')}</h4>
+            <p className="help-feedback-text">{t('settings.feedback.text')}</p>
+            <a className="help-feedback-btn"
+               href={`mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Owlgraph feedback')}`}>
+              ✉ {t('settings.feedback.button')}
+            </a>
+          </div>
+        )}
       </div>
 
       {/* ── Administration (admins and moderators only) ──────────────────────── */}

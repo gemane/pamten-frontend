@@ -113,11 +113,14 @@ describe('Help & feedback', () => {
     expect(document.querySelectorAll('.help-dot').length).toBeGreaterThanOrEqual(9)
   })
 
-  it('the feedback button is a mailto with a subject', () => {
+  it('the feedback button is a mailto built from the env address', () => {
+    // vitest loads .env, whose reserved-domain example address feeds the test —
+    // the REAL address lives only in the Render build env, not in git.
     renderPanel({ user: null })
     const a = screen.getByText(/Send feedback/).closest('a')!
-    expect(a.getAttribute('href')).toContain('mailto:')
+    expect(a.getAttribute('href')).toContain('mailto:feedback@example.com')
     expect(a.getAttribute('href')).toContain('subject=Owlgraph%20feedback')
+    expect(a.getAttribute('href')).not.toContain('gmail')
   })
 })
 
