@@ -20,6 +20,24 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#ffffff" />
     <script>
+      // The browser/PWA samples theme-color at LOAD — before React applies the
+      // saved theme — so a dark-mode user got a white bar until (and on some
+      // platforms regardless of) the late runtime update. Decide synchronously
+      // from the same key useTheme persists, before first paint.
+      (function () {
+        try {
+          var mode = localStorage.getItem('owlgraph-theme')
+          var light = mode === 'light' || (mode !== 'dark' &&
+            window.matchMedia('(prefers-color-scheme: light)').matches)
+          if (!light) {
+            document.querySelector('meta[name="theme-color"]')
+              .setAttribute('content', '#1a1a2e')
+            document.documentElement.setAttribute('data-theme', 'dark')
+          }
+        } catch (e) { /* default stays light */ }
+      })()
+    </script>
+    <script>
       (function(){
         var t = localStorage.getItem('owlgraph-theme');
         if (!t) { try { t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; } catch(e) { t = 'dark'; } }
