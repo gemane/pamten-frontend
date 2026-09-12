@@ -74,11 +74,15 @@ describe('the web manifest', () => {
     expect(missing, `manifest icons missing: ${missing.join(', ')}`).toEqual([])
   })
 
-  it('matches the page background, so no white flash on launch', () => {
-    // Both the splash and the browser chrome read this; a mismatch shows as a
-    // pale frame around a dark app.
-    expect(manifest.background_color).toBe('#1a1a2e')
-    expect(indexHtml).toMatch(/<meta name="theme-color" content="#1a1a2e"/)
+  it('splash is white to fit the logo; runtime syncs the chrome to the theme', () => {
+    // The splash shows the mark on its own background — white, like the logo
+    // (user decision 2026-09-12; it was dark and clashed). The install-time
+    // theme_color is light too; once the app runs, useTheme keeps the
+    // browser/PWA top bar in step with the ACTUAL theme, so dark mode still
+    // gets a dark bar (see useTheme's meta sync test).
+    expect(manifest.background_color).toBe('#ffffff')
+    expect(manifest.theme_color).toBe('#ffffff')
+    expect(indexHtml).toMatch(/<meta name="theme-color" content="#ffffff"/)
   })
 })
 
