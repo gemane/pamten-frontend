@@ -45,10 +45,12 @@ export function useTheme(): [Theme, ThemeMode, (mode: ThemeMode) => void] {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     // The browser / installed-app top bar follows this meta tag, not our CSS —
+    // and it must equal the BODY background of each theme, or the bar reads as
+    // a separate band above the page (the user's report on the settings page).
     // without the sync it stayed at the install-time colour (black) even in
     // light mode. Same background the app body uses in each theme.
     document.querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'light' ? '#ffffff' : '#1a1a2e')
+      ?.setAttribute('content', theme === 'light' ? '#f0f4f8' : '#1a1a2e')
   }, [theme])
 
   return [theme, mode, setMode]

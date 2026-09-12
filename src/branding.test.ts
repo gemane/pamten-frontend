@@ -80,9 +80,11 @@ describe('the web manifest', () => {
     // theme_color is light too; once the app runs, useTheme keeps the
     // browser/PWA top bar in step with the ACTUAL theme, so dark mode still
     // gets a dark bar (see useTheme's meta sync test).
-    expect(manifest.background_color).toBe('#ffffff')
-    expect(manifest.theme_color).toBe('#ffffff')
-    expect(indexHtml).toMatch(/<meta name="theme-color" content="#ffffff"/)
+    expect(manifest.background_color).toBe('#ffffff')          // splash: the logo's ground
+    // The BAR must equal the body background per theme, or it reads as a
+    // separate band above the page: light body is #f0f4f8, not white.
+    expect(manifest.theme_color).toBe('#f0f4f8')
+    expect(indexHtml).toMatch(/<meta name="theme-color" content="#f0f4f8"/)
   })
 })
 
