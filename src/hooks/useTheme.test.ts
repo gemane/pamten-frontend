@@ -32,16 +32,21 @@ describe('browser-chrome sync (meta theme-color)', () => {
   it('follows the applied theme, so light mode gets a light top bar', async () => {
     const { renderHook, act } = await import('@testing-library/react')
     const { useTheme } = await import('./useTheme')
-    const meta = document.createElement('meta')
-    meta.setAttribute('name', 'theme-color')
-    meta.setAttribute('content', '#f0f4f8')
-    document.head.appendChild(meta)
+    // the page carries a media-qualified PAIR; the toggle must rewrite both
+    const metas = ['light', 'dark'].map(scheme => {
+      const m = document.createElement('meta')
+      m.setAttribute('name', 'theme-color')
+      m.setAttribute('media', `(prefers-color-scheme: ${scheme})`)
+      m.setAttribute('content', scheme === 'light' ? '#f0f4f8' : '#1a1a2e')
+      document.head.appendChild(m)
+      return m
+    })
 
     const { result } = renderHook(() => useTheme())
     act(() => { result.current[2]('dark') })
-    expect(meta.getAttribute('content')).toBe('#1a1a2e')
+    expect(metas.map(m => m.getAttribute('content'))).toEqual(['#1a1a2e', '#1a1a2e'])
     act(() => { result.current[2]('light') })
-    expect(meta.getAttribute('content')).toBe('#f0f4f8')
-    meta.remove()
+    expect(metas.map(m => m.getAttribute('content'))).toEqual(['#f0f4f8', '#f0f4f8'])
+    metas.forEach(m => m.remove())
   })
 })

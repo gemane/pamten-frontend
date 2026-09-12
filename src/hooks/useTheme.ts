@@ -49,8 +49,9 @@ export function useTheme(): [Theme, ThemeMode, (mode: ThemeMode) => void] {
     // a separate band above the page (the user's report on the settings page).
     // without the sync it stayed at the install-time colour (black) even in
     // light mode. Same background the app body uses in each theme.
-    document.querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'light' ? '#f0f4f8' : '#1a1a2e')
+    const barColour = theme === 'light' ? '#f0f4f8' : '#1a1a2e'
+    document.querySelectorAll('meta[name="theme-color"]')
+      .forEach(m => m.setAttribute('content', barColour))
   }, [theme])
 
   return [theme, mode, setMode]

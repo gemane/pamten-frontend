@@ -18,7 +18,13 @@
          content type and serve the latter as octet-stream, which is not what a
          manifest is supposed to arrive as. -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#f0f4f8" />
+    <!-- Two media-qualified tags: the WebAPK's status bar ignores runtime
+         meta updates on some Androids and evaluates these natively against
+         the SYSTEM scheme — the only declarative path to a dark bar there.
+         The inline script + useTheme still rewrite both for the in-app
+         toggle, for browsers that honour dynamic changes. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f4f8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1a2e" />
     <script>
       // The browser/PWA samples theme-color at LOAD — before React applies the
       // saved theme — so a dark-mode user got a white bar until (and on some
@@ -29,11 +35,11 @@
           var mode = localStorage.getItem('owlgraph-theme')
           var light = mode === 'light' || (mode !== 'dark' &&
             window.matchMedia('(prefers-color-scheme: light)').matches)
-          if (!light) {
-            document.querySelector('meta[name="theme-color"]')
-              .setAttribute('content', '#1a1a2e')
-            document.documentElement.setAttribute('data-theme', 'dark')
-          }
+          var colour = light ? '#f0f4f8' : '#1a1a2e'
+          document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+            m.setAttribute('content', colour)
+          })
+          if (!light) document.documentElement.setAttribute('data-theme', 'dark')
         } catch (e) { /* default stays light */ }
       })()
     </script>
