@@ -928,7 +928,7 @@ function AppInner() {
                 <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /></button>
                 <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /></button>
                 <button className={`tab-btn ${activeTab === 'coverage' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('coverage')} title={t('nav.coverage')}><FiBookOpen /></button>
-                <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('scraper.title')}><FiDatabase /></button>
+                <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('nav.scraper')}><FiDatabase /></button>
                 <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
               </div>
             </div>
@@ -1148,7 +1148,7 @@ function AppInner() {
             <FiBookOpen /><span>{t('nav.coverage')}</span>
           </button>
           <button className={`bottom-nav-btn ${activeTab === 'scraper' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('scraper')}>
-            <FiDatabase /><span>{t('scraper.title')}</span>
+            <FiDatabase /><span>{t('nav.scraper')}</span>
           </button>
           <button className={`bottom-nav-btn ${activeTab === 'settings' ? 'bottom-nav-btn--active' : ''}`} onClick={() => handleTabChange('settings')}>
             <FiSettings /><span>{t('settings.title')}</span>
