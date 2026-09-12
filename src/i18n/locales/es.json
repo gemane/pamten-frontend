@@ -5,7 +5,8 @@
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
     "home": "Volver al inicio",
-    "coverage": "Datos"
+    "coverage": "Datos",
+    "scraper": "Scraper"
   },
   "share": {
     "title": "Compartir esta vista",

@@ -5,7 +5,8 @@
     "login": "Login",
     "logout": "Logout",
     "home": "Return to home",
-    "coverage": "Data"
+    "coverage": "Data",
+    "scraper": "Scraper"
   },
   "share": {
     "title": "Share this view",
