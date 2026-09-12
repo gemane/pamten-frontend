@@ -84,7 +84,11 @@ describe('the web manifest', () => {
     // The BAR must equal the body background per theme, or it reads as a
     // separate band above the page: light body is #f0f4f8, not white.
     expect(manifest.theme_color).toBe('#f0f4f8')
-    expect(indexHtml).toMatch(/<meta name="theme-color" content="#f0f4f8"/)
+    // Media-qualified pair: the WebAPK status bar evaluates these natively
+    // against the SYSTEM scheme (it ignores runtime meta updates), so a
+    // system-dark phone gets a dark bar declaratively.
+    expect(indexHtml).toMatch(/media="\(prefers-color-scheme: light\)" content="#f0f4f8"/)
+    expect(indexHtml).toMatch(/media="\(prefers-color-scheme: dark\)" content="#1a1a2e"/)
   })
 })
 
