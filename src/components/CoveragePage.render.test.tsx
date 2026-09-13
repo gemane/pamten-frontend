@@ -50,6 +50,19 @@ describe('CoveragePage', () => {
     expect(screen.getByText('2,394')).toBeTruthy()
   })
 
+  it('carries the reading-the-graph help, open, between the totals and the cards', async () => {
+    render(<CoveragePage />)
+    await screen.findByText('1,838')
+    const help = document.querySelector('section.graph-help')!
+    expect(help).toBeTruthy()
+    expect(document.querySelector('details')).toBeNull()
+    expect(screen.getByText('Help — reading the graph')).toBeTruthy()
+    const stats = document.querySelector('.coverage__stats')!
+    const cards = document.querySelector('.coverage__cards')!
+    expect(stats.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(help.compareDocumentPosition(cards) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('an instant source shows its last successful update from health', async () => {
     mockHealth.mockResolvedValue({ data: health({ sources: [{
       name: 'sec_edgar', label: 'SEC EDGAR', failure_streak: 0, runs_24h: 1,

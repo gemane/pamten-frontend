@@ -409,25 +409,23 @@
       "error": "Algo salió mal. Inténtalo de nuevo.",
       "badCode": "Ese código no es válido. Inténtalo de nuevo."
     },
-    "help": {
-      "title": "Ayuda — leer el grafo",
-      "colors": "Los colores indican el tipo: empresa, persona, fondo, holding, gobierno, fundación, sin ánimo de lucro, marca, grupo de voto",
-      "dimmedSample": "entrada atenuada",
-      "corroborated": "Confirmado de forma independiente por ese número de fuentes — la cifra muestra cuántas coinciden",
-      "edgeWidth": "El grosor de la línea sigue la participación: fina para pequeñas, gruesa para grandes",
-      "votingEdge": "Línea punteada ámbar: derechos de voto, dibujados aparte cuando difieren de la participación económica"
-    },
     "feedback": {
       "title": "Comentarios",
       "text": "¿Algo mal, ausente o confuso? Un correo breve ayuda mucho.",
       "button": "Enviar comentarios"
     },
     "groups": {
+      "moderation": "Moderación",
       "appearance": "Apariencia",
       "account": "Cuenta",
-      "helpFeedback": "Ayuda y comentarios",
+      "feedbackLegal": "Comentarios y aviso legal",
       "admin": "Administración"
-    }
+    },
+    "legal": "Aviso legal",
+    "legalPrivacy": "Política de privacidad",
+    "legalImprint": "Aviso legal e identificación",
+    "legalTerms": "Condiciones de uso",
+    "legalSources": "Fuentes de datos"
   },
   "scraper": {
     "title": "Estado del scraper",
@@ -596,6 +594,14 @@
     "intro": "Owlgraph mapea quién posee y controla empresas, a partir de registros públicos y presentaciones obligatorias. Cada dato lleva su fuente; esta página indica qué cubre cada fuente, cuánta confianza merece y qué tan frescos son sus datos.",
     "lastSuccess": "última actualización {{when}}",
     "note": "Esta instancia de desarrollo contiene un subconjunto de prueba de los conjuntos de datos completos — las etiquetas de alcance lo indican. Los recuentos crecen con cada lectura.",
-    "claimsOnly": "solo declaraciones"
+    "claimsOnly": "solo declaraciones",
+    "help": {
+      "title": "Ayuda — leer el grafo",
+      "colors": "Los colores indican el tipo: empresa, persona, fondo, holding, gobierno, fundación, sin ánimo de lucro, marca, grupo de voto",
+      "dimmedSample": "entrada atenuada",
+      "corroborated": "Confirmado de forma independiente por ese número de fuentes — la cifra muestra cuántas coinciden",
+      "edgeWidth": "El grosor de la línea sigue la participación: fina para pequeñas, gruesa para grandes",
+      "votingEdge": "Línea punteada ámbar: derechos de voto, dibujados aparte cuando difieren de la participación económica"
+    }
   }
 }

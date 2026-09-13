@@ -409,25 +409,23 @@
       "error": "Something went wrong. Try again.",
       "badCode": "That code isn't valid. Try again."
     },
-    "help": {
-      "title": "Help — reading the graph",
-      "colors": "Node colours tell the kind: company, person, fund, holding, government, foundation, nonprofit, brand, voting group",
-      "dimmedSample": "dimmed entry",
-      "corroborated": "Confirmed independently by that many sources — the count shows how many agree",
-      "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",
-      "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake"
-    },
     "feedback": {
       "title": "Feedback",
       "text": "Found something wrong, missing or confusing? A short mail helps a lot.",
       "button": "Send feedback"
     },
     "groups": {
+      "moderation": "Moderation",
       "appearance": "Appearance",
       "account": "Account",
-      "helpFeedback": "Help & feedback",
+      "feedbackLegal": "Feedback & legal",
       "admin": "Administration"
-    }
+    },
+    "legal": "Legal",
+    "legalPrivacy": "Privacy policy",
+    "legalImprint": "Imprint",
+    "legalTerms": "Terms of use",
+    "legalSources": "Data sources"
   },
   "scraper": {
     "title": "Scraper Status",
@@ -596,6 +594,14 @@
     "intro": "Owlgraph maps who owns and controls companies, assembled from public registers and filings. Every fact carries its source; this page states what each source covers, how far to trust it, and how fresh its data is.",
     "lastSuccess": "last updated {{when}}",
     "note": "This development instance carries a curated test subset of the full datasets — scope badges above say which. Counts grow as sources are re-read.",
-    "claimsOnly": "claims only"
+    "claimsOnly": "claims only",
+    "help": {
+      "title": "Help — reading the graph",
+      "colors": "Node colours tell the kind: company, person, fund, holding, government, foundation, nonprofit, brand, voting group",
+      "dimmedSample": "dimmed entry",
+      "corroborated": "Confirmed independently by that many sources — the count shows how many agree",
+      "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",
+      "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake"
+    }
   }
 }

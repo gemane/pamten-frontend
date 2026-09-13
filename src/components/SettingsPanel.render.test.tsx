@@ -102,15 +102,17 @@ describe('the moderation queue section', () => {
 })
 
 
-describe('Help & feedback', () => {
-  it('shows the glossary to everyone, logged in or not', () => {
+describe('Feedback & legal', () => {
+  it('the glossary no longer lives here — it moved to the Data page', () => {
     renderPanel({ user: null })
-    expect(screen.getByText('Help — reading the graph')).toBeInTheDocument()
-    // the marquee samples: dimmed, the ✓ 2 check, the ⚡ marker, node dots
-    expect(screen.getByText('dimmed entry')).toBeInTheDocument()
-    expect(screen.getByText('✓ 2')).toBeInTheDocument()
-    expect(screen.getByText('⚡')).toBeInTheDocument()
-    expect(document.querySelectorAll('.help-dot').length).toBeGreaterThanOrEqual(9)
+    expect(screen.queryByText('Help — reading the graph')).toBeNull()
+    expect(document.querySelector('.help-glossary')).toBeNull()
+  })
+
+  it('the legal links sit inside the Feedback & legal group', () => {
+    renderPanel({ user: null })
+    const group = document.querySelector('.settings-legal')!.closest('.settings-group')!
+    expect(group.querySelector('.settings-group__label')!.textContent).toBe('Feedback & legal')
   })
 
   it('the feedback button is a mailto built from the env address', () => {
@@ -126,31 +128,35 @@ describe('Help & feedback', () => {
 
 
 describe('page organisation', () => {
-  it('reads as four labelled groups, in order, for an admin', () => {
+  it('reads as five labelled groups, in order, for an admin — moderation first', () => {
     renderPanel({ user: as('admin') })
     const labels = [...document.querySelectorAll('.settings-group__label')].map(e => e.textContent)
-    expect(labels).toEqual(['Appearance', 'Account', 'Help & feedback', 'Administration'])
+    expect(labels).toEqual(['Moderation', 'Appearance', 'Account', 'Feedback & legal', 'Administration'])
+  })
+
+  it('a moderator gets the queue on top, and no Administration group', () => {
+    renderPanel({ user: as('moderator') })
+    const labels = [...document.querySelectorAll('.settings-group__label')].map(e => e.textContent)
+    expect(labels).toEqual(['Moderation', 'Appearance', 'Account', 'Feedback & legal'])
+    // the queue button precedes everything else on the page
+    const btn = queueButton()!
+    const lang = screen.getByRole('button', { name: 'DE' })
+    expect(btn.compareDocumentPosition(lang) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('hides the Administration group from ordinary users', () => {
     renderPanel({ user: verifiedUser })
     const labels = [...document.querySelectorAll('.settings-group__label')].map(e => e.textContent)
-    expect(labels).toEqual(['Appearance', 'Account', 'Help & feedback'])
+    expect(labels).toEqual(['Appearance', 'Account', 'Feedback & legal'])
   })
 
-  it('the help glossary is a disclosure, closed by default', () => {
-    renderPanel({ user: null })
-    const details = document.querySelector('details.settings-help') as HTMLDetailsElement
-    expect(details).toBeTruthy()
-    expect(details.open).toBe(false)
-    // content still in the DOM (searchable), just collapsed
-    expect(screen.getByText('dimmed entry')).toBeInTheDocument()
-  })
-
-  it('delete account stays last, after administration', () => {
+  it('delete account stays last, after administration and the legal links', () => {
     renderPanel({ user: as('admin') })
     const del = screen.getAllByText(/Delete account/i)[0]
     const adminLabel = [...document.querySelectorAll('.settings-group__label')].pop()!
     expect(adminLabel.compareDocumentPosition(del) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // Legal used to dangle after the delete button; now it is grouped above it.
+    const legal = document.querySelector('.settings-legal')!
+    expect(legal.compareDocumentPosition(del) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

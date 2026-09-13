@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiExternalLink } from 'react-icons/fi'
 import { getScraperSources, getScraperHealth, getStats } from '../services/api'
 import { ago } from '../utils/relativeTime'
+import GraphHelp from './GraphHelp'
 import type { ScraperSource, ScraperHealth } from '../types'
 
 /** The public coverage page — the OpenCorporates lesson, second half: state
@@ -51,10 +52,6 @@ export default function CoveragePage() {
       <h2 className="coverage__title">{t('coverage.title')}</h2>
       <p className="coverage__intro">{t('coverage.intro')}</p>
 
-      {/* On top on purpose: the source list below grows with every new
-          scraper, and the operator's door must not sink with it. */}
-
-
       {stats && (
         <div className="coverage__stats">
           <div><strong>{stats.companies.toLocaleString()}</strong> {t('graph.statCompanies')}</div>
@@ -63,6 +60,13 @@ export default function CoveragePage() {
           <div><strong>{stats.sources.toLocaleString()}</strong> {t('graph.statSources')}</div>
         </div>
       )}
+
+      {/* Above the cards on purpose: the source list below grows with every
+          new scraper, and the note under it is a caveat, not a place a
+          reader looks for help. */}
+      <div className="coverage__help">
+        <GraphHelp />
+      </div>
 
       <div className="coverage__cards">
         {ordered.map(s => (

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { FiLogIn, FiLogOut, FiUser, FiTrash2, FiChevronDown, FiFlag } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
-import { ENTITY_COLORS } from '../utils/entityColors'
 import MfaSection from './MfaSection'
 import ChangePasswordSection from './ChangePasswordSection'
 import DeleteAccountSection from './DeleteAccountSection'
@@ -118,6 +117,21 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
 
   return (
     <div className="settings-panel">
+      {/* ── Moderation (moderators and admins) — first on purpose: the queue is
+            the reason a moderator opens this page, so it must not sit below
+            the language switcher. */}
+      {canModerate && (
+        <div className="settings-group">
+          <div className="settings-group__label">{t('settings.groups.moderation')}</div>
+          <div className="settings-section">
+            <h4 className="settings-section__title">{t('modQueue.title')}</h4>
+            <button className="scraper-dup-link" onClick={() => setShowQueue(true)}>
+              <FiFlag /> {t('modQueue.open')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Appearance ───────────────────────────────────────────────────────── */}
       <div className="settings-group">
         <div className="settings-group__label">{t('settings.groups.appearance')}</div>
@@ -179,57 +193,9 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
         {user && <MfaSection />}
       </div>
 
-      {/* ── Help & feedback ──────────────────────────────────────────────────── */}
+      {/* ── Feedback & legal ─────────────────────────────────────────────────── */}
       <div className="settings-group">
-        <div className="settings-group__label">{t('settings.groups.helpFeedback')}</div>
-        {/* The glossary is tall; a disclosure keeps the page scannable and the
-            markers one click away. Native details, so it needs no state. */}
-        <details className="settings-section settings-help">
-          <summary className="settings-section__title settings-help__summary">{t('settings.help.title')}</summary>
-        <div className="help-glossary">
-          <div className="help-item">
-            <span className="help-sample">
-              {(['company', 'person', 'fund', 'holding', 'government', 'foundation', 'nonprofit', 'brand', 'voting_group'] as const).map(k => (
-                <span key={k} className="help-dot" title={t(`legend.${k}`)}
-                      style={{ background: ENTITY_COLORS[k].fill, borderColor: ENTITY_COLORS[k].border }} />
-              ))}
-            </span>
-            <span className="help-text">{t('settings.help.colors')}</span>
-          </div>
-          <div className="help-item">
-            <span className="help-sample"><span className="help-stale">{t('settings.help.dimmedSample')}</span></span>
-            <span className="help-text">{t('trust.staleHint')}</span>
-          </div>
-          <div className="help-item">
-            <span className="help-sample"><span className="corroboration-badge corroboration-badge--confirmed">✓ 2</span></span>
-            <span className="help-text">{t('settings.help.corroborated')}</span>
-          </div>
-          <div className="help-item">
-            <span className="help-sample"><span className="corroboration-badge corroboration-badge--community">{t('trust.community')}</span></span>
-            <span className="help-text">{t('trust.communityHint')}</span>
-          </div>
-          <div className="help-item">
-            <span className="help-sample"><span className="help-marker">⚡</span></span>
-            <span className="help-text">{t('ownershipType.specialVotingHint')}</span>
-          </div>
-          <div className="help-item">
-            <span className="help-sample"><span className="nominee-badge">{t('panel.nominee')}</span></span>
-            <span className="help-text">{t('panel.nomineeHint')}</span>
-          </div>
-          <div className="help-item">
-            <span className="help-sample"><span className="help-edge help-edge--thin" /><span className="help-edge help-edge--thick" /></span>
-            <span className="help-text">{t('settings.help.edgeWidth')}</span>
-          </div>
-          <div className="help-item">
-            <span className="help-sample"><span className="help-edge help-edge--dashed" /></span>
-            <span className="help-text">{t('legend.ultimateParent')}</span>
-          </div>
-          <div className="help-item">
-            <span className="help-sample"><span className="help-edge help-edge--dotted" /></span>
-            <span className="help-text">{t('settings.help.votingEdge')}</span>
-          </div>
-        </div>
-        </details>
+        <div className="settings-group__label">{t('settings.groups.feedbackLegal')}</div>
         {/* Build-time address (VITE_FEEDBACK_EMAIL) so no personal address
             lives in the repo; without one the section says nothing rather
             than offering a dead mailto. */}
@@ -243,13 +209,13 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
             </a>
           </div>
         )}
+        <LegalSection />
       </div>
 
-      {/* ── Administration (admins and moderators only) ──────────────────────── */}
-      {(user?.role === 'admin' || canModerate) && (
+      {/* ── Administration (admins only) ─────────────────────────────────────── */}
+      {user?.role === 'admin' && (
         <div className="settings-group">
           <div className="settings-group__label">{t('settings.groups.admin')}</div>
-      {user?.role === 'admin' && (
         <div className="settings-section">
           <h4 className="settings-section__title">{t('settings.users')}</h4>
           {usersErr && <p className="settings-error">{usersErr}</p>}
@@ -265,16 +231,6 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
             ))}
           </div>
         </div>
-      )}
-
-      {canModerate && (
-        <div className="settings-section">
-          <h4 className="settings-section__title">{t('modQueue.title')}</h4>
-          <button className="scraper-dup-link" onClick={() => setShowQueue(true)}>
-            <FiFlag /> {t('modQueue.open')}
-          </button>
-        </div>
-      )}
       </div>
       )}
 
@@ -282,6 +238,37 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
       {user && <DeleteAccountSection onDeleted={onLogout} />}
 
       {showQueue && <ModeratorQueue onClose={() => setShowQueue(false)} />}
+    </div>
+  )
+}
+
+/**
+ * Links to the standalone legal pages.
+ *
+ * They are plain HTML under /legal/, not app views: an app-store reviewer, a
+ * regulator or a text browser has to be able to read them without the SPA
+ * booting, and the URLs given to the stores must not depend on our navigation.
+ *
+ * This lives in Settings rather than a footer or its own nav icon because
+ * Settings is the one tab that is always present, signed in or out, on desktop
+ * and mobile alike — so §5 ECG's "easily and directly accessible" is met in two
+ * clicks from anywhere, without spending a pixel of graph space.
+ */
+function LegalSection() {
+  const { t, i18n } = useTranslation()
+  // Only German has its own translations; everything else reads the English set.
+  const suffix = i18n.language?.toLowerCase().startsWith('de') ? '.de' : ''
+  const page = (name: string) => `/legal/${name}${suffix}.html`
+
+  return (
+    <div className="settings-section">
+      <h4 className="settings-section__title">{t('settings.legal')}</h4>
+      <div className="settings-legal">
+        <a href={page('privacy')} target="_blank" rel="noreferrer">{t('settings.legalPrivacy')}</a>
+        <a href={page('imprint')} target="_blank" rel="noreferrer">{t('settings.legalImprint')}</a>
+        <a href={page('terms')} target="_blank" rel="noreferrer">{t('settings.legalTerms')}</a>
+        <a href={page('data-sources')} target="_blank" rel="noreferrer">{t('settings.legalSources')}</a>
+      </div>
     </div>
   )
 }
