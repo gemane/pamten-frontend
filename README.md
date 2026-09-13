@@ -93,7 +93,7 @@ src/
   **View source**, which goes to the register record that asserted *that* relationship. Under the
   name sits the "disputed" badge, and — for a moderator, and only when this record actually has
   reports waiting — the way into the flag queue, scoped to **this** company and every relationship
-  at either end of it. The full queue, every company, is in **Settings**, paged. There are no
+  at either end of it. The full queue, every company, is the first thing a moderator sees in **Settings** (a *Moderation* group above everything else), paged. There are no
   floating buttons
 - **Type markers**: every row in the relationship lists (owners, subsidiaries, executives, dual-listed, succession) carries a small coloured marker matching the node's colour in the graph — round for a person, rounded-square for an entity. The palette lives once in `src/utils/entityColors.ts` and is read by the graph, the legend, the map panel and the scraper results, so they cannot drift.
 - **Long subsidiary lists are grouped** by how the holding is held — *Direct holdings* open, *Held indirectly* and *Relationship not stated* collapsed — once a list exceeds 12 and actually splits. Section headers carry the true count from the server, which matters because sections are capped and a rendered list can be shorter than reality (Barclays: 118 subsidiaries).
@@ -157,7 +157,7 @@ The tab is visible to everyone, but each section only appears for roles the API 
 
 Order top to bottom: status header → recent activity → run controls → bulk datasets → federation, so the read-only content everyone can use comes before the controls most visitors can't.
 
-Visitors get a plain description of what the project is (the signed-in blurb describes importing, which they cannot do), plus a **source catalogue**: every source the platform draws on, with its own link, a short description, and a reliability band with its ranking score. The catalogue is public — where the data comes from is the case for the whole platform.
+Visitors get a plain description of what the project is (the signed-in blurb describes importing, which they cannot do), plus a **source catalogue**: every source the platform draws on, with its own link, a short description, and a reliability band with its ranking score. The catalogue is public — where the data comes from is the case for the whole platform. The same Data tab carries the **Help — reading the graph** glossary (node colours, dimmed entries, corroboration badges, edge widths) above the source cards, next to the data it explains.
 
 The run form is hidden rather than disabled for those who can't use it, and no sign-in prompt is shown — for a visitor the tab is simply a read-only activity view, not a broken scraper. Federation reads are `require_contributor` server-side, but the panel exists to add, remove and pull peers — all admin-only — so it's admin-gated here.
 
@@ -188,6 +188,7 @@ Inside the Scraper tab, and shown only to admins — sync ownership data with **
 - Login / register modal accessible from the header
 - **Settings → Password** changes your own password (current password required). This is the route that works when email delivery doesn't — the reset-by-email flow needs SMTP, which Render blocks. Other sessions are signed out; yours is re-issued, so you stay logged in where you are.
 - **Settings → Two-factor authentication** enrols a TOTP authenticator app
+- **Settings → Feedback & legal**: a feedback mailto (shown only when `VITE_FEEDBACK_EMAIL` is set at build time) and the links to the legal pages (privacy, imprint, terms, data sources)
 - **Settings → Delete account** permanently deletes your own account (password required, two-step confirm) and signs you out. Required by both app stores for any app with account creation, and the route for a GDPR erasure request. Reports you filed are kept but anonymised; the backend refuses for the `ADMIN_EMAIL` bootstrap account and for the last remaining admin, and shows its reason.
 
 ---

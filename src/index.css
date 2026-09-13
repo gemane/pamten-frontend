@@ -342,6 +342,20 @@ body {
   margin: 0 0 10px;
 }
 
+/* Legal links: a quiet column, since they must be reachable but are read once. */
+.settings-legal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.settings-legal a {
+  font-size: 13px;
+  color: #8aa3b8;
+  text-decoration: none;
+  width: fit-content;
+}
+.settings-legal a:hover { color: #cfe3f2; text-decoration: underline; }
+
 .settings-theme-row {
   display: flex;
   align-items: center;
@@ -3537,6 +3551,8 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .map-basis-btn:hover { color: #1a202c; }
 [data-theme="light"] .map-basis-btn--active { background: #e6edf6; color: #1a202c; }
 [data-theme="light"] .settings-section__title { color: #718096; }
+[data-theme="light"] .settings-legal a { color: #4a6b85; }
+[data-theme="light"] .settings-legal a:hover { color: #1a202c; }
 [data-theme="light"] .settings-theme-label { color: #4a5568; }
 [data-theme="light"] .settings-account__info { color: #4a5568; }
 [data-theme="light"] .settings-account__email { color: #1a202c; }
@@ -4047,11 +4063,9 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .coverage__kind { color: #44506a; background: #e4e9f2; }
 [data-theme="light"] .coverage__quality { color: #1e8449; }
 [data-theme="light"] .coverage__note, [data-theme="light"] .coverage__fresh--muted { color: #8a94a6; }
-.coverage__ops-link { display: flex; align-items: center; gap: 7px; width: 100%; margin: 14px 0; border: 1px solid #2a3a5a; border-radius: 10px; padding: 10px 12px; background: #12203c; color: #7aa2e0; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; }
-.coverage__ops-link:hover { border-color: #3d7cef; }
 .coverage__paused { font-size: 9.5px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; color: #d0a24a; background: #2c2410; }
-[data-theme="light"] .coverage__ops-link { border-color: #d5dbe6; background: #f6f8fb; color: #2d6cdf; }
 [data-theme="light"] .coverage__paused { color: #9a6a10; background: #f4e8cf; }
+.coverage__help { margin-bottom: 14px; }
 
 /* Per-source data-mode chip beside the enable toggle */
 .source-mode { flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: filter 0.12s; }
@@ -4063,7 +4077,7 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .source-mode--full { color: #1e8449; background: #e4f4ea; border-color: #a9d8bb; }
 [data-theme="light"] .source-mode--claims { color: #9a6a10; background: #f4e8cf; border-color: #ddc48a; }
 
-/* Settings → Help glossary */
+/* Graph help glossary (Data page) — and the feedback block in Settings */
 .help-glossary { display: flex; flex-direction: column; gap: 10px; }
 .help-item { display: flex; align-items: center; gap: 12px; }
 .help-sample { flex-shrink: 0; min-width: 96px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
@@ -4089,8 +4103,7 @@ a.source-item__name:hover { color: #4A90D9; }
 .settings-group__label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #5f6b7f; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #263248; }
 [data-theme="light"] .settings-group__label { color: #718096; border-bottom-color: #d5dde8; }
 .settings-group .settings-section { margin-bottom: 16px; }
-.settings-help__summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; }
-.settings-help__summary::before { content: "▸"; font-size: 11px; transition: transform 0.15s; }
-.settings-help[open] .settings-help__summary::before { transform: rotate(90deg); }
-.settings-help__summary::-webkit-details-marker { display: none; }
-.settings-help[open] .help-glossary { margin-top: 12px; }
+/* The help glossary's own title (section-title typography without the
+   settings-* class), so it can sit on any page. */
+.graph-help__title { margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #4a5568; }
+[data-theme="light"] .graph-help__title { color: #718096; }
