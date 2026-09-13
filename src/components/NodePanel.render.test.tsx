@@ -935,6 +935,38 @@ describe('why a company reports no parent', () => {
 })
 
 
+describe('the trust cue on an executive row', () => {
+  // The badge shipped on owner rows first; executives render the same
+  // relationship shape and were the gap the SpaceX board exposed — SEC and
+  // Wikidata both asserting Musk's directorship showed nothing.
+  const withExecutive = async (role: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'SpaceX', type: 'company', verified: false } as Entity,
+      subsidiaries: [], owners: [],
+      executives: [{ person: { id: 'p1', full_name: 'Elon Musk' },
+                     role: { role: 'Director', ...role } }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'SpaceX')} refreshKey={0} />)
+    await screen.findByText('Elon Musk')
+  }
+
+  it('marks a two-source seat with its count', async () => {
+    await withExecutive({ corroborations: 2, asserted_by: ['SEC EDGAR', 'Wikidata'] })
+    expect(screen.getByText(/✓\s*2/)).toBeInTheDocument()
+  })
+
+  it('marks a Wikidata-only role as community', async () => {
+    await withExecutive({ corroborations: 1, asserted_by: ['Wikidata'] })
+    expect(screen.getByText('community')).toBeInTheDocument()
+  })
+
+  it('stays silent on a register-backed role', async () => {
+    await withExecutive({ corroborations: 1, asserted_by: ['SEC EDGAR'] })
+    expect(screen.queryByText('community')).toBeNull()
+    expect(screen.queryByText(/✓/)).toBeNull()
+  })
+})
+
 describe('the trust cue on an owner row', () => {
   const withOwner = async (relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {

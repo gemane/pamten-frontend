@@ -638,6 +638,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, stakeFilter = ANY_S
                      role: p.role?.role ?? '', label: p.entity.name,
                      sourceName: sourceName.get(p.role?.source_id ?? '') })}>
               <span className="rel-item__name">{p.entity.name}</span>
+              <CorroborationBadge rel={p.role} />
               <span className="role-badge">{p.role?.role}</span>
             </RelRow>
           ))}
@@ -653,6 +654,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, stakeFilter = ANY_S
                      role: p.role?.role ?? '', label: p.entity.name,
                      sourceName: sourceName.get(p.role?.source_id ?? '') })}>
               <span className="rel-item__name">{p.entity.name}</span>
+              <CorroborationBadge rel={p.role} />
               <span className="role-badge role-badge--former">{p.role?.role}</span>
               <span className="rel-item__year">{tenure(p.role, t)}</span>
             </RelRow>
@@ -1263,6 +1265,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                      role: f.role?.role || 'Founder', label: f.person.full_name,
                      sourceName: sourceName.get(f.role?.source_id ?? '') })}>
               <span className="rel-item__name">{f.person.full_name}</span>
+              <CorroborationBadge rel={f.role} />
             </RelRow>
           ))}
         </Section>
@@ -1341,6 +1344,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                      role: e.role?.role ?? '', label: e.person.full_name,
                      sourceName: sourceName.get(e.role?.source_id ?? '') })}>
               <span className="rel-item__name">{e.person.full_name}</span>
+              <CorroborationBadge rel={e.role} />
               <span className="role-badge">{e.role?.role}</span>
             </RelRow>
           ))}
