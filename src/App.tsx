@@ -925,11 +925,11 @@ function AppInner() {
                 <span className="logo-sub">Ownership Graph</span>
               </div>
               <div className="tab-toggle">
-                <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /></button>
-                <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /></button>
-                <button className={`tab-btn ${activeTab === 'coverage' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('coverage')} title={t('nav.coverage')}><FiBookOpen /></button>
-                <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('nav.scraper')}><FiDatabase /></button>
-                <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /></button>
+                <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /><span>{t('nav.graph')}</span></button>
+                <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /><span>{t('nav.map')}</span></button>
+                <button className={`tab-btn ${activeTab === 'coverage' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('coverage')} title={t('nav.coverage')}><FiBookOpen /><span>{t('nav.coverage')}</span></button>
+                <button className={`tab-btn ${activeTab === 'scraper' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('scraper')} title={t('nav.scraper')}><FiDatabase /><span>{t('nav.scraper')}</span></button>
+                <button className={`tab-btn ${activeTab === 'settings' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('settings')} title={t('settings.title')}><FiSettings /><span>{t('settings.title')}</span></button>
               </div>
             </div>
           </div>
