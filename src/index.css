@@ -659,18 +659,26 @@ body {
   min-width: 0;
 }
 
+/* Mark on the left, wordmark + subtitle stacked beside it, spanning the
+   sidebar's width. */
 .logo-group {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+  min-width: 0;
 }
 
-/* The mark sits on the text's baseline row rather than on the baseline itself —
-   `align-items: baseline` would hang a square image off the letters. */
 .logo-mark {
-  align-self: center;
   flex-shrink: 0;
   display: block;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
 }
 
 .logo-group--clickable {
@@ -682,14 +690,14 @@ body {
 }
 
 .logo {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 800;
-  color: #4A90D9;
+  color: #E67E22;   /* the logo's orange — same as the start page's wordmark */
   letter-spacing: -0.5px;
 }
 
 .logo-sub {
-  font-size: 12px;
+  font-size: 13px;
   color: #8892a4;
   font-weight: 500;
 }
