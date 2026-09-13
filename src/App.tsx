@@ -920,9 +920,11 @@ function AppInner() {
                 title={t('nav.home')}
               >
                 <img className="logo-mark" src="/icons/logo.svg" alt="" aria-hidden="true"
-                     width={22} height={22} />
-                <span className="logo">Owlgraph</span>
-                <span className="logo-sub">Ownership Graph</span>
+                     width={48} height={48} />
+                <div className="logo-text">
+                  <span className="logo">Owlgraph</span>
+                  <span className="logo-sub">Ownership Graph</span>
+                </div>
               </div>
               <div className="tab-toggle">
                 <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /><span>{t('nav.graph')}</span></button>
