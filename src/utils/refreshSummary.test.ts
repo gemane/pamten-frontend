@@ -13,6 +13,23 @@ describe('summarizeRefresh', () => {
     })).toBe('toast.refreshDone(company=Acme,summary=toast.refreshPart13f(count=89) · toast.refreshPartEx21(count=12))')
   })
 
+  it('names what each instant source wrote — a refresh that found things never says "nothing new"', () => {
+    expect(summarizeRefresh(t, 'SpaceX', {
+      instant: 'scraped', sourceTotals: { wikidata: 0, sec_edgar: 22 }, sec13f: null, secEx21: null,
+    })).toBe('toast.refreshDone(company=SpaceX,summary=SEC EDGAR: 22)')
+  })
+
+  it('keeps the instant sources and the SEC phase in one sentence, in that order', () => {
+    expect(summarizeRefresh(t, 'Acme', {
+      instant: 'scraped', sourceTotals: { wikidata: 2 }, sec13f: { status: 'ok', total: 89 }, secEx21: null,
+    })).toBe('toast.refreshDone(company=Acme,summary=Wikidata: 2 · toast.refreshPart13f(count=89))')
+  })
+
+  it('says when another refresh of the company is still running', () => {
+    expect(summarizeRefresh(t, 'Acme', { instant: 'in_progress', sec13f: null, secEx21: null }))
+      .toBe('toast.refreshDone(company=Acme,summary=toast.refreshPartInProgress)')
+  })
+
   it('reports a 13F that was already current this quarter', () => {
     expect(summarizeRefresh(t, 'Acme', { instant: 'scraped', sec13f: { status: 'fresh', total: 0 }, secEx21: null }))
       .toBe('toast.refreshDone(company=Acme,summary=toast.refreshPart13fFresh)')

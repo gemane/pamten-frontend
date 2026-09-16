@@ -328,7 +328,8 @@
     "refreshPart13fFresh": "13F already current this quarter",
     "refreshPartEx21": "Exhibit 21: {{count}} subsidiaries",
     "refreshPartCooldown": "sources on cooldown (updated recently)",
-    "refreshNotifyTitle": "Owlgraph — refresh finished"
+    "refreshNotifyTitle": "Owlgraph — refresh finished",
+    "refreshPartInProgress": "another refresh of this company is still running"
   },
   "map": {
     "resetView": "Reset view",

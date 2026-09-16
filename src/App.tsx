@@ -16,7 +16,7 @@ import ScrapeOverlay from './components/ScrapeOverlay'
 import type { ToastState } from './components/Toast'
 import type { EnsureResult } from './types'
 import { requestNotifyPermission, notifyIfHidden } from './utils/notify'
-import { summarizeRefresh, type SecRunOutcome } from './utils/refreshSummary'
+import { summarizeRefresh, type RefreshOutcome } from './utils/refreshSummary'
 import ScraperPanel  from './components/ScraperPanel'
 import CoveragePage from './components/CoveragePage'
 import SettingsPanel from './components/SettingsPanel'
@@ -301,13 +301,15 @@ function AppInner() {
     setRefreshing({ id: node.id, slow: false })
     const token = enrichSeqRef.current
     void (async () => {
-      const outcome = { instant: 'skipped', sec13f: null, secEx21: null } as {
-        instant: 'scraped' | 'cooldown' | 'nothing' | 'skipped'
-        sec13f: SecRunOutcome | null; secEx21: SecRunOutcome | null }
+      const outcome: RefreshOutcome = { instant: 'skipped', sec13f: null, secEx21: null }
       try {
         const first = await enrichExisting(node.label, node.id, true, country)
-        if (first) outcome.instant = first.scraped ? 'scraped'
-                                   : first.reason === 'cooldown' ? 'cooldown' : 'nothing'
+        if (first) {
+          outcome.instant = first.scraped ? 'scraped'
+                          : first.reason === 'cooldown' ? 'cooldown'
+                          : first.reason === 'in_progress' ? 'in_progress' : 'nothing'
+          outcome.sourceTotals = first.source_totals
+        }
         // The explicit company refresh brings the SEC enrichments along for
         // anyone the endpoints allow (contributor+): 13F holders (who holds this
         // company) and Exhibit 21 subsidiaries (what it owns). Fired AFTER the
