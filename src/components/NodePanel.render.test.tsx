@@ -566,6 +566,21 @@ describe('refreshing a person', () => {
     expect(onReScrape).toHaveBeenCalledWith(personNode)
   })
 
+  it('reports a refresh in flight for THIS node and refuses a second click', async () => {
+    const onReScrape = vi.fn()
+    render(<NodePanel node={personNode} onReScrape={onReScrape} refreshingId="p1" />)
+    const btn = await screen.findByRole('button', { name: 'Refreshing…' })
+    expect(btn).toBeDisabled()
+    expect(btn).toHaveAttribute('aria-busy', 'true')
+    await userEvent.click(btn)
+    expect(onReScrape).not.toHaveBeenCalled()
+  })
+
+  it('stays available while some OTHER node is refreshing', async () => {
+    render(<NodePanel node={personNode} onReScrape={vi.fn()} refreshingId="e-elsewhere" />)
+    expect(await screen.findByRole('button', { name: /Refresh from sources/ })).toBeEnabled()
+  })
+
   it('the person meta offers a QUOTED Google search', async () => {
     const { container } = render(<NodePanel node={personNode} />)
     await screen.findAllByText('Larry Page')

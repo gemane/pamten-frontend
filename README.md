@@ -57,7 +57,7 @@ src/
 │   ├── MapView.tsx          # SVG world map (right panel)
 │   ├── MapPanel.tsx         # Country list + entity drilldown (left panel)
 │   ├── ScraperPanel.tsx     # Multi-source scraper UI with per-source toggles
-│   ├── Toast.tsx            # Transient notification banner
+│   ├── Toast.tsx            # Notification banner (transient; a refresh summary stays until dismissed)
 │   └── AuthModal.tsx        # Login / register modal
 ├── context/
 │   └── AuthContext.tsx      # JWT auth state, login/register/logout
@@ -77,6 +77,7 @@ src/
 - Search for any company, brand, holding, or person
 - **The country filter applies to the sources too.** Picking a country narrows the database results *and* the "search sources for X" scrape behind them: the on-demand lookup resolves within that country, and each source rejects a match it finds elsewhere. Without it, "Alphabet" searched under Germany came back as Alphabet Inc of Mountain View — every source answers a bare name with the most famous company that has it. A match whose country the source cannot determine is still accepted; unknown is not a mismatch
 - Start screen shows data-scale counts (companies · people · ownership relationships · sources, from `GET /stats`) and 3 randomly chosen example companies as quick-launch chips
+- **Refresh from sources** (panel button) runs in two phases: the instant sources behind the "Searching sources…" overlay, then — for contributors — the minutes-long SEC enrichments (13F holders, Exhibit 21) with the top progress bar running and the button showing *Refreshing…*. It always ends with a summary toast that stays until dismissed ("Refresh of X finished — 13F: 89 holders · Exhibit 21: 12 subsidiaries", or "nothing new from the sources"), the open panel refetches, and if the tab is in the background an OS notification says the same (permission is asked once, on the first refresh click).
 - Clicking the **Owlgraph** logo in the top-left — the mark plus the wordmark — clears the graph and returns to the start screen
 - Ownership graph rendered with Cytoscape.js cola layout (randomised, wide spacing)
 - Node colours: company `#4A90D9`, brand `#E67E22`, holding `#8E44AD`, government `#B03A2E`, foundation `#16A085`, fund `#B7950B`, nonprofit `#C0398B`, person `#27AE60`

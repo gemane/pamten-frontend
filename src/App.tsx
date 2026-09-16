@@ -13,6 +13,10 @@ import { buildCsvContent } from './utils/exportCsv'
 import GraphLegend   from './components/GraphLegend'
 import NodePanel     from './components/NodePanel'
 import ScrapeOverlay from './components/ScrapeOverlay'
+import type { ToastState } from './components/Toast'
+import type { EnsureResult } from './types'
+import { requestNotifyPermission, notifyIfHidden } from './utils/notify'
+import { summarizeRefresh, type SecRunOutcome } from './utils/refreshSummary'
 import ScraperPanel  from './components/ScraperPanel'
 import CoveragePage from './components/CoveragePage'
 import SettingsPanel from './components/SettingsPanel'
@@ -67,10 +71,6 @@ import {
 import { buildHash, parseHash, type ViewState } from './utils/viewHash'
 import { shareLink } from './utils/shareLink'
 
-interface ToastState {
-  message: string
-  type: string
-}
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null }
@@ -119,6 +119,10 @@ function AppInner() {
   const [scrapingCompany, setScrapingCompany] = useState<string | null>(null)  // scrape in flight (prominent overlay)
   const [enrichNonce,     setEnrichNonce]     = useState<number>(0)   // bumps when a scrape appends data → NodePanel refetches
   const [toast,           setToast]           = useState<ToastState | null>(null)
+  // A "Refresh from sources" in flight for this node; `slow` once the minutes-long
+  // 13F / Exhibit 21 phase has started (drives the top bar — deliberately NOT via
+  // startScrapeBar, whose stop is shared with the idle deepen pass).
+  const [refreshing,      setRefreshing]      = useState<{ id: string; slow: boolean } | null>(null)
   const [countryData,     setCountryData]     = useState<CountryEntityGroup[]>([])
   // Registered-in versus run-from. Persisted, because it is a way of reading the
   // map rather than a transient filter.
@@ -159,8 +163,8 @@ function AppInner() {
     getCountries().then(r => setSearchCountries(r.data)).catch(() => {})
   }, [])
 
-  const showToast = useCallback((message: string, type = 'info') => {
-    setToast({ message, type })
+  const showToast = useCallback((message: string, type = 'info', opts?: { sticky?: boolean }) => {
+    setToast({ message, type, sticky: opts?.sticky })
   }, [])
 
   const loadEntity = useCallback(async (entityId: string): Promise<GraphElement[]> => {
@@ -252,9 +256,10 @@ function AppInner() {
 
   // Phase 1: enrich an already-rendered entity (depth 1), then schedule the idle deepen.
   const enrichExisting = useCallback(async (query: string, entityId: string, force = false,
-                                            country?: string) => {
-    if (!canScrape(user)) return
+                                            country?: string): Promise<EnsureResult | undefined> => {
+    if (!canScrape(user)) return undefined
     const token = enrichSeqRef.current
+    let result: EnsureResult | undefined
     setExpandingId(entityId)
     // Only an explicit refresh (force) shows the prominent "Searching sources for X…"
     // overlay — that's a deliberate re-scrape. A passive enrich-on-select mostly hits
@@ -264,20 +269,22 @@ function AppInner() {
     if (force) startScrapeOverlay(query); else startScrapeBar()
     try {
       const { data } = await ensureScrape(query, 1, force, country)
-      if (token !== enrichSeqRef.current) return
+      if (token !== enrichSeqRef.current) return undefined
+      result = data
       if (data.scraped && data.profile && !isPersonResult(data)) {
         appendProfile(data.profile as FullProfile)
       }
-      // A forced refresh is denied within the 24h cooldown — tell the user why nothing changed.
-      else if (force && data.reason === 'cooldown') showToast(t('toast.scrapeCooldown'), 'info')
+      // A forced refresh denied within the 24h cooldown is reported by the
+      // refresh summary (handleReScrape), not here.
     } catch { /* best-effort */ }
     finally {
       setExpandingId(cur => (cur === entityId ? null : cur))
       if (force) stopScrapeOverlay(); else stopScrapeBar()
     }
     if (token === enrichSeqRef.current) scheduleDepth2Enrich(query)
+    return result
   }, [user, appendProfile, scheduleDepth2Enrich, startScrapeOverlay, stopScrapeOverlay,
-      startScrapeBar, stopScrapeBar, showToast, t])
+      startScrapeBar, stopScrapeBar])
 
   // A search that found nothing in the DB → scrape the typed query (force, since it's
   // absent), build the fresh graph, then deepen on idle.
@@ -286,41 +293,53 @@ function AppInner() {
     // The company's own country, so a refresh cannot walk off to a same-named
     // company somewhere else — the sources would happily hand one over.
     const country = (node.raw as { country?: string | null } | undefined)?.country || undefined
+    // The slow phase — 13F holders and Exhibit 21 — runs for minutes, so the
+    // reader may well switch tabs; ask for notification permission now, while
+    // this is still a user gesture (after the first await it no longer is).
+    const willRunSlow = node.nodeType !== 'person' && canManageScrapes(user)
+    if (willRunSlow) requestNotifyPermission()
+    setRefreshing({ id: node.id, slow: false })
+    const token = enrichSeqRef.current
     void (async () => {
-      await enrichExisting(node.label, node.id, true, country)
-      // The explicit company refresh brings the 13F holders along for anyone
-      // the endpoint would allow (contributor+). Fired AFTER the instant
-      // sources so a first-ever refresh stamps the CIK the 13F ingest needs,
-      // and safe to repeat — the server's quarterly deadline gate answers
-      // "fresh" and fetches nothing. Minutes, not seconds, when it does run
-      // (one EDGAR fetch per holder), so the result arrives as a toast and a
-      // profile update rather than holding the overlay open.
-      if (node.nodeType === 'person' || !canManageScrapes(user)) return
-      // Both SEC enrichments the schedules scrape has now unlocked (its CIK):
-      // 13F holders (who holds this company) and Exhibit 21 subsidiaries (what
-      // it owns). Each best-effort and independently gated server-side, so one
-      // finding nothing does not stop the other. Refresh the profile once at
-      // the end if either wrote.
-      let wrote = false
+      const outcome = { instant: 'skipped', sec13f: null, secEx21: null } as {
+        instant: 'scraped' | 'cooldown' | 'nothing' | 'skipped'
+        sec13f: SecRunOutcome | null; secEx21: SecRunOutcome | null }
       try {
-        const { data } = await runSec13f(node.label)
-        if (data.status === 'ok' && (data.total ?? 0) > 0) {
-          showToast(t('toast.sec13fHolders', { count: data.total }), 'info')
-          wrote = true
+        const first = await enrichExisting(node.label, node.id, true, country)
+        if (first) outcome.instant = first.scraped ? 'scraped'
+                                   : first.reason === 'cooldown' ? 'cooldown' : 'nothing'
+        // The explicit company refresh brings the SEC enrichments along for
+        // anyone the endpoints allow (contributor+): 13F holders (who holds this
+        // company) and Exhibit 21 subsidiaries (what it owns). Fired AFTER the
+        // instant sources so a first-ever refresh stamps the CIK they need, and
+        // safe to repeat — the server's gates answer "fresh" and fetch nothing.
+        // Each is best-effort and independently gated; the results feed one
+        // summary at the end rather than a toast each that nobody sees.
+        if (willRunSlow) {
+          setRefreshing({ id: node.id, slow: true })
+          try { outcome.sec13f = (await runSec13f(node.label)).data } catch { /* 409 or transient */ }
+          try { outcome.secEx21 = (await runSecEx21(node.label)).data } catch { /* 409 or transient */ }
+          const wrote = [outcome.sec13f, outcome.secEx21]
+            .some(r => r?.status === 'ok' && (r.total ?? 0) > 0)
+          if (wrote) {
+            try {
+              const { data: fresh } = await ensureScrape(node.label, 1, false, country)
+              // Only into the graph this refresh started from: minutes have
+              // passed, and the reader may have built a different one since.
+              if (token === enrichSeqRef.current && fresh.profile && !isPersonResult(fresh)) {
+                appendProfile(fresh.profile as FullProfile)
+              }
+            } catch { /* the holders are in the database; the next open shows them */ }
+          }
         }
-      } catch { /* 409 (schedules not run yet) or transient — best-effort */ }
-      try {
-        const { data } = await runSecEx21(node.label)
-        if (data.status === 'ok' && (data.total ?? 0) > 0) {
-          showToast(t('toast.secEx21Subsidiaries', { count: data.total }), 'info')
-          wrote = true
-        }
-      } catch { /* 409 or transient — best-effort */ }
-      if (wrote) {
-        const { data: fresh } = await ensureScrape(node.label, 1, false, country)
-        if (fresh.profile && !isPersonResult(fresh)) {
-          appendProfile(fresh.profile as FullProfile)
-        }
+      } finally {
+        setRefreshing(cur => (cur?.id === node.id ? null : cur))
+        // Always announce the end — also when nothing changed, also for a
+        // person — and make an open panel refetch so what it shows is current.
+        setEnrichNonce(n => n + 1)
+        const summary = summarizeRefresh(t, node.label, outcome)
+        showToast(summary, 'success', { sticky: true })
+        notifyIfHidden(t('toast.refreshNotifyTitle'), summary)
       }
     })()
   }, [enrichExisting, user, showToast, t, appendProfile])
@@ -896,7 +915,7 @@ function AppInner() {
 
   return (
     <div className="app">
-      {(loading || scraping) && <div className="loading-bar" />}
+      {(loading || scraping || refreshing?.slow) && <div className="loading-bar" />}
       {/* On mobile the canvas is only a half-screen split, so show the scrape overlay
           full-screen at the root instead of inside the small canvas. */}
       {isMobile && scrapingCompany && <ScrapeOverlay company={scrapingCompany} fullscreen />}
@@ -943,6 +962,7 @@ function AppInner() {
                 <NodePanel
                   node={selectedNode}
                   refreshKey={enrichNonce}
+                  refreshingId={refreshing?.id ?? null}
                   onExportPng={elements.length > 0 ? handleExportPng : undefined}
                   onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                   onViewOnMap={() => handleTabChange('map')}
@@ -1028,6 +1048,7 @@ function AppInner() {
                   <NodePanel
                     node={selectedNode}
                     refreshKey={enrichNonce}
+                  refreshingId={refreshing?.id ?? null}
                     onExportPng={elements.length > 0 ? handleExportPng : undefined}
                     onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
                     onViewOnMap={() => handleTabChange('map')}

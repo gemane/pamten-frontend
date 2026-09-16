@@ -2,9 +2,12 @@ import { useEffect } from 'react'
 import { FiX, FiAlertCircle, FiCheckCircle, FiInfo } from 'react-icons/fi'
 import type { IconType } from 'react-icons'
 
-interface ToastState {
+export interface ToastState {
   message: string
   type: string
+  /** Stays until dismissed. For a result the reader must not miss because they
+   *  looked away for four seconds — a refresh that ran for minutes, say. */
+  sticky?: boolean
 }
 
 interface ToastProps {
@@ -17,7 +20,7 @@ const COLORS: Record<string, string> = { error: '#e74c3c',     success: '#2ECC71
 
 export default function Toast({ toast, onClose }: ToastProps) {
   useEffect(() => {
-    if (!toast) return
+    if (!toast || toast.sticky) return
     const t = setTimeout(onClose, 4000)
     return () => clearTimeout(t)
   }, [toast, onClose])
@@ -28,7 +31,8 @@ export default function Toast({ toast, onClose }: ToastProps) {
   const color = COLORS[toast.type] || COLORS.info
 
   return (
-    <div className={`toast toast--${toast.type}`} style={{ borderLeftColor: color }}>
+    <div className={`toast toast--${toast.type}`} style={{ borderLeftColor: color }}
+         role="status" aria-live="polite">
       <Icon className="toast__icon" style={{ color }} />
       <span className="toast__msg">{toast.message}</span>
       <button className="toast__close" onClick={onClose}><FiX /></button>

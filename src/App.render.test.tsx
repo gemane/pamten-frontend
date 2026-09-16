@@ -15,17 +15,25 @@ vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
 vi.mock('./components/AuthModal', () => ({ default: () => null }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
 vi.mock('./components/NodePanel', () => ({
-  default: ({ node, onReScrape }: { node?: { label: string } | null
-                                    onReScrape?: (n: unknown) => void }) => (
+  default: ({ node, onReScrape, refreshingId }: { node?: { id: string; label: string } | null
+                                                  onReScrape?: (n: unknown) => void
+                                                  refreshingId?: string | null }) => (
     <div data-testid="node-panel">
       {/* The real Refresh button lives deep in the panel; this stands in for it so
-          App's own handler — including which country it scopes the refresh to —
-          is the code under test. */}
+          App's own handler — including which country it scopes the refresh to, and
+          the in-flight state it reports back — is the code under test. */}
       {onReScrape && node && (
-        <button onClick={() => onReScrape(node)}>refresh-from-sources</button>
+        <button onClick={() => onReScrape(node)} disabled={refreshingId === node.id}>
+          {refreshingId === node.id ? 'refreshing' : 'refresh-from-sources'}
+        </button>
       )}
     </div>
   ),
+}))
+vi.mock('./utils/notify', () => ({
+  requestNotifyPermission: vi.fn(),
+  notifyIfHidden: vi.fn(() => false),
+  canNotify: vi.fn(() => false),
 }))
 
 // Signed-in, email-verified user so on-demand scraping is allowed. The role is
@@ -64,6 +72,9 @@ const mockEnsure = vi.mocked(ensureScrape)
 const mockProfile = vi.mocked(getFullProfile)
 const mock13f = vi.mocked(runSec13f)
 const mockEx21 = vi.mocked(runSecEx21)
+import { requestNotifyPermission, notifyIfHidden } from './utils/notify'
+const mockAsk = vi.mocked(requestNotifyPermission)
+const mockNotify = vi.mocked(notifyIfHidden)
 
 const entity = (id: string, name: string, country?: string): Entity =>
   ({ id, name, type: 'company', verified: false, ...(country ? { country } : {}) } as Entity)
@@ -82,6 +93,8 @@ beforeEach(() => {
   mock13f.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
   mockEx21.mockReset()
   mockEx21.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
+  mockAsk.mockClear()
+  mockNotify.mockClear()
   auth.role = 'viewer'
   mockProfile.mockResolvedValue({ data: fullProfile('e1', 'Microsoft Corporation') } as never)
   mockEnsure.mockResolvedValue({
@@ -151,6 +164,7 @@ describe('refreshing a company from its panel', () => {
     mockEnsure.mockClear()                       // drop the passive enrich on select
     await userEvent.click(await screen.findByRole('button', { name: 'refresh-from-sources' }))
     await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+    await screen.findByText(/finished/)          // the refresh settles before cleanup
   }
 
   it('scopes the refresh to the company own country', async () => {
@@ -278,11 +292,13 @@ describe('the explicit refresh brings the 13F holders along', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'refresh-from-sources' }))
     await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
   }
+  const settled = () => screen.findByText(/finished/)
 
   it('a viewer refresh never touches the contributor endpoint', async () => {
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     expect(mock13f).not.toHaveBeenCalled()
     expect(mockEx21).not.toHaveBeenCalled()
+    await settled()
   })
 
   it('a contributor refresh runs 13F and pulls the fresh profile in', async () => {
@@ -293,6 +309,7 @@ describe('the explicit refresh brings the 13F holders along', () => {
     // The holders were written server-side; the profile is re-read WITHOUT
     // force so the new edges appear with no second scrape.
     await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
+    await settled()
   })
 
   it('a contributor refresh also runs Exhibit 21 and pulls the profile in', async () => {
@@ -301,6 +318,7 @@ describe('the explicit refresh brings the 13F holders along', () => {
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     await waitFor(() => expect(mockEx21).toHaveBeenCalledWith('Acme GmbH'))
     await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
+    await settled()
   })
 
   it('a fresh quarter answer changes nothing and re-reads nothing', async () => {
@@ -309,5 +327,80 @@ describe('the explicit refresh brings the 13F holders along', () => {
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     await waitFor(() => expect(mock13f).toHaveBeenCalled())
     expect(mockEnsure.mock.calls.filter(c => c[2] === false)).toHaveLength(0)
+    await settled()
+  })
+})
+
+
+/**
+ * The refresh announces itself.
+ *
+ * The SEC phase runs for minutes with nothing on screen and used to end with a
+ * four-second toast, or none at all when nothing was new. Now: the button reports
+ * the run, the top bar runs during the slow phase, and one summary that stays
+ * until dismissed ends every refresh — also a viewer's, also a person's — with
+ * an OS notification for a reader who switched tabs.
+ */
+describe('the refresh announces its progress and its end', () => {
+  const open = async (res: SearchResult) => {
+    mockSearch.mockResolvedValue({ data: [res] } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'acme', { delay: null })
+    await userEvent.click(await screen.findByText((res.node as Entity).name))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+    mockEnsure.mockClear()
+  }
+  const click = async () =>
+    userEvent.click(await screen.findByRole('button', { name: 'refresh-from-sources' }))
+
+  it('shows the button busy and the top bar running while the SEC phase is in flight', async () => {
+    auth.role = 'contributor'
+    let release!: (v: unknown) => void
+    mock13f.mockReturnValue(new Promise(r => { release = r }) as never)
+    await open(result('e1', 'Acme GmbH', 'DE'))
+    await click()
+    // instant phase done → slow phase: button busy, bar visible
+    await screen.findByRole('button', { name: 'refreshing' })
+    await waitFor(() => expect(document.querySelector('.loading-bar')).toBeTruthy())
+    release({ data: { status: 'fresh', total: 0 } })
+    await screen.findByText(/finished/)
+    expect(screen.queryByRole('button', { name: 'refreshing' })).toBeNull()
+    expect(document.querySelector('.loading-bar')).toBeNull()
+  })
+
+  it('ends with one summary that names what each source brought', async () => {
+    auth.role = 'contributor'
+    mock13f.mockResolvedValue({ data: { status: 'ok', total: 89 } } as never)
+    mockEx21.mockResolvedValue({ data: { status: 'ok', total: 12 } } as never)
+    await open(result('e1', 'Acme GmbH', 'DE'))
+    await click()
+    const toast = await screen.findByText(/Refresh of Acme GmbH finished/)
+    expect(toast.textContent).toContain('13F: 89 holders · Exhibit 21: 12 subsidiaries')
+    expect(mockNotify).toHaveBeenCalledWith(expect.stringMatching(/refresh finished/), toast.textContent)
+  })
+
+  it('says when 13F was already current this quarter', async () => {
+    auth.role = 'contributor'
+    mock13f.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
+    await open(result('e1', 'Acme GmbH', 'DE'))
+    await click()
+    expect((await screen.findByText(/finished/)).textContent).toContain('13F already current this quarter')
+  })
+
+  it('a viewer refresh still announces its end, without the SEC phase', async () => {
+    await open(result('e1', 'Acme GmbH', 'DE'))
+    await click()
+    expect((await screen.findByText(/finished/)).textContent).toContain('nothing new from the sources')
+    expect(mock13f).not.toHaveBeenCalled()
+    expect(mockAsk).not.toHaveBeenCalled()
+  })
+
+  it('asks for notification permission in the click, only when the slow phase will run', async () => {
+    auth.role = 'contributor'
+    mock13f.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
+    await open(result('e1', 'Acme GmbH', 'DE'))
+    await click()
+    expect(mockAsk).toHaveBeenCalledTimes(1)
+    await screen.findByText(/finished/)
   })
 })

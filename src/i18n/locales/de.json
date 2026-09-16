@@ -165,7 +165,8 @@
     "groupControls": "Kontrolliert",
     "votesIn": "Stimmt ab in",
     "website": "Webseite",
-    "webSearch": "Websuche"
+    "webSearch": "Websuche",
+    "refreshing": "Wird aktualisiert…"
   },
   "report": {
     "button": "Melden",
@@ -306,7 +307,6 @@
   },
   "toast": {
     "personGraphError": "Personendiagramm konnte nicht geladen werden.",
-    "sec13fHolders": "13F: {{count}} institutionelle Anteilseigner geladen",
     "entityLoadError": "Eintrag konnte nicht geladen werden. Bitte erneut versuchen.",
     "nodeLoadError": "Knoten konnte nicht geladen werden.",
     "noNewConnections": "Keine neuen Verbindungen gefunden.",
@@ -322,7 +322,13 @@
     "scrapeNoResultsIn": "Nichts gefunden für \"{{query}}\" in {{country}}.",
     "scrapeAlreadyMissed": "Quellen wurden bereits nach \"{{query}}\" durchsucht — nichts gefunden. Später erneut versuchen.",
     "scrapeAlreadyMissedIn": "Quellen in {{country}} wurden bereits nach \"{{query}}\" durchsucht — nichts gefunden. Später erneut versuchen.",
-    "secEx21Subsidiaries": "Exhibit 21: {{count}} Tochtergesellschaften geladen"
+    "refreshDone": "Aktualisierung von {{company}} abgeschlossen — {{summary}}",
+    "refreshDoneNothing": "Aktualisierung von {{company}} abgeschlossen — nichts Neues aus den Quellen",
+    "refreshPart13f": "13F: {{count}} Anteilseigner",
+    "refreshPart13fFresh": "13F für dieses Quartal bereits aktuell",
+    "refreshPartEx21": "Exhibit 21: {{count}} Tochtergesellschaften",
+    "refreshPartCooldown": "Quellen in Wartezeit (kürzlich aktualisiert)",
+    "refreshNotifyTitle": "Owlgraph — Aktualisierung abgeschlossen"
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",

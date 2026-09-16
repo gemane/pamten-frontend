@@ -165,7 +165,8 @@
     "groupControls": "Controla",
     "votesIn": "Vota en",
     "website": "Sitio web",
-    "webSearch": "Búsqueda web"
+    "webSearch": "Búsqueda web",
+    "refreshing": "Actualizando…"
   },
   "report": {
     "button": "Reportar",
@@ -306,7 +307,6 @@
   },
   "toast": {
     "personGraphError": "No se pudo cargar el grafo de la persona.",
-    "sec13fHolders": "13F: {{count}} accionistas institucionales cargados",
     "entityLoadError": "No se pudo cargar la entidad. Inténtalo de nuevo.",
     "nodeLoadError": "No se pudo cargar el nodo.",
     "noNewConnections": "No se encontraron nuevas conexiones.",
@@ -322,7 +322,13 @@
     "scrapeNoResultsIn": "No se encontró nada para \"{{query}}\" en {{country}}.",
     "scrapeAlreadyMissed": "Ya se buscó \"{{query}}\" en las fuentes — sin resultados. Inténtalo más tarde.",
     "scrapeAlreadyMissedIn": "Ya se buscó \"{{query}}\" en fuentes de {{country}} — sin resultados. Inténtalo más tarde.",
-    "secEx21Subsidiaries": "Exhibit 21: {{count}} filiales cargadas"
+    "refreshDone": "Actualización de {{company}} finalizada — {{summary}}",
+    "refreshDoneNothing": "Actualización de {{company}} finalizada — nada nuevo en las fuentes",
+    "refreshPart13f": "13F: {{count}} accionistas",
+    "refreshPart13fFresh": "13F ya actualizado este trimestre",
+    "refreshPartEx21": "Exhibit 21: {{count}} filiales",
+    "refreshPartCooldown": "fuentes en espera (actualizado recientemente)",
+    "refreshNotifyTitle": "Owlgraph — actualización finalizada"
   },
   "map": {
     "resetView": "Restablecer vista",

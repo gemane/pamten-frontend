@@ -165,7 +165,8 @@
     "groupControls": "Controls",
     "votesIn": "Votes in",
     "website": "Website",
-    "webSearch": "Web search"
+    "webSearch": "Web search",
+    "refreshing": "Refreshing…"
   },
   "report": {
     "button": "Report",
@@ -306,7 +307,6 @@
   },
   "toast": {
     "personGraphError": "Could not load person graph.",
-    "sec13fHolders": "13F: {{count}} institutional holders loaded",
     "entityLoadError": "Could not load entity. Please try again.",
     "nodeLoadError": "Could not load node.",
     "noNewConnections": "No new connections found.",
@@ -322,7 +322,13 @@
     "scrapeNoResultsIn": "Nothing found for \"{{query}}\" in {{country}}.",
     "scrapeAlreadyMissed": "Already searched the sources for \"{{query}}\" — nothing there. Try again later.",
     "scrapeAlreadyMissedIn": "Already searched {{country}} sources for \"{{query}}\" — nothing there. Try again later.",
-    "secEx21Subsidiaries": "Exhibit 21: {{count}} subsidiaries loaded"
+    "refreshDone": "Refresh of {{company}} finished — {{summary}}",
+    "refreshDoneNothing": "Refresh of {{company}} finished — nothing new from the sources",
+    "refreshPart13f": "13F: {{count}} holders",
+    "refreshPart13fFresh": "13F already current this quarter",
+    "refreshPartEx21": "Exhibit 21: {{count}} subsidiaries",
+    "refreshPartCooldown": "sources on cooldown (updated recently)",
+    "refreshNotifyTitle": "Owlgraph — refresh finished"
   },
   "map": {
     "resetView": "Reset view",

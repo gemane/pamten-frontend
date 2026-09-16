@@ -1067,7 +1067,8 @@ body {
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
-.panel-rescrape__btn:hover { border-color: #4A90D9; color: #8fc1ee; }
+.panel-rescrape__btn:hover:not(:disabled) { border-color: #4A90D9; color: #8fc1ee; }
+.panel-rescrape__btn:disabled { opacity: 0.5; cursor: progress; }
 
 .search-item__name {
   flex: 1;
