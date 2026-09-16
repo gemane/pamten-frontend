@@ -379,6 +379,19 @@ describe('the refresh announces its progress and its end', () => {
     expect(mockNotify).toHaveBeenCalledWith(expect.stringMatching(/refresh finished/), toast.textContent)
   })
 
+  it('reports what the instant sources wrote — the case that used to read "nothing new"', async () => {
+    mockEnsure.mockResolvedValue({ data: { scraped: true, reason: 'forced', kind: 'entity',
+      entity_id: 'e1', depth_reached: 1, sources_run: ['wikidata', 'sec_edgar'],
+      source_totals: { wikidata: 0, sec_edgar: 22 }, profile: null } } as never)
+    await open(result('e1', 'Acme GmbH', 'DE'))
+    mockEnsure.mockResolvedValue({ data: { scraped: true, reason: 'forced', kind: 'entity',
+      entity_id: 'e1', depth_reached: 1, sources_run: ['wikidata', 'sec_edgar'],
+      source_totals: { wikidata: 0, sec_edgar: 22 }, profile: null } } as never)
+    await click()
+    expect((await screen.findByText(/finished/)).textContent).toContain('SEC EDGAR: 22')
+    expect(screen.queryByText(/nothing new/)).toBeNull()
+  })
+
   it('says when 13F was already current this quarter', async () => {
     auth.role = 'contributor'
     mock13f.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)

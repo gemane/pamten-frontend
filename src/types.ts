@@ -331,6 +331,9 @@ export interface EnsureResult {
   person_id?: string | null
   depth_reached: number
   sources_run: string[]
+  /** What each instant source wrote, by catalogue name (zero kept — "ran and
+   *  found nothing" is an answer). Absent from older backends. */
+  source_totals?: Record<string, number>
   profile: FullProfile | PersonProfile | null
 }
 

@@ -328,7 +328,8 @@
     "refreshPart13fFresh": "13F ya actualizado este trimestre",
     "refreshPartEx21": "Exhibit 21: {{count}} filiales",
     "refreshPartCooldown": "fuentes en espera (actualizado recientemente)",
-    "refreshNotifyTitle": "Owlgraph — actualización finalizada"
+    "refreshNotifyTitle": "Owlgraph — actualización finalizada",
+    "refreshPartInProgress": "otra actualización de esta empresa sigue en curso"
   },
   "map": {
     "resetView": "Restablecer vista",
