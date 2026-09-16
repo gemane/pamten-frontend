@@ -227,6 +227,9 @@ interface NodePanelProps {
   onNavigate?: (node: NodeData) => void
   // Force a fresh scrape of this company (verified users only — App passes undefined otherwise).
   onReScrape?: (node: NodeData) => void
+  // The node whose "Refresh from sources" is in flight — its button shows the
+  // running state instead of inviting a second click.
+  refreshingId?: string | null
   // Bumped by App when an on-demand scrape appends data → refetch this node's profile in
   // place (the effect is keyed on node.id, which doesn't change when the same node is enriched).
   refreshKey?: number
@@ -513,11 +516,32 @@ function DetailsSection({ entity, hasOwners }: { entity: Entity; hasOwners: bool
   )
 }
 
-function PersonView({ node, onNavigate, onShare, onReScrape, stakeFilter = ANY_STAKE }: {
+/** "Refresh from sources", shared by the person and the company panel. While
+ *  the refresh runs — minutes, once the SEC enrichments start — the button
+ *  says so and refuses a second click; the summary toast announces the end. */
+function ReScrapeButton({ node, onReScrape, refreshing }: {
+  node: NodeData
+  onReScrape: (node: NodeData) => void
+  refreshing: boolean
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="panel-rescrape">
+      <button type="button" className="panel-rescrape__btn"
+              title={t('panel.reScrapeTitle')} disabled={refreshing} aria-busy={refreshing}
+              onClick={() => onReScrape(node)}>
+        {refreshing ? t('panel.refreshing') : t('panel.reScrape')}
+      </button>
+    </div>
+  )
+}
+
+function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stakeFilter = ANY_STAKE }: {
   node: NodeData
   onNavigate?: (n: NodeData) => void
   onShare?: () => void
   onReScrape?: (node: NodeData) => void
+  refreshingId?: string | null
   stakeFilter?: StakeFilter
 }) {
   const raw = node.raw as Person
@@ -692,12 +716,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, stakeFilter = ANY_S
           the company panel has, and it was missing here purely because until
           recently there was nothing behind it for a person. */}
       {onReScrape && (
-        <div className="panel-rescrape">
-          <button type="button" className="panel-rescrape__btn"
-                  title={t('panel.reScrapeTitle')} onClick={() => onReScrape(node)}>
-            {t('panel.reScrape')}
-          </button>
-        </div>
+        <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} />
       )}
 
       <SourcesSection sources={sources} />
@@ -940,6 +959,7 @@ interface EntityOverviewProps {
   onNavigate?: (node: NodeData) => void
   node: NodeData
   onReScrape?: (node: NodeData) => void
+  refreshingId?: string | null
 }
 
 function credibilityColor(score: number): string {
@@ -1015,7 +1035,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape, stakeFilter = ANY_STAKE }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape, refreshingId, stakeFilter = ANY_STAKE }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
@@ -1353,12 +1373,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       <DetailsSection entity={entity} hasOwners={owners.length > 0} />
       {onReScrape && (
-        <div className="panel-rescrape">
-          <button type="button" className="panel-rescrape__btn"
-                  title={t('panel.reScrapeTitle')} onClick={() => onReScrape(node)}>
-            {t('panel.reScrape')}
-          </button>
-        </div>
+        <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} />
       )}
       <SourcesSection sources={sources} />
       <SourceStatements ids={entity.source_statement_ids} />
@@ -1402,7 +1417,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshKey, stakeFilter = ANY_STAKE }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1452,7 +1467,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
   }
 
   if (node.nodeType === 'person') {
-    return <PersonView node={node} onNavigate={onNavigate} onShare={onShare}
+    return <PersonView refreshingId={refreshingId} node={node} onNavigate={onNavigate} onShare={onShare}
                        onReScrape={onReScrape} stakeFilter={stakeFilter} />
   }
 
@@ -1470,7 +1485,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} />
+        ? <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} />
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )

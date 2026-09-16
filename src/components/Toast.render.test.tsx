@@ -32,4 +32,20 @@ describe('Toast (render)', () => {
     act(() => { vi.advanceTimersByTime(4000) })
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('a sticky toast never auto-dismisses — a refresh summary must not be missed', () => {
+    vi.useFakeTimers()
+    const onClose = vi.fn()
+    render(<Toast toast={{ message: 'Refresh of Acme finished', type: 'success', sticky: true }} onClose={onClose} />)
+    act(() => { vi.advanceTimersByTime(60_000) })
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByText('Refresh of Acme finished')).toBeInTheDocument()
+  })
+
+  it('a sticky toast still closes on the button', async () => {
+    const onClose = vi.fn()
+    render(<Toast toast={{ message: 'done', type: 'success', sticky: true }} onClose={onClose} />)
+    await userEvent.click(screen.getByRole('button'))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
 })
