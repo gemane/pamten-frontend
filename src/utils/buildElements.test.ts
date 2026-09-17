@@ -153,11 +153,63 @@ describe('buildPersonProfileElements', () => {
     holdings:  [{ entity: entity('tesla', 'Tesla'), relationship: { stake_percent: 20.5, ownership_type: 'controlling' } }],
   }
 
-  it('maps holdings to owns edges and ignores positions — ownership graph only', () => {
+  it('draws holdings as owns edges AND current positions as one role edge per company', () => {
     const els = buildPersonProfileElements(profile)
-    // spacex is a position (role, no stake) → not in the graph
-    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['musk', 'tesla'])
-    expect(ids(edges(els))).toEqual(['musk__owns__tesla'])
+    // spacex is a position (role, no stake) → a dashed role edge, so a person who
+    // leads a company without a disclosed stake is not a lone node
+    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['musk', 'spacex', 'tesla'])
+    expect(ids(edges(els)).sort()).toEqual(['musk__owns__tesla', 'musk__role__spacex'])
+    const role = edges(els).find(e => e.data.id === 'musk__role__spacex')!.data as EdgeData
+    expect(role.edgeType).toBe('role')
+    expect(role.label).toBe('CEO')
+    expect(role.stakePct).toBeNull()
+  })
+
+  it('collapses several roles at one company into one edge labelled with all of them', () => {
+    const jassy: PersonProfile = {
+      person: person('jassy', 'Andy Jassy'),
+      positions: [
+        { entity: entity('amzn', 'Amazon'), role: { role: 'CEO' } },
+        { entity: entity('amzn', 'Amazon'), role: { role: 'Chairman' } },
+        { entity: entity('amzn', 'Amazon'), role: { role: 'President' } },
+        { entity: entity('amzn', 'Amazon'), role: { role: 'CEO' } },      // a duplicate row
+      ],
+      holdings: [],
+    }
+    const els = buildPersonProfileElements(jassy)
+    expect(ids(edges(els))).toEqual(['jassy__role__amzn'])
+    expect((edges(els)[0].data as EdgeData).label).toBe('CEO · Chairman · President')
+  })
+
+  it('leaves ended roles out — a company whose only roles ended draws nothing', () => {
+    const p: PersonProfile = {
+      person: person('jobs', 'Steve Jobs'),
+      positions: [
+        { entity: entity('apple', 'Apple'), role: { role: 'CEO', until: '2011-08-24' } },
+        { entity: entity('apple', 'Apple'), role: { role: 'Chairman' } },
+        { entity: entity('next', 'NeXT'),  role: { role: 'CEO', until: '1997-02-01' } },
+      ],
+      holdings: [],
+    }
+    const els = buildPersonProfileElements(p)
+    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['apple', 'jobs'])
+    expect((edges(els)[0].data as EdgeData).label).toBe('Chairman')   // not "CEO · Chairman"
+  })
+
+  it('a company with both a stake and a role gets both edges', () => {
+    const p: PersonProfile = {
+      person: person('musk', 'Elon Musk'),
+      positions: [{ entity: entity('tesla', 'Tesla'), role: { role: 'CEO' } }],
+      holdings:  [{ entity: entity('tesla', 'Tesla'), relationship: { stake_percent: 20.5 } }],
+    }
+    const els = buildPersonProfileElements(p)
+    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['musk', 'tesla'])   // one Tesla node
+    expect(ids(edges(els)).sort()).toEqual(['musk__owns__tesla', 'musk__role__tesla'])
+  })
+
+  it('tolerates a position row without a role object', () => {
+    const p = { person: person('x'), positions: [{ entity: entity('e') }], holdings: [] } as unknown as PersonProfile
+    expect(edges(buildPersonProfileElements(p))).toHaveLength(0)
   })
 
   it('carries the stake % onto the owns edge', () => {
@@ -166,7 +218,7 @@ describe('buildPersonProfileElements', () => {
     expect((ownsEdge!.data as unknown as { label: string }).label).toBe('20.5%')
   })
 
-  it('emits nothing but the person node when there are no holdings', () => {
+  it('emits nothing but the person node when there are neither holdings nor positions', () => {
     const els = buildPersonProfileElements({ person: person('solo'), positions: [], holdings: [] })
     expect(nodes(els).map(e => e.data.id)).toEqual(['solo'])
     expect(edges(els)).toHaveLength(0)

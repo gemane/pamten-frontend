@@ -244,14 +244,58 @@ export interface OwnershipItem {
   relationship?: OwnsRelationship
 }
 
-// Build the graph around a person from their full-profile: the person node plus
-// an entity node + owns edge for every entity they OWN. The graph is ownership-
-// only — positions/roles (companies they merely lead) are shown in the panel,
-// not the graph. Passing a shared loadedIds set lets the person be expanded
-// incrementally into an existing graph.
+/** The companies a person currently leads, as ONE dashed role edge each.
+ *
+ *  A person's graph used to be ownership-only, so someone who runs a company
+ *  without a disclosed stake — most executives — rendered as a lone node while
+ *  the panel listed four roles. Positions are grouped per company: Jassy's
+ *  CEO · Chairman · President of Amazon is one edge, not four parallel lines.
+ *  A role with an `until` date is left out (the panel keeps the history), and
+ *  a company whose only roles have ended draws nothing.
+ *
+ *  Person side only: a company's executives stay in its panel — SpaceX has 26,
+ *  and drawn they would swamp its owners. A role edge carries no stake, and
+ *  the stake filter never hides one (Graph.filterVisibleElements). */
+function roleElements(
+  person: Person,
+  positions: PersonProfile['positions'] | undefined,
+  loadedIds: Set<string>,
+): GraphElement[] {
+  const rolesByCompany = new Map<string, { entity: Entity; roles: string[] }>()
+  for (const pos of positions ?? []) {
+    const entity = pos.entity
+    const role = pos.role?.role
+    if (!entity?.id || !role || pos.role?.until) continue
+    const cur = rolesByCompany.get(entity.id) ?? { entity, roles: [] }
+    if (!cur.roles.includes(role)) cur.roles.push(role)
+    rolesByCompany.set(entity.id, cur)
+  }
+  const els: GraphElement[] = []
+  for (const { entity, roles } of rolesByCompany.values()) {
+    if (!loadedIds.has(entity.id)) {
+      loadedIds.add(entity.id)
+      els.push({ data: {
+        id: entity.id, label: entity.name || '?', nodeType: 'entity',
+        entitySubtype: entity.type ?? null, raw: entity,
+      } })
+    }
+    const id = `${person.id}__role__${entity.id}`
+    if (loadedIds.has(id)) continue
+    loadedIds.add(id)
+    els.push({ data: { id, source: person.id, target: entity.id, label: roles.join(' · '),
+                       edgeType: 'role', edgeDir: 'out', stakePct: null } })
+  }
+  return els
+}
+
+// Build the graph around a person from their full-profile: the person node,
+// an entity node + owns edge for every entity they OWN, and a dashed role edge
+// to every company they currently lead. Passing a shared loadedIds set lets the
+// person be expanded incrementally into an existing graph.
 export function buildPersonProfileElements(profile: PersonProfile, loadedIds: Set<string> = new Set()): GraphElement[] {
   return [
     ...buildPersonElements({ person: profile.person }, profile.holdings, loadedIds),
+    ...roleElements(profile.person, profile.positions, loadedIds),
     // A person can be a party to a filing group — three of AB InBev's nine are
     // — and this is the fifth builder that had to be told so. The helper is
     // shared precisely so the answer is the same from every entry point.
