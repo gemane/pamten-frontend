@@ -116,4 +116,34 @@ describe('filterVisibleElements + re-layout — the filtered graph closes ranks'
     const vis = filterVisibleElements(els, strict, 'c')
     expect(vis.map(e => e.data.id)).toEqual(['c'])
   })
+
+  it('a role edge keeps its company on screen under the strictest band', () => {
+    // The Jassy shape: a 0.02% holding (hidden at ≥1%) AND a role at the same
+    // company. Before role edges existed, Amazon was dropped as an orphan and
+    // the person stood alone although the panel listed four roles.
+    const strict = STAKE_FILTERS.find(f => f.id === 'gt75')!
+    const jassy: GraphElement[] = [
+      { data: { id: 'p', label: 'Andy Jassy', nodeType: 'person' } } as GraphElement,
+      node('amzn', 'Amazon'),
+      ownsEdge('p', 'amzn', 0.0209),
+      { data: { id: 'p__role__amzn', source: 'p', target: 'amzn', label: 'CEO · Chairman',
+                edgeType: 'role', stakePct: null } } as GraphElement,
+    ]
+    const vis = filterVisibleElements(jassy, strict, 'p').map(e => e.data.id)
+    expect(vis).toContain('amzn')
+    expect(vis).toContain('p__role__amzn')
+    expect(vis).not.toContain('p__amzn')            // the tiny stake is still hidden
+  })
+
+  it('a role edge sorts like an undisclosed stake in the arc, never crashing on null', () => {
+    const els2: GraphElement[] = [
+      { data: { id: 'p', label: 'P', nodeType: 'person' } } as GraphElement,
+      node('a', 'Alpha'), node('z', 'Zeta'),
+      { data: { id: 'p__role__z', source: 'p', target: 'z', label: 'CEO', edgeType: 'role', stakePct: null } } as GraphElement,
+      ownsEdge('p', 'a', 12),
+    ]
+    const pos = computeArcPositions(els2, 'p')
+    expect(pos.get('z')).toBeTruthy()
+    expect(namesByXDesc(pos, ['a', 'z'])).toEqual(['a', 'z'])   // staked first, role-only after
+  })
 })

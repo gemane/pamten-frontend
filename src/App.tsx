@@ -172,8 +172,8 @@ function AppInner() {
     return buildElements(profile, loadedIds.current)
   }, [])
 
-  // Build the graph around a person: their positions (role edges) and
-  // ownerships (owns edges) as connected entity nodes.
+  // Build the graph around a person: their ownerships (owns edges) and the
+  // companies they currently lead (one dashed role edge per company).
   const loadPerson = useCallback(async (personId: string): Promise<{ els: GraphElement[]; person: Person }> => {
     const { data: profile } = await getPersonProfile(personId)
     return { els: buildPersonProfileElements(profile, loadedIds.current), person: profile.person }

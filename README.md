@@ -88,6 +88,7 @@ src/
 
 ### Node detail panel
 - **Entity panel**: shows company logo (fetched from Wikidata via P154/P18 → Wikimedia Commons), ownership badges, subsidiaries, executives, **succession** links (*Succeeded by* / *Formerly*, e.g. Twitter → X Corp.), and a link to Wikipedia. Entities collapsed from several BODS filings (an id-less party re-declared per controlled company) list every declaring **source statement** id, so per-statement provenance stays visible after the merge
+- **Person graph**: the companies a person owns (owns edges, stake-labelled) and the companies they currently **lead** — one dashed role edge per company, labelled with the roles ("CEO · Chairman · President"); ended roles stay in the panel only. The minimum-stake filter never hides a role edge, so an executive without a disclosed stake is not a lone node. Company graphs stay ownership-only: their executives are listed in the panel, not drawn.
 - **Person panel**: shows person photo (fetched from Wikipedia REST API, falls back to name search), nationality, **place of birth**, the **positions** they hold and **ownership stakes** they own, the **sources** behind those facts, and a Wikipedia link
 - **Actions live in the panel.** A ⋮ beside a company or person name opens **Share** and **Report**;
   right-clicking (or long-pressing, on touch) a relationship row opens **Report relationship** and
