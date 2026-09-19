@@ -610,5 +610,30 @@
       "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",
       "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake"
     }
+  },
+  "weekly": {
+    "title": "Weekly report",
+    "previous": "Previous week",
+    "next": "Next week",
+    "loading": "Loading…",
+    "error": "Could not load the weekly summary.",
+    "searches": "Searches",
+    "searchesSub": "{{queries}} distinct queries · {{zero}} found nothing",
+    "noResult": "no result",
+    "scrapes": "Scrapes",
+    "scrapesSub": "{{records}} records written · {{failures}} failed",
+    "firstScrapes": "Scraped for the first time ({{count}})",
+    "refreshed": "Refreshed ({{count}})",
+    "imports": "Imports",
+    "none": "none",
+    "importRow": "{{runs}} runs · {{records}} records · {{failed}} failed",
+    "graph": "Graph",
+    "since": "change since {{week}}",
+    "total": {
+      "companies": "companies",
+      "people": "people",
+      "relationships": "relationships",
+      "roles": "roles"
+    }
   }
 }

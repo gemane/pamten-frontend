@@ -506,6 +506,35 @@ export interface DatasetHealth {
   behind_days?: number | null
 }
 
+export interface WeeklyReport {
+  week: string
+  label: string
+  from: string
+  to: string
+  generated_at: string
+  searches: {
+    total: number; distinct_queries: number; zero_results: number; selected: number
+    top: { query: string; country: string | null; searches: number; zero_results: number }[]
+    usage: Record<string, number>
+  }
+  scrapes: {
+    runs: number
+    by_source: Record<string, Record<string, number>>
+    records_written: number
+    first_scrapes: { entity_id: string; target: string; records: number; name: string }[]
+    refreshed: { entity_id: string; target: string; records: number; name: string }[]
+    failures: { source: string; target: string; error: string }[]
+    sec_enrichments: Record<string, { target: string; total: number }[]>
+  }
+  imports: Record<string, { runs: number; ok: number; failed: number; skipped: number; records: number }>
+  graph: {
+    totals: Record<string, number>
+    new_relationships: Record<string, number>
+    since: string | null
+    delta: Record<string, number> | null
+  }
+}
+
 export interface ScraperHealth {
   sources: SourceHealthEntry[]
   datasets: DatasetHealth[]

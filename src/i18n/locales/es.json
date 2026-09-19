@@ -610,5 +610,30 @@
       "edgeWidth": "El grosor de la línea sigue la participación: fina para pequeñas, gruesa para grandes",
       "votingEdge": "Línea punteada ámbar: derechos de voto, dibujados aparte cuando difieren de la participación económica"
     }
+  },
+  "weekly": {
+    "title": "Informe semanal",
+    "previous": "Semana anterior",
+    "next": "Semana siguiente",
+    "loading": "Cargando…",
+    "error": "No se pudo cargar el resumen semanal.",
+    "searches": "Búsquedas",
+    "searchesSub": "{{queries}} consultas distintas · {{zero}} sin resultado",
+    "noResult": "sin resultado",
+    "scrapes": "Scrapes",
+    "scrapesSub": "{{records}} registros escritos · {{failures}} fallidos",
+    "firstScrapes": "Capturadas por primera vez ({{count}})",
+    "refreshed": "Actualizadas ({{count}})",
+    "imports": "Importaciones",
+    "none": "ninguna",
+    "importRow": "{{runs}} ejecuciones · {{records}} registros · {{failed}} fallidas",
+    "graph": "Grafo",
+    "since": "cambio desde {{week}}",
+    "total": {
+      "companies": "empresas",
+      "people": "personas",
+      "relationships": "relaciones",
+      "roles": "cargos"
+    }
   }
 }
