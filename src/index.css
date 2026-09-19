@@ -4023,6 +4023,40 @@ a.source-item__name:hover { color: #4A90D9; }
 .src-health__streak { grid-column: 4; justify-self: end; font-size: 9.5px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; color: #d0a24a; background: #2c2410; }
 .src-health__error { grid-column: 2 / -1; font-size: 11px; color: #e0837a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 [data-theme="light"] .src-health { border-color: #d5dbe6; background: #f6f8fb; }
+
+/* Scraper → This week (the weekly digest) */
+.weekly { margin: 14px 0; border: 1px solid #2a3a5a; border-radius: 10px; padding: 12px; background: #12203c; }
+.weekly__head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.weekly__title { flex: 1; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #8fb0e0; }
+.weekly__label { font-weight: 500; text-transform: none; letter-spacing: 0; color: #7d8aa0; }
+.weekly__nav { background: transparent; border: 1px solid #2a3a5a; border-radius: 6px; color: #8892a4; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.weekly__nav:hover:not(:disabled) { color: #eaeaea; border-color: #4A90D9; }
+.weekly__nav:disabled { opacity: 0.35; cursor: default; }
+.weekly__loading, .weekly__error { font-size: 12px; color: #8892a4; display: flex; align-items: center; gap: 6px; }
+.weekly__error { color: #e07b7b; }
+.weekly__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.weekly__block { background: #0f1a30; border-radius: 8px; padding: 10px; min-width: 0; }
+.weekly__block h4 { margin: 0 0 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #8892a4; }
+.weekly__big { font-size: 22px; font-weight: 700; color: #eaeaea; line-height: 1.1; }
+.weekly__sub { font-size: 11.5px; color: #7d8aa0; margin-top: 2px; }
+.weekly__caption { font-size: 11px; color: #8fb0e0; margin: 8px 0 3px; }
+.weekly__list { list-style: none; margin: 0; padding: 0; font-size: 12px; color: #c3cad6; }
+.weekly__list li { display: flex; align-items: baseline; gap: 6px; padding: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weekly__n { font-variant-numeric: tabular-nums; color: #eaeaea; font-weight: 600; }
+.weekly__n--right { margin-left: auto; color: #7d8aa0; font-weight: 500; }
+.weekly__tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; padding: 0 5px; border-radius: 4px; color: #44506a; background: #1e2a44; }
+.weekly__tag--zero { color: #d0a24a; background: #2c2410; }
+.weekly__row { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #c3cad6; padding: 2px 0; }
+.weekly__delta { color: #7ee29b; font-weight: 500; margin-left: 2px; }
+@media (max-width: 480px) { .weekly__grid { grid-template-columns: 1fr; } }
+[data-theme="light"] .weekly { border-color: #d5dbe6; background: #f6f8fb; }
+[data-theme="light"] .weekly__block { background: #ffffff; }
+[data-theme="light"] .weekly__big, [data-theme="light"] .weekly__n { color: #1c2733; }
+[data-theme="light"] .weekly__list, [data-theme="light"] .weekly__row { color: #3a4656; }
+[data-theme="light"] .weekly__nav { border-color: #d5dbe6; color: #718096; }
+[data-theme="light"] .weekly__delta { color: #1e8449; }
+[data-theme="light"] .weekly__tag { color: #44506a; background: #e4e9f2; }
+[data-theme="light"] .weekly__tag--zero { color: #9a6a10; background: #f4e8cf; }
 [data-theme="light"] .src-health__head { color: #1c2733; }
 [data-theme="light"] .src-health__name { color: #1c2733; }
 [data-theme="light"] .src-health__meta { color: #5a6678; }

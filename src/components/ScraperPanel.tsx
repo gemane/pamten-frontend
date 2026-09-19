@@ -10,6 +10,7 @@ import DuplicatesModal from './DuplicatesModal'
 import FederationPanel from './FederationPanel'
 import ScraperActivity from './ScraperActivity'
 import SourceHealth from './SourceHealth'
+import WeeklySummary from './WeeklySummary'
 import { canManageScrapes, canAdministerScrapes } from '../utils/scrapeAccess'
 import { colorFor } from '../utils/entityColors'
 
@@ -319,6 +320,9 @@ export default function ScraperPanel({ onLoadIntoGraph, user }: ScraperPanelProp
           this panel is the OPERATIONAL view — and the Data tab links here,
           not the other way round: readers land there, operators come here. */}
       <SourceHealth />
+      {/* The weekly digest — the numbers the Monday email carries. Admin only:
+          the endpoint is require_admin. */}
+      {canAdminister && <WeeklySummary />}
 
       {canManage && !masterOn && masterStatus && (
         <div className="scraper-disabled-msg"><FiAlertCircle /> {t('scraper.enableRequired')}</div>

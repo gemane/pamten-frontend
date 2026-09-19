@@ -610,5 +610,30 @@
       "edgeWidth": "Liniendicke folgt dem Anteil: dünn für kleine, dick für große Beteiligungen",
       "votingEdge": "Gepunktete gelbe Linie: Stimmrechte, getrennt gezeichnet, wo sie vom wirtschaftlichen Anteil abweichen"
     }
+  },
+  "weekly": {
+    "title": "Wochenbericht",
+    "previous": "Vorherige Woche",
+    "next": "Nächste Woche",
+    "loading": "Lädt…",
+    "error": "Die Wochenübersicht konnte nicht geladen werden.",
+    "searches": "Suchen",
+    "searchesSub": "{{queries}} verschiedene Anfragen · {{zero}} ohne Treffer",
+    "noResult": "kein Treffer",
+    "scrapes": "Scrapes",
+    "scrapesSub": "{{records}} Datensätze geschrieben · {{failures}} fehlgeschlagen",
+    "firstScrapes": "Erstmals erfasst ({{count}})",
+    "refreshed": "Aktualisiert ({{count}})",
+    "imports": "Importe",
+    "none": "keine",
+    "importRow": "{{runs}} Läufe · {{records}} Datensätze · {{failed}} fehlgeschlagen",
+    "graph": "Graph",
+    "since": "Veränderung seit {{week}}",
+    "total": {
+      "companies": "Unternehmen",
+      "people": "Personen",
+      "relationships": "Beziehungen",
+      "roles": "Rollen"
+    }
   }
 }

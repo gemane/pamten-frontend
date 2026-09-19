@@ -31,7 +31,7 @@ import type {
   FlagGroup,
   Suppression,
   Pin,
-  ScraperHealth,
+  ScraperHealth, WeeklyReport,
 } from '../types'
 
 // The backend serves everything under /v1. It still answers on the unversioned
@@ -469,6 +469,9 @@ export const getScraperRuns    = (limit = 50): Promise<AxiosResponse<{ count: nu
 // redacts by dropping the keys).
 export const getScraperHealth = (): Promise<AxiosResponse<ScraperHealth>> =>
   client.get('/scraper/health')
+/** The weekly activity digest (admin) — the last completed week unless `week` names one. */
+export const getWeeklyReport = (week?: string): Promise<AxiosResponse<WeeklyReport>> =>
+  client.get('/analytics/weekly', { params: week ? { week } : {} })
 export const getScraperSources = (): Promise<AxiosResponse<ScraperSource[]>> => client.get('/scraper/sources')
 // Set a source's data mode: 'full' draws edges, 'claims_only' records claims
 // and enriches entities but never draws structure. Admin-only server-side.

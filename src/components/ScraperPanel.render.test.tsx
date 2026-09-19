@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import ScraperPanel from './ScraperPanel'
 import type { AuthUser, ScraperStatus, ScraperSource } from '../types'
 
@@ -18,6 +18,7 @@ vi.mock('./DuplicatesModal', () => ({ default: () => null }))
 vi.mock('./FederationPanel', () => ({ default: () => <div data-testid="federation" /> }))
 vi.mock('./ScraperActivity', () => ({ default: () => <div data-testid="activity" /> }))
 vi.mock('./SourceHealth', () => ({ default: () => <div data-testid="health" /> }))
+vi.mock('./WeeklySummary', () => ({ default: () => <div data-testid="weekly" /> }))
 import { getScraperStatus, getScraperSources, setScraperSourceMode } from '../services/api'
 
 const status: ScraperStatus = { enabled: true, sec_edgar_enabled: false, open_corporates_enabled: false }
@@ -110,6 +111,18 @@ describe('ScraperPanel visibility by role', () => {
     render(<ScraperPanel user={contributor} onLoadIntoGraph={vi.fn()} />)
     await screen.findByPlaceholderText(/Company name/i)
     expect(federation()).toBeNull()
+  })
+
+  it('shows the weekly digest to an admin and withholds it from a contributor', async () => {
+    // GET /analytics/weekly is require_admin; rendering it for a contributor
+    // would be a section that always fails to load.
+    render(<ScraperPanel user={admin} onLoadIntoGraph={vi.fn()} />)
+    await screen.findByPlaceholderText(/Company name/i)
+    expect(screen.getByTestId('weekly')).toBeInTheDocument()
+    cleanup()
+    render(<ScraperPanel user={contributor} onLoadIntoGraph={vi.fn()} />)
+    await screen.findByPlaceholderText(/Company name/i)
+    expect(screen.queryByTestId('weekly')).toBeNull()
   })
 
   it('puts recent activity above the run controls', async () => {
