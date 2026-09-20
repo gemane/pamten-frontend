@@ -1397,19 +1397,36 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   )
 }
 
+/** The panel that scrolls around `el` — the one the sticky tab bar pins to. */
+function scrollingPanel(el: HTMLElement): HTMLElement | null {
+  const known = el.closest<HTMLElement>('.left-panel__detail, .mobile-panel, .mobile-full-panel')
+  if (known) return known
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const o = getComputedStyle(p).overflowY
+    if (o === 'auto' || o === 'scroll') return p
+  }
+  return null
+}
+
 function PanelTabs({ active, onChange }: { active: string; onChange: (tab: string) => void }) {
   const { t } = useTranslation()
+  // Switching views deep in a long list left the reader mid-way down the
+  // other view; a tab click starts the new view at its top.
+  const pick = (tab: string) => (e: { currentTarget: HTMLElement }) => {
+    onChange(tab)
+    scrollingPanel(e.currentTarget)?.scrollTo({ top: 0 })
+  }
   return (
     <div className="panel-tabs">
       <button
         className={`panel-tab ${active === 'overview' ? 'panel-tab--active' : ''}`}
-        onClick={() => onChange('overview')}
+        onClick={pick('overview')}
       >
         <FiList /> {t('panel.overview')}
       </button>
       <button
         className={`panel-tab ${active === 'timeline' ? 'panel-tab--active' : ''}`}
-        onClick={() => onChange('timeline')}
+        onClick={pick('timeline')}
       >
         <FiClock /> {t('panel.timeline')}
       </button>
