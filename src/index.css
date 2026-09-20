@@ -1671,6 +1671,12 @@ a.source-item__name:hover { color: #4A90D9; }
   display: flex;
   border-bottom: 1px solid #2a2a4a;
   flex-shrink: 0;
+  /* Pinned to the top of the scrolling panel: the body below scrolls, the
+     bar stays reachable. Opaque so the rows do not show through it. */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #16213e;
 }
 
 .panel-tab {
@@ -3598,7 +3604,7 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .panel-section__title { color: #718096; }
 [data-theme="light"] .rel-item { background: #eef2f7; }
 [data-theme="light"] .rel-item__name { color: #1a202c; }
-[data-theme="light"] .panel-tabs { border-bottom-color: #d1d9e6; }
+[data-theme="light"] .panel-tabs { border-bottom-color: #d1d9e6; background: #ffffff; }
 [data-theme="light"] .panel-tab { color: #718096; }
 [data-theme="light"] .panel-tab:hover { color: #1a202c; }
 [data-theme="light"] .panel-tab--active { color: #2b6cb0; border-bottom-color: #2b6cb0; }

@@ -652,6 +652,19 @@ describe('the person timeline tab', () => {
     expect(screen.getByText('Steve Jobs')).toBeInTheDocument()
   })
 
+  it('scrolls the panel back to the top when a tab is picked', async () => {
+    // The bar is pinned, so a tab can be clicked deep in a long list; the
+    // new view must then start at its top, not mid-way down.
+    withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
+                     role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
+    const scrollTo = vi.fn()
+    const { container } = render(<div className="left-panel__detail"><NodePanel node={personNode} /></div>)
+    const panel = container.querySelector('.left-panel__detail') as HTMLElement
+    panel.scrollTo = scrollTo as unknown as typeof panel.scrollTo
+    await userEvent.click(await screen.findByRole('button', { name: /timeline/i }))
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0 })
+  })
+
   it('puts the tab bar above the padded body, not inside it', async () => {
     // The company panel nests them this way, and the nesting is what produces
     // the spacing: inside `.panel-body` the bar is inset by that padding and
