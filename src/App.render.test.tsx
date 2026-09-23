@@ -8,8 +8,12 @@ import type { FullProfile, Entity, SearchResult } from './types'
 // search → select → enrich flow without cytoscape, leaflet, or real network.
 vi.mock('./components/Graph', () => ({
   // Exposes the one prop the graph-focus wiring is about.
-  default: ({ focusedId }: { focusedId?: string | null }) =>
-    <div data-testid="graph" data-focused={focusedId ?? ''} />,
+  default: ({ focusedId, onNodeHover }: { focusedId?: string | null
+                                          onNodeHover?: (id: string | null) => void }) =>
+    <div data-testid="graph" data-focused={focusedId ?? ''} data-hover-wired={onNodeHover ? 'yes' : 'no'}>
+      {onNodeHover && <button onClick={() => onNodeHover('own1')}>hover-own1</button>}
+      {onNodeHover && <button onClick={() => onNodeHover(null)}>hover-none</button>}
+    </div>,
 }))
 vi.mock('./components/MapView', () => ({ default: () => null }))
 vi.mock('./components/MapPanel', () => ({ default: () => null }))
@@ -19,13 +23,14 @@ vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
 vi.mock('./components/AuthModal', () => ({ default: () => null }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
 vi.mock('./components/NodePanel', () => ({
-  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode }: {
+  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId }: {
                 node?: { id: string; label: string } | null
                 onReScrape?: (n: unknown) => void
                 refreshingId?: string | null
                 onGraphFocus?: (id: string | null) => void
-                graphFocusMode?: string }) => (
-    <div data-testid="node-panel" data-focus-mode={graphFocusMode ?? ''}>
+                graphFocusMode?: string
+                graphHoverId?: string | null }) => (
+    <div data-testid="node-panel" data-focus-mode={graphFocusMode ?? ''} data-graph-hover={graphHoverId ?? ''}>
       {/* Stand-ins for a row coming into / going out of focus in the real panel. */}
       {onGraphFocus && <button onClick={() => onGraphFocus('sub1')}>focus-sub1</button>}
       {onGraphFocus && <button onClick={() => onGraphFocus(null)}>focus-none</button>}
@@ -441,6 +446,17 @@ describe('panel row focus reaches the graph', () => {
     expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('')
   })
 
+  it('desktop: the graph node under the mouse is handed to the panel', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const panel = await screen.findByTestId('node-panel')
+    expect(screen.getByTestId('graph').getAttribute('data-hover-wired')).toBe('yes')
+    await user.click(screen.getByText('hover-own1'))
+    expect(panel.getAttribute('data-graph-hover')).toBe('own1')
+    await user.click(screen.getByText('hover-none'))
+    expect(panel.getAttribute('data-graph-hover')).toBe('')
+  })
+
   it('on a phone the panel reports the centred row instead of the hovered one', async () => {
     const width = window.innerWidth
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 400 })
@@ -449,6 +465,9 @@ describe('panel row focus reaches the graph', () => {
       render(<App />)
       const panel = await screen.findByTestId('node-panel')
       expect(panel.getAttribute('data-focus-mode')).toBe('center')
+      // no hover on a phone: the graph does not report one, the panel lights nothing
+      expect(screen.getByTestId('graph').getAttribute('data-hover-wired')).toBe('no')
+      expect(panel.getAttribute('data-graph-hover')).toBe('')
       await user.click(screen.getByText('focus-sub1'))
       expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('sub1')
     } finally {
