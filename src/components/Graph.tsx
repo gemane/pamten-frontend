@@ -395,6 +395,81 @@ function pickRandom(arr: string[], n: number): string[] {
 }
 
 
+/** How much a node grows while its panel row is in focus — "slightly". */
+export const FOCUS_SCALE = 1.2
+const FOCUS_BASE = '_focusBase'
+// Cytoscape's animation runtime accepts `spring(tension, friction)` (a
+// Runge-Kutta spring sized to the animation's duration) but its type
+// definitions list only the named/cubic-bezier easings — hence the cast.
+const FOCUS_SPRING = 'spring(420, 18)' as unknown as cytoscape.Css.TransitionTimingFunction
+
+interface FocusBase { padding: number; fontSize: number; textMaxWidth: number }
+
+/**
+ * Emphasise the node whose owner/subsidiary row is in focus in the panel, and
+ * let the previous one go.
+ *
+ * The node grows by animating its padding, font size AND wrap width by the same
+ * factor: every node except the hub sizes to its label (`width: label`), so the
+ * box, the text and the border grow together. The wrap width matters as much as
+ * the font — left at 120px, a larger font breaks the name onto more lines and the
+ * node grows taller and narrower instead of simply larger. The grow uses a spring easing — a small overshoot and settle
+ * reads as organic where a linear tween reads as a UI toggle — and the release
+ * an ease-out. The value the node had before the first grow is kept in scratch,
+ * so a node re-focused while it is still shrinking grows from where the
+ * stylesheet puts it, not from a half-animated size. When the release finishes
+ * the inline styles are removed, so the stylesheet (importance sizing, the
+ * selected border) is back in charge.
+ *
+ * `animate: false` (prefers-reduced-motion) applies the same sizes instantly.
+ * The hub is left alone: it is already the largest thing on screen and is never
+ * one of its own panel's rows.
+ */
+export function applyNodeFocus(cy: cytoscape.Core, prevId: string | null, nextId: string | null,
+                               animate: boolean): void {
+  if (prevId && prevId !== nextId) releaseNode(cy.getElementById(prevId), animate)
+  if (nextId) growNode(cy.getElementById(nextId), animate)
+}
+
+function growNode(n: cytoscape.CollectionReturnValue, animate: boolean): void {
+  if (n.empty() || !n.isNode() || n.hasClass('center')) return
+  n.stop(true)
+  let base = n.scratch(FOCUS_BASE) as FocusBase | undefined
+  if (!base) {
+    base = { padding: n.numericStyle('padding'), fontSize: n.numericStyle('font-size'),
+             textMaxWidth: n.numericStyle('text-max-width') }
+    n.scratch(FOCUS_BASE, base)
+  }
+  const target = { padding: base.padding * FOCUS_SCALE, 'font-size': base.fontSize * FOCUS_SCALE,
+                   'text-max-width': `${base.textMaxWidth * FOCUS_SCALE}px` }
+  n.style('z-index', 10)
+  if (animate) n.animate({ style: target, easing: FOCUS_SPRING, duration: 480 })
+  else n.style(target)
+}
+
+function releaseNode(n: cytoscape.CollectionReturnValue, animate: boolean): void {
+  if (n.empty() || !n.isNode()) return
+  const base = n.scratch(FOCUS_BASE) as FocusBase | undefined
+  if (!base) return
+  n.stop(true)
+  const restore = () => {
+    n.removeStyle('padding font-size text-max-width z-index')
+    n.removeScratch(FOCUS_BASE)
+  }
+  if (animate) {
+    n.animate({ style: { padding: base.padding, 'font-size': base.fontSize,
+                         'text-max-width': `${base.textMaxWidth}px` },
+                easing: 'ease-out-cubic', duration: 360, complete: restore })
+  } else {
+    restore()
+  }
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined'
+    && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+}
+
 interface GraphProps {
   elements: GraphElement[]
   centerId?: string | null
@@ -410,16 +485,19 @@ interface GraphProps {
   /** Shared with the node-panel list so one control filters both views. */
   stakeFilter: StakeFilter
   onStakeFilterChange: (filter: StakeFilter) => void
+  /** Node whose row is in focus in the node panel — grown slightly (see applyNodeFocus). */
+  focusedId?: string | null
 }
 
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange }: GraphProps,
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, focusedId = null }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
+  const prevFocusIdRef  = useRef<string | null>(null)
   const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
   const [examples, setExamples]   = useState(() => pickRandom(ALL_EXAMPLE_QUERIES, 3))
   const [taglineIdx, setTaglineIdx] = useState(0)
@@ -625,6 +703,14 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
   const centerLabel = elements.find(el => 'id' in el.data && el.data.id === centerId)
     ?.data.label ?? 'graph'
+
+  // Grow the node whose panel row is in focus; shrink the one before it.
+  useEffect(() => {
+    const cy = cyRef.current
+    if (!cy) return
+    applyNodeFocus(cy, prevFocusIdRef.current, focusedId, !prefersReducedMotion())
+    prevFocusIdRef.current = focusedId
+  }, [focusedId])
 
   useImperativeHandle(ref, () => ({
     exportPng: () => {

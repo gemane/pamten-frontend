@@ -100,6 +100,8 @@ function AppInner() {
   const canModerate = user?.role === 'moderator' || user?.role === 'admin'
   const userCanScrape = canScrape(user)
   const isMobile = useMobile()
+  // The owner/subsidiary row in focus in the node panel; the graph grows its node.
+  const [graphFocusId, setGraphFocusId] = useState<string | null>(null)
   // Android's back gesture would otherwise close the app outright — Capacitor's
   // native bridge does not handle it, so the web layer must.
   useAndroidBackButton()
@@ -972,6 +974,8 @@ function AppInner() {
                   onNavigate={handleNavigateTo}
                   onReScrape={userCanScrape ? handleReScrape : undefined}
                   stakeFilter={stakeFilter}
+                  onGraphFocus={setGraphFocusId}
+                  graphFocusMode={isMobile ? 'center' : 'hover'}
                 />
               </div>
             </>
@@ -1043,6 +1047,7 @@ function AppInner() {
                     theme={theme}
                     stakeFilter={stakeFilter}
                     onStakeFilterChange={setStakeFilter}
+                    focusedId={graphFocusId}
                   />
                 </div>
                 <div className="mobile-panel">
@@ -1058,6 +1063,8 @@ function AppInner() {
                     onNavigate={handleNavigateTo}
                     onReScrape={userCanScrape ? handleReScrape : undefined}
                     stakeFilter={stakeFilter}
+                    onGraphFocus={setGraphFocusId}
+                    graphFocusMode={isMobile ? 'center' : 'hover'}
                   />
                 </div>
               </>
@@ -1153,6 +1160,7 @@ function AppInner() {
                     theme={theme}
                     stakeFilter={stakeFilter}
                     onStakeFilterChange={setStakeFilter}
+                    focusedId={graphFocusId}
                   />
               }
               {activeTab === 'graph' && scrapingCompany && <ScrapeOverlay company={scrapingCompany} />}

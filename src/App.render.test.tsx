@@ -6,7 +6,11 @@ import type { FullProfile, Entity, SearchResult } from './types'
 
 // Canvas / heavy / fetching children — stub so App renders in jsdom and we can drive the
 // search → select → enrich flow without cytoscape, leaflet, or real network.
-vi.mock('./components/Graph', () => ({ default: () => <div data-testid="graph" /> }))
+vi.mock('./components/Graph', () => ({
+  // Exposes the one prop the graph-focus wiring is about.
+  default: ({ focusedId }: { focusedId?: string | null }) =>
+    <div data-testid="graph" data-focused={focusedId ?? ''} />,
+}))
 vi.mock('./components/MapView', () => ({ default: () => null }))
 vi.mock('./components/MapPanel', () => ({ default: () => null }))
 vi.mock('./components/GraphLegend', () => ({ default: () => null }))
@@ -15,10 +19,16 @@ vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
 vi.mock('./components/AuthModal', () => ({ default: () => null }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
 vi.mock('./components/NodePanel', () => ({
-  default: ({ node, onReScrape, refreshingId }: { node?: { id: string; label: string } | null
-                                                  onReScrape?: (n: unknown) => void
-                                                  refreshingId?: string | null }) => (
-    <div data-testid="node-panel">
+  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode }: {
+                node?: { id: string; label: string } | null
+                onReScrape?: (n: unknown) => void
+                refreshingId?: string | null
+                onGraphFocus?: (id: string | null) => void
+                graphFocusMode?: string }) => (
+    <div data-testid="node-panel" data-focus-mode={graphFocusMode ?? ''}>
+      {/* Stand-ins for a row coming into / going out of focus in the real panel. */}
+      {onGraphFocus && <button onClick={() => onGraphFocus('sub1')}>focus-sub1</button>}
+      {onGraphFocus && <button onClick={() => onGraphFocus(null)}>focus-none</button>}
       {/* The real Refresh button lives deep in the panel; this stands in for it so
           App's own handler — including which country it scopes the refresh to, and
           the in-flight state it reports back — is the code under test. */}
@@ -415,5 +425,34 @@ describe('the refresh announces its progress and its end', () => {
     await click()
     expect(mockAsk).toHaveBeenCalledTimes(1)
     await screen.findByText(/finished/)
+  })
+})
+
+describe('panel row focus reaches the graph', () => {
+  it('hands the focused row id to the graph, and clears it again', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const panel = await screen.findByTestId('node-panel')
+    expect(panel.getAttribute('data-focus-mode')).toBe('hover')     // desktop width
+    expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('')
+    await user.click(screen.getByText('focus-sub1'))
+    expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('sub1')
+    await user.click(screen.getByText('focus-none'))
+    expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('')
+  })
+
+  it('on a phone the panel reports the centred row instead of the hovered one', async () => {
+    const width = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 400 })
+    try {
+      const user = userEvent.setup()
+      render(<App />)
+      const panel = await screen.findByTestId('node-panel')
+      expect(panel.getAttribute('data-focus-mode')).toBe('center')
+      await user.click(screen.getByText('focus-sub1'))
+      expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('sub1')
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
+    }
   })
 })

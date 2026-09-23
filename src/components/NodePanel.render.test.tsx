@@ -1593,3 +1593,111 @@ describe('the web link renders at the panel top, not in the details', () => {
     expect(a?.textContent).toContain('Google')
   })
 })
+
+// ── Graph focus: which owner/subsidiary row the graph should grow ────────────
+describe('NodePanel graph focus', () => {
+  const focusProfile = (): FullProfile => ({
+    entity: { id: 'e1', name: 'Hub Co', type: 'company', verified: false } as Entity,
+    owners: [
+      { owner: { id: 'own1', name: 'Owner One', type: 'company' } as Entity,
+        relationship: { stake_percent: 60 } },
+      { owner: { id: 'p1', full_name: 'Pat Person' } as never,
+        relationship: { stake_percent: 10 } },
+    ],
+    subsidiaries: [
+      { entity: { id: 'sub1', name: 'Sub One', type: 'company' } as Entity,
+        relationship: { stake_percent: 100 } },
+    ],
+    executives: [
+      { person: { id: 'x1', full_name: 'Exec Person' } as never, role: { role: 'CEO' } as never },
+    ],
+  })
+
+  beforeEach(() => {
+    mockProfile.mockResolvedValue({ data: focusProfile() } as never)
+  })
+
+  it('marks owner and subsidiary rows with their graph id, and nothing else', async () => {
+    render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} />)
+    await screen.findByText('Sub One')
+    const ids = [...document.querySelectorAll('[data-graph-focus]')].map(el => el.getAttribute('data-graph-focus'))
+    expect(ids.sort()).toEqual(['own1', 'p1', 'sub1'])
+    expect(screen.getByText('Exec Person').closest('[data-graph-focus]')).toBeNull()
+  })
+
+  it('desktop: reports the hovered row, and null when the mouse leaves the rows', async () => {
+    const onFocus = vi.fn()
+    render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                      onGraphFocus={onFocus} graphFocusMode="hover" />)
+    await screen.findByText('Sub One')
+
+    fireEvent.mouseOver(screen.getByText('Owner One'))
+    expect(onFocus).toHaveBeenLastCalledWith('own1')
+    fireEvent.mouseOver(screen.getByText('Sub One'))
+    expect(onFocus).toHaveBeenLastCalledWith('sub1')
+    // a row that is not an owner/subsidiary clears it
+    fireEvent.mouseOver(screen.getByText('Exec Person'))
+    expect(onFocus).toHaveBeenLastCalledWith(null)
+    fireEvent.mouseOver(screen.getByText('Sub One'))
+    expect(onFocus).toHaveBeenLastCalledWith('sub1')
+    // leaving the overview altogether clears it (mouseleave does not bubble, so
+    // it is fired on the scope itself: the block under the pinned tab bar)
+    const scope = document.querySelector('.panel-tabs')!.nextElementSibling as HTMLElement
+    expect(scope.contains(screen.getByText('Sub One'))).toBe(true)
+    fireEvent.mouseLeave(scope)
+    expect(onFocus).toHaveBeenLastCalledWith(null)
+  })
+
+  it('desktop: repeated hovers of one row report it once', async () => {
+    const onFocus = vi.fn()
+    render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                      onGraphFocus={onFocus} graphFocusMode="hover" />)
+    await screen.findByText('Sub One')
+    fireEvent.mouseOver(screen.getByText('Sub One'))
+    fireEvent.mouseOver(screen.getByText('Sub One'))
+    expect(onFocus.mock.calls.filter(c => c[0] === 'sub1')).toHaveLength(1)
+  })
+
+  it('clears the focus when the panel goes away', async () => {
+    const onFocus = vi.fn()
+    const { unmount } = render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0}
+                                  onNavigate={() => {}} onGraphFocus={onFocus} graphFocusMode="hover" />)
+    await screen.findByText('Sub One')
+    fireEvent.mouseOver(screen.getByText('Owner One'))
+    unmount()
+    expect(onFocus).toHaveBeenLastCalledWith(null)
+  })
+
+  it('mobile: reports the row at the scrolling panel’s centre as it scrolls', async () => {
+    const onFocus = vi.fn()
+    const box = (top: number, height: number) =>
+      ({ top, bottom: top + height, height, left: 0, right: 300, width: 300, x: 0, y: top,
+         toJSON: () => ({}) }) as DOMRect
+    // The known scroll container class, 0..400 on screen → centre line at 200.
+    const { container } = render(
+      <div className="mobile-panel">
+        <NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                   onGraphFocus={onFocus} graphFocusMode="center" />
+      </div>)
+    await screen.findByText('Sub One')
+    const panel = container.querySelector('.mobile-panel') as HTMLElement
+    panel.getBoundingClientRect = () => box(0, 400)
+    const row = (id: string) => document.querySelector(`[data-graph-focus="${id}"]`) as HTMLElement
+    // "Scroll" so that the subsidiary row sits across the centre line.
+    row('own1').getBoundingClientRect = () => box(100, 30)
+    row('p1').getBoundingClientRect = () => box(140, 30)
+    row('sub1').getBoundingClientRect = () => box(190, 30)
+    fireEvent.scroll(panel)
+    await waitFor(() => expect(onFocus).toHaveBeenLastCalledWith('sub1'))
+    // Scroll on: the owner row now crosses the centre.
+    row('own1').getBoundingClientRect = () => box(185, 30)
+    row('p1').getBoundingClientRect = () => box(225, 30)
+    row('sub1').getBoundingClientRect = () => box(275, 30)
+    fireEvent.scroll(panel)
+    await waitFor(() => expect(onFocus).toHaveBeenLastCalledWith('own1'))
+    // And past the lists entirely: nothing near the centre any more.
+    for (const id of ['own1', 'p1', 'sub1']) row(id).getBoundingClientRect = () => box(-200, 30)
+    fireEvent.scroll(panel)
+    await waitFor(() => expect(onFocus).toHaveBeenLastCalledWith(null))
+  })
+})

@@ -14,6 +14,8 @@ import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
+import { FOCUS_ATTR, scrollingPanel } from '../utils/graphFocus'
+import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
 
@@ -236,6 +238,13 @@ interface NodePanelProps {
   // Shared with the graph's stake filter, so one control hides small holdings
   // in both views. Defaults to "any" when a caller does not pass it.
   stakeFilter?: StakeFilter
+  /**
+   * Called with the graph id of the owner/subsidiary row in focus (the hovered
+   * row on desktop, the row at the panel's centre while scrolling on a phone),
+   * and with null when none is. App hands it to the graph, which grows the node.
+   */
+  onGraphFocus?: (id: string | null) => void
+  graphFocusMode?: GraphFocusMode
 }
 
 
@@ -851,10 +860,12 @@ function relFromRole(rel: RoleRelationship | undefined, ids: {
   }
 }
 
-function RelRow({ node, onNavigate, rel, children }: {
+function RelRow({ node, onNavigate, rel, focusId, children }: {
   node: NodeData | null
   onNavigate?: (n: NodeData) => void
   rel?: RelTarget
+  /** Graph node this row stands for — the graph grows it while the row is in focus. */
+  focusId?: string
   children: React.ReactNode
 }) {
   const { t } = useTranslation()
@@ -872,10 +883,11 @@ function RelRow({ node, onNavigate, rel, children }: {
   // confidence, not a removal.
   const staleCls = rel?.stale ? ' rel-item--stale' : ''
   const staleTitle = rel?.stale ? t('trust.staleHint') : undefined
+  const focusAttr = focusId ? { [FOCUS_ATTR]: focusId } : {}
   const row = (node && node.id && onNavigate)
     ? <button type="button" className={`rel-item rel-item--clickable${staleCls}`}
-              title={staleTitle} onClick={() => onNavigate(node)}>{body}</button>
-    : <div className={`rel-item${staleCls}`} title={staleTitle}>{body}</div>
+              title={staleTitle} onClick={() => onNavigate(node)} {...focusAttr}>{body}</button>
+    : <div className={`rel-item${staleCls}`} title={staleTitle} {...focusAttr}>{body}</div>
   if (!rel) return row
 
   // What this particular filing says. Each line appears only if the filing
@@ -1185,6 +1197,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
             o => o.relationship?.shares,
           )).map((o, i) => (
             <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}
+              focusId={o.owner?.id}
               rel={o.owner
                 ? relFromOwns(o.relationship, {
                     fromId: o.owner.id, toId: entity.id,
@@ -1300,6 +1313,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                           s => s.relationship?.shares))
             const row = (s: SubsidiaryEntry, i: number) => (
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
+                focusId={s.entity.id}
                 rel={relFromOwns(s.relationship, {
                        fromId: entity.id, toId: s.entity.id, label: s.entity.name,
                        sourceName: sourceName.get(s.relationship?.source_id ?? '') })}>
@@ -1397,17 +1411,6 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   )
 }
 
-/** The panel that scrolls around `el` — the one the sticky tab bar pins to. */
-function scrollingPanel(el: HTMLElement): HTMLElement | null {
-  const known = el.closest<HTMLElement>('.left-panel__detail, .mobile-panel, .mobile-full-panel')
-  if (known) return known
-  for (let p = el.parentElement; p; p = p.parentElement) {
-    const o = getComputedStyle(p).overflowY
-    if (o === 'auto' || o === 'scroll') return p
-  }
-  return null
-}
-
 function PanelTabs({ active, onChange }: { active: string; onChange: (tab: string) => void }) {
   const { t } = useTranslation()
   // Switching views deep in a long list left the reader mid-way down the
@@ -1434,13 +1437,15 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, onGraphFocus, graphFocusMode = 'hover' }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
   const [loading,    setLoading]    = useState<boolean>(false)
   const [activeView, setActiveView] = useState<string>('overview')
   const prevIdRef = useRef<string | null>(null)
+  const focusScopeRef = useRef<HTMLDivElement>(null)
+  useGraphFocus(focusScopeRef, graphFocusMode, onGraphFocus, [node?.id, profile, activeView, loading])
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {
@@ -1502,7 +1507,9 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     <>
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
-        ? <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} />
+        ? <div ref={focusScopeRef}>
+            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} />
+          </div>
         : <TimelinePanel entityId={profile.entity.id} />}
     </>
   )
