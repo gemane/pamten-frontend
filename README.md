@@ -84,6 +84,7 @@ src/
 - Edge colours by ownership type: full/majority `#2ECC71`, minority `#F39C12`, controlling `#E74C3C`
 - Click a node to open the detail panel; double-click to expand its connections directly
 - **The panel points at the graph.** The owner or subsidiary row under the mouse (desktop), or the one on the panel's centre line while scrolling (phone), grows its node a little in the graph, with a spring ease in and an ease out, so you can see which box a line of the list is about without clicking it. The hub never grows, and `prefers-reduced-motion` gets the same sizes without the animation.
+- **…and the graph points at the panel.** On desktop, hovering a box in the graph lights up its owner or subsidiary row in the panel (a lighter background with a soft blue ring, faded in and out). A phone has no hover, so there it works one way only.
 - **Expand into graph** button in the panel loads an entity's full ownership graph
 - **Minimum stake filter**, above the ⓘ in the top-right: `Any · ≥5% · ≥25% · >50% · >75%`. Bands rather than a slider, because ownership is *reported* in bands — Companies House PSC states "more than 25%", never a number — and because those thresholds are the ones the rules name. A link whose percentage is undisclosed is always kept, since most ownership links state none (26 of 115 on Barclays, 1 of 28 on Microsoft) and hiding them would delete most of the graph while presenting the rest as the whole picture; the panel says how many of the links on screen can actually be judged.
 

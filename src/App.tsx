@@ -102,6 +102,9 @@ function AppInner() {
   const isMobile = useMobile()
   // The owner/subsidiary row in focus in the node panel; the graph grows its node.
   const [graphFocusId, setGraphFocusId] = useState<string | null>(null)
+  // …and the other way round: the graph node under the mouse lights up its row
+  // in the panel. Desktop only — a phone has no hover.
+  const [graphHoverId, setGraphHoverId] = useState<string | null>(null)
   // Android's back gesture would otherwise close the app outright — Capacitor's
   // native bridge does not handle it, so the web layer must.
   useAndroidBackButton()
@@ -976,6 +979,7 @@ function AppInner() {
                   stakeFilter={stakeFilter}
                   onGraphFocus={setGraphFocusId}
                   graphFocusMode={isMobile ? 'center' : 'hover'}
+                  graphHoverId={isMobile ? null : graphHoverId}
                 />
               </div>
             </>
@@ -1048,6 +1052,7 @@ function AppInner() {
                     stakeFilter={stakeFilter}
                     onStakeFilterChange={setStakeFilter}
                     focusedId={graphFocusId}
+                    onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />
                 </div>
                 <div className="mobile-panel">
@@ -1065,6 +1070,7 @@ function AppInner() {
                     stakeFilter={stakeFilter}
                     onGraphFocus={setGraphFocusId}
                     graphFocusMode={isMobile ? 'center' : 'hover'}
+                    graphHoverId={isMobile ? null : graphHoverId}
                   />
                 </div>
               </>
@@ -1161,6 +1167,7 @@ function AppInner() {
                     stakeFilter={stakeFilter}
                     onStakeFilterChange={setStakeFilter}
                     focusedId={graphFocusId}
+                    onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />
               }
               {activeTab === 'graph' && scrapingCompany && <ScrapeOverlay company={scrapingCompany} />}

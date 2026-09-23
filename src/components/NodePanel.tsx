@@ -14,7 +14,7 @@ import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
-import { FOCUS_ATTR, scrollingPanel } from '../utils/graphFocus'
+import { FOCUS_ATTR, scrollingPanel, useGraphHoverHighlight } from '../utils/graphFocus'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
@@ -245,6 +245,11 @@ interface NodePanelProps {
    */
   onGraphFocus?: (id: string | null) => void
   graphFocusMode?: GraphFocusMode
+  /**
+   * The other direction: the graph node under the mouse (desktop). Its owner or
+   * subsidiary row lights up, so the list shows which line a box stands for.
+   */
+  graphHoverId?: string | null
 }
 
 
@@ -1437,7 +1442,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, onGraphFocus, graphFocusMode = 'hover' }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1446,6 +1451,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
   const prevIdRef = useRef<string | null>(null)
   const focusScopeRef = useRef<HTMLDivElement>(null)
   useGraphFocus(focusScopeRef, graphFocusMode, onGraphFocus, [node?.id, profile, activeView, loading])
+  useGraphHoverHighlight(focusScopeRef, graphHoverId, [node?.id, profile, activeView, loading])
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {

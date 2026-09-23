@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import cytoscape from 'cytoscape'
-import { applyNodeFocus, buildStylesheet, FOCUS_SCALE } from './Graph'
+import { applyNodeFocus, bindNodeHover, buildStylesheet, FOCUS_SCALE } from './Graph'
 
 // A headless graph with the real stylesheet, so the base sizes the focus grows
 // from are the ones the app draws: 14px padding, 12px font, and an importance-
@@ -81,5 +81,27 @@ describe('applyNodeFocus (reduced motion: instant)', () => {
     applyNodeFocus(cy, null, 'hub', false)
     expect(size(cy, 'hub')).toEqual(hub0)
     expect(() => applyNodeFocus(cy, 'gone', 'missing', false)).not.toThrow()
+  })
+})
+
+describe('bindNodeHover', () => {
+  it('reports the node under the mouse, and null when it leaves', () => {
+    const cy = graph()
+    const seen: (string | null)[] = []
+    bindNodeHover(cy, id => seen.push(id))
+    cy.getElementById('sub').emit('mouseover')
+    cy.getElementById('sub').emit('mouseout')
+    cy.getElementById('p1').emit('mouseover')
+    expect(seen).toEqual(['sub', null, 'p1'])
+  })
+
+  it('ignores edges and the background', () => {
+    const cy = graph()
+    cy.add({ data: { id: 'e1', source: 'own', target: 'hub' } })
+    const seen: (string | null)[] = []
+    bindNodeHover(cy, id => seen.push(id))
+    cy.getElementById('e1').emit('mouseover')
+    cy.emit('mouseover')
+    expect(seen).toEqual([])
   })
 })

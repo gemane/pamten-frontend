@@ -8,6 +8,8 @@
  * seeing which dot a line of text is about without clicking it.
  */
 
+import { useEffect, type RefObject } from 'react'
+
 export const FOCUS_ATTR = 'data-graph-focus'
 
 export interface RowBox {
@@ -68,4 +70,35 @@ export function scrollingPanel(el: HTMLElement): HTMLElement | null {
     if (o === 'auto' || o === 'scroll') return p
   }
   return null
+}
+
+/** Class on the row(s) of the graph node under the mouse. */
+export const GRAPH_HOVER_CLASS = 'rel-item--graph-hover'
+
+/**
+ * Light up the owner/subsidiary row(s) of the graph node under the mouse.
+ *
+ * A class toggle on the marked rows rather than a prop threaded through every
+ * list: the rows already carry their graph id, and the lists re-render for
+ * reasons of their own. `deps` are whatever re-renders the rows, so a list that
+ * loads after the hover still gets marked. A node can appear twice (an owner that
+ * is also a subsidiary); both rows light up.
+ */
+export function useGraphHoverHighlight(
+  scopeRef: RefObject<HTMLElement | null>,
+  hoverId: string | null,
+  deps: readonly unknown[],
+): void {
+  useEffect(() => {
+    const scope = scopeRef.current
+    if (!scope || !hoverId) return
+    const lit: HTMLElement[] = []
+    scope.querySelectorAll<HTMLElement>(`[${FOCUS_ATTR}]`).forEach(el => {
+      if (el.getAttribute(FOCUS_ATTR) === hoverId) {
+        el.classList.add(GRAPH_HOVER_CLASS)
+        lit.push(el)
+      }
+    })
+    return () => lit.forEach(el => el.classList.remove(GRAPH_HOVER_CLASS))
+  }, [hoverId, ...deps]) // eslint-disable-line react-hooks/exhaustive-deps
 }

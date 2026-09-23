@@ -1668,6 +1668,36 @@ describe('NodePanel graph focus', () => {
     expect(onFocus).toHaveBeenLastCalledWith(null)
   })
 
+  it('desktop: the row of the graph node under the mouse lights up, and moves with it', async () => {
+    const lit = () => [...document.querySelectorAll('.rel-item--graph-hover')]
+      .map(el => el.getAttribute('data-graph-focus'))
+    const { rerender } = render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0}
+                                          onNavigate={() => {}} graphHoverId={null} />)
+    await screen.findByText('Sub One')
+    expect(lit()).toEqual([])
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                        graphHoverId="sub1" />)
+    expect(lit()).toEqual(['sub1'])
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                        graphHoverId="own1" />)
+    expect(lit()).toEqual(['own1'])
+    // a node without a row (the hub, an executive) lights nothing
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                        graphHoverId="e1" />)
+    expect(lit()).toEqual([])
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                        graphHoverId={null} />)
+    expect(lit()).toEqual([])
+  })
+
+  it('a hover that arrives before the lists have loaded still lights the row', async () => {
+    render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                      graphHoverId="sub1" />)
+    await screen.findByText('Sub One')
+    await waitFor(() => expect(document.querySelector('.rel-item--graph-hover')
+      ?.getAttribute('data-graph-focus')).toBe('sub1'))
+  })
+
   it('mobile: reports the row at the scrolling panel’s centre as it scrolls', async () => {
     const onFocus = vi.fn()
     const box = (top: number, height: number) =>

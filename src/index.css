@@ -1353,10 +1353,29 @@ button.rel-item--clickable {
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.12s;
+  /* its own hover stays quick; the graph-hover glow below fades slower */
+  transition: background 0.12s, box-shadow 0.25s ease;
 }
 button.rel-item--clickable:hover { background: #253454; }
 [data-theme="light"] button.rel-item--clickable:hover { background: #e2e8f4; }
+
+/* The row of the graph node under the mouse (desktop): the list lights up the
+   line a box stands for. Lighter than a hover and ringed in the company blue,
+   faded in and out so moving across the graph reads as a glow travelling
+   down the list rather than rows blinking. */
+.rel-item { transition: background 0.25s ease, box-shadow 0.25s ease; }
+.rel-item.rel-item--graph-hover {
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+  background: #2d4170;
+  box-shadow: inset 0 0 0 1px #4a90d9, 0 0 10px rgba(74, 144, 217, 0.35);
+}
+[data-theme="light"] .rel-item.rel-item--graph-hover {
+  background: #d6e4f7;
+  box-shadow: inset 0 0 0 1px #4a90d9, 0 0 10px rgba(74, 144, 217, 0.25);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rel-item, button.rel-item--clickable, .rel-item.rel-item--graph-hover { transition: none; }
+}
 
 .rel-item__name {
   font-size: 13px;

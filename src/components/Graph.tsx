@@ -465,6 +465,17 @@ function releaseNode(n: cytoscape.CollectionReturnValue, animate: boolean): void
   }
 }
 
+/**
+ * Report the node under the mouse — the other direction of the panel/graph link:
+ * the node panel lights up the owner or subsidiary row for it. `null` when the
+ * mouse leaves the node. Mouse events only, so a tap on a phone does not
+ * trigger it (the phone has the panel's centre line instead).
+ */
+export function bindNodeHover(cy: cytoscape.Core, onHover: (id: string | null) => void): void {
+  cy.on('mouseover', 'node', evt => onHover(evt.target.id()))
+  cy.on('mouseout', 'node', () => onHover(null))
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined'
     && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -487,10 +498,12 @@ interface GraphProps {
   onStakeFilterChange: (filter: StakeFilter) => void
   /** Node whose row is in focus in the node panel — grown slightly (see applyNodeFocus). */
   focusedId?: string | null
+  /** Called with the id of the node under the mouse, null when it leaves (see bindNodeHover). */
+  onNodeHover?: (id: string | null) => void
 }
 
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, focusedId = null }: GraphProps,
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, focusedId = null, onNodeHover }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
@@ -498,6 +511,10 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
   const prevFocusIdRef  = useRef<string | null>(null)
+  // The handlers are bound once when the graph is created; a ref keeps them
+  // calling the current callback rather than the one from the first render.
+  const onNodeHoverRef  = useRef(onNodeHover)
+  onNodeHoverRef.current = onNodeHover
   const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
   const [examples, setExamples]   = useState(() => pickRandom(ALL_EXAMPLE_QUERIES, 3))
   const [taglineIdx, setTaglineIdx] = useState(0)
@@ -559,6 +576,8 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (d.nodeType === 'entity' && onExpand) lines.push(t('graph.expandHint'))
       setTooltip({ x: me.clientX, y: me.clientY, lines })
     })
+
+    bindNodeHover(cy, id => onNodeHoverRef.current?.(id))
 
     cy.on('mouseover', 'edge', (evt) => {
       const d   = evt.target.data()
