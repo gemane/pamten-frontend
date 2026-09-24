@@ -4167,3 +4167,40 @@ a.source-item__name:hover { color: #4A90D9; }
    settings-* class), so it can sit on any page. */
 .graph-help__title { margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #4a5568; }
 [data-theme="light"] .graph-help__title { color: #718096; }
+
+/* ── Minimum-app-version check (components/UpdateGate.tsx) ─────────────────── */
+/* Required: covers everything, on purpose — this build must not keep running. */
+.update-gate {
+  position: fixed; inset: 0; z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(10, 16, 30, 0.92);
+}
+.update-gate__card {
+  max-width: 360px; width: 100%; padding: 24px; border-radius: 14px;
+  background: #16213a; color: #e8edf5; text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+.update-gate__card h2 { margin: 0 0 10px; font-size: 20px; }
+.update-gate__card p { margin: 0 0 20px; font-size: 14px; line-height: 1.5; color: #b8c2d6; }
+.update-gate__button, .update-banner__button {
+  border: none; border-radius: 8px; padding: 10px 18px; font: inherit; font-weight: 600;
+  background: #4a90d9; color: #fff; cursor: pointer;
+}
+[data-theme="light"] .update-gate { background: rgba(240, 244, 248, 0.94); }
+[data-theme="light"] .update-gate__card { background: #fff; color: #1a202c; }
+[data-theme="light"] .update-gate__card p { color: #4a5568; }
+
+/* Available: a dismissible strip above the bottom navigation. */
+.update-banner {
+  position: fixed; left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  z-index: 9000; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 10px; background: #16213a; color: #e8edf5;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); font-size: 13px;
+}
+.update-banner__text { flex: 1; min-width: 160px; }
+.update-banner__button { padding: 7px 12px; }
+.update-banner__later {
+  border: none; background: none; color: #8892a4; font: inherit; cursor: pointer; padding: 7px 6px;
+}
+[data-theme="light"] .update-banner { background: #fff; color: #1a202c; }
+[data-theme="light"] .update-banner__later { color: #4a5568; }

@@ -210,6 +210,32 @@ Inside the Scraper tab, and shown only to admins — sync ownership data with **
 
 The app is deployed on Render as a static site built from this repo. Render runs `npm run build` and serves `dist/`. Any push to **`develop`** triggers a redeploy.
 
+### Installed app: minimum version check
+
+The Android app is a native shell that loads the deployed site, so its web code is
+always current — what can go stale is the **shell** (plugins, WebView settings). At
+start, and when it returns to the foreground (at most hourly), the app asks the
+backend's unversioned `GET /app-version?platform=android&version=<installed>` and:
+
+- **update required** → a full-screen *Update required* screen with no way past it
+  (the backend only says this when that build must not keep running);
+- **update available** → a banner with *Update* / *Later* (*Later* is remembered per
+  offered version).
+
+The server decides and the client fails open: no answer, a malformed answer, the web
+app, and development builds (`0.0.0-dev…`) all mean "carry on". Only `https://`,
+`market://` and `itms-apps://` store links are opened. Setting the policy is an admin
+call on the backend (`PUT /app-version`, see its api-reference), e.g.:
+
+```bash
+curl -X PUT "$API/app-version" -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"android": {"min_supported": "1.0.0", "latest": "1.1.0",
+                   "store_url": "https://play.google.com/store/apps/details?id=org.owlgraph.app"}}'
+```
+
+It is a full replace per call — send every platform you want kept.
+
 ### Branch model
 
 Two long-lived branches, matching [pamten-backend](https://github.com/gemane/pamten-backend):

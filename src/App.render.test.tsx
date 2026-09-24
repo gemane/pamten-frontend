@@ -45,6 +45,10 @@ vi.mock('./components/NodePanel', () => ({
     </div>
   ),
 }))
+// The installed-app version check: native only, so a no-op here unless a test
+// sets the verdict (the hook itself is tested on its own).
+const updateVerdict = vi.hoisted(() => ({ state: { kind: 'none' } as Record<string, unknown> }))
+vi.mock('./hooks/useAppVersionCheck', () => ({ useAppVersionCheck: () => updateVerdict.state }))
 vi.mock('./utils/notify', () => ({
   requestNotifyPermission: vi.fn(),
   notifyIfHidden: vi.fn(() => false),
@@ -473,5 +477,24 @@ describe('panel row focus reaches the graph', () => {
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
     }
+  })
+})
+
+describe('installed app version check', () => {
+  it('a required update covers the whole app', async () => {
+    updateVerdict.state = { kind: 'required', storeUrl: 'https://play.google.com/x', message: null }
+    try {
+      render(<App />)
+      const gate = await screen.findByRole('alertdialog')
+      expect(gate).toHaveTextContent('Update required')
+    } finally {
+      updateVerdict.state = { kind: 'none' }
+    }
+  })
+
+  it('no verdict, no screen', async () => {
+    render(<App />)
+    await screen.findByTestId('node-panel')
+    expect(screen.queryByRole('alertdialog')).toBeNull()
   })
 })
