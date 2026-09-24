@@ -432,7 +432,8 @@
     "legalPrivacy": "Privacy policy",
     "legalImprint": "Imprint",
     "legalTerms": "Terms of use",
-    "legalSources": "Data sources"
+    "legalSources": "Data sources",
+    "version": "Version {{version}}"
   },
   "scraper": {
     "title": "Scraper Status",

@@ -210,6 +210,8 @@ export default function SettingsPanel({ themeMode, onSetThemeMode, user, onLogin
           </div>
         )}
         <LegalSection />
+        {/* Which build this is — the first thing to ask in any bug report. */}
+        <p className="settings-version">{t('settings.version', { version: __APP_VERSION__ })}</p>
       </div>
 
       {/* ── Administration (admins only) ─────────────────────────────────────── */}
