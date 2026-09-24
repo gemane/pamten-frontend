@@ -432,7 +432,8 @@
     "legalPrivacy": "Política de privacidad",
     "legalImprint": "Aviso legal e identificación",
     "legalTerms": "Condiciones de uso",
-    "legalSources": "Fuentes de datos"
+    "legalSources": "Fuentes de datos",
+    "version": "Versión {{version}}"
   },
   "scraper": {
     "title": "Estado del scraper",

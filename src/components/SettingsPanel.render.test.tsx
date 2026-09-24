@@ -50,6 +50,14 @@ describe('SettingsPanel (render)', () => {
     expect(props.onSetThemeMode).toHaveBeenCalledWith('dark')
   })
 
+  it('shows the build version, the one the build was made from', async () => {
+    renderPanel()
+    // __APP_VERSION__ is injected by vite from scripts/app-version.mjs; in tests
+    // that is a development version (no release tag)
+    expect(__APP_VERSION__).toMatch(/^\d+\.\d+\.\d+/)
+    expect(await screen.findByText(`Version ${__APP_VERSION__}`)).toBeInTheDocument()
+  })
+
   it('shows a login button when signed out', async () => {
     const { props } = renderPanel({ user: null })
     const login = screen.getByRole('button', { name: /Login/ })

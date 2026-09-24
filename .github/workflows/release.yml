@@ -1,0 +1,92 @@
+name: Release
+
+# A release is a git tag on main: `v1.2.3` — the same tag, with the same number,
+# as the matching pamten-backend release (see README "Releases & versions").
+# The tag is the only place the version lives; this workflow builds the web app
+# for production with that number baked in and attaches it to a GitHub release.
+# The Android build runs from the same tag in android.yml.
+#
+# Needs, in the repository settings (Settings → Secrets and variables → Actions):
+#   variable PROD_API_URL      the production API origin, e.g. https://api.owlgraph.org
+#   variable FEEDBACK_EMAIL    optional, the feedback address shown in Settings
+#   secrets  LEGAL_NAME, LEGAL_ADDRESS, LEGAL_EMAIL   the imprint (the build fails without them)
+# VITE_API_URL is baked in at build time — it cannot be changed on the server afterwards.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write     # create the GitHub release and attach the build
+
+jobs:
+  release:
+    name: Build and publish the web app
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Tag is vMAJOR.MINOR.PATCH
+        run: echo "VERSION=$(APP_VERSION="$TAG" node scripts/app-version.mjs --check)" >> "$GITHUB_ENV"
+
+      - name: Tagged commit is on main
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$TAG ($GITHUB_SHA) is not on main"; exit 1
+          fi
+
+      - name: Production settings are present
+        env:
+          PROD_API_URL: ${{ vars.PROD_API_URL }}
+        run: |
+          if [ -z "$PROD_API_URL" ]; then
+            echo "::error::repository variable PROD_API_URL is not set — the build would point at the dev API"; exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+      - name: Build for production
+        env:
+          APP_VERSION: ${{ env.VERSION }}
+          GIT_COMMIT: ${{ github.sha }}
+          VITE_API_URL: ${{ vars.PROD_API_URL }}
+          VITE_FEEDBACK_EMAIL: ${{ vars.FEEDBACK_EMAIL }}
+          NODE_ENV: production          # makes the legal fill refuse a missing imprint
+          LEGAL_NAME: ${{ secrets.LEGAL_NAME }}
+          LEGAL_ADDRESS: ${{ secrets.LEGAL_ADDRESS }}
+          LEGAL_EMAIL: ${{ secrets.LEGAL_EMAIL }}
+        run: npm run build
+
+      # Prove the number made it into the bundle before anything is published.
+      - name: Build carries its version
+        run: |
+          grep -qF "<meta name=\"app-version\" content=\"$VERSION\">" dist/index.html \
+            || { echo "::error::index.html does not carry app-version $VERSION"; grep -o '<meta name="app-version"[^>]*>' dist/index.html; exit 1; }
+
+      - name: Package
+        run: |
+          tar -czf "owlgraph-web-$VERSION.tar.gz" -C dist .
+          sha256sum "owlgraph-web-$VERSION.tar.gz" > "owlgraph-web-$VERSION.tar.gz.sha256"
+
+      - name: GitHub release with notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Notes = the squash-merged PR titles since the previous release tag.
+          prev=$(git describe --tags --abbrev=0 --match 'v*' "$TAG^" 2>/dev/null || true)
+          gh release create "$TAG" --verify-tag --generate-notes --title "$TAG" \
+            ${prev:+--notes-start-tag "$prev"} \
+            "owlgraph-web-$VERSION.tar.gz" "owlgraph-web-$VERSION.tar.gz.sha256"

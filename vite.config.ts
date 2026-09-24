@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+// @ts-expect-error — a plain .mjs script, shared with the Android build (no types)
+import { resolveAppVersion } from './scripts/app-version.mjs'
 
 // Inject a strict Content-Security-Policy meta tag into the production build.
 // Kept out of the dev server so Vite's HMR (eval + websocket) keeps working.
@@ -39,6 +41,19 @@ function cspPlugin(apiUrl: string): Plugin {
   }
 }
 
+/**
+ * Writes the build's version into index.html as `<meta name="app-version">`, so
+ * what is deployed can be read without opening the app (`curl -s <site> | grep
+ * app-version`), and the release workflow can check the number made it in.
+ */
+export function versionMetaPlugin(version: string): Plugin {
+  return {
+    name: 'owlgraph-version-meta',
+    transformIndexHtml: () => [{ tag: 'meta', attrs: { name: 'app-version', content: version },
+                                injectTo: 'head' }],
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   // Fallback is the canonical host, not the Render default (pamten-backend-yrbh
@@ -46,6 +61,7 @@ export default defineConfig(({ mode }) => {
   // are the ones the deployed frontend and the docs use, and this value goes
   // into the page's CSP connect-src.
   const apiUrl = env.VITE_API_URL || 'https://api-dev.owlgraph.org'
+  const appVersion: string = resolveAppVersion({ ...process.env, ...env })
 
   return {
     test: {
@@ -59,9 +75,11 @@ export default defineConfig(({ mode }) => {
       // the real address lives only in the Render build env — the tests pin
       // behaviour against this reserved-domain example.
       env: { VITE_FEEDBACK_EMAIL: 'feedback@example.com' },
-      include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+      include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts'],
     },
-    plugins: [react(), cspPlugin(apiUrl)],
+    plugins: [react(), cspPlugin(apiUrl), versionMetaPlugin(appVersion)],
+    // The product version, from the release tag (scripts/app-version.mjs).
+    define: { __APP_VERSION__: JSON.stringify(appVersion) },
     build: {
       chunkSizeWarningLimit: 600,
       rollupOptions: {

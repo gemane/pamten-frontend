@@ -46,6 +46,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The version comes from the tag, like every other build (scripts/app-version.mjs).
+      # A tag build must carry a release version; a manual run is a development
+      # build (0.0.0-dev+<commit>, versionCode 1) and says so in the app.
+      - name: Version from the tag
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            v=$(APP_VERSION="${{ github.ref_name }}" node scripts/app-version.mjs --check)
+          else
+            v=$(GIT_COMMIT="${{ github.sha }}" node scripts/app-version.mjs)
+          fi
+          echo "APP_VERSION=$v" >> "$GITHUB_ENV"
+          echo "APP_VERSION_CODE=$(APP_VERSION="$v" node scripts/app-version.mjs --code)" >> "$GITHUB_ENV"
+          echo "GIT_COMMIT=${{ github.sha }}" >> "$GITHUB_ENV"
+          echo "version $v"
+
       # The app loads the deployed site, so these assets are not what runs — but
       # `cap sync` requires webDir to exist, and building it also proves the web
       # app still compiles before we wrap it.
@@ -68,9 +83,16 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
+      - name: APK carries its version
+        run: |
+          aapt=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -1)
+          "$aapt" dump badging android/app/build/outputs/apk/debug/app-debug.apk | grep -E "versionCode|versionName" | head -1
+          "$aapt" dump badging android/app/build/outputs/apk/debug/app-debug.apk \
+            | grep -q "versionCode='$APP_VERSION_CODE' versionName='$APP_VERSION'"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: owlgraph-debug-apk
+          name: owlgraph-debug-apk-${{ env.APP_VERSION }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
