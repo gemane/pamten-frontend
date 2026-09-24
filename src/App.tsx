@@ -26,6 +26,8 @@ import AuthModal     from './components/AuthModal'
 import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { useAndroidBackButton } from './hooks/useAndroidBackButton'
+import { useAppVersionCheck } from './hooks/useAppVersionCheck'
+import UpdateGate from './components/UpdateGate'
 import { useMobile } from './hooks/useMobile'
 import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -108,6 +110,8 @@ function AppInner() {
   // Android's back gesture would otherwise close the app outright — Capacitor's
   // native bridge does not handle it, so the web layer must.
   useAndroidBackButton()
+  // Is this installed app still allowed to run? (native only; see useAppVersionCheck)
+  const updateState = useAppVersionCheck()
   const searchBarRef = useRef<SearchBarHandle>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
@@ -922,6 +926,7 @@ function AppInner() {
 
   return (
     <div className="app">
+      <UpdateGate state={updateState} />
       {(loading || scraping || refreshing?.slow) && <div className="loading-bar" />}
       {/* On mobile the canvas is only a half-screen split, so show the scrape overlay
           full-screen at the root instead of inside the small canvas. */}

@@ -636,5 +636,12 @@
       "relationships": "relationships",
       "roles": "roles"
     }
+  },
+  "update": {
+    "requiredTitle": "Update required",
+    "requiredText": "This version of the app is no longer supported. Please install the latest version to continue.",
+    "availableText": "A new version of the app is available.",
+    "button": "Update",
+    "later": "Later"
   }
 }
