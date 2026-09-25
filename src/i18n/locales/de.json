@@ -291,8 +291,10 @@
     "role": "Rolle"
   },
   "timeline": {
-    "acquiredBy": "Erworben von",
-    "acquired": "Erworben",
+    "ownedBy": "Im Besitz von",
+    "ownsLabel": "Besitzt",
+    "sinceAtLeast": "seit {{year}} oder früher",
+    "sinceAtLeastHint": "Die älteste Jahresliste der Tochtergesellschaften, die sie nennt, stammt aus {{year}} — die Beteiligung kann älter sein.",
     "executive": "Führungskraft",
     "active": "Aktiv",
     "until": "bis {{year}}",
