@@ -291,8 +291,10 @@
     "role": "Rol"
   },
   "timeline": {
-    "acquiredBy": "Adquirido por",
-    "acquired": "Adquirido",
+    "ownedBy": "Propiedad de",
+    "ownsLabel": "Posee",
+    "sinceAtLeast": "desde {{year}} o antes",
+    "sinceAtLeastHint": "La lista anual de filiales más antigua que la menciona es de {{year}}; la participación puede ser anterior.",
     "executive": "Directivo",
     "active": "Activo",
     "until": "hasta {{year}}",

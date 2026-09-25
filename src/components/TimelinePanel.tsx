@@ -7,6 +7,9 @@ import OwnershipBadge from './OwnershipBadge'
 interface TimelineEvent {
   kind?: string
   since?: string | null
+  /** "first_listed": `since` is a LOWER bound — the oldest annual subsidiary
+   *  list (Exhibit 21) naming it — not the start of the holding. */
+  since_basis?: string | null
   until?: string | null
   active?: boolean
   role?: string
@@ -50,9 +53,13 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   const kind      = ev.kind ?? ''
   const color     = KIND_COLOR[kind] || KIND_COLOR.role
   const Icon      = KIND_ICON[kind]  || FiUser
-  const kindLabel = kind === 'ownership_in'  ? t('timeline.acquiredBy')
-                  : kind === 'ownership_out' ? t('timeline.acquired')
+  // "Owns" / "Owned by", not "Acquired": most sources say a holding existed at
+  // a date, not that it was bought then (an Exhibit 21 is a year-end list), and
+  // the year heading above already carries the date.
+  const kindLabel = kind === 'ownership_in'  ? t('timeline.ownedBy')
+                  : kind === 'ownership_out' ? t('timeline.ownsLabel')
                   : t('timeline.executive')
+  const lowerBound = ev.since && ev.since_basis === 'first_listed' ? ev.since.slice(0, 4) : null
   const name  = partyName(ev.party)
   const ended = ev.until ? ev.until.slice(0, 4) : null
 
@@ -65,6 +72,11 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
             <Icon />
             {ev.kind === 'role' ? ev.role || kindLabel : kindLabel}
           </span>
+          {lowerBound && (
+            <span className="tl-event__badge tl-event__badge--bound" title={t('timeline.sinceAtLeastHint', { year: lowerBound })}>
+              {t('timeline.sinceAtLeast', { year: lowerBound })}
+            </span>
+          )}
           {ev.active
             ? <span className="tl-event__badge tl-event__badge--active">{t('timeline.active')}</span>
             : ended && <span className="tl-event__badge tl-event__badge--closed">{t('timeline.until', { year: ended })}</span>}

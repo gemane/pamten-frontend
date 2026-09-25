@@ -291,8 +291,10 @@
     "role": "Role"
   },
   "timeline": {
-    "acquiredBy": "Acquired by",
-    "acquired": "Acquired",
+    "ownedBy": "Owned by",
+    "ownsLabel": "Owns",
+    "sinceAtLeast": "since {{year}} or earlier",
+    "sinceAtLeastHint": "The oldest annual subsidiary list naming it is from {{year}} — the holding may be older.",
     "executive": "Executive",
     "active": "Active",
     "until": "until {{year}}",
