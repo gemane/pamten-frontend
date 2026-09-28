@@ -277,19 +277,30 @@ function MetaRow({ icon: Icon, label, value, href }: MetaRowProps) {
   )
 }
 
-function Section({ title, count, children }: {
+function Section({ title, count, shown, children }: {
   title: string
   /** True total from the server. Not the child count: sections are capped, so what
    *  is rendered can be fewer than what exists. */
   count?: number | null
+  /** How many rows the server actually sent. When fewer than `count`, the list was
+   *  cut by the profile's section cap and the panel says so — News Corp showed 200
+   *  of 300 subsidiaries with nothing to tell a reader the rest existed. */
+  shown?: number
   children: React.ReactNode
 }) {
+  const { t } = useTranslation()
+  const cut = count != null && shown != null && shown < count
   return (
     <div className="panel-section">
       <h4 className="panel-section__title">
         {title}{count != null && <span className="panel-section__count">{count}</span>}
       </h4>
       {children}
+      {cut && (
+        <div className="panel-section__cut" role="note">
+          {t('panel.capped', { shown, total: count })}
+        </div>
+      )}
     </div>
   )
 }
@@ -1195,7 +1206,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {ownersShown.length > 0 && (
-        <Section title={t('panel.ownedBy')} count={counts?.owners}>
+        <Section title={t('panel.ownedBy')} count={counts?.owners} shown={owners.length}>
           {[...ownersShown].sort(byStakeDesc(
             o => o.relationship?.stake_percent,
             o => o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '',
@@ -1311,7 +1322,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
       {subsidiariesShown.length > 0 && (
         <Section title={isGroup ? t('panel.groupControls') : t('panel.subsidiaries')}
-                 count={counts?.subsidiaries}>
+                 count={counts?.subsidiaries} shown={subsidiaries.length}>
           {(() => {
             const sorted = [...subsidiariesShown].sort(
               byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? '',

@@ -166,7 +166,8 @@
     "votesIn": "Stimmt ab in",
     "website": "Webseite",
     "webSearch": "Websuche",
-    "refreshing": "Wird aktualisiert…"
+    "refreshing": "Wird aktualisiert…",
+    "capped": "{{shown}} von {{total}} angezeigt — die Liste ist begrenzt"
   },
   "report": {
     "button": "Melden",
@@ -637,7 +638,8 @@
       "people": "Personen",
       "relationships": "Beziehungen",
       "roles": "Rollen"
-    }
+    },
+    "largeGroups": "Konzerne mit mehr als {{threshold}} direkten Tochtergesellschaften ({{count}})"
   },
   "update": {
     "requiredTitle": "Update erforderlich",

@@ -528,6 +528,10 @@ export interface WeeklyReport {
   }
   imports: Record<string, { runs: number; ok: number; failed: number; skipped: number; records: number }>
   graph: {
+    /** Owners with more than `large_group_threshold` direct subsidiaries — the
+     *  groups the profile cap cuts, and the ones to look at for a split. */
+    large_groups?: { id: string | null; name: string | null; subsidiaries: number }[]
+    large_group_threshold?: number
     totals: Record<string, number>
     new_relationships: Record<string, number>
     since: string | null

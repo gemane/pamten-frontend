@@ -240,9 +240,21 @@ describe('NodePanel subsidiary grouping', () => {
     Array.from({ length: n }, (_, i) => sub(`${doi}${i}`, doi))
 
   it('shows the true count from the server, not the number of rows', async () => {
-    // The list is capped at 200; the count must survive that.
+    // The list is capped; the count must survive that.
     await show(many(3, 'direct'), { subsidiaries: 118 })
     expect(screen.getByText('118')).toBeInTheDocument()
+  })
+
+  it('says so when the server cut the list', async () => {
+    // News Corp showed 200 of 300 subsidiaries with nothing to tell a reader
+    // the rest existed.
+    await show(many(3, 'direct'), { subsidiaries: 118 })
+    expect(screen.getByRole('note')).toHaveTextContent('Showing 3 of 118 — the list is capped')
+  })
+
+  it('says nothing when every row is there', async () => {
+    await show(many(3, 'direct'), { subsidiaries: 3 })
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
   })
 
   it('sets the indirect holdings apart and leaves the rest unlabelled', async () => {

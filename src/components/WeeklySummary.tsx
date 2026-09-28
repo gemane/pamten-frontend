@@ -147,6 +147,20 @@ export default function WeeklySummary() {
                 </span>
               </div>
             ))}
+            {(report.graph.large_groups?.length ?? 0) > 0 && (
+              <>
+                <div className="weekly__sub">
+                  {t('weekly.largeGroups', { threshold: report.graph.large_group_threshold ?? 500,
+                                             count: report.graph.large_groups!.length })}
+                </div>
+                {report.graph.large_groups!.map(g => (
+                  <div key={g.id ?? g.name ?? ''} className="weekly__row">
+                    <span>{g.name}</span>
+                    <span className="weekly__n">{g.subsidiaries.toLocaleString()}</span>
+                  </div>
+                ))}
+              </>
+            )}
           </section>
         </div>
       )}
