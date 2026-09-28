@@ -25,7 +25,10 @@ const report = (week = '2026-W38', extra: Partial<WeeklyReport> = {}): WeeklyRep
   imports: { 'gleif-update': { runs: 7, ok: 7, failed: 0, skipped: 0, records: 184 } },
   graph: { totals: { companies: 6773, people: 385, relationships: 7638, roles: 440 },
            new_relationships: {}, since: '2026-W37',
-           delta: { companies: 5, people: -1, relationships: 300, roles: 9 } },
+           delta: { companies: 5, people: -1, relationships: 300, roles: 9 },
+           large_groups: [{ id: 'tenet', name: 'TENET HEALTHCARE CORPORATION', subsidiaries: 1162 },
+                          { id: 'davita', name: 'DAVITA INC.', subsidiaries: 735 }],
+           large_group_threshold: 500 },
   ...extra,
 })
 
@@ -36,6 +39,14 @@ beforeEach(() => {
 })
 
 describe('WeeklySummary', () => {
+  it('lists the groups over the subsidiary threshold, largest first', async () => {
+    render(<WeeklySummary />)
+    expect(await screen.findByText('Groups with more than 500 direct subsidiaries (2)')).toBeInTheDocument()
+    const rows = screen.getAllByText(/TENET HEALTHCARE CORPORATION|DAVITA INC\./)
+    expect(rows.map(r => r.textContent)).toEqual(['TENET HEALTHCARE CORPORATION', 'DAVITA INC.'])
+    expect(screen.getByText('1,162')).toBeInTheDocument()
+  })
+
   it('shows the four blocks with the numbers, the named companies and the deltas', async () => {
     render(<WeeklySummary />)
     expect(await screen.findByText('12')).toBeInTheDocument()            // searches

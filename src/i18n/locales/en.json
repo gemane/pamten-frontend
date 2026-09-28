@@ -166,7 +166,8 @@
     "votesIn": "Votes in",
     "website": "Website",
     "webSearch": "Web search",
-    "refreshing": "Refreshing…"
+    "refreshing": "Refreshing…",
+    "capped": "Showing {{shown}} of {{total}} — the list is capped"
   },
   "report": {
     "button": "Report",
@@ -637,7 +638,8 @@
       "people": "people",
       "relationships": "relationships",
       "roles": "roles"
-    }
+    },
+    "largeGroups": "Groups with more than {{threshold}} direct subsidiaries ({{count}})"
   },
   "update": {
     "requiredTitle": "Update required",

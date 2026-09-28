@@ -166,7 +166,8 @@
     "votesIn": "Vota en",
     "website": "Sitio web",
     "webSearch": "Búsqueda web",
-    "refreshing": "Actualizando…"
+    "refreshing": "Actualizando…",
+    "capped": "Se muestran {{shown}} de {{total}} — la lista está limitada"
   },
   "report": {
     "button": "Reportar",
@@ -637,7 +638,8 @@
       "people": "personas",
       "relationships": "relaciones",
       "roles": "cargos"
-    }
+    },
+    "largeGroups": "Grupos con más de {{threshold}} filiales directas ({{count}})"
   },
   "update": {
     "requiredTitle": "Actualización necesaria",
