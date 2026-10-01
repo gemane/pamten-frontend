@@ -610,3 +610,44 @@ describe('buildTreeElements — the "all levels" view', () => {
     expect(ids(els)).toContain('a__owns__a1')
   })
 })
+
+describe('the as-of view: dates travel on the edges', () => {
+  it('every builder carries since / sinceBasis / until / sourceDate on its ownership edges', () => {
+    const rel = { stake_percent: 10, since: '2013-06-30', since_basis: 'first_listed',
+                  until: null, source_date: '2026-08-07' }
+    const prof: FullProfile = {
+      entity: entity('c', 'Centre'),
+      owners: [{ owner: entity('o', 'Owner'), relationship: rel }],
+      subsidiaries: [{ entity: entity('s', 'Sub'), relationship: rel }],
+      executives: [],
+    }
+    for (const built of [buildElements(prof, new Set()), buildElementsUpward(prof, new Set()),
+                         buildElementsDownward(prof, new Set())]) {
+      for (const e of edges(built)) {
+        const d = e.data as EdgeData
+        expect([d.since, d.sinceBasis, d.until, d.sourceDate])
+          .toEqual(['2013-06-30', 'first_listed', null, '2026-08-07'])
+      }
+    }
+  })
+
+  it('a person\'s role edges follow the day: ended-by-then and started-after go, the rest stay', () => {
+    const prof: PersonProfile = {
+      person: person('p', 'P'),
+      positions: [
+        { entity: entity('a', 'A'), role: { role: 'CEO', since: '2005-01-01', until: '2011-08-24' } },
+        { entity: entity('b', 'B'), role: { role: 'CEO', since: '2011-08-24' } },
+        { entity: entity('c', 'C'), role: { role: 'Director', since: '2020-01-01' } },
+      ],
+      holdings: [],
+    }
+    // the present: any ended seat is gone (today's rule)
+    expect(ids(edges(buildPersonProfileElements(prof, new Set()))).sort()).toEqual(['p__role__b', 'p__role__c'])
+    // end of 2010: the seat that ends in 2011 is still held; the ones starting later are not
+    expect(ids(edges(buildPersonProfileElements(prof, new Set(), '2010-12-31')))).toEqual(['p__role__a'])
+    // end of 2015: b only
+    expect(ids(edges(buildPersonProfileElements(prof, new Set(), '2015-12-31')))).toEqual(['p__role__b'])
+    const b = edges(buildPersonProfileElements(prof, new Set(), '2015-12-31'))[0].data as EdgeData
+    expect(b.since).toBe('2011-08-24')
+  })
+})

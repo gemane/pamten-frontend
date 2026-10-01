@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox } from 'react-icons/fi'
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
+import { asOfFromYear, asOfYear } from '../utils/asOf'
 
 interface TimelineEvent {
   kind?: string
@@ -100,9 +101,15 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
 
 interface TimelinePanelProps {
   entityId: string
+  /** The day the graph currently shows (time travel); null = the present. */
+  asOf?: string | null
+  /** Clicking a year asks for the graph as of that year's end; clicking the
+   *  selected year again asks for the present (null). Without this the
+   *  headings are plain text, as before. */
+  onYearSelect?: (asOf: string | null) => void
 }
 
-export default function TimelinePanel({ entityId }: TimelinePanelProps) {
+export default function TimelinePanel({ entityId, asOf = null, onYearSelect }: TimelinePanelProps) {
   const { t } = useTranslation()
   const [events,  setEvents]  = useState<TimelineEvent[] | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -138,10 +145,25 @@ export default function TimelinePanel({ entityId }: TimelinePanelProps) {
     <div className="timeline">
       {groups.map(([year, evs]) => (
         <div key={year} className="tl-group">
-          <div className="tl-group__label">
-            <FiClock />
-            {year === '__undated' ? t('timeline.noDate') : year}
-          </div>
+          {/* A dated year is a way into the past; "No date recorded" has no
+              date to travel to and stays a heading. */}
+          {year !== '__undated' && onYearSelect ? (() => {
+            const selected = asOf != null && asOfYear(asOf) === year
+            return (
+              <button type="button" className="tl-group__label tl-group__label--btn"
+                      aria-pressed={selected}
+                      title={selected ? t('timeline.showPresent') : t('timeline.showAsOf', { year })}
+                      onClick={() => onYearSelect(selected ? null : asOfFromYear(year))}>
+                <FiClock />
+                {year}
+              </button>
+            )
+          })() : (
+            <div className="tl-group__label">
+              <FiClock />
+              {year === '__undated' ? t('timeline.noDate') : year}
+            </div>
+          )}
           <div className="tl-group__events">
             {evs.map((ev, i) => <EventRow key={i} ev={ev} />)}
           </div>

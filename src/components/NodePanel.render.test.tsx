@@ -42,7 +42,7 @@ describe('NodePanel (render)', () => {
 
     expect(await screen.findByText('Acme Corp')).toBeInTheDocument()
     expect(mockProfile).toHaveBeenCalledTimes(1)
-    expect(mockProfile).toHaveBeenCalledWith('e1')
+    expect(mockProfile).toHaveBeenCalledWith('e1', null)
   })
 
   it('hides a tiny null-stake holder but keeps a truly undisclosed one', async () => {
@@ -119,7 +119,7 @@ describe('NodePanel (render)', () => {
     rerender(<NodePanel node={entityNode('e2', 'Second Co')} refreshKey={0} />)
 
     expect(await screen.findByText('Second Co')).toBeInTheDocument()
-    expect(mockProfile).toHaveBeenCalledWith('e2')
+    expect(mockProfile).toHaveBeenCalledWith('e2', null)
   })
 })
 
@@ -1799,5 +1799,44 @@ describe('the subsidiary list in "all levels" mode', () => {
   it('a truncated tree says so', async () => {
     await show(true, { ...tree, truncated: true })
     expect(await screen.findByRole('note')).toHaveTextContent('The tree is large: showing the first 4 companies')
+  })
+})
+
+describe('the as-of view in the panel', () => {
+  const owner = (id: string, rel: Record<string, unknown>, extra: Record<string, unknown> = {}) =>
+    ({ owner: { id, name: id, type: 'company', ...extra }, relationship: rel })
+
+  const showAsOf = async (asOf: string | null, owners: unknown[]) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      owners, subsidiaries: [], executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} asOf={asOf} />)
+    await screen.findByText('Acme Corp')
+  }
+
+  it('fetches the profile as of the day', async () => {
+    await showAsOf('2019-12-31', [])
+    expect(mockProfile).toHaveBeenCalledWith('e1', '2019-12-31')
+  })
+
+  it('dims a row the sources do not document for the year and drops a party founded later', async () => {
+    await showAsOf('2019-12-31', [
+      owner('Documented', { since: '2010-01-01' }),
+      owner('Undocumented', { source_date: '2025-06-30' }),
+      owner('TooYoung', { since: '2010-01-01' }, { founded: 2021 }),
+    ])
+    expect(screen.getByText('Documented').closest('.rel-item')).not.toHaveClass('rel-item--unknown')
+    const dim = screen.getByText('Undocumented').closest('.rel-item')!
+    expect(dim).toHaveClass('rel-item--unknown')
+    expect(dim).toHaveAttribute('title', 'Not documented for 2019 — the sources only confirm it later')
+    expect(screen.queryByText('TooYoung')).toBeNull()
+  })
+
+  it('in the present nothing is dimmed and nothing new is dropped', async () => {
+    await showAsOf(null, [owner('Undocumented', { source_date: '2025-06-30' }), owner('Young', {}, { founded: 2021 })])
+    expect(mockProfile).toHaveBeenCalledWith('e1', null)
+    expect(screen.getByText('Undocumented').closest('.rel-item')).not.toHaveClass('rel-item--unknown')
+    expect(screen.getByText('Young')).toBeInTheDocument()
   })
 })

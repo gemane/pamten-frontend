@@ -314,7 +314,9 @@
     "emptyHint": "Dates are recorded when relationships are created manually or via the scraper.",
     "owns": "owns",
     "born": "born",
-    "died": "died"
+    "died": "died",
+    "showAsOf": "Show the graph as of the end of {{year}}",
+    "showPresent": "Back to the present"
   },
   "toast": {
     "personGraphError": "Could not load person graph.",
@@ -656,5 +658,11 @@
     "availableText": "A new version of the app is available.",
     "button": "Update",
     "later": "Later"
+  },
+  "asOf": {
+    "chip": "As of {{year}}",
+    "clear": "Show the present",
+    "legend": "Dashed and faded: not documented for that year — the sources only confirm it later.",
+    "rowHint": "Not documented for {{year}} — the sources only confirm it later"
   }
 }

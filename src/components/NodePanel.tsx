@@ -18,6 +18,7 @@ import { FOCUS_ATTR, scrollingPanel, useGraphHoverHighlight } from '../utils/gra
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
+import { asOfYear, edgePresence, endedBy, rowPresence, startedAfter, type Tenure } from '../utils/asOf'
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
 // otherwise render in arbitrary backend order.
@@ -240,6 +241,11 @@ interface NodePanelProps {
   stakeFilter?: StakeFilter
   /** "All levels": the subsidiary list shows the whole tree, indented by level. */
   allLevels?: boolean
+  /** Time travel: the day the graph shows; the profile is fetched as of it and
+   *  the lists hide what was absent and dim what is undocumented for it. */
+  asOf?: string | null
+  /** A year clicked in the timeline (null = back to the present). */
+  onYearSelect?: (asOf: string | null) => void
   /**
    * Called with the graph id of the owner/subsidiary row in focus (the hovered
    * row on desktop, the row at the panel's centre while scrolling on a phone),
@@ -563,13 +569,14 @@ function ReScrapeButton({ node, onReScrape, refreshing }: {
   )
 }
 
-function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stakeFilter = ANY_STAKE }: {
+function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stakeFilter = ANY_STAKE, asOf = null }: {
   node: NodeData
   onNavigate?: (n: NodeData) => void
   onShare?: () => void
   onReScrape?: (node: NodeData) => void
   refreshingId?: string | null
   stakeFilter?: StakeFilter
+  asOf?: string | null
 }) {
   const raw = node.raw as Person
   const { t, i18n } = useTranslation()
@@ -607,9 +614,11 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
   const sourceName = sourceNames(sources)
   const allPositions = profile?.positions ?? []
   const allHoldings  = profile?.holdings  ?? []
-  const positions = allPositions.filter(p => !p.role?.until)
-  const formerPositions = allPositions.filter(p => p.role?.until)
-  const holdings  = allHoldings.filter(h => !h.relationship?.until)
+  // Current = not ended (by the chosen day, in the as-of view) and not started
+  // after it; "former" is a present-tense notion and has no place in a past view.
+  const positions = allPositions.filter(p => !endedBy(p.role, asOf) && !startedAfter(p.role, asOf))
+  const formerPositions = asOf ? [] : allPositions.filter(p => p.role?.until)
+  const holdings  = allHoldings.filter(h => !endedBy(h.relationship, asOf) && !startedAfter(h.relationship, asOf))
     .filter(h => keepsEdge(effectiveStakePct(h.relationship?.stake_percent, h.relationship?.shares, h.relationship?.shares_outstanding), stakeFilter))
 
   // The blocs this person votes in. Three of AB InBev's nine parties are
@@ -878,12 +887,15 @@ function relFromRole(rel: RoleRelationship | undefined, ids: {
   }
 }
 
-function RelRow({ node, onNavigate, rel, focusId, children }: {
+function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
   node: NodeData | null
   onNavigate?: (n: NodeData) => void
   rel?: RelTarget
   /** Graph node this row stands for — the graph grows it while the row is in focus. */
   focusId?: string
+  /** As-of view: the year the sources do not document this relationship for —
+   *  the row is dimmed like the edge on the canvas, with the reason on hover. */
+  unknownFor?: string | null
   children: React.ReactNode
 }) {
   const { t } = useTranslation()
@@ -899,8 +911,9 @@ function RelRow({ node, onNavigate, rel, focusId, children }: {
   // Dimmed when the staleness pass has marked the assertion, with the reason on
   // hover. Still clickable, still reportable: dimming is a statement about
   // confidence, not a removal.
-  const staleCls = rel?.stale ? ' rel-item--stale' : ''
-  const staleTitle = rel?.stale ? t('trust.staleHint') : undefined
+  const staleCls = (rel?.stale ? ' rel-item--stale' : '') + (unknownFor ? ' rel-item--unknown' : '')
+  const staleTitle = unknownFor ? t('asOf.rowHint', { year: unknownFor })
+                   : rel?.stale ? t('trust.staleHint') : undefined
   const focusAttr = focusId ? { [FOCUS_ATTR]: focusId } : {}
   const row = (node && node.id && onNavigate)
     ? <button type="button" className={`rel-item rel-item--clickable${staleCls}`}
@@ -982,10 +995,12 @@ function RelRow({ node, onNavigate, rel, focusId, children }: {
  *  company indented under its parent. Siblings in the panel's usual order
  *  (largest stake first, then by name). The count is the tree's companies; a
  *  truncated tree says so the way a capped section does. */
-function SubsidiaryTreeList({ tree, onNavigate, sourceName }: {
+function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
   tree: SubsidiaryTree
   onNavigate?: (node: NodeData) => void
   sourceName: Map<string, string>
+  /** Time travel: rows the sources do not document for the day are dimmed. */
+  asOf?: string | null
 }) {
   const { t } = useTranslation()
   const rows = useMemo(() => {
@@ -1015,6 +1030,7 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName }: {
         <div key={n.entity.id} className="rel-tree__row" data-depth={n.depth}
              style={{ paddingLeft: `${(n.depth - 1) * 14}px` }}>
           <RelRow node={entityToNode(n.entity)} onNavigate={onNavigate} focusId={n.entity.id}
+            unknownFor={asOf && rowPresence(n.entity, rel, asOf) === 'unknown' ? asOfYear(asOf) : null}
             rel={relFromOwns(rel, { fromId: n.parent_id, toId: n.entity.id, label: n.entity.name,
                                     sourceName: sourceName.get(rel?.source_id ?? '') })}>
             <span className="rel-item__name">{n.entity.name}</span>
@@ -1035,6 +1051,7 @@ interface EntityOverviewProps {
   stakeFilter?: StakeFilter
   /** The whole subsidiary tree ("all levels"); null = the flat list of direct holdings. */
   tree?: SubsidiaryTree | null
+  asOf?: string | null
   onExportPng?: () => void
   onExportCsv?: () => void
   onViewOnMap?: () => void
@@ -1118,7 +1135,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape, refreshingId, stakeFilter = ANY_STAKE, tree = null }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
@@ -1130,8 +1147,18 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
   // The stake filter shared with the graph hides small DISCLOSED holdings from
   // the list too (undisclosed stakes are kept — keepsEdge keeps null). The
   // section count stays the server total, as it already does for capped lists.
-  const ownersShown = owners.filter(o => keepsEdge(effectiveStakePct(o.relationship?.stake_percent, o.relationship?.shares, o.relationship?.shares_outstanding), stakeFilter))
-  const subsidiariesShown = subsidiaries.filter(s => keepsEdge(effectiveStakePct(s.relationship?.stake_percent, s.relationship?.shares, s.relationship?.shares_outstanding), stakeFilter))
+  // In the as-of view a row absent on the day (the server already drops those,
+  // but a party founded later is decided here) goes; one the sources do not
+  // document for the day stays, dimmed — the same answer the canvas gives.
+  const unknownYear = asOf ? asOfYear(asOf) : null
+  const ownersShown = owners
+    .filter(o => keepsEdge(effectiveStakePct(o.relationship?.stake_percent, o.relationship?.shares, o.relationship?.shares_outstanding), stakeFilter))
+    .filter(o => rowPresence(o.owner, o.relationship, asOf) !== 'absent')
+  const subsidiariesShown = subsidiaries
+    .filter(s => keepsEdge(effectiveStakePct(s.relationship?.stake_percent, s.relationship?.shares, s.relationship?.shares_outstanding), stakeFilter))
+    .filter(s => rowPresence(s.entity, s.relationship, asOf) !== 'absent')
+  const unknownRow = (party: Entity | Person | null | undefined, rel: Tenure | null | undefined) =>
+    unknownYear && rowPresence(party, rel, asOf) === 'unknown' ? unknownYear : null
   // The stored direct-thumb URL (upload.wikimedia.org — the host that works
   // where Special:FilePath's new redirect does not, e.g. mobile), resolved
   // server-side during the scrape. No client-side lookup: still-dev data, so
@@ -1141,12 +1168,13 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
 
   // Surface founders in their own section rather than buried among executives.
   const seenFounders = new Set<string>()
-  const founders = executives.filter(e => {
+  const executivesShown = executives.filter(e => edgePresence(e.role, asOf) !== 'absent')
+  const founders = executivesShown.filter(e => {
     if (e.role?.role !== 'Founder' || seenFounders.has(e.person.id)) return false
     seenFounders.add(e.person.id)
     return true
   })
-  const otherExecutives = executives.filter(e => e.role?.role !== 'Founder')
+  const otherExecutives = executivesShown.filter(e => e.role?.role !== 'Founder')
 
   // The panel's only branch on entity type. A voting group's "owners" are the
   // parties to the agreement and its "subsidiaries" are the company the bloc
@@ -1268,7 +1296,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
             o => o.relationship?.shares,
           )).map((o, i) => (
             <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}
-              focusId={o.owner?.id}
+              focusId={o.owner?.id} unknownFor={unknownRow(o.owner, o.relationship)}
               rel={o.owner
                 ? relFromOwns(o.relationship, {
                     fromId: o.owner.id, toId: entity.id,
@@ -1376,7 +1404,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       )}
 
       {tree && tree.nodes.length > 0 && (
-        <SubsidiaryTreeList tree={tree} onNavigate={onNavigate} sourceName={sourceName} />
+        <SubsidiaryTreeList tree={tree} onNavigate={onNavigate} sourceName={sourceName} asOf={asOf} />
       )}
       {!(tree && tree.nodes.length > 0) && subsidiariesShown.length > 0 && (
         <Section title={isGroup ? t('panel.groupControls') : t('panel.subsidiaries')}
@@ -1387,7 +1415,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                           s => s.relationship?.shares))
             const row = (s: SubsidiaryEntry, i: number) => (
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
-                focusId={s.entity.id}
+                focusId={s.entity.id} unknownFor={unknownRow(s.entity, s.relationship)}
                 rel={relFromOwns(s.relationship, {
                        fromId: entity.id, toId: s.entity.id, label: s.entity.name,
                        sourceName: sourceName.get(s.relationship?.source_id ?? '') })}>
@@ -1447,6 +1475,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
                           : undefined}>
           {[...otherExecutives].sort(byRoleImportance(e => e.role?.role, e => e.person?.full_name ?? '')).map((e, i) => (
             <RelRow key={i} node={personToNode(e.person)} onNavigate={onNavigate}
+              unknownFor={unknownRow(e.person, e.role)}
               rel={relFromRole(e.role, {
                      fromId: e.person.id, toId: entity.id,
                      role: e.role?.role ?? '', label: e.person.full_name,
@@ -1511,7 +1540,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1542,10 +1571,10 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     }
     let active = true
     Promise.all([
-      getFullProfile(node.id),
+      getFullProfile(node.id, asOf),
       getEntitySources(node.id).catch(() => ({ data: [] as Source[] })),
       // The tree only in "all levels" mode; its failure leaves the flat list.
-      allLevels ? getSubsidiaryTree(node.id).then(r => r.data).catch(() => null) : Promise.resolve(null),
+      allLevels ? getSubsidiaryTree(node.id, asOf).then(r => r.data).catch(() => null) : Promise.resolve(null),
     ])
       .then(([{ data: prof }, { data: srcs }, subTree]) => {
         if (!active) return
@@ -1556,7 +1585,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
       .catch(() => { if (active && idChanged) setProfile(null) })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [node?.id, refreshKey, allLevels]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [node?.id, refreshKey, allLevels, asOf]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!node) {
     return (
@@ -1568,7 +1597,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
   }
 
   if (node.nodeType === 'person') {
-    return <PersonView refreshingId={refreshingId} node={node} onNavigate={onNavigate} onShare={onShare}
+    return <PersonView refreshingId={refreshingId} node={node} onNavigate={onNavigate} onShare={onShare} asOf={asOf}
                        onReScrape={onReScrape} stakeFilter={stakeFilter} />
   }
 
@@ -1587,9 +1616,9 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
         ? <div ref={focusScopeRef}>
-            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} />
+            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
           </div>
-        : <TimelinePanel entityId={profile.entity.id} />}
+        : <TimelinePanel entityId={profile.entity.id} asOf={asOf} onYearSelect={onYearSelect} />}
     </>
   )
 }

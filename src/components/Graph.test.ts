@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyTreeRoutes, computeArcPositions, buildStylesheet, diffElements, filterVisibleElements, layoutGraph } from './Graph'
+import { applyTreeRoutes, computeArcPositions, buildStylesheet, classifyElements, diffElements, filterVisibleElements, layoutGraph } from './Graph'
 import { STAKE_FILTERS, ANY_STAKE } from './GraphStakeFilter'
 import type { GraphElement } from '../types'
 
@@ -289,5 +289,67 @@ describe('applyTreeRoutes — a centred person who owns and runs a company', () 
     applyTreeRoutes(cy, layoutGraph(els.filter(el => el.data.id !== 'p__owns__tesla'), 'p').tree)
     expect(role.hasClass('dual')).toBe(false)
     expect(role.style('target-label')).toBe('CEO')
+  })
+})
+
+describe('classifyElements — the as-of view', () => {
+  const node = (id: string, raw: Record<string, unknown> = {}) =>
+    ({ data: { id, label: id, nodeType: 'entity', raw } }) as unknown as GraphElement
+  const owns = (source: string, target: string, tenure: Record<string, unknown> = {}) =>
+    ({ data: { id: `${source}__owns__${target}`, source, target, label: '', edgeType: 'owns',
+               edgeDir: 'out', stakePct: null, ...tenure } }) as unknown as GraphElement
+  const ids = (els: GraphElement[]) => els.map(el => el.data.id)
+
+  const els = [
+    node('c'), node('stated'), node('bound'), node('ended'), node('undated'), node('young', { founded: 2021 }),
+    owns('c', 'stated',  { since: '2015-06-01' }),
+    owns('c', 'bound',   { since: '2023-06-30', sinceBasis: 'first_listed' }),
+    owns('c', 'ended',   { since: '2010-01-01', until: '2018-03-31' }),
+    owns('c', 'undated', { sourceDate: '2025-06-30' }),
+    owns('c', 'young',   { since: '2021-05-01' }),
+  ]
+
+  it('in the present it is the stake filter alone — nothing dims, nothing new hides', () => {
+    const { visible, unknownEdges, unknownNodes } = classifyElements(els, ANY_STAKE, 'c', null)
+    expect(visible).toEqual(filterVisibleElements(els, ANY_STAKE, 'c'))
+    expect(ids(visible)).toHaveLength(els.length)
+    expect(unknownEdges.size).toBe(0)
+    expect(unknownNodes.size).toBe(0)
+  })
+
+  it('as of 2019: later stated starts and ended holdings go, lower bounds and undated dim', () => {
+    const { visible, unknownEdges, unknownNodes } = classifyElements(els, ANY_STAKE, 'c', '2019-12-31')
+    const shown = ids(visible)
+    expect(shown).toContain('stated')
+    expect(shown).not.toContain('ended')                 // until 2018 <= 2019
+    expect(shown).not.toContain('c__owns__ended')
+    expect(shown).not.toContain('young')                 // founded 2021: did not exist, nor its edge
+    expect(shown).not.toContain('c__owns__young')
+    expect(unknownEdges).toEqual(new Set(['c__owns__bound', 'c__owns__undated']))
+    expect(unknownNodes).toEqual(new Set(['bound', 'undated']))
+  })
+
+  it('a node with one documented edge stays solid even if another is unknown', () => {
+    const two = [node('c'), node('x'),
+                 owns('c', 'x', { since: '2010-01-01' }),
+                 ({ data: { id: 'x__votes__c', source: 'x', target: 'c', label: '', edgeType: 'votes',
+                            edgeDir: 'in', stakePct: null, votingPowerPct: 60 } }) as unknown as GraphElement]
+    const { unknownEdges, unknownNodes } = classifyElements(two, ANY_STAKE, 'c', '2019-12-31')
+    expect(unknownEdges).toEqual(new Set(['x__votes__c']))
+    expect(unknownNodes.size).toBe(0)
+  })
+
+  it('the centre is never hidden, even founded after the day', () => {
+    const { visible } = classifyElements([node('c', { founded: 2030 })], ANY_STAKE, 'c', '2019-12-31')
+    expect(ids(visible)).toEqual(['c'])
+  })
+
+  it('the stylesheet dims what is unknown', () => {
+    const sheet = buildStylesheet('dark') as { selector: string; style: Record<string, unknown> }[]
+    const edge = sheet.find(s => s.selector === 'edge.unknown')!
+    const nd = sheet.find(s => s.selector === 'node.unknown')!
+    expect(edge.style['line-style']).toBe('dashed')
+    expect(Number(edge.style.opacity)).toBeLessThan(1)
+    expect(Number(nd.style.opacity)).toBeLessThan(1)
   })
 })

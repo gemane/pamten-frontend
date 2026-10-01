@@ -91,3 +91,28 @@ describe('"all levels" in the hash', () => {
     expect(parseHash('#graph/e/x')).toEqual({ tab: 'graph', entityId: 'x', entityType: 'entity' })
   })
 })
+
+describe('time travel in the hash', () => {
+  it('round-trips an as-of day on the graph', () => {
+    const h = buildHash({ tab: 'graph', entityId: 'lei:1', entityType: 'entity', asOf: '2019-12-31' })
+    expect(h).toBe('#graph/e/lei%3A1/asof/2019-12-31')
+    expect(parseHash(h)).toEqual({ tab: 'graph', entityId: 'lei:1', entityType: 'entity', asOf: '2019-12-31' })
+  })
+
+  it('ignores a malformed day and never writes one', () => {
+    expect(parseHash('#graph/e/x/asof/2019')).toEqual({ tab: 'graph', entityId: 'x', entityType: 'entity' })
+    expect(buildHash({ tab: 'graph', entityId: 'x', entityType: 'entity', asOf: '2019' })).toBe('#graph/e/x')
+  })
+
+  it('has no meaning off the graph tab', () => {
+    expect(buildHash({ tab: 'map', country: 'DE', asOf: '2019-12-31' })).toBe('#map/c/DE')
+  })
+})
+
+describe('"all levels" and the day together', () => {
+  it('round-trips both', () => {
+    const v = { tab: 'graph', entityId: 'x', entityType: 'entity' as const, allLevels: true, asOf: '2019-12-31' }
+    expect(buildHash(v)).toBe('#graph/e/x/all/asof/2019-12-31')
+    expect(parseHash('#graph/e/x/all/asof/2019-12-31')).toEqual(v)
+  })
+})

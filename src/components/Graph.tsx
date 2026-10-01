@@ -8,6 +8,8 @@ import { getStats, type StatsResponse } from '../services/api'
 import GraphStakeFilter, { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
 import GraphLevelsToggle from './GraphLevelsToggle'
 import { computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
+import GraphAsOfChip from './GraphAsOfChip'
+import { edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 
 export interface GraphHandle {
   exportPng: () => void
@@ -189,6 +191,11 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       selector: 'edge[directOrIndirect = "indirect"]',
       style: { 'line-style': 'dashed' },
     },
+    // The as-of view: a relationship the sources do not document for the
+    // chosen day is drawn, but faded and dashed — "may have existed", not
+    // "existed". A node all of whose links are like that fades with them.
+    { selector: 'edge.unknown', style: { 'line-style': 'dashed', opacity: 0.35 } },
+    { selector: 'node.unknown', style: { opacity: 0.45 } },
     // Edge width by ownership type — used when stake% is not in the data
     { selector: 'edge[ownershipType = "minority"]',    style: { width: 2.5 } },
     { selector: 'edge[ownershipType = "controlling"]', style: { width: 4 } },
@@ -234,27 +241,74 @@ export function filterVisibleElements(
   elements: GraphElement[],
   filter: StakeFilter,
   centerId: string | null,
+  asOf: string | null = null,
 ): GraphElement[] {
-  const edgeVisible = (d: GraphElement['data']): boolean => {
-    if (!('source' in d)) return true
-    if (d.edgeType === 'role') return true
-    const eff = effectiveStakePct(d.stakePct ?? null, d.shares, d.sharesOutstanding)
-    return keepsEdge(eff, filter)
+  return classifyElements(elements, filter, centerId, asOf).visible
+}
+
+/** The stake filter and the as-of day together: which elements are drawn,
+ *  and which of those are only UNKNOWN for that day (drawn dimmed).
+ *
+ *  Rules, with `asOf` null reducing to the stake filter alone:
+ *  - a node founded after the day does not exist, and takes its edges with it;
+ *  - an ownership edge below the stake band is hidden (role edges never are);
+ *  - an edge absent on the day (started later, ended by then) is hidden;
+ *  - a node left with no visible edge is hidden — the centre always stays;
+ *  - a visible edge the sources do not document for that day is `unknown`,
+ *    and so is a node all of whose visible edges are. */
+export function classifyElements(
+  elements: GraphElement[],
+  filter: StakeFilter,
+  centerId: string | null,
+  asOf: string | null = null,
+): { visible: GraphElement[]; unknownEdges: Set<string>; unknownNodes: Set<string> } {
+  const exists = new Map<string, boolean>()
+  for (const el of elements) {
+    const d = el.data
+    if (!('source' in d)) exists.set(d.id, nodeExists(d.raw as { founded?: number | null; founded_date?: string | null }, asOf))
+  }
+  const presence = new Map<string, Presence>()
+  const edgeVisible = (d: EdgeData): boolean => {
+    if (exists.get(d.source) === false || exists.get(d.target) === false) return false
+    if (d.edgeType !== 'role') {
+      const eff = effectiveStakePct(d.stakePct ?? null, d.shares, d.sharesOutstanding)
+      if (!keepsEdge(eff, filter)) return false
+    }
+    const p = edgePresence(tenureOfEdge(d), asOf)
+    presence.set(d.id, p)
+    return p !== 'absent'
   }
   const nodeHasEdge = new Set<string>()
+  const nodeHasPresentEdge = new Set<string>()
   for (const el of elements) {
     const d = el.data
     if ('source' in d && edgeVisible(d)) {
       nodeHasEdge.add(d.source)
       nodeHasEdge.add(d.target)
+      if (presence.get(d.id) === 'present') {
+        nodeHasPresentEdge.add(d.source)
+        nodeHasPresentEdge.add(d.target)
+      }
     }
   }
-  const nodeVisible = (id: string) => id === centerId || nodeHasEdge.has(id)
-  return elements.filter(el => {
+  // The centre always stays — it is what the user asked to see, founded
+  // whenever; a neighbour that did not exist yet goes with its edges.
+  const nodeVisible = (id: string) => id === centerId || (exists.get(id) !== false && nodeHasEdge.has(id))
+  const visible = elements.filter(el => {
     const d = el.data
     if ('source' in d) return edgeVisible(d) && nodeVisible(d.source) && nodeVisible(d.target)
     return nodeVisible(d.id)
   })
+  const unknownEdges = new Set<string>()
+  const unknownNodes = new Set<string>()
+  if (asOf) {
+    for (const el of visible) {
+      const d = el.data
+      if ('source' in d) { if (presence.get(d.id) === 'unknown') unknownEdges.add(d.id) }
+      else if (d.id !== centerId && nodeHasEdge.has(d.id) && !nodeHasPresentEdge.has(d.id)) unknownNodes.add(d.id)
+    }
+  }
+  return { visible, unknownEdges, unknownNodes }
 }
 
 
@@ -622,6 +676,9 @@ interface GraphProps {
    *  which indents its list. */
   allLevels?: boolean
   onAllLevelsChange?: (on: boolean) => void
+  /** The day the graph shows (time travel), YYYY-MM-DD; null = the present. */
+  asOf?: string | null
+  onAsOfClear?: () => void
   /** Node whose row is in focus in the node panel — grown slightly (see applyNodeFocus). */
   focusedId?: string | null
   /** Called with the id of the node under the mouse, null when it leaves (see bindNodeHover). */
@@ -629,7 +686,7 @@ interface GraphProps {
 }
 
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, focusedId = null, onNodeHover }: GraphProps,
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, asOf = null, onAsOfClear, focusedId = null, onNodeHover }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
@@ -852,26 +909,22 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   useEffect(() => {
     const cy = cyRef.current
     if (!cy || elements.length === 0) return
-    cy.edges().forEach(edge => {
-      const stakePct  = edge.data('stakePct')
-      const edgeType  = edge.data('edgeType')
-      if (edgeType === 'role') return
-      const effective = effectiveStakePct(stakePct, edge.data('shares'), edge.data('sharesOutstanding'))
-      edge.style('display', keepsEdge(effective, stakeFilter) ? 'element' : 'none')
-    })
-    cy.nodes().forEach(node => {
-      if (node.id() === centerId) return
-      const visible = node.connectedEdges().some(e => e.style('display') !== 'none')
-      node.style('display', visible ? 'element' : 'none')
+    // One classification for both: what is drawn, and what is drawn dimmed
+    // because the sources do not document it for the chosen day.
+    const { visible, unknownEdges, unknownNodes } =
+      classifyElements(elements, stakeFilter, centerId ?? null, asOf)
+    const shown = new Set(visible.map(el => el.data.id))
+    cy.elements().forEach(ele => {
+      ele.style('display', shown.has(ele.id()) ? 'element' : 'none')
+      ele.toggleClass('unknown', unknownEdges.has(ele.id()) || unknownNodes.has(ele.id()))
     })
 
     cy.minZoom(layoutModeRef.current ? TREE_MIN_ZOOM : MIN_ZOOM)
-    // The tree is laid out, routed and judged on the FILTERED elements, once:
-    // judged on the unfiltered set, a 0.1 % holder the filter hides could
-    // still make the 99.9 % holder's line "redundant", and the company was
-    // left with no line at all.
-    const shown = filterVisibleElements(elements, stakeFilter, centerId ?? null)
-    const { positions, tree } = layoutGraph(shown, centerId ?? null, measureWith(cy))
+    // The tree is laid out, routed and judged on the VISIBLE elements (the
+    // stake filter's and the day's), once: judged on everything, a 0.1 %
+    // holder the filter hides could still make the 99.9 % holder's line
+    // "redundant", and the company was left with no line at all.
+    const { positions, tree } = layoutGraph(visible, centerId ?? null, measureWith(cy))
     if (positions.size > 0) {
       cy.nodes().forEach(node => {
         const p = positions.get(node.id())
@@ -883,7 +936,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       cy.edges('.implied').style('display', 'none')
       cy.fit(undefined, 80)
     }
-  }, [stakeFilter, elements, centerId])
+  }, [stakeFilter, elements, centerId, asOf])
 
   const centerLabel = elements.find(el => 'id' in el.data && el.data.id === centerId)
     ?.data.label ?? 'graph'
@@ -986,6 +1039,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         </div>
       )}
 
+      {elements.length > 0 && asOf && <GraphAsOfChip asOf={asOf} onClear={onAsOfClear} />}
       {elements.length > 0 && (
         <GraphStakeFilter value={stakeFilter} onChange={onStakeFilterChange}
                           stated={stakeCoverage.stated} total={stakeCoverage.total} />
