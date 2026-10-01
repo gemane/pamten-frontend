@@ -4,21 +4,28 @@ import userEvent from '@testing-library/user-event'
 import GraphLevelsToggle from './GraphLevelsToggle'
 
 describe('GraphLevelsToggle', () => {
-  it('off: offers all levels and asks for them on click', async () => {
-    const onChange = vi.fn()
-    render(<GraphLevelsToggle on={false} onChange={onChange} />)
-    const btn = screen.getByRole('button', { name: 'Show all levels of subsidiaries' })
-    expect(btn).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.queryByText('All levels')).toBeNull()
-    await userEvent.click(btn)
-    expect(onChange).toHaveBeenCalledWith(true)
+  it('names what it switches and shows both choices, with the current one checked', () => {
+    render(<GraphLevelsToggle on={false} onChange={() => {}} />)
+    expect(screen.getByRole('radiogroup', { name: 'Subsidiaries' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Direct' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('radio', { name: 'All levels' })).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('on: says so on the button and offers the way back', async () => {
+  it('asks for all levels, and for direct again', async () => {
+    const onChange = vi.fn()
+    const { rerender } = render(<GraphLevelsToggle on={false} onChange={onChange} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'All levels' }))
+    expect(onChange).toHaveBeenLastCalledWith(true)
+    rerender(<GraphLevelsToggle on onChange={onChange} />)
+    expect(screen.getByRole('radio', { name: 'All levels' })).toHaveAttribute('aria-checked', 'true')
+    await userEvent.click(screen.getByRole('radio', { name: 'Direct' }))
+    expect(onChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('clicking the choice that is already on does nothing', async () => {
     const onChange = vi.fn()
     render(<GraphLevelsToggle on onChange={onChange} />)
-    expect(screen.getByText('All levels')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Show direct subsidiaries only' }))
-    expect(onChange).toHaveBeenCalledWith(false)
+    await userEvent.click(screen.getByRole('radio', { name: 'All levels' }))
+    expect(onChange).not.toHaveBeenCalled()
   })
 })

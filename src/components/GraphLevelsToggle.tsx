@@ -1,19 +1,23 @@
 import { useTranslation } from 'react-i18next'
-import { FiGitMerge } from 'react-icons/fi'
 
-/** The "all levels" switch: the whole subsidiary tree below the centre, in the
- *  graph and — indented — in the panel, instead of the direct holdings only. */
+/** Which subsidiaries the graph and the panel show: the direct holdings only,
+ *  or the whole tree below the centre. Two labelled choices rather than one
+ *  icon button — an icon alone did not say what it switched, or which state
+ *  was on. */
 export default function GraphLevelsToggle({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }) {
   const { t } = useTranslation()
-  const label = on ? t('graph.allLevelsOff') : t('graph.allLevelsOn')
+  const option = (value: boolean, label: string, hint: string) => (
+    <button type="button" role="radio" aria-checked={on === value} title={hint}
+            className={`graph-levels__option ${on === value ? 'graph-levels__option--active' : ''}`}
+            onClick={() => { if (on !== value) onChange(value) }}>
+      {label}
+    </button>
+  )
   return (
-    <div className="graph-levels">
-      <button type="button" aria-pressed={on} title={label} aria-label={label}
-              className={`graph-filter__toggle ${on ? 'graph-filter__toggle--on' : ''}`}
-              onClick={() => onChange(!on)}>
-        <FiGitMerge style={{ transform: 'rotate(180deg)' }} />
-        {on && <span className="graph-filter__value">{t('graph.allLevelsChip')}</span>}
-      </button>
+    <div className="graph-levels" role="radiogroup" aria-label={t('graph.levelsLabel')}>
+      <span className="graph-levels__label">{t('graph.levelsLabel')}</span>
+      {option(false, t('graph.levelsDirect'), t('graph.levelsDirectHint'))}
+      {option(true, t('graph.levelsAll'), t('graph.levelsAllHint'))}
     </div>
   )
 }

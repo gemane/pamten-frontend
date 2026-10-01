@@ -77,9 +77,11 @@
     "filterAny": "Todas",
     "filterCoverage": "{{stated}} de {{total}} participaciones indican un porcentaje.",
     "filterCoverageRest": "El resto se muestra siempre.",
-    "allLevelsOn": "Mostrar todos los niveles de filiales",
-    "allLevelsOff": "Mostrar solo las filiales directas",
-    "allLevelsChip": "Todos los niveles"
+    "levelsLabel": "Filiales",
+    "levelsDirect": "Directas",
+    "levelsAll": "Todos los niveles",
+    "levelsDirectHint": "Solo las empresas en propiedad directa",
+    "levelsAllHint": "El árbol completo: todos los niveles bajo esta empresa"
   },
   "legend": {
     "nodes": "Nodos",

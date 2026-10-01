@@ -77,9 +77,11 @@
     "filterAny": "Any",
     "filterCoverage": "{{stated}} of {{total}} ownership links state a percentage.",
     "filterCoverageRest": "The rest are always shown.",
-    "allLevelsOn": "Show all levels of subsidiaries",
-    "allLevelsOff": "Show direct subsidiaries only",
-    "allLevelsChip": "All levels"
+    "levelsLabel": "Subsidiaries",
+    "levelsDirect": "Direct",
+    "levelsAll": "All levels",
+    "levelsDirectHint": "Only the companies held directly",
+    "levelsAllHint": "The whole tree: every level below this company"
   },
   "legend": {
     "nodes": "Nodes",

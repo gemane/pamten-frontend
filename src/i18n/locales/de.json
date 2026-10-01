@@ -77,9 +77,11 @@
     "filterAny": "Alle",
     "filterCoverage": "{{stated}} von {{total}} Beteiligungen nennen einen Prozentsatz.",
     "filterCoverageRest": "Die übrigen werden immer angezeigt.",
-    "allLevelsOn": "Alle Ebenen der Tochtergesellschaften anzeigen",
-    "allLevelsOff": "Nur direkte Tochtergesellschaften anzeigen",
-    "allLevelsChip": "Alle Ebenen"
+    "levelsLabel": "Töchter",
+    "levelsDirect": "Direkt",
+    "levelsAll": "Alle Ebenen",
+    "levelsDirectHint": "Nur die direkt gehaltenen Unternehmen",
+    "levelsAllHint": "Der ganze Baum: jede Ebene unter diesem Unternehmen"
   },
   "legend": {
     "nodes": "Knoten",
