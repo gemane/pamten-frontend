@@ -33,6 +33,11 @@ describe('asOf rules', () => {
   it('a lower bound after the day is unknown, never absent', () => {
     expect(edgePresence({ since: '2023-06-30', since_basis: 'first_listed' }, Y19)).toBe('unknown')
     expect(edgePresence({ since: '2013-06-30', since_basis: 'first_listed' }, Y19)).toBe('present')
+    // first listed 2023, and the 2022 list does not name it: gone before 2023, there from it
+    expect(edgePresence({ since: '2023-06-30', since_basis: 'newly_listed' }, Y19)).toBe('absent')
+    expect(edgePresence({ since: '2023-06-30', since_basis: 'newly_listed' }, '2023-12-31')).toBe('present')
+    expect(edgePresence({ since: '2023-06-30', since_basis: 'newly_listed' }, '2022-12-31')).toBe('absent')
+    expect(edgePresence({ since: '2023-06-30', since_basis: 'newly_listed' }, null)).toBe('present')
   })
 
   it('an until on or before the day is absent; after it, still present', () => {

@@ -3,8 +3,9 @@
  *
  * Time travel shows the graph and the panel as they stood at the end of a
  * year. Each relationship carries what its source said: a `since` (a stated
- * start, or — with `since_basis: 'first_listed'` — only a LOWER bound, the
- * oldest annual subsidiary list naming it), an `until`, and a `source_date`
+ * start; with `since_basis: 'first_listed'` only a LOWER bound, the oldest
+ * annual subsidiary list naming it; with `'newly_listed'` the first list
+ * naming it when the one before does not), an `until`, and a `source_date`
  * (the filing or snapshot that asserted it). Three answers follow:
  *
  *   present  — the sources show it existed on that day
@@ -49,9 +50,13 @@ export function endedBy(rel: Tenure | null | undefined, asOf: string | null): bo
   return asOf ? rel.until <= asOf : true
 }
 
-/** A STATED start after the day. A lower bound never says "started after". */
+/** A start after the day: a STATED one, or a FIRST LISTING (`newly_listed`: the
+ *  annual list for the year before was read and does not name it, nor any
+ *  older one — not proof, but the filings' own answer, and the user's call:
+ *  hidden before that year). A lower bound (`first_listed`) never says
+ *  "started after". */
 export function startedAfter(rel: Tenure | null | undefined, asOf: string | null): boolean {
-  if (!asOf || !rel?.since || rel.since_basis) return false
+  if (!asOf || !rel?.since || rel.since_basis === 'first_listed') return false
   return rel.since > asOf
 }
 
