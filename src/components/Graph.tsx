@@ -289,9 +289,7 @@ export function layoutGraph(
   measure?: Measure,
 ): { positions: Map<string, { x: number; y: number }>; tree: TreeLayout } {
   const tree = computeTreeLayout(elements, centerId, measure)
-  const positions = computeArcPositions(elements, centerId)
-  for (const [id, p] of tree.positions) positions.set(id, p)
-  return { positions, tree }
+  return { positions: computeArcPositions(elements, centerId, tree.positions), tree }
 }
 
 /** The size Cytoscape draws a node at — the tree is laid out on the real
@@ -344,12 +342,25 @@ export function applyTreeRoutes(cy: cytoscape.Core, tree: TreeLayout) {
   })
 }
 
+/** Owners (and people) on an arc above the centre; what the centre points at
+ *  on an arc below it; anything further out stacked above or below the node it
+ *  hangs on.
+ *
+ *  `placed`: nodes that already have their place — the graph passes the tree
+ *  (the companies below the centre). They are taken as they are: they get no
+ *  slot on the lower arc, which then holds only what the tree leaves over (a
+ *  vote, a membership), and whatever hangs on one of them is stacked from
+ *  where it really is. Before, the whole lower arc was computed and thrown
+ *  away, and an expanded subsidiary's other owners were stacked above the arc
+ *  slot it no longer occupied. */
 export function computeArcPositions(
   elements: GraphElement[],
   centerId: string | null,
+  placed?: Map<string, { x: number; y: number }>,
 ): Map<string, { x: number; y: number }> {
   const pos = new Map<string, { x: number; y: number }>()
   if (!centerId) return pos
+  for (const [id, p] of placed ?? []) pos.set(id, p)
 
   // Build edge adjacency from element data
   const incomersOf  = new Map<string, string[]>()
@@ -395,7 +406,8 @@ export function computeArcPositions(
 
   const topIds    = (incomersOf.get(centerId) ?? []).filter(id => id !== centerId)
   const topSet    = new Set(topIds)
-  const bottomIds = (outgoersOf.get(centerId) ?? []).filter(id => !topSet.has(id) && id !== centerId)
+  const bottomIds = (outgoersOf.get(centerId) ?? [])
+    .filter(id => !topSet.has(id) && id !== centerId && !placed?.has(id))
 
   // Left-to-right order along each arc follows the panel's stake ordering.
   topIds.sort(cmpByStake(id => edgeStake.get(edgeKey(id, centerId))))       // owners → center
@@ -404,9 +416,7 @@ export function computeArcPositions(
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)
 
-  // Semi-ellipse for what the centre points at (below it). In the graph the
-  // companies it OWNS are then re-placed as a tree (layoutGraph); what stays
-  // on this arc are a centred person's roles and the like.
+  // Semi-ellipse for what the centre points at (below it) and is not `placed`.
   // a scales so nodes get MIN_NODE_GAP spacing at the densest point (t ≈ π/2, bottom).
   // At the bottom the tangent is nearly horizontal so arc-length ≈ a·Δt.
   if (bottomIds.length > 0) {
@@ -435,7 +445,7 @@ export function computeArcPositions(
   // For every queued node, owners go ABOVE it and subsidiaries go BELOW it,
   // regardless of which direction the node was reached from.
   const positioned = new Set<string>(pos.keys())
-  const queue: string[] = [...topIds, ...bottomIds]
+  const queue: string[] = [...topIds, ...bottomIds, ...[...(placed?.keys() ?? [])].filter(id => id !== centerId)]
   let qi = 0
   while (qi < queue.length) {
     const id = queue[qi++]

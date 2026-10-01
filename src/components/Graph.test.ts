@@ -167,6 +167,43 @@ describe('layoutGraph — owners on their arc, the subsidiaries as a tree', () =
   })
 })
 
+describe('computeArcPositions with the tree already placed', () => {
+  const n = (id: string) => ({ data: { id, label: id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement
+  const e = (s: string, t: string, type = 'owns') =>
+    ({ data: { id: `${s}__${type}__${t}`, source: s, target: t, label: '', edgeType: type, edgeDir: 'out', stakePct: null } }) as unknown as GraphElement
+  const placed = new Map([['c', { x: 0, y: 0 }], ['a', { x: -500, y: 300 }], ['b', { x: 500, y: 300 }]])
+
+  it('takes placed nodes as they are and gives them no slot on the lower arc', () => {
+    const els = [n('c'), n('a'), n('b'), n('voted'), e('c', 'a'), e('c', 'b'), e('c', 'voted', 'votes')]
+    const pos = computeArcPositions(els, 'c', placed)
+    expect(pos.get('a')).toEqual({ x: -500, y: 300 })
+    expect(pos.get('b')).toEqual({ x: 500, y: 300 })
+    // what the tree leaves over has the arc to itself: alone, it sits straight below the centre
+    const alone = computeArcPositions([n('c'), n('voted'), e('c', 'voted', 'votes')], 'c')
+    expect(pos.get('voted')).toEqual(alone.get('voted'))
+    expect(pos.get('voted')!.x).toBeCloseTo(0)
+  })
+
+  it('stacks what hangs on a placed node from where that node really is', () => {
+    // b was expanded: another owner of b, and something b points at that the tree does not place
+    const els = [n('c'), n('a'), n('b'), n('co'), n('seat'), e('c', 'a'), e('c', 'b'), e('co', 'b'), e('b', 'seat', 'role')]
+    const pos = computeArcPositions(els, 'c', placed)
+    expect(pos.get('co')!.x).toBe(500)
+    expect(pos.get('co')!.y).toBeLessThan(300)
+    expect(pos.get('seat')!.x).toBe(500)
+    expect(pos.get('seat')!.y).toBeGreaterThan(300)
+    // without the tree's positions the same graph is the plain arc layout, unchanged
+    expect(computeArcPositions(els, 'c').get('b')).not.toEqual({ x: 500, y: 300 })
+  })
+
+  it('layoutGraph hands the tree to the arc: one result, the tree\'s places in it', () => {
+    const els = [n('c'), n('owner'), n('a'), n('b'), e('owner', 'c'), e('c', 'a'), e('c', 'b')]
+    const { positions, tree } = layoutGraph(els, 'c')
+    for (const [id, p] of tree.positions) expect(positions.get(id)).toEqual(p)
+    expect(positions.get('owner')).toEqual(computeArcPositions(els, 'c').get('owner'))
+  })
+})
+
 describe('diffElements — the canvas follows the list both ways', () => {
   const n = (id: string) => ({ data: { id, label: id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement
 
