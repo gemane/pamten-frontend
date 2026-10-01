@@ -300,6 +300,8 @@
   "timeline": {
     "ownedBy": "Owned by",
     "ownsLabel": "Owns",
+    "firstListed": "first listed {{year}}",
+    "firstListedHint": "It first appears in the {{year}} annual subsidiary list: the list for the year before does not name it, nor any older one. Filers may leave out small subsidiaries, so it can still be older.",
     "sinceAtLeast": "since {{year}} or earlier",
     "sinceAtLeastHint": "The oldest annual subsidiary list naming it is from {{year}} — the holding may be older.",
     "executive": "Executive",

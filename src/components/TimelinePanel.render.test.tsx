@@ -35,6 +35,21 @@ describe('TimelinePanel', () => {
     expect(screen.getAllByText(/or earlier/)).toHaveLength(1)
   })
 
+  it('says "first listed" where the list for the year before does not name it', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_out', since: '2025-06-30', since_basis: 'newly_listed',
+           party: { id: 'st', name: 'Storyful Limited' } }),
+      ev({ kind: 'ownership_out', since: '2013-06-30', since_basis: 'first_listed',
+           party: { id: 'dj', name: 'Dow Jones & Company, Inc.' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="nc" />)
+    const badge = await screen.findByText('first listed 2025')
+    expect(badge).toHaveAttribute('title', expect.stringContaining('year before'))
+    expect(screen.getByText('since 2013 or earlier')).toBeInTheDocument()
+    expect(screen.queryByText('since 2025 or earlier')).toBeNull()
+    expect(screen.getAllByText(/first listed/)).toHaveLength(1)
+  })
+
   it('a subsidiary list without a start date sits under "No date recorded", not this year', async () => {
     mockHistory.mockResolvedValue({ data: [
       ev({ kind: 'ownership_out', since: null, party: { id: 'st', name: 'Storyful Limited' } }),
