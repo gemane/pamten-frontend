@@ -8,6 +8,7 @@
 //   #graph              home (empty graph)
 //   #graph/e/<id>       entity centered in the graph
 //   #graph/p/<id>       person centered in the graph
+//   #graph/e/<id>/all   …with the whole subsidiary tree ("all levels")
 //   #map                world map
 //   #map/c/<country>    map with a country selected
 //   #map/n/<id>         map showing one company and its subsidiaries
@@ -26,6 +27,9 @@ export interface ViewState {
    *  and landed on whatever came before it — the graph — while the panel still
    *  showed the subsidiary. */
   nodeId?: string
+  /** "All levels": the whole subsidiary tree below the centre. In the URL so a
+   *  tree view survives a reload and can be linked to. */
+  allLevels?: boolean
 }
 
 const TABS = new Set(['graph', 'map', 'scraper', 'settings', 'coverage'])
@@ -33,7 +37,7 @@ const TABS = new Set(['graph', 'map', 'scraper', 'settings', 'coverage'])
 export function buildHash(view: ViewState): string {
   if (view.tab === 'graph' && view.entityId) {
     const kind = view.entityType === 'person' ? 'p' : 'e'
-    return `#graph/${kind}/${encodeURIComponent(view.entityId)}`
+    return `#graph/${kind}/${encodeURIComponent(view.entityId)}${view.allLevels ? '/all' : ''}`
   }
   // The context node wins over a selected country, because the panel shows it
   // that way round: a company's subsidiary list replaces the country list.
@@ -55,6 +59,7 @@ export function parseHash(hash: string): ViewState {
       tab,
       entityId: decodeURIComponent(parts[2]),
       entityType: parts[1] === 'p' ? 'person' : 'entity',
+      ...(parts[3] === 'all' ? { allLevels: true } : {}),
     }
   }
   if (tab === 'map' && parts[1] === 'c' && parts[2]) {

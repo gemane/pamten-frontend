@@ -11,11 +11,12 @@ vi.mock('../services/api', () => ({
   getEntitySources: vi.fn(),
   getPersonProfile: vi.fn(),
   getPersonSources: vi.fn(),
+  getSubsidiaryTree: vi.fn(),
 }))
 vi.mock('./NodeFlags', () => ({ default: () => null }))
 vi.mock('./TimelinePanel', () => ({ default: () => null }))
 
-import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree } from '../services/api'
 import { STAKE_FILTERS } from './GraphStakeFilter'
 
 const mockProfile = vi.mocked(getFullProfile)
@@ -1741,5 +1742,62 @@ describe('NodePanel graph focus', () => {
     for (const id of ['own1', 'p1', 'sub1']) row(id).getBoundingClientRect = () => box(-200, 30)
     fireEvent.scroll(panel)
     await waitFor(() => expect(onFocus).toHaveBeenLastCalledWith(null))
+  })
+})
+
+describe('the subsidiary list in "all levels" mode', () => {
+  const ent = (id: string, name: string) => ({ id, name, type: 'company' })
+  const tree = {
+    root_id: 'e1',
+    nodes: [
+      { entity: ent('prosus', 'Prosus N.V.'), parent_id: 'e1', depth: 1 },
+      { entity: ent('other', 'Aardvark Ltd'), parent_id: 'e1', depth: 1 },
+      { entity: ent('mih', 'MIH Internet Holdings B.V.'), parent_id: 'prosus', depth: 2 },
+      { entity: ent('dante', 'Dante International SA'), parent_id: 'mih', depth: 3 },
+    ],
+    edges: [
+      { from_id: 'e1', to_id: 'prosus', depth: 1, relationship: { stake_percent: 60 } },
+      { from_id: 'e1', to_id: 'other', depth: 1, relationship: {} },
+      { from_id: 'prosus', to_id: 'mih', depth: 2, relationship: {} },
+      { from_id: 'mih', to_id: 'dante', depth: 3, relationship: {} },
+    ],
+    truncated: false,
+  }
+
+  const show = async (allLevels: boolean, t: unknown = tree) => {
+    vi.mocked(getSubsidiaryTree).mockResolvedValue({ data: t } as never)
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Naspers', type: 'company', verified: false } as Entity,
+      owners: [], executives: [],
+      subsidiaries: [{ entity: ent('prosus', 'Prosus N.V.'), relationship: { stake_percent: 60 } }],
+      counts: { subsidiaries: 1 },
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Naspers')} refreshKey={0} allLevels={allLevels} />)
+    await screen.findByText('Naspers')
+  }
+
+  it('lists the whole tree depth-first, each company indented under its parent', async () => {
+    await show(true)
+    expect(await screen.findByText('Subsidiaries — all levels')).toBeInTheDocument()
+    const rows = [...document.querySelectorAll('.rel-tree__row')] as HTMLElement[]
+    expect(rows.map(r => r.textContent?.replace(/Majority.*|Owned.*/, '').trim()))
+      .toEqual(['Prosus N.V.', 'MIH Internet Holdings B.V.', 'Dante International SA', 'Aardvark Ltd'])
+    expect(rows.map(r => r.dataset.depth)).toEqual(['1', '2', '3', '1'])
+    expect(rows.map(r => r.style.paddingLeft)).toEqual(['0px', '14px', '28px', '0px'])
+    expect(screen.getByText('4')).toBeInTheDocument()          // the tree's count, not the profile's 1
+  })
+
+  it('off: the flat list of direct holdings, and no tree is fetched', async () => {
+    vi.mocked(getSubsidiaryTree).mockClear()
+    await show(false)
+    expect(screen.getByText('Prosus N.V.')).toBeInTheDocument()
+    expect(screen.queryByText('Subsidiaries — all levels')).toBeNull()
+    expect(document.querySelector('.rel-tree__row')).toBeNull()
+    expect(getSubsidiaryTree).not.toHaveBeenCalled()
+  })
+
+  it('a truncated tree says so', async () => {
+    await show(true, { ...tree, truncated: true })
+    expect(await screen.findByRole('note')).toHaveTextContent('The tree is large: showing the first 4 companies')
   })
 })

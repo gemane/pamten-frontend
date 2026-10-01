@@ -76,7 +76,12 @@
     "filterTitle": "Participación mínima",
     "filterAny": "Todas",
     "filterCoverage": "{{stated}} de {{total}} participaciones indican un porcentaje.",
-    "filterCoverageRest": "El resto se muestra siempre."
+    "filterCoverageRest": "El resto se muestra siempre.",
+    "levelsLabel": "Filiales",
+    "levelsDirect": "Directas",
+    "levelsAll": "Todos los niveles",
+    "levelsDirectHint": "Solo las empresas en propiedad directa",
+    "levelsAllHint": "El árbol completo: todos los niveles bajo esta empresa"
   },
   "legend": {
     "nodes": "Nodos",
@@ -167,7 +172,8 @@
     "website": "Sitio web",
     "webSearch": "Búsqueda web",
     "refreshing": "Actualizando…",
-    "capped": "Se muestran {{shown}} de {{total}} — la lista está limitada"
+    "capped": "Se muestran {{shown}} de {{total}} — la lista está limitada",
+    "subsidiariesAllLevels": "Filiales — todos los niveles"
   },
   "report": {
     "button": "Reportar",
@@ -332,7 +338,8 @@
     "refreshPartEx21": "Exhibit 21: {{count}} filiales",
     "refreshPartCooldown": "fuentes en espera (actualizado recientemente)",
     "refreshNotifyTitle": "Owlgraph — actualización finalizada",
-    "refreshPartInProgress": "otra actualización de esta empresa sigue en curso"
+    "refreshPartInProgress": "otra actualización de esta empresa sigue en curso",
+    "treeTruncated": "El árbol es grande: se muestran las primeras {{count}} empresas"
   },
   "map": {
     "resetView": "Restablecer vista",

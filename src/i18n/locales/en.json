@@ -76,7 +76,12 @@
     "filterTitle": "Minimum stake",
     "filterAny": "Any",
     "filterCoverage": "{{stated}} of {{total}} ownership links state a percentage.",
-    "filterCoverageRest": "The rest are always shown."
+    "filterCoverageRest": "The rest are always shown.",
+    "levelsLabel": "Subsidiaries",
+    "levelsDirect": "Direct",
+    "levelsAll": "All levels",
+    "levelsDirectHint": "Only the companies held directly",
+    "levelsAllHint": "The whole tree: every level below this company"
   },
   "legend": {
     "nodes": "Nodes",
@@ -167,7 +172,8 @@
     "website": "Website",
     "webSearch": "Web search",
     "refreshing": "Refreshing…",
-    "capped": "Showing {{shown}} of {{total}} — the list is capped"
+    "capped": "Showing {{shown}} of {{total}} — the list is capped",
+    "subsidiariesAllLevels": "Subsidiaries — all levels"
   },
   "report": {
     "button": "Report",
@@ -332,7 +338,8 @@
     "refreshPartEx21": "Exhibit 21: {{count}} subsidiaries",
     "refreshPartCooldown": "sources on cooldown (updated recently)",
     "refreshNotifyTitle": "Owlgraph — refresh finished",
-    "refreshPartInProgress": "another refresh of this company is still running"
+    "refreshPartInProgress": "another refresh of this company is still running",
+    "treeTruncated": "The tree is large: showing the first {{count}} companies"
   },
   "map": {
     "resetView": "Reset view",

@@ -6,6 +6,8 @@ import type { EdgeData, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
 import GraphStakeFilter, { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
+import GraphLevelsToggle from './GraphLevelsToggle'
+import { computeTreePositions } from '../utils/treeLayout'
 
 export interface GraphHandle {
   exportPng: () => void
@@ -196,6 +198,8 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
 const T_START      = Math.PI / 6   // 30° — side nodes are 0.5·b above/below Google
 const T_END        = Math.PI * 5/6 // 150°
 const T_RANGE      = T_END - T_START
+const MIN_ZOOM      = 0.15          // how far the user (and a fit) can zoom out
+const TREE_MIN_ZOOM = 0.02          // …in "all levels", where the tree must still fit
 const MIN_NODE_GAP = 72             // min arc-length (px) at the densest point (bottom)
 const SUB_B        = 280            // fixed vertical semi-axis for subsidiaries
 const OWNER_B_MIN  = 120            // vertical distance for most-important owner
@@ -234,6 +238,39 @@ export function filterVisibleElements(
   })
 }
 
+
+/** What the canvas must change to show `elements`: everything (a new centre,
+ *  or nothing in common), or the difference — what to add AND what to take
+ *  away. It only ever added: turning "all levels" off rebuilt the list with
+ *  the direct holdings alone, found nothing new, and left Chubb's nine levels
+ *  on screen however often the button was pressed. */
+export function diffElements(
+  existingIds: Set<string>,
+  elements: GraphElement[],
+  centerChanged: boolean,
+): { isReset: boolean; toAdd: GraphElement[]; toRemove: string[] } {
+  const isReset = centerChanged || !elements.some(el => existingIds.has(el.data.id))
+  if (isReset) return { isReset, toAdd: elements, toRemove: [] }
+  const wanted = new Set(elements.map(el => el.data.id))
+  return {
+    isReset,
+    toAdd: elements.filter(el => !existingIds.has(el.data.id)),
+    toRemove: [...existingIds].filter(id => !wanted.has(id)),
+  }
+}
+
+/** Where every node goes: the arc layout, and in the "all levels" view the
+ *  subsidiary tree below the centre laid out as a tree instead (owners keep
+ *  their arc above). */
+export function layoutPositions(
+  elements: GraphElement[],
+  centerId: string | null,
+  allLevels: boolean,
+): Map<string, { x: number; y: number }> {
+  const pos = computeArcPositions(elements, centerId)
+  if (allLevels) for (const [id, p] of computeTreePositions(elements, centerId)) pos.set(id, p)
+  return pos
+}
 
 export function computeArcPositions(
   elements: GraphElement[],
@@ -496,6 +533,10 @@ interface GraphProps {
   /** Shared with the node-panel list so one control filters both views. */
   stakeFilter: StakeFilter
   onStakeFilterChange: (filter: StakeFilter) => void
+  /** "All levels": the whole subsidiary tree below the centre is loaded and
+   *  laid out as a tree. Shared with the panel, which indents its list. */
+  allLevels?: boolean
+  onAllLevelsChange?: (on: boolean) => void
   /** Node whose row is in focus in the node panel — grown slightly (see applyNodeFocus). */
   focusedId?: string | null
   /** Called with the id of the node under the mouse, null when it leaves (see bindNodeHover). */
@@ -503,13 +544,14 @@ interface GraphProps {
 }
 
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, focusedId = null, onNodeHover }: GraphProps,
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, focusedId = null, onNodeHover }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
+  const layoutModeRef = useRef<boolean>(allLevels)   // the mode the elements on screen were laid out in
   const prevFocusIdRef  = useRef<string | null>(null)
   // The handlers are bound once when the graph is created; a ref keeps them
   // calling the current callback rather than the one from the first render.
@@ -544,7 +586,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       layout: { name: 'preset' },
       userZoomingEnabled: true,
       userPanningEnabled: true,
-      minZoom: 0.15,
+      minZoom: MIN_ZOOM,
       maxZoom: 4,
     })
 
@@ -634,14 +676,22 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     const centerChanged = centerId !== prevCenterIdRef.current
     prevCenterIdRef.current = centerId
     const existingIds = new Set(cy.elements().map(el => el.id()))
-    const isReset     = centerChanged || !elements.some(el => existingIds.has(el.data.id))
+    const { isReset, toAdd, toRemove } = diffElements(existingIds, elements, centerChanged)
+    // The layout mode follows the ELEMENTS, not the switch: the switch flips at
+    // once, its elements arrive a moment later, and re-laying out the old
+    // elements in the new mode in between is what made the picture swell before
+    // every change. Adopted here, when the elements that belong to it land.
+    const modeChanged = layoutModeRef.current !== allLevels
+    layoutModeRef.current = allLevels
 
     if (isReset) {
       cy.elements().remove()
       cy.add(elements as cytoscape.ElementDefinition[])
     } else {
-      const toAdd = elements.filter(el => !existingIds.has(el.data.id))
-      if (toAdd.length === 0) return
+      if (toAdd.length === 0 && toRemove.length === 0 && !modeChanged) return
+      // Edges first: removing a node takes its edges with it, and removing an
+      // already-removed edge afterwards would be a lookup of nothing.
+      for (const id of toRemove) cy.$id(id).remove()
       cy.add(toAdd as cytoscape.ElementDefinition[])
     }
 
@@ -656,7 +706,27 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
     // Step 1: run concentric layout — this reliably fits the viewport (proven to work).
     // Step 2: on layoutstop, instantly move nodes to arc positions while viewport stays correct.
-    const positions = computeArcPositions(elements, centerId ?? null)
+    // A whole tree is far wider than one ring of subsidiaries — Chubb's nine
+    // levels ran off both edges because the fit stopped at the usual floor.
+    cy.minZoom(allLevels ? TREE_MIN_ZOOM : MIN_ZOOM)
+    const positions = layoutPositions(elements, centerId ?? null, allLevels)
+    const place = () => {
+      if (positions.size === 0) return
+      cy.nodes().forEach(node => {
+        const p = positions.get(node.id())
+        if (p) node.position(p)
+      })
+      cy.fit(undefined, 80)
+    }
+    // The same company with more or fewer elements (a node expanded, "all
+    // levels" switched): go straight to the final positions. The concentric
+    // pass below fits the viewport to a ring first, and on a graph that is
+    // already on screen that showed as the whole picture swelling for a moment
+    // before settling.
+    if (!isReset) {
+      cy.batch(place)
+      return
+    }
     const layout = cy.layout({
       name: 'concentric',
       animate: false,
@@ -666,15 +736,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         (centerId && node.id() === centerId) ? 10 : 1,
       levelWidth: () => 1,
     })
-    layout.on('layoutstop', () => {
-      if (positions.size > 0) {
-        cy.nodes().forEach(node => {
-          const p = positions.get(node.id())
-          if (p) node.position(p)
-        })
-        cy.fit(undefined, 80)
-      }
-    })
+    layout.on('layoutstop', place)
     layout.run()
   }, [elements, centerId])
 
@@ -709,8 +771,10 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       node.style('display', visible ? 'element' : 'none')
     })
 
-    const positions = computeArcPositions(
-      filterVisibleElements(elements, stakeFilter, centerId ?? null), centerId ?? null)
+    const tree = layoutModeRef.current
+    cy.minZoom(tree ? TREE_MIN_ZOOM : MIN_ZOOM)
+    const positions = layoutPositions(
+      filterVisibleElements(elements, stakeFilter, centerId ?? null), centerId ?? null, tree)
     if (positions.size > 0) {
       cy.nodes().forEach(node => {
         const p = positions.get(node.id())
@@ -824,6 +888,9 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       {elements.length > 0 && (
         <GraphStakeFilter value={stakeFilter} onChange={onStakeFilterChange}
                           stated={stakeCoverage.stated} total={stakeCoverage.total} />
+      )}
+      {elements.length > 0 && onAllLevelsChange && (
+        <GraphLevelsToggle on={allLevels} onChange={onAllLevelsChange} />
       )}
 
       {tooltip && (

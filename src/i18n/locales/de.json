@@ -76,7 +76,12 @@
     "filterTitle": "Mindestanteil",
     "filterAny": "Alle",
     "filterCoverage": "{{stated}} von {{total}} Beteiligungen nennen einen Prozentsatz.",
-    "filterCoverageRest": "Die übrigen werden immer angezeigt."
+    "filterCoverageRest": "Die übrigen werden immer angezeigt.",
+    "levelsLabel": "Töchter",
+    "levelsDirect": "Direkt",
+    "levelsAll": "Alle Ebenen",
+    "levelsDirectHint": "Nur die direkt gehaltenen Unternehmen",
+    "levelsAllHint": "Der ganze Baum: jede Ebene unter diesem Unternehmen"
   },
   "legend": {
     "nodes": "Knoten",
@@ -167,7 +172,8 @@
     "website": "Webseite",
     "webSearch": "Websuche",
     "refreshing": "Wird aktualisiert…",
-    "capped": "{{shown}} von {{total}} angezeigt — die Liste ist begrenzt"
+    "capped": "{{shown}} von {{total}} angezeigt — die Liste ist begrenzt",
+    "subsidiariesAllLevels": "Tochtergesellschaften — alle Ebenen"
   },
   "report": {
     "button": "Melden",
@@ -332,7 +338,8 @@
     "refreshPartEx21": "Exhibit 21: {{count}} Tochtergesellschaften",
     "refreshPartCooldown": "Quellen in Wartezeit (kürzlich aktualisiert)",
     "refreshNotifyTitle": "Owlgraph — Aktualisierung abgeschlossen",
-    "refreshPartInProgress": "eine weitere Aktualisierung dieses Unternehmens läuft noch"
+    "refreshPartInProgress": "eine weitere Aktualisierung dieses Unternehmens läuft noch",
+    "treeTruncated": "Der Baum ist groß: die ersten {{count}} Unternehmen werden angezeigt"
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",
