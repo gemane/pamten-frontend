@@ -551,6 +551,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
+  const layoutModeRef = useRef<boolean>(allLevels)   // the mode the elements on screen were laid out in
   const prevFocusIdRef  = useRef<string | null>(null)
   // The handlers are bound once when the graph is created; a ref keeps them
   // calling the current callback rather than the one from the first render.
@@ -676,12 +677,18 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     prevCenterIdRef.current = centerId
     const existingIds = new Set(cy.elements().map(el => el.id()))
     const { isReset, toAdd, toRemove } = diffElements(existingIds, elements, centerChanged)
+    // The layout mode follows the ELEMENTS, not the switch: the switch flips at
+    // once, its elements arrive a moment later, and re-laying out the old
+    // elements in the new mode in between is what made the picture swell before
+    // every change. Adopted here, when the elements that belong to it land.
+    const modeChanged = layoutModeRef.current !== allLevels
+    layoutModeRef.current = allLevels
 
     if (isReset) {
       cy.elements().remove()
       cy.add(elements as cytoscape.ElementDefinition[])
     } else {
-      if (toAdd.length === 0 && toRemove.length === 0) return
+      if (toAdd.length === 0 && toRemove.length === 0 && !modeChanged) return
       // Edges first: removing a node takes its edges with it, and removing an
       // already-removed edge afterwards would be a lookup of nothing.
       for (const id of toRemove) cy.$id(id).remove()
@@ -703,6 +710,23 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     // levels ran off both edges because the fit stopped at the usual floor.
     cy.minZoom(allLevels ? TREE_MIN_ZOOM : MIN_ZOOM)
     const positions = layoutPositions(elements, centerId ?? null, allLevels)
+    const place = () => {
+      if (positions.size === 0) return
+      cy.nodes().forEach(node => {
+        const p = positions.get(node.id())
+        if (p) node.position(p)
+      })
+      cy.fit(undefined, 80)
+    }
+    // The same company with more or fewer elements (a node expanded, "all
+    // levels" switched): go straight to the final positions. The concentric
+    // pass below fits the viewport to a ring first, and on a graph that is
+    // already on screen that showed as the whole picture swelling for a moment
+    // before settling.
+    if (!isReset) {
+      cy.batch(place)
+      return
+    }
     const layout = cy.layout({
       name: 'concentric',
       animate: false,
@@ -712,15 +736,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         (centerId && node.id() === centerId) ? 10 : 1,
       levelWidth: () => 1,
     })
-    layout.on('layoutstop', () => {
-      if (positions.size > 0) {
-        cy.nodes().forEach(node => {
-          const p = positions.get(node.id())
-          if (p) node.position(p)
-        })
-        cy.fit(undefined, 80)
-      }
-    })
+    layout.on('layoutstop', place)
     layout.run()
   }, [elements, centerId])
 
@@ -755,9 +771,10 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       node.style('display', visible ? 'element' : 'none')
     })
 
-    cy.minZoom(allLevels ? TREE_MIN_ZOOM : MIN_ZOOM)
+    const tree = layoutModeRef.current
+    cy.minZoom(tree ? TREE_MIN_ZOOM : MIN_ZOOM)
     const positions = layoutPositions(
-      filterVisibleElements(elements, stakeFilter, centerId ?? null), centerId ?? null, allLevels)
+      filterVisibleElements(elements, stakeFilter, centerId ?? null), centerId ?? null, tree)
     if (positions.size > 0) {
       cy.nodes().forEach(node => {
         const p = positions.get(node.id())
@@ -765,7 +782,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       })
       cy.fit(undefined, 80)
     }
-  }, [stakeFilter, elements, centerId, allLevels])
+  }, [stakeFilter, elements, centerId])
 
   const centerLabel = elements.find(el => 'id' in el.data && el.data.id === centerId)
     ?.data.label ?? 'graph'
