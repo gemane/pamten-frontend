@@ -2939,6 +2939,15 @@ a.source-item__name:hover { color: #4A90D9; }
   gap: 6px;
 }
 
+/* "All levels": beside the ⓘ, under the stake filter. Borrows the filter
+   button's look (and its --on state) so the three read as one control group. */
+.graph-levels {
+  position: absolute;
+  top: 52px;
+  right: 52px;
+  z-index: 998;
+}
+
 /* The filter button is the ⓘ's twin — same size, same glass, same corner — so
    one definition covers both and they cannot drift apart. */
 .graph-legend__toggle,

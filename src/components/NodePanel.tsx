@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch } from 'react-icons/fi'
-import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import { ageFrom } from '../utils/age'
 import { isSubdivision, subdivisionName } from '../utils/isoSubdivisions'
@@ -16,7 +16,7 @@ import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
 import { FOCUS_ATTR, scrollingPanel, useGraphHoverHighlight } from '../utils/graphFocus'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
-import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
@@ -238,6 +238,8 @@ interface NodePanelProps {
   // Shared with the graph's stake filter, so one control hides small holdings
   // in both views. Defaults to "any" when a caller does not pass it.
   stakeFilter?: StakeFilter
+  /** "All levels": the subsidiary list shows the whole tree, indented by level. */
+  allLevels?: boolean
   /**
    * Called with the graph id of the owner/subsidiary row in focus (the hovered
    * row on desktop, the row at the panel's centre while scrolling on a phone),
@@ -976,10 +978,63 @@ function RelRow({ node, onNavigate, rel, focusId, children }: {
   )
 }
 
+/** The subsidiary list in "all levels" mode: the whole tree, depth-first, each
+ *  company indented under its parent. Siblings in the panel's usual order
+ *  (largest stake first, then by name). The count is the tree's companies; a
+ *  truncated tree says so the way a capped section does. */
+function SubsidiaryTreeList({ tree, onNavigate, sourceName }: {
+  tree: SubsidiaryTree
+  onNavigate?: (node: NodeData) => void
+  sourceName: Map<string, string>
+}) {
+  const { t } = useTranslation()
+  const rows = useMemo(() => {
+    const relOf = new Map(tree.edges.map(e => [`${e.from_id}\u0000${e.to_id}`, e.relationship]))
+    const kids = new Map<string, SubsidiaryTree['nodes']>()
+    for (const n of tree.nodes) {
+      if (!kids.has(n.parent_id)) kids.set(n.parent_id, [])
+      kids.get(n.parent_id)!.push(n)
+    }
+    const rel = (n: SubsidiaryTree['nodes'][number]) => relOf.get(`${n.parent_id}\u0000${n.entity.id}`)
+    const order = byStakeDesc<SubsidiaryTree['nodes'][number]>(
+      n => rel(n)?.stake_percent, n => n.entity.name ?? '', n => rel(n)?.shares)
+    const out: { node: SubsidiaryTree['nodes'][number]; rel: OwnsRelationship | undefined }[] = []
+    const walk = (parentId: string) => {
+      for (const n of [...(kids.get(parentId) ?? [])].sort(order)) {
+        out.push({ node: n, rel: rel(n) })
+        walk(n.entity.id)
+      }
+    }
+    walk(tree.root_id)
+    return out
+  }, [tree])
+
+  return (
+    <Section title={t('panel.subsidiariesAllLevels')} count={tree.nodes.length}>
+      {rows.map(({ node: n, rel }) => (
+        <div key={n.entity.id} className="rel-tree__row" data-depth={n.depth}
+             style={{ paddingLeft: `${(n.depth - 1) * 14}px` }}>
+          <RelRow node={entityToNode(n.entity)} onNavigate={onNavigate} focusId={n.entity.id}
+            rel={relFromOwns(rel, { fromId: n.parent_id, toId: n.entity.id, label: n.entity.name,
+                                    sourceName: sourceName.get(rel?.source_id ?? '') })}>
+            <span className="rel-item__name">{n.entity.name}</span>
+            <OwnershipBadge type={rel?.ownership_type} percent={rel?.stake_percent} shares={rel?.shares} />
+          </RelRow>
+        </div>
+      ))}
+      {tree.truncated && (
+        <div className="panel-section__cut" role="note">{t('toast.treeTruncated', { count: tree.nodes.length })}</div>
+      )}
+    </Section>
+  )
+}
+
 interface EntityOverviewProps {
   profile: FullProfile
   sources: Source[]
   stakeFilter?: StakeFilter
+  /** The whole subsidiary tree ("all levels"); null = the flat list of direct holdings. */
+  tree?: SubsidiaryTree | null
   onExportPng?: () => void
   onExportCsv?: () => void
   onViewOnMap?: () => void
@@ -1063,7 +1118,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape, refreshingId, stakeFilter = ANY_STAKE }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape, refreshingId, stakeFilter = ANY_STAKE, tree = null }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
@@ -1320,7 +1375,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      {subsidiariesShown.length > 0 && (
+      {tree && tree.nodes.length > 0 && (
+        <SubsidiaryTreeList tree={tree} onNavigate={onNavigate} sourceName={sourceName} />
+      )}
+      {!(tree && tree.nodes.length > 0) && subsidiariesShown.length > 0 && (
         <Section title={isGroup ? t('panel.groupControls') : t('panel.subsidiaries')}
                  count={counts?.subsidiaries} shown={subsidiaries.length}>
           {(() => {
@@ -1453,10 +1511,11 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
+  const [tree,       setTree]       = useState<SubsidiaryTree | null>(null)
   const [loading,    setLoading]    = useState<boolean>(false)
   const [activeView, setActiveView] = useState<string>('overview')
   const prevIdRef = useRef<string | null>(null)
@@ -1485,16 +1544,19 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
     Promise.all([
       getFullProfile(node.id),
       getEntitySources(node.id).catch(() => ({ data: [] as Source[] })),
+      // The tree only in "all levels" mode; its failure leaves the flat list.
+      allLevels ? getSubsidiaryTree(node.id).then(r => r.data).catch(() => null) : Promise.resolve(null),
     ])
-      .then(([{ data: prof }, { data: srcs }]) => {
+      .then(([{ data: prof }, { data: srcs }, subTree]) => {
         if (!active) return
         setProfile(prof)
         setSources(srcs)
+        setTree(subTree)
       })
       .catch(() => { if (active && idChanged) setProfile(null) })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [node?.id, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [node?.id, refreshKey, allLevels]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!node) {
     return (
@@ -1525,7 +1587,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
         ? <div ref={focusScopeRef}>
-            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} />
+            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} />
           </div>
         : <TimelinePanel entityId={profile.entity.id} />}
     </>

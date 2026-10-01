@@ -6,6 +6,8 @@ import type { EdgeData, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
 import GraphStakeFilter, { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
+import GraphLevelsToggle from './GraphLevelsToggle'
+import { computeTreePositions } from '../utils/treeLayout'
 
 export interface GraphHandle {
   exportPng: () => void
@@ -196,6 +198,8 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
 const T_START      = Math.PI / 6   // 30° — side nodes are 0.5·b above/below Google
 const T_END        = Math.PI * 5/6 // 150°
 const T_RANGE      = T_END - T_START
+const MIN_ZOOM      = 0.15          // how far the user (and a fit) can zoom out
+const TREE_MIN_ZOOM = 0.02          // …in "all levels", where the tree must still fit
 const MIN_NODE_GAP = 72             // min arc-length (px) at the densest point (bottom)
 const SUB_B        = 280            // fixed vertical semi-axis for subsidiaries
 const OWNER_B_MIN  = 120            // vertical distance for most-important owner
@@ -234,6 +238,19 @@ export function filterVisibleElements(
   })
 }
 
+
+/** Where every node goes: the arc layout, and in the "all levels" view the
+ *  subsidiary tree below the centre laid out as a tree instead (owners keep
+ *  their arc above). */
+export function layoutPositions(
+  elements: GraphElement[],
+  centerId: string | null,
+  allLevels: boolean,
+): Map<string, { x: number; y: number }> {
+  const pos = computeArcPositions(elements, centerId)
+  if (allLevels) for (const [id, p] of computeTreePositions(elements, centerId)) pos.set(id, p)
+  return pos
+}
 
 export function computeArcPositions(
   elements: GraphElement[],
@@ -496,6 +513,10 @@ interface GraphProps {
   /** Shared with the node-panel list so one control filters both views. */
   stakeFilter: StakeFilter
   onStakeFilterChange: (filter: StakeFilter) => void
+  /** "All levels": the whole subsidiary tree below the centre is loaded and
+   *  laid out as a tree. Shared with the panel, which indents its list. */
+  allLevels?: boolean
+  onAllLevelsChange?: (on: boolean) => void
   /** Node whose row is in focus in the node panel — grown slightly (see applyNodeFocus). */
   focusedId?: string | null
   /** Called with the id of the node under the mouse, null when it leaves (see bindNodeHover). */
@@ -503,7 +524,7 @@ interface GraphProps {
 }
 
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, focusedId = null, onNodeHover }: GraphProps,
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, focusedId = null, onNodeHover }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
@@ -544,7 +565,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       layout: { name: 'preset' },
       userZoomingEnabled: true,
       userPanningEnabled: true,
-      minZoom: 0.15,
+      minZoom: MIN_ZOOM,
       maxZoom: 4,
     })
 
@@ -656,7 +677,10 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
     // Step 1: run concentric layout — this reliably fits the viewport (proven to work).
     // Step 2: on layoutstop, instantly move nodes to arc positions while viewport stays correct.
-    const positions = computeArcPositions(elements, centerId ?? null)
+    // A whole tree is far wider than one ring of subsidiaries — Chubb's nine
+    // levels ran off both edges because the fit stopped at the usual floor.
+    cy.minZoom(allLevels ? TREE_MIN_ZOOM : MIN_ZOOM)
+    const positions = layoutPositions(elements, centerId ?? null, allLevels)
     const layout = cy.layout({
       name: 'concentric',
       animate: false,
@@ -709,8 +733,9 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       node.style('display', visible ? 'element' : 'none')
     })
 
-    const positions = computeArcPositions(
-      filterVisibleElements(elements, stakeFilter, centerId ?? null), centerId ?? null)
+    cy.minZoom(allLevels ? TREE_MIN_ZOOM : MIN_ZOOM)
+    const positions = layoutPositions(
+      filterVisibleElements(elements, stakeFilter, centerId ?? null), centerId ?? null, allLevels)
     if (positions.size > 0) {
       cy.nodes().forEach(node => {
         const p = positions.get(node.id())
@@ -718,7 +743,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       })
       cy.fit(undefined, 80)
     }
-  }, [stakeFilter, elements, centerId])
+  }, [stakeFilter, elements, centerId, allLevels])
 
   const centerLabel = elements.find(el => 'id' in el.data && el.data.id === centerId)
     ?.data.label ?? 'graph'
@@ -824,6 +849,9 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       {elements.length > 0 && (
         <GraphStakeFilter value={stakeFilter} onChange={onStakeFilterChange}
                           stated={stakeCoverage.stated} total={stakeCoverage.total} />
+      )}
+      {elements.length > 0 && onAllLevelsChange && (
+        <GraphLevelsToggle on={allLevels} onChange={onAllLevelsChange} />
       )}
 
       {tooltip && (

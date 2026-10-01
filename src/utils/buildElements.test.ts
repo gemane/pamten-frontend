@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { buildElements, buildElementsUpward, buildElementsDownward, buildPersonElements, buildPersonProfileElements, isDrawableOwnership } from './buildElements'
-import type { Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, ExecutiveEntry, OwnsRelationship, EdgeData } from '../types'
+import { buildElements, buildElementsUpward, buildElementsDownward, buildPersonElements, buildPersonProfileElements, buildTreeElements, isDrawableOwnership } from './buildElements'
+import type { Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, ExecutiveEntry, OwnsRelationship, EdgeData, SubsidiaryTree } from '../types'
 
 // ── fixtures ────────────────────────────────────────────────────────────────
 
@@ -573,5 +573,40 @@ describe('every builder emits the same edge, whichever way you stand', () => {
       subsidiaries: [{ entity: abi, relationship: REL }] }), new Set())
     const node = els.find(e => e.data.id === 'abi')!.data as { importance?: number }
     expect(node.importance).toBe(51.9)
+  })
+})
+
+describe('buildTreeElements — the "all levels" view', () => {
+  const tree: SubsidiaryTree = {
+    root_id: 'c',
+    nodes: [
+      { entity: entity('a', 'A'), parent_id: 'c', depth: 1 },
+      { entity: entity('b', 'B'), parent_id: 'c', depth: 1 },
+      { entity: entity('a1', 'A1'), parent_id: 'a', depth: 2 },
+    ],
+    edges: [
+      { from_id: 'c', to_id: 'a', depth: 1, relationship: { stake_percent: 100 } },
+      { from_id: 'c', to_id: 'b', depth: 1, relationship: {} },
+      { from_id: 'a', to_id: 'a1', depth: 2, relationship: { stake_percent: 66 } },
+      { from_id: 'b', to_id: 'a1', depth: 2, relationship: { stake_percent: 34 } },   // co-holder
+      { from_id: 'a1', to_id: 'c', depth: 3, relationship: {} },                       // back to the root
+    ],
+    truncated: false,
+  }
+
+  it('draws each holding from its actual holder, a company once, co-holders included', () => {
+    const els = buildTreeElements(tree, new Set(['c']))
+    expect(nodes(els).map(e => e.data.id).sort()).toEqual(['a', 'a1', 'b'])
+    expect(ids(edges(els)).sort()).toEqual(['a__owns__a1', 'b__owns__a1', 'c__owns__a', 'c__owns__b'])
+    const e = edges(els).find(x => x.data.id === 'a__owns__a1')!.data as EdgeData
+    expect([e.source, e.target, e.stakePct]).toEqual(['a', 'a1', 66])
+  })
+
+  it('adds nothing the profile already drew', () => {
+    const loaded = new Set(['c', 'a', 'c__owns__a'])
+    const els = buildTreeElements(tree, loaded)
+    expect(ids(els)).not.toContain('a')
+    expect(ids(els)).not.toContain('c__owns__a')
+    expect(ids(els)).toContain('a__owns__a1')
   })
 })

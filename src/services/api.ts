@@ -31,8 +31,7 @@ import type {
   FlagGroup,
   Suppression,
   Pin,
-  ScraperHealth, WeeklyReport,
-} from '../types'
+  ScraperHealth, WeeklyReport, SubsidiaryTree } from '../types'
 
 // The backend serves everything under /v1. It still answers on the unversioned
 // paths, but those are deprecated and hidden from the schema, so the prefix is
@@ -205,6 +204,10 @@ export const getStats = (): Promise<AxiosResponse<StatsResponse>> =>
 
 export const getFullProfile = (id: string): Promise<AxiosResponse<FullProfile>> =>
   client.get(`/search/entity/${id}/full-profile`)
+
+/** The whole tree below a company — the "all levels" view. */
+export const getSubsidiaryTree = (id: string): Promise<AxiosResponse<SubsidiaryTree>> =>
+  client.get(`/relationships/subsidiary-tree/${id}`)
 
 export const getPersonProfile = (id: string): Promise<AxiosResponse<PersonProfile>> =>
   client.get(`/search/person/${id}/full-profile`)

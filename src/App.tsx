@@ -33,6 +33,7 @@ import { useEmailActionLinks } from './hooks/useEmailActionLinks'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import {
   getFullProfile,
+  getSubsidiaryTree,
   getPersonProfile,
   search,
   getEntitiesByCountry,
@@ -68,8 +69,7 @@ import {
   buildElements,
   buildElementsUpward,
   buildElementsDownward,
-  buildPersonProfileElements,
-} from './utils/buildElements'
+  buildPersonProfileElements, buildTreeElements } from './utils/buildElements'
 import { buildHash, parseHash, type ViewState } from './utils/viewHash'
 import { shareLink } from './utils/shareLink'
 
@@ -118,6 +118,11 @@ function AppInner() {
 
   const [elements,        setElements]        = useState<GraphElement[]>([])
   const [stakeFilter,     setStakeFilter]     = useState<StakeFilter>(DEFAULT_STAKE)
+  // "All levels": load the whole subsidiary tree below the centre, not only the
+  // direct holdings. A ref too — loadEntity reads it outside React's deps.
+  const [allLevels,       setAllLevels]       = useState<boolean>(false)
+  const allLevelsRef = useRef<boolean>(false)
+  allLevelsRef.current = allLevels
   const [centerId,        setCenterId]        = useState<string | null>(null)
   const [selectedNode,    setSelectedNode]    = useState<NodeData | null>(null)
   const [searchLabel,     setSearchLabel]     = useState<string | undefined>(undefined)
@@ -178,8 +183,18 @@ function AppInner() {
 
   const loadEntity = useCallback(async (entityId: string): Promise<GraphElement[]> => {
     const { data: profile } = await getFullProfile(entityId)
-    return buildElements(profile, loadedIds.current)
-  }, [])
+    const els = buildElements(profile, loadedIds.current)
+    if (allLevelsRef.current) {
+      // The tree's own failure must not cost the user the company: the direct
+      // holdings are already built.
+      try {
+        const { data: tree } = await getSubsidiaryTree(entityId)
+        els.push(...buildTreeElements(tree, loadedIds.current))
+        if (tree.truncated) showToast(t('toast.treeTruncated', { count: tree.nodes.length }), 'info')
+      } catch { /* direct holdings only */ }
+    }
+    return els
+  }, [showToast, t])
 
   // Build the graph around a person: their ownerships (owns edges) and the
   // companies they currently lead (one dashed role edge per company).
@@ -841,6 +856,24 @@ function AppInner() {
     }
   }, [loadEntity, loadPerson, showToast])
 
+  // "All levels" on or off: the loaded set belongs to one mode, so the centre
+  // is rebuilt. The switch persists across navigation until turned off.
+  const handleAllLevelsChange = useCallback(async (on: boolean) => {
+    allLevelsRef.current = on
+    setAllLevels(on)
+    const id = centerIdRef.current
+    if (!id || centerType === 'person') return
+    setLoading(true)
+    loadedIds.current = new Set()
+    try {
+      setElements(await loadEntity(id))
+    } catch {
+      showToast(t('toast.entityLoadError'), 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [centerType, loadEntity, showToast, t])
+
   const applyView = useCallback((view: ViewState) => {
     handleTabChange(view.tab)
     setSelectedCountry(view.tab === 'map' ? (view.country ?? null) : null)
@@ -859,7 +892,12 @@ function AppInner() {
       }
     }
     if (view.tab === 'graph') {
-      if (view.entityId && view.entityId !== centerIdRef.current) {
+      // The mode comes before the entity: restoreEntity loads in allLevelsRef's mode.
+      const levels = !!view.allLevels
+      const levelsChanged = levels !== allLevelsRef.current
+      allLevelsRef.current = levels
+      setAllLevels(levels)
+      if (view.entityId && (view.entityId !== centerIdRef.current || levelsChanged)) {
         restoreEntity(view.entityId, view.entityType ?? 'entity')
       } else if (!view.entityId && centerIdRef.current) {
         handleClearGraph()
@@ -907,6 +945,7 @@ function AppInner() {
       tab:        activeTab,
       entityId:   centerId ?? undefined,
       entityType: centerType,
+      allLevels:  activeTab === 'graph' && !!centerId && allLevels,
       country:    selectedCountry ?? undefined,
       // On the map, which company's subsidiaries the panel is listing. Selecting
       // one used to change nothing in the URL, so Back walked past the map.
@@ -922,7 +961,7 @@ function AppInner() {
     } else {
       window.history.pushState(null, '', hash)
     }
-  }, [activeTab, centerId, centerType, selectedCountry, selectedNode])
+  }, [activeTab, centerId, centerType, selectedCountry, selectedNode, allLevels])
 
   return (
     <div className="app">
@@ -982,6 +1021,7 @@ function AppInner() {
                   onNavigate={handleNavigateTo}
                   onReScrape={userCanScrape ? handleReScrape : undefined}
                   stakeFilter={stakeFilter}
+                  allLevels={allLevels}
                   onGraphFocus={setGraphFocusId}
                   graphFocusMode={isMobile ? 'center' : 'hover'}
                   graphHoverId={isMobile ? null : graphHoverId}
@@ -1056,6 +1096,8 @@ function AppInner() {
                     theme={theme}
                     stakeFilter={stakeFilter}
                     onStakeFilterChange={setStakeFilter}
+                    allLevels={allLevels}
+                    onAllLevelsChange={handleAllLevelsChange}
                     focusedId={graphFocusId}
                     onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />
@@ -1073,6 +1115,7 @@ function AppInner() {
                     onNavigate={handleNavigateTo}
                     onReScrape={userCanScrape ? handleReScrape : undefined}
                     stakeFilter={stakeFilter}
+                    allLevels={allLevels}
                     onGraphFocus={setGraphFocusId}
                     graphFocusMode={isMobile ? 'center' : 'hover'}
                     graphHoverId={isMobile ? null : graphHoverId}
@@ -1171,6 +1214,8 @@ function AppInner() {
                     theme={theme}
                     stakeFilter={stakeFilter}
                     onStakeFilterChange={setStakeFilter}
+                    allLevels={allLevels}
+                    onAllLevelsChange={handleAllLevelsChange}
                     focusedId={graphFocusId}
                     onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />

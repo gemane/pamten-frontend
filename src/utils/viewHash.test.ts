@@ -79,3 +79,15 @@ describe('the coverage tab round-trips', () => {
     expect(buildHash({ tab: 'coverage' })).toBe('#coverage')
   })
 })
+
+describe('"all levels" in the hash', () => {
+  it('round-trips on an entity', () => {
+    const h = buildHash({ tab: 'graph', entityId: 'x', entityType: 'entity', allLevels: true })
+    expect(h).toBe('#graph/e/x/all')
+    expect(parseHash(h)).toEqual({ tab: 'graph', entityId: 'x', entityType: 'entity', allLevels: true })
+  })
+  it('is absent by default', () => {
+    expect(buildHash({ tab: 'graph', entityId: 'x', entityType: 'entity' })).toBe('#graph/e/x')
+    expect(parseHash('#graph/e/x')).toEqual({ tab: 'graph', entityId: 'x', entityType: 'entity' })
+  })
+})

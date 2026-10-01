@@ -1,4 +1,4 @@
-import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType } from '../types'
+import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType, SubsidiaryTree } from '../types'
 
 // Cytoscape element builders. Each takes a `loadedIds`/`seen` set and only
 // emits nodes/edges whose id isn't already present, so a graph can be grown
@@ -325,5 +325,22 @@ export function buildPersonElements(
     els.push(...ownershipElements(person.id, entity, item.relationship, 'out', loadedIds))
   }
 
+  return els
+}
+
+/** The whole subsidiary tree as graph elements: a node per company, an owns
+ *  edge per holding, each drawn from its actual holder — so a grandchild hangs
+ *  off its parent, not off the centre. Shares `loadedIds` with the other
+ *  builders, so what the profile already drew is not drawn twice. A holding
+ *  whose target is not in the tree's node list (the cross-holding back to the
+ *  root) is drawn only if that node is already on the canvas. */
+export function buildTreeElements(tree: SubsidiaryTree, loadedIds: Set<string>): GraphElement[] {
+  const byId = new Map(tree.nodes.map(n => [n.entity.id, n.entity]))
+  const els: GraphElement[] = []
+  for (const e of tree.edges) {
+    const child = byId.get(e.to_id)
+    if (!child) continue
+    els.push(...ownershipElements(e.from_id, child, e.relationship, 'out', loadedIds))
+  }
   return els
 }

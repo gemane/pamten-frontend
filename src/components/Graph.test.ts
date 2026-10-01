@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeArcPositions, buildStylesheet, filterVisibleElements } from './Graph'
+import { computeArcPositions, buildStylesheet, filterVisibleElements, layoutPositions } from './Graph'
 import { STAKE_FILTERS, ANY_STAKE } from './GraphStakeFilter'
 import type { GraphElement } from '../types'
 
@@ -145,5 +145,27 @@ describe('filterVisibleElements + re-layout — the filtered graph closes ranks'
     const pos = computeArcPositions(els2, 'p')
     expect(pos.get('z')).toBeTruthy()
     expect(namesByXDesc(pos, ['a', 'z'])).toEqual(['a', 'z'])   // staked first, role-only after
+  })
+})
+
+describe('layoutPositions — arc by default, a tree in "all levels"', () => {
+  const n = (id: string) => ({ data: { id, label: id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement
+  const e = (s: string, t: string, dir: 'in' | 'out') =>
+    ({ data: { id: `${s}__owns__${t}`, source: s, target: t, label: '', edgeType: 'owns', edgeDir: dir, stakePct: null } }) as unknown as GraphElement
+  const els = [n('c'), n('owner'), n('a'), n('b'), n('a1'), n('a2'),
+               e('owner', 'c', 'in'), e('c', 'a', 'out'), e('c', 'b', 'out'), e('a', 'a1', 'out'), e('a', 'a2', 'out')]
+
+  it('off: exactly the arc layout', () => {
+    expect(layoutPositions(els, 'c', false)).toEqual(computeArcPositions(els, 'c'))
+  })
+
+  it('on: the subsidiaries form a tree below the centre, the owners keep their arc above', () => {
+    const arc = computeArcPositions(els, 'c')
+    const pos = layoutPositions(els, 'c', true)
+    expect(pos.get('owner')).toEqual(arc.get('owner'))
+    expect(pos.get('c')).toEqual({ x: 0, y: 0 })
+    expect(pos.get('a1')!.y).toBeGreaterThan(pos.get('a')!.y)
+    expect(pos.get('a')!.y).toBe(pos.get('b')!.y)
+    expect(pos.get('a1')!.x).not.toBe(pos.get('a2')!.x)
   })
 })

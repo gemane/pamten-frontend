@@ -663,3 +663,13 @@ export interface FlagGroup {
   note: string
   created_at: string
 }
+
+/** Every company below one, all levels (GET /relationships/subsidiary-tree). */
+export interface SubsidiaryTree {
+  root_id: string
+  /** Breadth-first; each company once, with the ONE parent a list indents it under. */
+  nodes: { entity: Entity; parent_id: string; depth: number }[]
+  /** Every holding between the tree's companies — co-holders included. */
+  edges: { from_id: string; to_id: string; depth: number; relationship: OwnsRelationship }[]
+  truncated: boolean
+}
