@@ -225,3 +225,32 @@ describe('applyTreeRoutes — right-angled tree lines, implied lines hidden', ()
     expect(cy.$id('act__owns__king').style('curve-style')).toBe('bezier')
   })
 })
+
+describe('applyTreeRoutes — a centred person who owns and runs a company', () => {
+  it('draws the role over the holding as one line with one label, placed above the company', async () => {
+    const n = (id: string, nodeType = 'entity') => ({ data: { id, label: id, nodeType, raw: {} } }) as unknown as GraphElement
+    const els = [n('p', 'person'), n('tesla'), n('solar'),
+      { data: { id: 'p__role__tesla', source: 'p', target: 'tesla', label: 'CEO', edgeType: 'role', edgeDir: 'out', stakePct: null } },
+      { data: { id: 'p__role__solar', source: 'p', target: 'solar', label: 'Chairman', edgeType: 'role', edgeDir: 'out', stakePct: null } },
+      { data: { id: 'p__owns__tesla', source: 'p', target: 'tesla', label: '18.4%', edgeType: 'owns', edgeDir: 'out', stakePct: 18.4 } },
+    ] as unknown as GraphElement[]
+    const cytoscape = (await import('cytoscape')).default
+    const cy = cytoscape({ headless: true, styleEnabled: true, elements: els as never, style: buildStylesheet('light') as never })
+    const { positions, tree } = layoutGraph(els, 'p')
+    for (const [id, p] of positions) cy.$id(id).position(p)
+    applyTreeRoutes(cy, tree)
+    const role = cy.$id('p__role__tesla'), holding = cy.$id('p__owns__tesla'), alone = cy.$id('p__role__solar')
+    expect(role.hasClass('dual')).toBe(true)
+    expect(role.style('curve-style')).toBe('segments')
+    expect(role.style('target-label')).toBe('')                 // its text is on the holding's label
+    expect(holding.style('target-label')).toBe('CEO · 18.4%')
+    expect(alone.hasClass('dual')).toBe(false)
+    expect(alone.style('target-label')).toBe('Chairman')
+    expect(alone.style('curve-style')).toBe('segments')
+
+    // the stake filter hides the holding: the role places Tesla alone and takes its label back
+    applyTreeRoutes(cy, layoutGraph(els.filter(el => el.data.id !== 'p__owns__tesla'), 'p').tree)
+    expect(role.hasClass('dual')).toBe(false)
+    expect(role.style('target-label')).toBe('CEO')
+  })
+})

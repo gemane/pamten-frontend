@@ -59,6 +59,20 @@ const BRANCH_GAP = 18               // under a sub-branch, before the next compa
 /** A holding with no stated percentage (a consolidation parent, a filer's
  *  subsidiary list) counts as control when holders compete to place a company. */
 const UNSTATED_STAKE = 50
+/** …and a ROLE counts for less than any holding: the centred person's seat on
+ *  a board places a company only where no ownership does. */
+const ROLE_STAKE = -1
+
+type EdgeLike = { source: string; target: string; edgeType?: string; stakePct?: number | null }
+/** The lines a tree is built from: every holding — and, from a centred PERSON,
+ *  their roles too, so the companies they run sit in the same columns as the
+ *  ones they own (they were left on the old arc, in a second style, under the
+ *  tree). Only from the centre: a role is not ownership, and the tree never
+ *  continues through one. */
+const placesFrom = (d: EdgeLike, centerId: string) =>
+  d.edgeType === 'owns' || (d.edgeType === 'role' && d.source === centerId)
+const stakeOfEdge = (d: EdgeLike) =>
+  d.edgeType === 'role' ? ROLE_STAKE : typeof d.stakePct === 'number' ? d.stakePct : UNSTATED_STAKE
 const MAX_COLUMNS = 30
 /** The shape the picture should approach (a wide screen's canvas). */
 const TARGET_ASPECT = 1.7
@@ -77,6 +91,14 @@ export interface TreeLayout {
   implied: Set<string>
   /** Edge ids of co-holders in another branch: real, drawn faintly, may cross. */
   coHolders: Set<string>
+  /** A centred person who owns AND runs a company: the role line (key) runs
+   *  along the holding's line (value) — one two-tone line, one label. */
+  dual: Map<string, string>
+  /** The label of each company's placing line, by the edge that shows it: its
+   *  text (the roles and the stake together where both apply) and the room
+   *  reserved for it above the company — on the lines themselves, labels sat
+   *  across the bars and each other. */
+  labels: Map<string, { text: string; w: number; h: number }>
 }
 
 /** A branch's rectangle. `place`: its own company goes in the middle of the top
@@ -84,6 +106,22 @@ export interface TreeLayout {
  *  from the side — or that line would run the width of the branch to reach it
  *  (Chubb's INA Corporation: left to the gutter, down, and all the way back). */
 interface Box { width: number; height: number; place: (left: number, top: number, leftRooted?: boolean) => void }
+
+/** Text wrapped at `wrapAt` px: how many lines, how wide the widest. Character
+ *  widths for 12 px bold, scaled. */
+function wrap(text: string, wrapAt: number, scale: number): { lines: number; widest: number } {
+  const charW = (c: string) => scale * (c === ' ' ? 3.6 : /[A-Z0-9&@%MWmw]/.test(c) ? 8.9 : /[a-z]/.test(c) ? 6.9
+    : /[.,;:'|!()ilI-]/.test(c) ? 4.2 : 9.5)
+  const width = (t: string) => [...t].reduce((w, c) => w + charW(c), 0)
+  let lines = 1, line = 0, widest = 0
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const w = width(word)
+    if (line > 0 && line + charW(' ') + w > wrapAt) { lines++; line = 0 }
+    line += (line > 0 ? charW(' ') : 0) + w
+    widest = Math.max(widest, line)
+  }
+  return { lines, widest }
+}
 
 /** How large Cytoscape draws a company (the stylesheet's rules, in numbers):
  *  the label wrapped at 120 px, 12 px bold, inside padding that GROWS with the
@@ -94,22 +132,20 @@ interface Box { width: number; height: number; place: (left: number, top: number
 export function nodeSize(data: { label?: unknown; importance?: unknown }, centre = false): { w: number; h: number } {
   const [wrapAt, lineH, pad, scale] = centre ? [210, 16, 38, 16 / 12] : [120, 12,
     14 + Math.min(60, Math.max(0, typeof data.importance === 'number' ? data.importance : 0)) / 60 * 20, 1]
-  const charW = (c: string) => scale * (c === ' ' ? 3.6 : /[A-Z0-9&@%MWmw]/.test(c) ? 8.9 : /[a-z]/.test(c) ? 6.9
-    : /[.,;:'|!()ilI-]/.test(c) ? 4.2 : 9.5)
-  const width = (t: string) => [...t].reduce((w, c) => w + charW(c), 0)
-  let lines = 1, line = 0, widest = 0
-  for (const word of String(data.label ?? '').split(/\s+/).filter(Boolean)) {
-    const w = width(word)
-    if (line > 0 && line + charW(' ') + w > wrapAt) { lines++; line = 0 }
-    line += (line > 0 ? charW(' ') : 0) + w
-    widest = Math.max(widest, Math.min(line, Math.max(wrapAt, w)))
-  }
+  const { lines, widest } = wrap(String(data.label ?? ''), wrapAt, scale)
   // A wrapped label is as wide as its widest line — up to the wrap width, and
   // guessing which line that is from character widths is how a box ended up
   // 2 px across its neighbour's trunk. So: wrapped → the full wrap width; one
   // line → the estimate with a margin; one unbreakable word → as long as it is.
   const text = lines > 1 ? Math.max(wrapAt + 2, widest) : Math.min(Math.max(wrapAt + 2, widest), widest * 1.12)
   return { w: (centre ? 240 : text) + 2 * pad + 4, h: lines * lineH + 2 * pad + 4 }
+}
+
+/** The room a line's label takes (10 px, wrapped at 120, 3 px of background
+ *  around it): the stake, the roles, or both. */
+export function labelSize(text: string): { w: number; h: number } {
+  const { lines, widest } = wrap(text, 120, 0.72)
+  return { w: Math.min(126, widest) + 6, h: lines * 11.5 + 6 }
 }
 
 /** One parent per company below the centre: its LARGEST holder and, between
@@ -123,14 +159,16 @@ export function treeParents(elements: GraphElement[], centerId: string): Map<str
   const outgoers = new Map<string, string[]>()
   for (const el of elements) {
     const d = el.data
-    if (!('source' in d) || d.edgeType !== 'owns') continue
-    holdings.push([d.source, d.target, typeof d.stakePct === 'number' ? d.stakePct : UNSTATED_STAKE])
+    if (!('source' in d) || !placesFrom(d, centerId)) continue
+    holdings.push([d.source, d.target, stakeOfEdge(d)])
     if (!outgoers.has(d.source)) outgoers.set(d.source, [])
     outgoers.get(d.source)!.push(d.target)
   }
   const parent = new Map<string, string>()
   const stake = new Map<string, number>()            // of the holding that places each company
-  const stakeOf = new Map(holdings.map(([s, t, pct]) => [`${s}\u0000${t}`, pct]))
+  // a person may own AND run a company: two lines, the holding's stake counts
+  const stakeOf = new Map<string, number>()
+  for (const [s, t, pct] of holdings) stakeOf.set(`${s}\u0000${t}`, Math.max(pct, stakeOf.get(`${s}\u0000${t}`) ?? ROLE_STAKE))
   const depth = new Map<string, number>([[centerId, 0]])
   const queue = [centerId]
   for (let qi = 0; qi < queue.length; qi++) {
@@ -184,13 +222,17 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
   const routes = new Map<string, Route>()
   const implied = new Set<string>()
   const coHolders = new Set<string>()
-  const layout = { positions: pos, routes, implied, coHolders }
+  const dual = new Map<string, string>()
+  const labels = new Map<string, { text: string; w: number; h: number }>()
+  const layout = { positions: pos, routes, implied, coHolders, dual, labels }
   if (!centerId) return layout
 
   const parent = treeParents(elements, centerId)
   if (parent.size === 0) return layout
   // Children in element order (the profile's: largest stake first).
   const children = new Map<string, string[]>()
+  const owned = new Set<string>()                    // placed by a holding, not only by a role
+  const lineLabel = new Map<string, { role: string; holding: string; edge: string }>()
   const route = new Map<string, Route>()             // by child id
   const sizes = new Map<string, { w: number; h: number }>()
   for (const el of elements) {
@@ -205,10 +247,23 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
   const size = (id: string) => sizes.get(id) ?? { w: 152, h: 60 }
   for (const el of elements) {
     const d = el.data
-    if (!('source' in d) || d.edgeType !== 'owns' || parent.get(d.target) !== d.source) continue
+    if (!('source' in d) || !placesFrom(d, centerId) || parent.get(d.target) !== d.source) continue
     if (!children.has(d.source)) children.set(d.source, [])
     if (!children.get(d.source)!.includes(d.target)) children.get(d.source)!.push(d.target)
+    if (d.edgeType === 'owns') owned.add(d.target)
+    // one label per company: what the parent IS there (roles), then what it holds
+    const said = lineLabel.get(d.target) ?? { role: '', holding: '', edge: d.id }
+    if (d.edgeType === 'owns') { said.holding ||= String(d.label ?? ''); said.edge = d.id }
+    else said.role ||= String(d.label ?? '')
+    lineLabel.set(d.target, said)
   }
+  const labelOf = new Map<string, { text: string; w: number; h: number; edge: string }>()   // by child id
+  for (const [child, said] of lineLabel) {
+    const text = [said.role, said.holding].filter(Boolean).join(' · ')
+    if (text) labelOf.set(child, { text, ...labelSize(text), edge: said.edge })
+  }
+  const LABEL_GAP = 4
+  const labelRoom = (id: string) => labelOf.has(id) ? labelOf.get(id)!.h + LABEL_GAP : 0
   // How far the picture must shrink to show a box of this size.
   const cost = (w: number, h: number) => Math.max(w, h * TARGET_ASPECT)
 
@@ -218,7 +273,9 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
     // whole branch-width away from their parent — Huatai sat 7,000 px from
     // Chubb INA Holdings, behind INA Corporation's sub-tree.
     const kids = (children.get(id) ?? []).map(k => ({ id: k, box: box(k), branch: children.has(k) }))
-      .map((k, i) => ({ k, i })).sort((a, b) => a.k.box.width - b.k.box.width || a.i - b.i).map(x => x.k)
+      .map((k, i) => ({ k, i, roleOnly: owned.has(k.id) ? 0 : 1 }))
+      // …and what a person owns before what they only run
+      .sort((a, b) => a.roleOnly - b.roleOnly || a.k.box.width - b.k.box.width || a.i - b.i).map(x => x.k)
     const { w: w0, h: h0 } = size(id)
     const cellW = TREE_GUTTER + w0
     if (kids.length === 0) {
@@ -227,7 +284,7 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
     }
     const slot = (k: typeof kids[number]) => ({
       w: k.box.width + (k.branch ? NEST : 0),
-      h: k.box.height + (k.branch ? BRANCH_GAP : 0),
+      h: labelRoom(k.id) + k.box.height + (k.branch ? BRANCH_GAP : 0),
     })
     const total = kids.reduce((h, k) => h + slot(k).h, 0)
 
@@ -278,7 +335,7 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
             // …and a branch that itself sits at the left end keeps its column
             // heads at the left too, right under it: centred over a wide
             // sub-tree, Chubb INA Holdings' first child was 3,500 px away.
-            k.box.place(kLeft, y, !fromTop || leftRooted)
+            k.box.place(kLeft, y + labelRoom(k.id), !fromTop || leftRooted)
             route.set(k.id, fromTop ? { kind: 'top', drop }
               : { kind: 'side', drop, dx: pos.get(k.id)!.x - (x + TREE_TRUNK_INSET) })
             y += slot(k).h
@@ -305,6 +362,8 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
   const shift = { x: at.x, y: at.y }
   for (const p of pos.values()) { p.x -= shift.x; p.y -= shift.y }
 
+  const holdingLine = new Map<string, string>()      // source+target → the routed holding's edge id
+  const roleLines: [string, string][] = []
   const isAncestor = (candidate: string, of: string) => {
     for (let at = parent.get(of), n = 0; at !== undefined && n <= parent.size; at = parent.get(at), n++)
       if (at === candidate) return true
@@ -312,13 +371,20 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
   }
   for (const el of elements) {
     const d = el.data
-    if (!('source' in d) || d.edgeType !== 'owns' || !parent.has(d.target)) continue
-    if (parent.get(d.target) === d.source) routes.set(d.id, route.get(d.target)!)
+    if (!('source' in d) || !placesFrom(d, centerId) || !parent.has(d.target)) continue
+    if (parent.get(d.target) === d.source) {
+      routes.set(d.id, route.get(d.target)!)
+      const pair = `${d.source}\u0000${d.target}`
+      if (d.edgeType === 'owns') holdingLine.set(pair, d.id)
+      else roleLines.push([d.id, pair])
+    } else if (d.edgeType === 'role') continue       // run by the centre, held by someone below: its own straight line
     // a line from further up the same branch says nothing new — unless it
     // states a stake of its own: then it is a holding, not a repetition
     else if (isAncestor(d.source, d.target) && typeof d.stakePct !== 'number') implied.add(d.id)
     else if (pos.has(d.source)) coHolders.add(d.id)
   }
+  for (const [id, pair] of roleLines) if (holdingLine.has(pair)) dual.set(id, holdingLine.get(pair)!)
+  for (const { text, w, h, edge } of labelOf.values()) if (routes.has(edge)) labels.set(edge, { text, w, h })
   return layout
 }
 

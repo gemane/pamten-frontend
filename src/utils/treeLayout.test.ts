@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTreeLayout, computeTreePositions, routePoints, segmentStyle, treeParents,
+import { computeTreeLayout, computeTreePositions, labelSize, routePoints, segmentStyle, treeParents,
   nodeSize, TREE_BUS_SPACE, TREE_GUTTER, TREE_TRUNK_INSET, type Point } from './treeLayout'
 import type { GraphElement } from '../types'
 
@@ -349,5 +349,82 @@ describe('routePoints and segmentStyle', () => {
     expect(seg.distances[1]).toBeCloseTo(50)
     expect(segmentStyle({ x: 1, y: 1 }, { x: 1, y: 1 }, [{ x: 0, y: 0 }])).toBeNull()
     expect(segmentStyle({ x: 0, y: 0 }, { x: 1, y: 1 }, [])).toBeNull()
+  })
+})
+
+describe('a centred person: what they run sits in the tree with what they own', () => {
+  const person = () => ({ data: { id: 'p', label: 'Elon Musk', nodeType: 'person', raw: {} } }) as unknown as GraphElement
+  const holds = (t: string, pct: number) =>
+    ({ data: { id: `p__owns__${t}`, source: 'p', target: t, label: `${pct}%`, edgeType: 'owns', edgeDir: 'out', stakePct: pct } }) as unknown as GraphElement
+  const runs = (s: string, t: string, label: string) =>
+    ({ data: { id: `${s}__role__${t}`, source: s, target: t, label, edgeType: 'role', edgeDir: 'out', stakePct: null } }) as unknown as GraphElement
+  // roles come first in the profile's elements; Tesla and SpaceX are owned AND run, SolarCity only run
+  const els = [person(), node('solar'), node('tesla'), node('spacex'),
+    runs('p', 'solar', 'Chairman'), runs('p', 'tesla', 'Board Member · CEO'), runs('p', 'spacex', 'CEO · Founder'),
+    holds('tesla', 18.4), holds('spacex', 28.7)]
+
+  it('places every company below the person, the owned ones first', () => {
+    const { positions } = computeTreeLayout(els, 'p')
+    for (const c of ['solar', 'tesla', 'spacex']) expect(positions.get(c)!.y).toBeGreaterThan(0)
+    expect(positions.get('solar')!.x).toBeGreaterThan(Math.max(positions.get('tesla')!.x, positions.get('spacex')!.x))
+    expect(overlaps(positions, els, 'p')).toBe(false)
+  })
+
+  it('runs the role line along the holding, with one label naming both', () => {
+    const { routes, dual, labels } = computeTreeLayout(els, 'p')
+    expect(routes.get('p__role__tesla')).toEqual(routes.get('p__owns__tesla'))
+    expect(Object.fromEntries(dual)).toEqual({ p__role__tesla: 'p__owns__tesla', p__role__spacex: 'p__owns__spacex' })
+    expect(labels.get('p__owns__tesla')!.text).toBe('Board Member · CEO · 18.4%')
+    expect(labels.has('p__role__tesla')).toBe(false)            // one label per company, on the holding
+    expect(labels.get('p__role__solar')!.text).toBe('Chairman') // run only: the role line carries it
+    expect(routes.has('p__role__solar')).toBe(true)
+  })
+
+  it('keeps room above each company for its label, more for a longer one', () => {
+    const bare = els.map(e => 'source' in e.data ? { data: { ...e.data, label: '' } } as unknown as GraphElement : e)
+    const without = computeTreeLayout(bare, 'p').positions, withLabels = computeTreeLayout(els, 'p').positions
+    expect(computeTreeLayout(bare, 'p').labels.size).toBe(0)
+    for (const c of ['solar', 'tesla', 'spacex']) expect(withLabels.get(c)!.y).toBeGreaterThan(without.get(c)!.y)
+    expect(labelSize('CEO · Chairman · Director · Executive Officer · Founder · 28.7416%').h).toBeGreaterThan(labelSize('100%').h)
+  })
+
+  it('in a column, each label fits between the company above and its own', () => {
+    const many = [node('c'), ...Array.from({ length: 30 }, (_, i) => node(`c-${i}`)),
+      ...Array.from({ length: 30 }, (_, i) => ({ data: { id: `c__owns__c-${i}`, source: 'c', target: `c-${i}`, label: '100%',
+        edgeType: 'owns', edgeDir: 'out', stakePct: null } }) as unknown as GraphElement)]
+    const { positions, routes } = computeTreeLayout(many, 'c')
+    const columns = new Map<number, number[]>()
+    for (const [id, r] of routes) {
+      const p = positions.get(id.split('__owns__')[1])!
+      const trunk = Math.round(p.x - (r.kind === 'side' ? r.dx : TREE_GUTTER + LEAF.w / 2 - TREE_TRUNK_INSET))
+      columns.set(trunk, [...(columns.get(trunk) ?? []), p.y])
+    }
+    const step = Math.min(...[...columns.values()].flatMap(ys => ys.sort((a, b) => a - b).slice(1).map((y, i) => y - ys[i])))
+    expect(step).toBeGreaterThanOrEqual(LEAF.h + labelSize('100%').h)
+  })
+
+  it('a holding the filter hides leaves the role to place the company alone', () => {
+    const { routes, dual, labels } = computeTreeLayout(els.filter(e => e.data.id !== 'p__owns__tesla'), 'p')
+    expect(routes.has('p__role__tesla')).toBe(true)
+    expect(dual.has('p__role__tesla')).toBe(false)
+    expect(labels.get('p__role__tesla')!.text).toBe('Board Member · CEO')
+  })
+
+  it('never continues through a role, and only the CENTRE\'s roles place a company', () => {
+    // someone else runs Tesla; Tesla holds a subsidiary; the centred person also runs that subsidiary
+    const more = [...els, node('other'), runs('other', 'tesla', 'CFO'), node('sub'), owns('tesla', 'sub'), runs('p', 'sub', 'Director'),
+      node('far'), runs('solar', 'far', 'n/a')]
+    const { positions, routes } = computeTreeLayout(more, 'p')
+    expect(positions.has('other')).toBe(false)
+    expect(positions.has('far')).toBe(false)                    // reached only through a non-centre role
+    expect(treeParents(more, 'p').get('sub')).toBe('tesla')     // the holding places it…
+    expect(routes.has('p__role__sub')).toBe(false)              // …the person's seat there is its own line
+  })
+
+  it('leaves a company-centred graph alone: its executives point AT it', () => {
+    const co = [node('c'), node('a'), owns('c', 'a'), person(), runs('p', 'c', 'CEO')]
+    const { positions, routes } = computeTreeLayout(co, 'c')
+    expect([...positions.keys()].sort()).toEqual(['a', 'c'])
+    expect([...routes.keys()]).toEqual(['c__owns__a'])
   })
 })

@@ -199,6 +199,13 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       selector: 'edge[stakePct > 0]',
       style: { width: 'mapData(stakePct, 0, 100, 2, 7)' as unknown as number },
     },
+    {
+      // A centred person who owns AND runs a company: this is the role's line,
+      // routed along the holding's — its dashes on top make one two-tone line.
+      // The holding's label names the roles too (TreeLayout.labels).
+      selector: 'edge.dual',
+      style: { 'target-label': '', 'z-index': 2, 'line-dash-pattern': [7, 7], 'target-arrow-shape': 'none' },
+    },
   ]
 }
 
@@ -295,6 +302,7 @@ export const measureWith = (cy: cytoscape.Core): Measure => id => {
 }
 
 const ROUTE_STYLE = 'curve-style edge-distances segment-weights segment-distances'
+const LABEL_STYLE = 'target-label target-text-offset target-text-margin-x target-text-margin-y'
 
 /** Bend one tree line at right angles between its ends' CURRENT positions. */
 function routeEdge(edge: cytoscape.EdgeSingular, route: Route) {
@@ -318,6 +326,21 @@ export function applyTreeRoutes(cy: cytoscape.Core, tree: TreeLayout) {
     else edge.removeStyle(ROUTE_STYLE)
     edge.toggleClass('implied', tree.implied.has(edge.id()))
     edge.toggleClass('coholder', tree.coHolders.has(edge.id()))
+    // Owns AND runs: the role's dashes run on top of the holding's line, and
+    // the holding's label names both.
+    edge.toggleClass('dual', tree.dual.has(edge.id()))
+    // The label: in the room the layout kept above the company, beside the
+    // line — not on it, where it sat across the bars and the other labels.
+    edge.removeStyle(LABEL_STYLE)
+    const label = tree.labels.get(edge.id())
+    if (!route || !label) return
+    const fromTop = route.kind === 'top'
+    edge.style({
+      'target-label': label.text,
+      'target-text-offset': fromTop ? label.h / 2 + 4 : 1,
+      'target-text-margin-x': fromTop ? label.w / 2 + 8 : label.w / 2,
+      'target-text-margin-y': fromTop ? 0 : -(edge.target().outerHeight() / 2 + label.h / 2 + 1),
+    })
   })
 }
 
