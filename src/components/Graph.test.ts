@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeArcPositions, buildStylesheet, diffElements, filterVisibleElements, layoutPositions } from './Graph'
+import { applyTreeRoutes, computeArcPositions, buildStylesheet, diffElements, filterVisibleElements, layoutGraph } from './Graph'
 import { STAKE_FILTERS, ANY_STAKE } from './GraphStakeFilter'
 import type { GraphElement } from '../types'
 
@@ -148,25 +148,59 @@ describe('filterVisibleElements + re-layout — the filtered graph closes ranks'
   })
 })
 
-describe('layoutPositions — arc by default, a tree in "all levels"', () => {
+describe('layoutGraph — owners on their arc, the subsidiaries as a tree', () => {
   const n = (id: string) => ({ data: { id, label: id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement
   const e = (s: string, t: string, dir: 'in' | 'out') =>
     ({ data: { id: `${s}__owns__${t}`, source: s, target: t, label: '', edgeType: 'owns', edgeDir: dir, stakePct: null } }) as unknown as GraphElement
   const els = [n('c'), n('owner'), n('a'), n('b'), n('a1'), n('a2'),
                e('owner', 'c', 'in'), e('c', 'a', 'out'), e('c', 'b', 'out'), e('a', 'a1', 'out'), e('a', 'a2', 'out')]
 
-  it('off: exactly the arc layout', () => {
-    expect(layoutPositions(els, 'c', false)).toEqual(computeArcPositions(els, 'c'))
-  })
-
-  it('on: the subsidiaries form a tree below the centre, the owners keep their arc above', () => {
+  it('the subsidiaries form a tree below the centre, the owners keep their arc above', () => {
     const arc = computeArcPositions(els, 'c')
-    const pos = layoutPositions(els, 'c', true)
+    const { positions: pos, tree } = layoutGraph(els, 'c')
+    expect(tree.routes.size).toBe(4)                    // one placing line per subsidiary
     expect(pos.get('owner')).toEqual(arc.get('owner'))
     expect(pos.get('c')).toEqual({ x: 0, y: 0 })
     expect(pos.get('a1')!.y).toBeGreaterThan(pos.get('a')!.y)
     expect(pos.get('a')!.y).toBe(pos.get('b')!.y)
     expect(pos.get('a1')!.x).not.toBe(pos.get('a2')!.x)
+  })
+})
+
+describe('computeArcPositions with the tree already placed', () => {
+  const n = (id: string) => ({ data: { id, label: id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement
+  const e = (s: string, t: string, type = 'owns') =>
+    ({ data: { id: `${s}__${type}__${t}`, source: s, target: t, label: '', edgeType: type, edgeDir: 'out', stakePct: null } }) as unknown as GraphElement
+  const placed = new Map([['c', { x: 0, y: 0 }], ['a', { x: -500, y: 300 }], ['b', { x: 500, y: 300 }]])
+
+  it('takes placed nodes as they are and gives them no slot on the lower arc', () => {
+    const els = [n('c'), n('a'), n('b'), n('voted'), e('c', 'a'), e('c', 'b'), e('c', 'voted', 'votes')]
+    const pos = computeArcPositions(els, 'c', placed)
+    expect(pos.get('a')).toEqual({ x: -500, y: 300 })
+    expect(pos.get('b')).toEqual({ x: 500, y: 300 })
+    // what the tree leaves over has the arc to itself: alone, it sits straight below the centre
+    const alone = computeArcPositions([n('c'), n('voted'), e('c', 'voted', 'votes')], 'c')
+    expect(pos.get('voted')).toEqual(alone.get('voted'))
+    expect(pos.get('voted')!.x).toBeCloseTo(0)
+  })
+
+  it('stacks what hangs on a placed node from where that node really is', () => {
+    // b was expanded: another owner of b, and something b points at that the tree does not place
+    const els = [n('c'), n('a'), n('b'), n('co'), n('seat'), e('c', 'a'), e('c', 'b'), e('co', 'b'), e('b', 'seat', 'role')]
+    const pos = computeArcPositions(els, 'c', placed)
+    expect(pos.get('co')!.x).toBe(500)
+    expect(pos.get('co')!.y).toBeLessThan(300)
+    expect(pos.get('seat')!.x).toBe(500)
+    expect(pos.get('seat')!.y).toBeGreaterThan(300)
+    // without the tree's positions the same graph is the plain arc layout, unchanged
+    expect(computeArcPositions(els, 'c').get('b')).not.toEqual({ x: 500, y: 300 })
+  })
+
+  it('layoutGraph hands the tree to the arc: one result, the tree\'s places in it', () => {
+    const els = [n('c'), n('owner'), n('a'), n('b'), e('owner', 'c'), e('c', 'a'), e('c', 'b')]
+    const { positions, tree } = layoutGraph(els, 'c')
+    for (const [id, p] of tree.positions) expect(positions.get(id)).toEqual(p)
+    expect(positions.get('owner')).toEqual(computeArcPositions(els, 'c').get('owner'))
   })
 })
 
@@ -195,5 +229,65 @@ describe('diffElements — the canvas follows the list both ways', () => {
   it('a new centre, or nothing in common, is a full reset', () => {
     expect(diffElements(new Set(['c', 'a']), [n('c'), n('a')], true).isReset).toBe(true)
     expect(diffElements(new Set(['x']), [n('c')], false).isReset).toBe(true)
+  })
+})
+
+describe('applyTreeRoutes — right-angled tree lines, implied lines hidden', () => {
+  const n = (id: string) => ({ data: { id, label: id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement
+  const e = (s: string, t: string) =>
+    ({ data: { id: `${s}__owns__${t}`, source: s, target: t, label: '', edgeType: 'owns', edgeDir: 'out', stakePct: null } }) as unknown as GraphElement
+  const els = [n('ms'), n('act'), n('king'), n('linkedin'), e('ms', 'act'), e('ms', 'king'), e('ms', 'linkedin'), e('act', 'king')]
+
+  it('routes the placing lines, marks the implied one, and follows the elements when they change', async () => {
+    const cytoscape = (await import('cytoscape')).default
+    const cy = cytoscape({ headless: true, styleEnabled: true, elements: els as never, style: buildStylesheet('light') as never })
+    const { positions, tree } = layoutGraph(els, 'ms')
+    for (const [id, p] of positions) cy.$id(id).position(p)
+    applyTreeRoutes(cy, tree)
+    expect(cy.$id('ms__owns__act').style('curve-style')).toBe('segments')
+    expect(cy.$id('ms__owns__act').scratch('_route')).toMatchObject({ kind: 'top' })
+    expect(cy.$id('ms__owns__king').hasClass('implied')).toBe(true)
+    expect(cy.$id('ms__owns__king').style('display')).toBe('none')
+    expect(cy.$id('act__owns__king').hasClass('implied')).toBe(false)
+    expect(cy.edges('.coholder').length).toBe(0)
+
+    // Activision's line to King gone (the filter hid it): Microsoft's own line places King again
+    const fewer = els.filter(el => el.data.id !== 'act__owns__king')
+    applyTreeRoutes(cy, layoutGraph(fewer, 'ms').tree)
+    expect(cy.$id('ms__owns__king').hasClass('implied')).toBe(false)
+    expect(cy.$id('ms__owns__king').style('display')).toBe('element')
+    expect(cy.$id('ms__owns__king').scratch('_route')).not.toBeNull()
+    // …and a line the new tree does not route goes back to the stylesheet's
+    expect(cy.$id('act__owns__king').scratch('_route')).toBeNull()
+    expect(cy.$id('act__owns__king').style('curve-style')).toBe('bezier')
+  })
+})
+
+describe('applyTreeRoutes — a centred person who owns and runs a company', () => {
+  it('draws the role over the holding as one line with one label, placed above the company', async () => {
+    const n = (id: string, nodeType = 'entity') => ({ data: { id, label: id, nodeType, raw: {} } }) as unknown as GraphElement
+    const els = [n('p', 'person'), n('tesla'), n('solar'),
+      { data: { id: 'p__role__tesla', source: 'p', target: 'tesla', label: 'CEO', edgeType: 'role', edgeDir: 'out', stakePct: null } },
+      { data: { id: 'p__role__solar', source: 'p', target: 'solar', label: 'Chairman', edgeType: 'role', edgeDir: 'out', stakePct: null } },
+      { data: { id: 'p__owns__tesla', source: 'p', target: 'tesla', label: '18.4%', edgeType: 'owns', edgeDir: 'out', stakePct: 18.4 } },
+    ] as unknown as GraphElement[]
+    const cytoscape = (await import('cytoscape')).default
+    const cy = cytoscape({ headless: true, styleEnabled: true, elements: els as never, style: buildStylesheet('light') as never })
+    const { positions, tree } = layoutGraph(els, 'p')
+    for (const [id, p] of positions) cy.$id(id).position(p)
+    applyTreeRoutes(cy, tree)
+    const role = cy.$id('p__role__tesla'), holding = cy.$id('p__owns__tesla'), alone = cy.$id('p__role__solar')
+    expect(role.hasClass('dual')).toBe(true)
+    expect(role.style('curve-style')).toBe('segments')
+    expect(role.style('target-label')).toBe('')                 // its text is on the holding's label
+    expect(holding.style('target-label')).toBe('CEO · 18.4%')
+    expect(alone.hasClass('dual')).toBe(false)
+    expect(alone.style('target-label')).toBe('Chairman')
+    expect(alone.style('curve-style')).toBe('segments')
+
+    // the stake filter hides the holding: the role places Tesla alone and takes its label back
+    applyTreeRoutes(cy, layoutGraph(els.filter(el => el.data.id !== 'p__owns__tesla'), 'p').tree)
+    expect(role.hasClass('dual')).toBe(false)
+    expect(role.style('target-label')).toBe('CEO')
   })
 })
