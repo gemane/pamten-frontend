@@ -239,6 +239,26 @@ export function filterVisibleElements(
 }
 
 
+/** What the canvas must change to show `elements`: everything (a new centre,
+ *  or nothing in common), or the difference — what to add AND what to take
+ *  away. It only ever added: turning "all levels" off rebuilt the list with
+ *  the direct holdings alone, found nothing new, and left Chubb's nine levels
+ *  on screen however often the button was pressed. */
+export function diffElements(
+  existingIds: Set<string>,
+  elements: GraphElement[],
+  centerChanged: boolean,
+): { isReset: boolean; toAdd: GraphElement[]; toRemove: string[] } {
+  const isReset = centerChanged || !elements.some(el => existingIds.has(el.data.id))
+  if (isReset) return { isReset, toAdd: elements, toRemove: [] }
+  const wanted = new Set(elements.map(el => el.data.id))
+  return {
+    isReset,
+    toAdd: elements.filter(el => !existingIds.has(el.data.id)),
+    toRemove: [...existingIds].filter(id => !wanted.has(id)),
+  }
+}
+
 /** Where every node goes: the arc layout, and in the "all levels" view the
  *  subsidiary tree below the centre laid out as a tree instead (owners keep
  *  their arc above). */
@@ -655,14 +675,16 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     const centerChanged = centerId !== prevCenterIdRef.current
     prevCenterIdRef.current = centerId
     const existingIds = new Set(cy.elements().map(el => el.id()))
-    const isReset     = centerChanged || !elements.some(el => existingIds.has(el.data.id))
+    const { isReset, toAdd, toRemove } = diffElements(existingIds, elements, centerChanged)
 
     if (isReset) {
       cy.elements().remove()
       cy.add(elements as cytoscape.ElementDefinition[])
     } else {
-      const toAdd = elements.filter(el => !existingIds.has(el.data.id))
-      if (toAdd.length === 0) return
+      if (toAdd.length === 0 && toRemove.length === 0) return
+      // Edges first: removing a node takes its edges with it, and removing an
+      // already-removed edge afterwards would be a lookup of nothing.
+      for (const id of toRemove) cy.$id(id).remove()
       cy.add(toAdd as cytoscape.ElementDefinition[])
     }
 
