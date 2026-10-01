@@ -7,7 +7,7 @@ import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
 import GraphStakeFilter, { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
 import GraphLevelsToggle from './GraphLevelsToggle'
-import { computeTreePositions } from '../utils/treeLayout'
+import { computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
 
 export interface GraphHandle {
   exportPng: () => void
@@ -129,6 +129,18 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       },
     },
     {
+      // The subsidiary tree: a line it already explains (the holder is further
+      // up the same branch) is not drawn — it would cut across the picture.
+      selector: 'edge.implied',
+      style: { display: 'none' },
+    },
+    {
+      // …and a co-holder from another branch is drawn faintly: it is real, but
+      // it is the one kind of line that has to cross the tree.
+      selector: 'edge.coholder',
+      style: { opacity: 0.3, 'z-index': 0 },
+    },
+    {
       // Owner / role edges: source is the outer node → label near source
       selector: 'edge[edgeDir = "in"]',
       style: { 'source-label': 'data(label)', 'source-text-offset': 60 },
@@ -199,7 +211,7 @@ const T_START      = Math.PI / 6   // 30° — side nodes are 0.5·b above/below
 const T_END        = Math.PI * 5/6 // 150°
 const T_RANGE      = T_END - T_START
 const MIN_ZOOM      = 0.15          // how far the user (and a fit) can zoom out
-const TREE_MIN_ZOOM = 0.02          // …in "all levels", where the tree must still fit
+const TREE_MIN_ZOOM = 0.02          // …in "all levels", where the whole tree must still fit
 const MIN_NODE_GAP = 72             // min arc-length (px) at the densest point (bottom)
 const SUB_B        = 280            // fixed vertical semi-axis for subsidiaries
 const OWNER_B_MIN  = 120            // vertical distance for most-important owner
@@ -259,17 +271,54 @@ export function diffElements(
   }
 }
 
-/** Where every node goes: the arc layout, and in the "all levels" view the
- *  subsidiary tree below the centre laid out as a tree instead (owners keep
- *  their arc above). */
-export function layoutPositions(
+/** Where every node goes, and how the tree's lines run: owners (and people)
+ *  on their arc above the centre, the subsidiaries below it as a tree —
+ *  columns, right-angled lines. The same for "Direct" and "All levels", so one
+ *  level of subsidiaries looks like the first level of all of them. One
+ *  computation serves the positions, the routes and the hidden lines. */
+export function layoutGraph(
   elements: GraphElement[],
   centerId: string | null,
-  allLevels: boolean,
-): Map<string, { x: number; y: number }> {
-  const pos = computeArcPositions(elements, centerId)
-  if (allLevels) for (const [id, p] of computeTreePositions(elements, centerId)) pos.set(id, p)
-  return pos
+  measure?: Measure,
+): { positions: Map<string, { x: number; y: number }>; tree: TreeLayout } {
+  const tree = computeTreeLayout(elements, centerId, measure)
+  const positions = computeArcPositions(elements, centerId)
+  for (const [id, p] of tree.positions) positions.set(id, p)
+  return { positions, tree }
+}
+
+/** The size Cytoscape draws a node at — the tree is laid out on the real
+ *  boxes, so a column's left edges line up exactly. */
+export const measureWith = (cy: cytoscape.Core): Measure => id => {
+  const n = cy.$id(id)
+  return n.nonempty() ? { w: n.outerWidth(), h: n.outerHeight() } : undefined
+}
+
+const ROUTE_STYLE = 'curve-style edge-distances segment-weights segment-distances'
+
+/** Bend one tree line at right angles between its ends' CURRENT positions. */
+function routeEdge(edge: cytoscape.EdgeSingular, route: Route) {
+  const s = edge.source().position(), t = edge.target().position()
+  const seg = segmentStyle(s, t, routePoints(s, t, route))
+  if (!seg) { edge.removeStyle(ROUTE_STYLE); return }
+  edge.style({ 'curve-style': 'segments', 'edge-distances': 'node-position',
+               'segment-weights': seg.weights, 'segment-distances': seg.distances })
+}
+
+/** The tree's lines, after its nodes are placed: each placing line routed at
+ *  right angles, each line the tree makes redundant marked `implied` (hidden),
+ *  each co-holder's marked `coholder` (faint); every other line as the
+ *  stylesheet draws it. The route stays on the edge so a dragged node's lines
+ *  can follow it. */
+export function applyTreeRoutes(cy: cytoscape.Core, tree: TreeLayout) {
+  cy.edges().forEach(edge => {
+    const route = tree.routes.get(edge.id())
+    edge.scratch('_route', route ?? null)
+    if (route) routeEdge(edge, route)
+    else edge.removeStyle(ROUTE_STYLE)
+    edge.toggleClass('implied', tree.implied.has(edge.id()))
+    edge.toggleClass('coholder', tree.coHolders.has(edge.id()))
+  })
 }
 
 export function computeArcPositions(
@@ -332,7 +381,9 @@ export function computeArcPositions(
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)
 
-  // Semi-ellipse for subsidiaries (below Google).
+  // Semi-ellipse for what the centre points at (below it). In the graph the
+  // companies it OWNS are then re-placed as a tree (layoutGraph); what stays
+  // on this arc are a centred person's roles and the like.
   // a scales so nodes get MIN_NODE_GAP spacing at the densest point (t ≈ π/2, bottom).
   // At the bottom the tangent is nearly horizontal so arc-length ≈ a·Δt.
   if (bottomIds.length > 0) {
@@ -533,8 +584,9 @@ interface GraphProps {
   /** Shared with the node-panel list so one control filters both views. */
   stakeFilter: StakeFilter
   onStakeFilterChange: (filter: StakeFilter) => void
-  /** "All levels": the whole subsidiary tree below the centre is loaded and
-   *  laid out as a tree. Shared with the panel, which indents its list. */
+  /** "All levels": the whole subsidiary tree below the centre is loaded, not
+   *  only its first level (both are drawn as a tree). Shared with the panel,
+   *  which indents its list. */
   allLevels?: boolean
   onAllLevelsChange?: (on: boolean) => void
   /** Node whose row is in focus in the node panel — grown slightly (see applyNodeFocus). */
@@ -551,7 +603,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
-  const layoutModeRef = useRef<boolean>(allLevels)   // the mode the elements on screen were laid out in
+  const layoutModeRef = useRef<boolean>(allLevels)   // the mode the elements on screen belong to (sets the zoom floor)
   const prevFocusIdRef  = useRef<string | null>(null)
   // The handlers are bound once when the graph is created; a ref keeps them
   // calling the current callback rather than the one from the first render.
@@ -594,6 +646,14 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
     cy.on('tap', 'node', (evt) => {
       onNodeClick(evt.target.data() as NodeData)
+    })
+
+    // A dragged node takes its right-angled tree lines with it.
+    cy.on('drag', 'node', (evt) => {
+      evt.target.connectedEdges().forEach((edge: cytoscape.EdgeSingular) => {
+        const route = edge.scratch('_route') as Route | null
+        if (route) routeEdge(edge, route)
+      })
     })
 
     cy.on('dblclick', 'node', (evt) => {
@@ -677,10 +737,10 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     prevCenterIdRef.current = centerId
     const existingIds = new Set(cy.elements().map(el => el.id()))
     const { isReset, toAdd, toRemove } = diffElements(existingIds, elements, centerChanged)
-    // The layout mode follows the ELEMENTS, not the switch: the switch flips at
-    // once, its elements arrive a moment later, and re-laying out the old
-    // elements in the new mode in between is what made the picture swell before
-    // every change. Adopted here, when the elements that belong to it land.
+    // The mode follows the ELEMENTS, not the switch: the switch flips at once,
+    // its elements arrive a moment later, and re-fitting the old elements to
+    // the new mode's zoom floor in between made the picture swell before every
+    // change. Adopted here, when the elements that belong to it land.
     const modeChanged = layoutModeRef.current !== allLevels
     layoutModeRef.current = allLevels
 
@@ -709,13 +769,14 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     // A whole tree is far wider than one ring of subsidiaries — Chubb's nine
     // levels ran off both edges because the fit stopped at the usual floor.
     cy.minZoom(allLevels ? TREE_MIN_ZOOM : MIN_ZOOM)
-    const positions = layoutPositions(elements, centerId ?? null, allLevels)
+    const { positions, tree } = layoutGraph(elements, centerId ?? null, measureWith(cy))
     const place = () => {
       if (positions.size === 0) return
       cy.nodes().forEach(node => {
         const p = positions.get(node.id())
         if (p) node.position(p)
       })
+      applyTreeRoutes(cy, tree)
       cy.fit(undefined, 80)
     }
     // The same company with more or fewer elements (a node expanded, "all
@@ -771,15 +832,22 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       node.style('display', visible ? 'element' : 'none')
     })
 
-    const tree = layoutModeRef.current
-    cy.minZoom(tree ? TREE_MIN_ZOOM : MIN_ZOOM)
-    const positions = layoutPositions(
-      filterVisibleElements(elements, stakeFilter, centerId ?? null), centerId ?? null, tree)
+    cy.minZoom(layoutModeRef.current ? TREE_MIN_ZOOM : MIN_ZOOM)
+    // The tree is laid out, routed and judged on the FILTERED elements, once:
+    // judged on the unfiltered set, a 0.1 % holder the filter hides could
+    // still make the 99.9 % holder's line "redundant", and the company was
+    // left with no line at all.
+    const shown = filterVisibleElements(elements, stakeFilter, centerId ?? null)
+    const { positions, tree } = layoutGraph(shown, centerId ?? null, measureWith(cy))
     if (positions.size > 0) {
       cy.nodes().forEach(node => {
         const p = positions.get(node.id())
         if (p && node.style('display') !== 'none') node.position(p)
       })
+      applyTreeRoutes(cy, tree)
+      // a line the tree makes redundant stays hidden whatever the filter says
+      // (the display set above is a bypass, which outranks the class's rule)
+      cy.edges('.implied').style('display', 'none')
       cy.fit(undefined, 80)
     }
   }, [stakeFilter, elements, centerId])

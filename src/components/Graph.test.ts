@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeArcPositions, buildStylesheet, diffElements, filterVisibleElements, layoutPositions } from './Graph'
+import { applyTreeRoutes, computeArcPositions, buildStylesheet, diffElements, filterVisibleElements, layoutGraph } from './Graph'
 import { STAKE_FILTERS, ANY_STAKE } from './GraphStakeFilter'
 import type { GraphElement } from '../types'
 
@@ -148,20 +148,17 @@ describe('filterVisibleElements + re-layout — the filtered graph closes ranks'
   })
 })
 
-describe('layoutPositions — arc by default, a tree in "all levels"', () => {
+describe('layoutGraph — owners on their arc, the subsidiaries as a tree', () => {
   const n = (id: string) => ({ data: { id, label: id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement
   const e = (s: string, t: string, dir: 'in' | 'out') =>
     ({ data: { id: `${s}__owns__${t}`, source: s, target: t, label: '', edgeType: 'owns', edgeDir: dir, stakePct: null } }) as unknown as GraphElement
   const els = [n('c'), n('owner'), n('a'), n('b'), n('a1'), n('a2'),
                e('owner', 'c', 'in'), e('c', 'a', 'out'), e('c', 'b', 'out'), e('a', 'a1', 'out'), e('a', 'a2', 'out')]
 
-  it('off: exactly the arc layout', () => {
-    expect(layoutPositions(els, 'c', false)).toEqual(computeArcPositions(els, 'c'))
-  })
-
-  it('on: the subsidiaries form a tree below the centre, the owners keep their arc above', () => {
+  it('the subsidiaries form a tree below the centre, the owners keep their arc above', () => {
     const arc = computeArcPositions(els, 'c')
-    const pos = layoutPositions(els, 'c', true)
+    const { positions: pos, tree } = layoutGraph(els, 'c')
+    expect(tree.routes.size).toBe(4)                    // one placing line per subsidiary
     expect(pos.get('owner')).toEqual(arc.get('owner'))
     expect(pos.get('c')).toEqual({ x: 0, y: 0 })
     expect(pos.get('a1')!.y).toBeGreaterThan(pos.get('a')!.y)
@@ -195,5 +192,36 @@ describe('diffElements — the canvas follows the list both ways', () => {
   it('a new centre, or nothing in common, is a full reset', () => {
     expect(diffElements(new Set(['c', 'a']), [n('c'), n('a')], true).isReset).toBe(true)
     expect(diffElements(new Set(['x']), [n('c')], false).isReset).toBe(true)
+  })
+})
+
+describe('applyTreeRoutes — right-angled tree lines, implied lines hidden', () => {
+  const n = (id: string) => ({ data: { id, label: id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement
+  const e = (s: string, t: string) =>
+    ({ data: { id: `${s}__owns__${t}`, source: s, target: t, label: '', edgeType: 'owns', edgeDir: 'out', stakePct: null } }) as unknown as GraphElement
+  const els = [n('ms'), n('act'), n('king'), n('linkedin'), e('ms', 'act'), e('ms', 'king'), e('ms', 'linkedin'), e('act', 'king')]
+
+  it('routes the placing lines, marks the implied one, and follows the elements when they change', async () => {
+    const cytoscape = (await import('cytoscape')).default
+    const cy = cytoscape({ headless: true, styleEnabled: true, elements: els as never, style: buildStylesheet('light') as never })
+    const { positions, tree } = layoutGraph(els, 'ms')
+    for (const [id, p] of positions) cy.$id(id).position(p)
+    applyTreeRoutes(cy, tree)
+    expect(cy.$id('ms__owns__act').style('curve-style')).toBe('segments')
+    expect(cy.$id('ms__owns__act').scratch('_route')).toMatchObject({ kind: 'top' })
+    expect(cy.$id('ms__owns__king').hasClass('implied')).toBe(true)
+    expect(cy.$id('ms__owns__king').style('display')).toBe('none')
+    expect(cy.$id('act__owns__king').hasClass('implied')).toBe(false)
+    expect(cy.edges('.coholder').length).toBe(0)
+
+    // Activision's line to King gone (the filter hid it): Microsoft's own line places King again
+    const fewer = els.filter(el => el.data.id !== 'act__owns__king')
+    applyTreeRoutes(cy, layoutGraph(fewer, 'ms').tree)
+    expect(cy.$id('ms__owns__king').hasClass('implied')).toBe(false)
+    expect(cy.$id('ms__owns__king').style('display')).toBe('element')
+    expect(cy.$id('ms__owns__king').scratch('_route')).not.toBeNull()
+    // …and a line the new tree does not route goes back to the stylesheet's
+    expect(cy.$id('act__owns__king').scratch('_route')).toBeNull()
+    expect(cy.$id('act__owns__king').style('curve-style')).toBe('bezier')
   })
 })
