@@ -44,10 +44,13 @@ const crossings = (els: GraphElement[], center: string) => {
   const crossed = H.flatMap(h => V.filter(v => v.from !== h.from
     && v.a.x > Math.min(h.a.x, h.b.x) && v.a.x < Math.max(h.a.x, h.b.x)
     && h.a.y > Math.min(v.a.y, v.b.y) && h.a.y < Math.max(v.a.y, v.b.y)))
-  // a line through a company that is not one of its ends
+  // a line through a company that is not one of its ends (sizes looked up once:
+  // per segment and company it made this helper cubic, and two tests took 3 s)
+  const sizes = new Map(els.filter(e => !('source' in e.data))
+    .map(e => [e.data.id, nodeSize(e.data as { label: string }, e.data.id === center)]))
   const through = segs.flatMap(g => [...positions].filter(([id, p]) => {
     const [x0, x1, y0, y1] = [Math.min(g.a.x, g.b.x), Math.max(g.a.x, g.b.x), Math.min(g.a.y, g.b.y), Math.max(g.a.y, g.b.y)]
-    const { w, h } = nodeSize(els.find(e => e.data.id === id)!.data as { label: string }, id === center)
+    const { w, h } = sizes.get(id)!
     return positions.get(g.from) !== p && !(g.a === p || g.b === p)
       && p.x + w / 2 > x0 && p.x - w / 2 < x1 && p.y + h / 2 > y0 && p.y - h / 2 < y1 && id !== g.from
   }))

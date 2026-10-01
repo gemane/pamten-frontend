@@ -300,6 +300,8 @@
   "timeline": {
     "ownedBy": "Propiedad de",
     "ownsLabel": "Posee",
+    "firstListed": "listada por primera vez en {{year}}",
+    "firstListedHint": "Aparece por primera vez en la lista anual de filiales de {{year}}: la lista del año anterior no la menciona, ni ninguna más antigua. Las filiales pequeñas pueden omitirse, así que aún puede ser anterior.",
     "sinceAtLeast": "desde {{year}} o antes",
     "sinceAtLeastHint": "La lista anual de filiales más antigua que la menciona es de {{year}}; la participación puede ser anterior.",
     "executive": "Directivo",

@@ -300,6 +300,8 @@
   "timeline": {
     "ownedBy": "Im Besitz von",
     "ownsLabel": "Besitzt",
+    "firstListed": "erstmals gelistet {{year}}",
+    "firstListedHint": "Sie erscheint erstmals in der Jahresliste der Tochtergesellschaften von {{year}}: Die Liste des Vorjahres nennt sie nicht, ebenso wenig eine ältere. Kleine Tochtergesellschaften dürfen ausgelassen werden, sie kann also dennoch älter sein.",
     "sinceAtLeast": "seit {{year}} oder früher",
     "sinceAtLeastHint": "Die älteste Jahresliste der Tochtergesellschaften, die sie nennt, stammt aus {{year}} — die Beteiligung kann älter sein.",
     "executive": "Führungskraft",

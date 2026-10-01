@@ -59,7 +59,12 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   const kindLabel = kind === 'ownership_in'  ? t('timeline.ownedBy')
                   : kind === 'ownership_out' ? t('timeline.ownsLabel')
                   : t('timeline.executive')
-  const lowerBound = ev.since && ev.since_basis === 'first_listed' ? ev.since.slice(0, 4) : null
+  // A start date read off the annual subsidiary lists, not stated by a source:
+  // "first_listed" — the oldest list naming it, the holding may be older;
+  // "newly_listed" — the list for the year before does not name it, nor any
+  // older one: it first appears that year.
+  const listed = ev.since && (ev.since_basis === 'first_listed' || ev.since_basis === 'newly_listed')
+    ? { year: ev.since.slice(0, 4), newly: ev.since_basis === 'newly_listed' } : null
   const name  = partyName(ev.party)
   const ended = ev.until ? ev.until.slice(0, 4) : null
 
@@ -72,9 +77,10 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
             <Icon />
             {ev.kind === 'role' ? ev.role || kindLabel : kindLabel}
           </span>
-          {lowerBound && (
-            <span className="tl-event__badge tl-event__badge--bound" title={t('timeline.sinceAtLeastHint', { year: lowerBound })}>
-              {t('timeline.sinceAtLeast', { year: lowerBound })}
+          {listed && (
+            <span className="tl-event__badge tl-event__badge--bound"
+              title={t(listed.newly ? 'timeline.firstListedHint' : 'timeline.sinceAtLeastHint', { year: listed.year })}>
+              {t(listed.newly ? 'timeline.firstListed' : 'timeline.sinceAtLeast', { year: listed.year })}
             </span>
           )}
           {ev.active
