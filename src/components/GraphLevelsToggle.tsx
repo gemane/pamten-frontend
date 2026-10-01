@@ -16,8 +16,10 @@ export default function GraphLevelsToggle({ on, onChange }: { on: boolean; onCha
   return (
     <div className="graph-levels" role="radiogroup" aria-label={t('graph.levelsLabel')}>
       <span className="graph-levels__label">{t('graph.levelsLabel')}</span>
-      {option(false, t('graph.levelsDirect'), t('graph.levelsDirectHint'))}
-      {option(true, t('graph.levelsAll'), t('graph.levelsAllHint'))}
+      <div className="graph-levels__options">
+        {option(false, t('graph.levelsDirect'), t('graph.levelsDirectHint'))}
+        {option(true, t('graph.levelsAll'), t('graph.levelsAllHint'))}
+      </div>
     </div>
   )
 }
