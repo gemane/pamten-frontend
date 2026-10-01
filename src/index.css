@@ -2882,6 +2882,13 @@ a.source-item__name:hover { color: #4A90D9; }
   z-index: 10;
 }
 
+/* A <button> does not inherit the page's font — these fell back to the
+   browser's Arial while everything around them used the app's type. */
+.graph-action-btn,
+.graph-filter__toggle,
+.graph-legend__toggle,
+.graph-filter__option { font-family: inherit; }
+
 .graph-action-btn {
   display: flex;
   align-items: center;
@@ -2956,12 +2963,11 @@ a.source-item__name:hover { color: #4A90D9; }
   border-radius: 8px;
   font-size: 12px;
 }
+/* The same type as the action buttons above it (Clear, Expand…): 12px, 600. */
 .graph-levels__label {
-  padding: 0 6px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  padding: 2px 8px 0;
+  font-size: 12px;
+  font-weight: 600;
   color: #8892a4;
   white-space: nowrap;
 }
@@ -2975,12 +2981,14 @@ a.source-item__name:hover { color: #4A90D9; }
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: #c9d1e0;
-  font: inherit;
+  color: #8892a4;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
 }
-.graph-levels__option:hover { background: rgba(255,255,255,0.08); }
+.graph-levels__option:hover { background: rgba(255,255,255,0.08); color: #eaeaea; }
 .graph-levels__option--active,
 .graph-levels__option--active:hover {
   background: #4A90D9;
@@ -2988,10 +2996,10 @@ a.source-item__name:hover { color: #4A90D9; }
   font-weight: 600;
   cursor: default;
 }
-[data-theme="light"] .graph-levels { background: rgba(255,255,255,0.92); border-color: rgba(0,0,0,0.12); }
+[data-theme="light"] .graph-levels { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); }
 [data-theme="light"] .graph-levels__label { color: #4a5568; }
-[data-theme="light"] .graph-levels__option { color: #1f2937; }
-[data-theme="light"] .graph-levels__option:hover { background: rgba(0,0,0,0.06); }
+[data-theme="light"] .graph-levels__option { color: #4a5568; }
+[data-theme="light"] .graph-levels__option:hover { background: rgba(0,0,0,0.06); color: #1a202c; }
 [data-theme="light"] .graph-levels__option--active,
 [data-theme="light"] .graph-levels__option--active:hover { background: #4A90D9; color: #fff; }
 
@@ -3930,12 +3938,14 @@ a.source-item__name:hover { color: #4A90D9; }
 
 [data-theme="light"] .graph-empty p { color: #718096; }
 
+/* White like the filter and ⓘ buttons across the canvas — the grey-blue these
+   had made one row of controls look like two different kinds. */
 [data-theme="light"] .graph-action-btn {
-  background: rgba(240,244,248,0.92);
-  border-color: #b8c4d4;
+  background: rgba(255,255,255,0.9);
+  border-color: rgba(0,0,0,0.12);
   color: #4a5568;
 }
-[data-theme="light"] .graph-action-btn:hover { color: #1a202c; border-color: #8a9ab4; }
+[data-theme="light"] .graph-action-btn:hover { color: #1a202c; border-color: rgba(0,0,0,0.25); }
 [data-theme="light"] .graph-action-btn--clear:hover { color: #c0392b; border-color: rgba(192,57,43,0.4); }
 
 [data-theme="light"] .source-item { background: rgba(0,0,0,0.04); }
