@@ -292,8 +292,9 @@ export function classifyElements(
     }
   }
   // The centre always stays — it is what the user asked to see, founded
-  // whenever; a neighbour that did not exist yet goes with its edges.
-  const nodeVisible = (id: string) => id === centerId || (exists.get(id) !== false && nodeHasEdge.has(id))
+  // whenever. A neighbour that did not exist yet has no visible edge (edgeVisible
+  // drops every edge to it), so it goes with them.
+  const nodeVisible = (id: string) => id === centerId || nodeHasEdge.has(id)
   const visible = elements.filter(el => {
     const d = el.data
     if ('source' in d) return edgeVisible(d) && nodeVisible(d.source) && nodeVisible(d.target)
