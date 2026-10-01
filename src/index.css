@@ -2947,7 +2947,8 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 
 /* Which subsidiaries are shown: on the left, under Clear, in two lines — the
-   word it is about, then the two choices. */
+   word it is about, then the two choices as one segmented button: edge to
+   edge inside the box, a line between them, no padding around. */
 .graph-levels {
   position: absolute;
   top: 52px;
@@ -2955,9 +2956,7 @@ a.source-item__name:hover { color: #4A90D9; }
   z-index: 10;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  padding: 4px;
-  gap: 3px;
+  overflow: hidden;                 /* the segments take the box's rounded corners */
   background: rgba(20, 20, 40, 0.85);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px;
@@ -2965,21 +2964,19 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 /* The same type as the action buttons above it (Clear, Expand…): 12px, 600. */
 .graph-levels__label {
-  padding: 2px 8px 0;
+  padding: 4px 10px;
   font-size: 12px;
   font-weight: 600;
   color: #8892a4;
   white-space: nowrap;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
-.graph-levels__options {
-  display: flex;
-  gap: 2px;
-}
+.graph-levels__options { display: flex; }
 .graph-levels__option {
-  height: 26px;
-  padding: 0 10px;
+  flex: 1;
+  padding: 5px 10px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 0;
   background: transparent;
   color: #8892a4;
   font-family: inherit;
@@ -2988,17 +2985,18 @@ a.source-item__name:hover { color: #4A90D9; }
   white-space: nowrap;
   cursor: pointer;
 }
+.graph-levels__option + .graph-levels__option { border-left: 1px solid rgba(255,255,255,0.1); }
 .graph-levels__option:hover { background: rgba(255,255,255,0.08); color: #eaeaea; }
 .graph-levels__option--active,
 .graph-levels__option--active:hover {
   background: #4A90D9;
   color: #fff;
-  font-weight: 600;
   cursor: default;
 }
 [data-theme="light"] .graph-levels { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); }
-[data-theme="light"] .graph-levels__label { color: #4a5568; }
+[data-theme="light"] .graph-levels__label { color: #4a5568; border-bottom-color: rgba(0,0,0,0.12); }
 [data-theme="light"] .graph-levels__option { color: #4a5568; }
+[data-theme="light"] .graph-levels__option + .graph-levels__option { border-left-color: rgba(0,0,0,0.12); }
 [data-theme="light"] .graph-levels__option:hover { background: rgba(0,0,0,0.06); color: #1a202c; }
 [data-theme="light"] .graph-levels__option--active,
 [data-theme="light"] .graph-levels__option--active:hover { background: #4A90D9; color: #fff; }
