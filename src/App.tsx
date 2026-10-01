@@ -123,6 +123,13 @@ function AppInner() {
   const [allLevels,       setAllLevels]       = useState<boolean>(false)
   const allLevelsRef = useRef<boolean>(false)
   allLevelsRef.current = allLevels
+  // Time travel: the day the graph shows (YYYY-MM-DD), null = the present. Kept
+  // in a ref too, because the load/expand callbacks read it outside React's
+  // dependency tracking (handleExpand's deps are deliberately narrow).
+  const [asOf,            setAsOf]            = useState<string | null>(null)
+  const asOfRef = useRef<string | null>(null)
+  asOfRef.current = asOf
+  const reloadCentreRef = useRef<null | (() => Promise<void>)>(null)
   const [centerId,        setCenterId]        = useState<string | null>(null)
   const [selectedNode,    setSelectedNode]    = useState<NodeData | null>(null)
   const [searchLabel,     setSearchLabel]     = useState<string | undefined>(undefined)
@@ -182,13 +189,13 @@ function AppInner() {
   }, [])
 
   const loadEntity = useCallback(async (entityId: string): Promise<GraphElement[]> => {
-    const { data: profile } = await getFullProfile(entityId)
+    const { data: profile } = await getFullProfile(entityId, asOfRef.current)
     const els = buildElements(profile, loadedIds.current)
     if (allLevelsRef.current) {
       // The tree's own failure must not cost the user the company: the direct
-      // holdings are already built.
+      // holdings are already built. As of the same day as the profile.
       try {
-        const { data: tree } = await getSubsidiaryTree(entityId)
+        const { data: tree } = await getSubsidiaryTree(entityId, asOfRef.current)
         els.push(...buildTreeElements(tree, loadedIds.current))
         if (tree.truncated) showToast(t('toast.treeTruncated', { count: tree.nodes.length }), 'info')
       } catch { /* direct holdings only */ }
@@ -200,13 +207,19 @@ function AppInner() {
   // companies they currently lead (one dashed role edge per company).
   const loadPerson = useCallback(async (personId: string): Promise<{ els: GraphElement[]; person: Person }> => {
     const { data: profile } = await getPersonProfile(personId)
-    return { els: buildPersonProfileElements(profile, loadedIds.current), person: profile.person }
+    return { els: buildPersonProfileElements(profile, loadedIds.current, asOfRef.current), person: profile.person }
   }, [])
 
   // ── On-demand enrichment ──────────────────────────────────────────────────
   // Append any newly-scraped nodes/edges to the graph without a full reset (mirrors
   // handleExpand's draft-loadedIds append), so the selected node "fills" in place.
   const appendProfile = useCallback((profile: FullProfile) => {
+    // A scrape's profile is present-tense; in a past view its ended edges
+    // would leak in. Reloading the centre as of the day keeps the view honest.
+    if (asOfRef.current) {
+      void reloadCentreRef.current?.()
+      return
+    }
     const draftIds = new Set(loadedIds.current)
     const newEls = buildElements(profile, draftIds)
     if (newEls.length > 0) {
@@ -521,9 +534,9 @@ function AppInner() {
       if (node && (node.data as NodeData).nodeType === 'person') {
         // Person: pull in their positions/ownerships around the existing graph.
         const { data: profile } = await getPersonProfile(nodeId)
-        newEls = buildPersonProfileElements(profile, draftIds)
+        newEls = buildPersonProfileElements(profile, draftIds, asOfRef.current)
       } else {
-        const { data: profile } = await getFullProfile(nodeId)
+        const { data: profile } = await getFullProfile(nodeId, asOfRef.current)
         const cur = elementsRef.current
         const isAbove = cur.some(el =>
           'source' in el.data && el.data.source === nodeId && el.data.edgeDir === 'in')
@@ -551,6 +564,7 @@ function AppInner() {
   const handleClearGraph = useCallback(() => {
     resetEnrichment()
     setElements([])
+    setAsOf(null)                 // home is the present
     setCenterId(null)
     setSelectedNode(null)
     setSearchLabel(undefined)
@@ -856,23 +870,41 @@ function AppInner() {
     }
   }, [loadEntity, loadPerson, showToast])
 
-  // "All levels" on or off: the loaded set belongs to one mode, so the centre
-  // is rebuilt. The switch persists across navigation until turned off.
-  const handleAllLevelsChange = useCallback(async (on: boolean) => {
-    allLevelsRef.current = on
-    setAllLevels(on)
+  // Rebuild the graph around the current centre for the day in asOfRef and the
+  // mode in allLevelsRef — the loaded set belongs to one day and one mode, so
+  // it is dropped and refetched.
+  const reloadCentre = useCallback(async () => {
     const id = centerIdRef.current
-    if (!id || centerType === 'person') return
+    if (!id) return
     setLoading(true)
     loadedIds.current = new Set()
     try {
-      setElements(await loadEntity(id))
+      const els = centerType === 'person' ? (await loadPerson(id)).els : await loadEntity(id)
+      setElements(els)
     } catch {
       showToast(t('toast.entityLoadError'), 'error')
     } finally {
       setLoading(false)
     }
-  }, [centerType, loadEntity, showToast, t])
+  }, [centerType, loadEntity, loadPerson, showToast, t])
+  reloadCentreRef.current = reloadCentre
+
+  // Time travel: a year clicked in the timeline (null = back to the present).
+  // The day persists across navigation and expansion until cleared.
+  const handleAsOfChange = useCallback((next: string | null) => {
+    if (next === asOfRef.current) return
+    asOfRef.current = next
+    setAsOf(next)
+    void reloadCentre()
+  }, [reloadCentre])
+
+  // "All levels" on or off. The switch persists across navigation until turned off.
+  const handleAllLevelsChange = useCallback((on: boolean) => {
+    if (on === allLevelsRef.current) return
+    allLevelsRef.current = on
+    setAllLevels(on)
+    void reloadCentre()
+  }, [reloadCentre])
 
   const applyView = useCallback((view: ViewState) => {
     handleTabChange(view.tab)
@@ -892,12 +924,16 @@ function AppInner() {
       }
     }
     if (view.tab === 'graph') {
-      // The mode comes before the entity: restoreEntity loads in allLevelsRef's mode.
+      // The mode and the day come before the entity: restoreEntity loads in
+      // allLevelsRef's mode, as of asOfRef.
       const levels = !!view.allLevels
-      const levelsChanged = levels !== allLevelsRef.current
+      const day = view.asOf ?? null
+      const changed = levels !== allLevelsRef.current || day !== asOfRef.current
       allLevelsRef.current = levels
       setAllLevels(levels)
-      if (view.entityId && (view.entityId !== centerIdRef.current || levelsChanged)) {
+      asOfRef.current = day
+      setAsOf(day)
+      if (view.entityId && (view.entityId !== centerIdRef.current || changed)) {
         restoreEntity(view.entityId, view.entityType ?? 'entity')
       } else if (!view.entityId && centerIdRef.current) {
         handleClearGraph()
@@ -946,6 +982,7 @@ function AppInner() {
       entityId:   centerId ?? undefined,
       entityType: centerType,
       allLevels:  activeTab === 'graph' && !!centerId && allLevels,
+      asOf:       activeTab === 'graph' && centerId ? asOf ?? undefined : undefined,
       country:    selectedCountry ?? undefined,
       // On the map, which company's subsidiaries the panel is listing. Selecting
       // one used to change nothing in the URL, so Back walked past the map.
@@ -961,7 +998,7 @@ function AppInner() {
     } else {
       window.history.pushState(null, '', hash)
     }
-  }, [activeTab, centerId, centerType, selectedCountry, selectedNode, allLevels])
+  }, [activeTab, centerId, centerType, selectedCountry, selectedNode, allLevels, asOf])
 
   return (
     <div className="app">
@@ -1022,6 +1059,8 @@ function AppInner() {
                   onReScrape={userCanScrape ? handleReScrape : undefined}
                   stakeFilter={stakeFilter}
                   allLevels={allLevels}
+                  asOf={asOf}
+                  onYearSelect={handleAsOfChange}
                   onGraphFocus={setGraphFocusId}
                   graphFocusMode={isMobile ? 'center' : 'hover'}
                   graphHoverId={isMobile ? null : graphHoverId}
@@ -1098,6 +1137,8 @@ function AppInner() {
                     onStakeFilterChange={setStakeFilter}
                     allLevels={allLevels}
                     onAllLevelsChange={handleAllLevelsChange}
+                    asOf={asOf}
+                    onAsOfClear={() => handleAsOfChange(null)}
                     focusedId={graphFocusId}
                     onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />
@@ -1116,6 +1157,8 @@ function AppInner() {
                     onReScrape={userCanScrape ? handleReScrape : undefined}
                     stakeFilter={stakeFilter}
                     allLevels={allLevels}
+                    asOf={asOf}
+                    onYearSelect={handleAsOfChange}
                     onGraphFocus={setGraphFocusId}
                     graphFocusMode={isMobile ? 'center' : 'hover'}
                     graphHoverId={isMobile ? null : graphHoverId}
@@ -1216,6 +1259,8 @@ function AppInner() {
                     onStakeFilterChange={setStakeFilter}
                     allLevels={allLevels}
                     onAllLevelsChange={handleAllLevelsChange}
+                    asOf={asOf}
+                    onAsOfClear={() => handleAsOfChange(null)}
                     focusedId={graphFocusId}
                     onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />

@@ -131,6 +131,11 @@ export interface OwnsRelationship {
   ownership_type?: OwnershipType | null
   since?: string | null
   until?: string | null
+  /** "first_listed": `since` is a LOWER bound (the oldest Exhibit 21 naming the
+   *  subsidiary), not the stated start — see utils/asOf. */
+  since_basis?: string | null
+  /** "withdrawn": the register record vanished (a correction), not a cessation. */
+  until_reason?: string | null
   value_usd?: number
   source_id?: string
   credibility_score?: number
@@ -152,6 +157,7 @@ export interface RoleRelationship {
   stale?: boolean | null
   since?: string | null
   until?: string | null
+  since_basis?: string | null
   source_id?: string
   credibility_score?: number
   source_url?: string | null   // deep link to the record that asserted it
@@ -305,7 +311,11 @@ export interface EdgeData {
   /** 'indirect' here means an ultimate-parent link that survived the shortcut
    *  filter because nothing else reaches that company — drawn dashed, since it is
    *  still not a direct holding. */
-  directOrIndirect?: string | null
+  directOrIndirect?: string | null  /** The relationship's dates, for the as-of view (utils/asOf). */
+  since?: string | null
+  sinceBasis?: string | null
+  until?: string | null
+  sourceDate?: string | null
 }
 
 export type GraphElement =

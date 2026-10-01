@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import TimelinePanel from './TimelinePanel'
 
 vi.mock('../services/api', () => ({ getHistory: vi.fn() }))
@@ -57,5 +58,38 @@ describe('TimelinePanel', () => {
     render(<TimelinePanel entityId="nc" />)
     expect(await screen.findByText('No date recorded')).toBeInTheDocument()
     expect(screen.queryByText('2026')).toBeNull()
+  })
+})
+
+describe('time travel from the timeline', () => {
+  const two = [ev({ kind: 'ownership_out', since: '2019-03-01', party: { id: 'a', name: 'Alpha' } }),
+               ev({ kind: 'ownership_out', since: '2014-08-14', party: { id: 'b', name: 'Beta' } }),
+               ev({ kind: 'ownership_out', since: null, party: { id: 'c', name: 'Gamma' } })]
+
+  it('a dated year is a button that asks for the end of that year; the undated group is not', async () => {
+    mockHistory.mockResolvedValue({ data: two } as never)
+    const onYearSelect = vi.fn()
+    render(<TimelinePanel entityId="nc" onYearSelect={onYearSelect} />)
+    await userEvent.click(await screen.findByRole('button', { name: /2019/ }))
+    expect(onYearSelect).toHaveBeenCalledWith('2019-12-31')
+    expect(screen.getByText('No date recorded').closest('button')).toBeNull()
+  })
+
+  it('the selected year is pressed, and clicking it again asks for the present', async () => {
+    mockHistory.mockResolvedValue({ data: two } as never)
+    const onYearSelect = vi.fn()
+    render(<TimelinePanel entityId="nc" asOf="2014-12-31" onYearSelect={onYearSelect} />)
+    const selected = await screen.findByRole('button', { name: /2014/ })
+    expect(selected).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /2019/ })).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(selected)
+    expect(onYearSelect).toHaveBeenCalledWith(null)
+  })
+
+  it('without a handler the years are plain headings, as before', async () => {
+    mockHistory.mockResolvedValue({ data: two } as never)
+    render(<TimelinePanel entityId="nc" />)
+    expect(await screen.findByText('2019')).toBeInTheDocument()
+    expect(screen.queryByRole('button')).toBeNull()
   })
 })

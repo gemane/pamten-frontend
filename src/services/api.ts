@@ -202,12 +202,14 @@ export interface StatsResponse {
 export const getStats = (): Promise<AxiosResponse<StatsResponse>> =>
   client.get('/stats')
 
-export const getFullProfile = (id: string): Promise<AxiosResponse<FullProfile>> =>
-  client.get(`/search/entity/${id}/full-profile`)
+/** `asOf` (YYYY-MM-DD) asks for the profile as it stood on that day — the
+ *  time-travel view; omitted, the present. */
+export const getFullProfile = (id: string, asOf?: string | null): Promise<AxiosResponse<FullProfile>> =>
+  client.get(`/search/entity/${id}/full-profile`, asOf ? { params: { as_of: asOf } } : undefined)
 
 /** The whole tree below a company — the "all levels" view. */
-export const getSubsidiaryTree = (id: string): Promise<AxiosResponse<SubsidiaryTree>> =>
-  client.get(`/relationships/subsidiary-tree/${id}`)
+export const getSubsidiaryTree = (id: string, asOf?: string | null): Promise<AxiosResponse<SubsidiaryTree>> =>
+  client.get(`/relationships/subsidiary-tree/${id}`, asOf ? { params: { as_of: asOf } } : undefined)
 
 export const getPersonProfile = (id: string): Promise<AxiosResponse<PersonProfile>> =>
   client.get(`/search/person/${id}/full-profile`)

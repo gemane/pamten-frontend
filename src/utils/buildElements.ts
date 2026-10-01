@@ -1,4 +1,5 @@
 import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType, SubsidiaryTree } from '../types'
+import { endedBy, evidenceDate, startedAfter, type Tenure } from './asOf'
 
 // Cytoscape element builders. Each takes a `loadedIds`/`seen` set and only
 // emits nodes/edges whose id isn't already present, so a graph can be grown
@@ -159,6 +160,7 @@ function ownershipElements(
       sharesOutstanding: rel?.shares_outstanding ?? null,
       votingPowerPct: vote ?? null,
       directOrIndirect: rel?.direct_or_indirect ?? '',
+      ...tenureData(rel),
     } })
   }
 
@@ -174,10 +176,18 @@ function ownershipElements(
         edgeDir:        dir,
         votingPowerPct: vote,
         stakePct:       stake ?? null,
+        ...tenureData(rel),
       } })
     }
   }
   return els
+}
+
+/** The relationship's dates, carried on the edge for the as-of view (utils/asOf):
+ *  the graph decides per edge whether it existed on the chosen day. */
+function tenureData(rel: Tenure | null | undefined) {
+  return { since: rel?.since ?? null, sinceBasis: rel?.since_basis ?? null,
+           until: rel?.until ?? null, sourceDate: rel?.source_date ?? null }
 }
 
 export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
@@ -260,18 +270,24 @@ function roleElements(
   person: Person,
   positions: PersonProfile['positions'] | undefined,
   loadedIds: Set<string>,
+  asOf: string | null = null,
 ): GraphElement[] {
-  const rolesByCompany = new Map<string, { entity: Entity; roles: string[] }>()
+  const rolesByCompany = new Map<string, { entity: Entity; roles: string[]; tenure: Tenure }>()
   for (const pos of positions ?? []) {
     const entity = pos.entity
     const role = pos.role?.role
-    if (!entity?.id || !role || pos.role?.until) continue
-    const cur = rolesByCompany.get(entity.id) ?? { entity, roles: [] }
+    // Ended seats are not drawn — ended by the chosen day, when there is one;
+    // nor a seat that began after it.
+    if (!entity?.id || !role || endedBy(pos.role, asOf) || startedAfter(pos.role, asOf)) continue
+    const cur = rolesByCompany.get(entity.id) ?? { entity, roles: [], tenure: {} }
     if (!cur.roles.includes(role)) cur.roles.push(role)
+    // One edge per company: the earliest evidence among its seats dates it.
+    const ev = evidenceDate(pos.role)
+    if (ev && (!cur.tenure.since || ev < cur.tenure.since)) cur.tenure = { since: ev }
     rolesByCompany.set(entity.id, cur)
   }
   const els: GraphElement[] = []
-  for (const { entity, roles } of rolesByCompany.values()) {
+  for (const { entity, roles, tenure } of rolesByCompany.values()) {
     if (!loadedIds.has(entity.id)) {
       loadedIds.add(entity.id)
       els.push({ data: {
@@ -283,7 +299,7 @@ function roleElements(
     if (loadedIds.has(id)) continue
     loadedIds.add(id)
     els.push({ data: { id, source: person.id, target: entity.id, label: roles.join(' · '),
-                       edgeType: 'role', edgeDir: 'out', stakePct: null } })
+                       edgeType: 'role', edgeDir: 'out', stakePct: null, ...tenureData(tenure) } })
   }
   return els
 }
@@ -292,10 +308,11 @@ function roleElements(
 // an entity node + owns edge for every entity they OWN, and a dashed role edge
 // to every company they currently lead. Passing a shared loadedIds set lets the
 // person be expanded incrementally into an existing graph.
-export function buildPersonProfileElements(profile: PersonProfile, loadedIds: Set<string> = new Set()): GraphElement[] {
+export function buildPersonProfileElements(profile: PersonProfile, loadedIds: Set<string> = new Set(),
+                                           asOf: string | null = null): GraphElement[] {
   return [
     ...buildPersonElements({ person: profile.person }, profile.holdings, loadedIds),
-    ...roleElements(profile.person, profile.positions, loadedIds),
+    ...roleElements(profile.person, profile.positions, loadedIds, asOf),
     // A person can be a party to a filing group — three of AB InBev's nine are
     // — and this is the fifth builder that had to be told so. The helper is
     // shared precisely so the answer is the same from every entry point.

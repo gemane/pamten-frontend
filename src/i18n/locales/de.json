@@ -314,7 +314,9 @@
     "emptyHint": "Daten werden erfasst, wenn Beziehungen manuell oder über den Scraper angelegt werden.",
     "owns": "hält",
     "born": "geboren",
-    "died": "gestorben"
+    "died": "gestorben",
+    "showAsOf": "Graph zum Ende von {{year}} anzeigen",
+    "showPresent": "Zurück zur Gegenwart"
   },
   "toast": {
     "personGraphError": "Personendiagramm konnte nicht geladen werden.",
@@ -656,5 +658,11 @@
     "availableText": "Eine neue Version der App ist verfügbar.",
     "button": "Aktualisieren",
     "later": "Später"
+  },
+  "asOf": {
+    "chip": "Stand {{year}}",
+    "clear": "Gegenwart anzeigen",
+    "legend": "Gestrichelt und blass: für dieses Jahr nicht belegt — die Quellen bestätigen es erst später.",
+    "rowHint": "Für {{year}} nicht belegt — die Quellen bestätigen es erst später"
   }
 }
