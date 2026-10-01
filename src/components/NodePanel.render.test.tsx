@@ -1840,3 +1840,26 @@ describe('the as-of view in the panel', () => {
     expect(screen.getByText('Young')).toBeInTheDocument()
   })
 })
+
+describe('"all levels" and the as-of day together', () => {
+  it('fetches the tree as of the day and dims a row the sources do not document for it', async () => {
+    const ent = (id: string, name: string) => ({ id, name, type: 'company' })
+    vi.mocked(getSubsidiaryTree).mockResolvedValue({ data: {
+      root_id: 'e1',
+      nodes: [{ entity: ent('a', 'Documented Ltd'), parent_id: 'e1', depth: 1 },
+              { entity: ent('b', 'Later Listed Ltd'), parent_id: 'a', depth: 2 }],
+      edges: [{ from_id: 'e1', to_id: 'a', depth: 1, relationship: { since: '2010-01-01' } },
+              { from_id: 'a', to_id: 'b', depth: 2, relationship: { since: '2023-06-30', since_basis: 'first_listed' } }],
+      truncated: false,
+    } } as never)
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      owners: [], subsidiaries: [], executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} allLevels asOf="2019-12-31" />)
+    await screen.findByText('Subsidiaries — all levels')
+    expect(getSubsidiaryTree).toHaveBeenLastCalledWith('e1', '2019-12-31')
+    expect(screen.getByText('Documented Ltd').closest('.rel-item')).not.toHaveClass('rel-item--unknown')
+    expect(screen.getByText('Later Listed Ltd').closest('.rel-item')).toHaveClass('rel-item--unknown')
+  })
+})
