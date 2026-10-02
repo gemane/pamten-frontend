@@ -704,12 +704,12 @@ body {
 .logo-group--compact {
   gap: 9px;
   justify-content: center;
-  padding: 8px 12px 0;
+  padding: 8px 12px 2px;
   background: rgba(10, 15, 26, 0.97);
   flex-shrink: 0;
 }
 /* the wordmark as tall as the mark beside it (32 px, see Brand) */
-.logo-group--compact .logo { font-size: 32px; line-height: 1; }
+.logo-group--compact .logo { font-size: 32px; line-height: 1.25; }   /* room for the g and the p */
 
 .logo-group--clickable:hover .logo {
   opacity: 0.8;

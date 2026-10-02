@@ -125,6 +125,9 @@ describe('the mark inside the app', () => {
     // …with the wordmark as tall as the mark beside it
     const mark = Number(app.match(/const size = compact \? (\d+) :/)![1])
     expect(css).toMatch(new RegExp(`\\.logo-group--compact \\.logo \\{ font-size: ${mark}px`))
+    // a line height of 1 cut the descenders of "g" and "p" off
+    const lh = Number(css.match(/\.logo-group--compact \.logo \{[^}]*line-height: ([\d.]+)/)![1])
+    expect(lh).toBeGreaterThanOrEqual(1.2)
   })
 
   it('stays off the start screen, where the wordmark carries it alone', () => {
