@@ -1021,7 +1021,18 @@ function AppInner() {
         <div className="left-panel">
           <div className="left-panel__header">
             <div className="left-panel__header-row">
-              <Brand onHome={handleClearGraph} title={t('nav.home')} />
+              <div
+                className="logo-group logo-group--clickable"
+                onClick={handleClearGraph}
+                title={t('nav.home')}
+              >
+                <img className="logo-mark" src="/icons/logo.svg" alt="" aria-hidden="true"
+                     width={48} height={48} />
+                <div className="logo-text">
+                  <span className="logo">Owlgraph</span>
+                  <span className="logo-sub">Ownership Graph</span>
+                </div>
+              </div>
               <div className="tab-toggle">
                 <button className={`tab-btn ${activeTab === 'graph' ? 'tab-btn--active' : ''}`} onClick={handleSearchTab} title={t('nav.graph')}><FiSearch /><span>{t('nav.graph')}</span></button>
                 <button className={`tab-btn ${activeTab === 'map' ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange('map')} title={t('nav.map')}><FiGlobe /><span>{t('nav.map')}</span></button>
@@ -1104,9 +1115,6 @@ function AppInner() {
           <>
             {activeTab === 'graph' && (
               <>
-                {/* The phone has no sidebar, so the logo sits at the very top,
-                    right above the search bar. */}
-                <Brand compact onHome={handleClearGraph} title={t('nav.home')} />
                 <div className="graph-topbar">
                   <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
                 </div>
@@ -1282,23 +1290,6 @@ function AppInner() {
           </button>
         </nav>
       )}
-    </div>
-  )
-}
-
-/** The logo: mark, wordmark and subtitle; a click goes home. The sidebar's on a
- *  desktop; `compact` is the phone's — centred above the search bar, mark and
- *  wordmark only (no subtitle). */
-export function Brand({ onHome, title, compact = false }: { onHome: () => void; title: string; compact?: boolean }) {
-  const size = compact ? 32 : 48
-  return (
-    <div className={`logo-group logo-group--clickable${compact ? ' logo-group--compact' : ''}`}
-         onClick={onHome} title={title}>
-      <img className="logo-mark" src="/icons/logo.svg" alt="" aria-hidden="true" width={size} height={size} />
-      <div className="logo-text">
-        <span className="logo">Owlgraph</span>
-        {!compact && <span className="logo-sub">Ownership Graph</span>}
-      </div>
     </div>
   )
 }
