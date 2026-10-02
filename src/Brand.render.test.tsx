@@ -18,7 +18,7 @@ describe('Brand — the logo, in the sidebar and above the phone\'s search bar',
     expect(onHome).toHaveBeenCalledTimes(1)
   })
 
-  it('is smaller on a phone', () => {
+  it('is smaller on a phone, and only mark and wordmark: no subtitle', () => {
     const { container, rerender } = render(<Brand onHome={() => {}} title="Home" />)
     const mark = () => container.querySelector('img.logo-mark') as HTMLImageElement
     expect(mark().getAttribute('width')).toBe('48')
@@ -26,5 +26,7 @@ describe('Brand — the logo, in the sidebar and above the phone\'s search bar',
     rerender(<Brand compact onHome={() => {}} title="Home" />)
     expect(mark().getAttribute('width')).toBe('32')
     expect(container.querySelector('.logo-group--compact')).not.toBeNull()
+    expect(screen.getByText('Owlgraph')).toBeInTheDocument()
+    expect(screen.queryByText('Ownership Graph')).toBeNull()
   })
 })

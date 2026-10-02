@@ -1287,7 +1287,8 @@ function AppInner() {
 }
 
 /** The logo: mark, wordmark and subtitle; a click goes home. The sidebar's on a
- *  desktop; `compact` is the phone's, a slim row above the search bar. */
+ *  desktop; `compact` is the phone's — centred above the search bar, mark and
+ *  wordmark only (no subtitle). */
 export function Brand({ onHome, title, compact = false }: { onHome: () => void; title: string; compact?: boolean }) {
   const size = compact ? 32 : 48
   return (
@@ -1296,7 +1297,7 @@ export function Brand({ onHome, title, compact = false }: { onHome: () => void; 
       <img className="logo-mark" src="/icons/logo.svg" alt="" aria-hidden="true" width={size} height={size} />
       <div className="logo-text">
         <span className="logo">Owlgraph</span>
-        <span className="logo-sub">Ownership Graph</span>
+        {!compact && <span className="logo-sub">Ownership Graph</span>}
       </div>
     </div>
   )

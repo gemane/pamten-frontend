@@ -703,12 +703,13 @@ body {
    bar's own background so the two read as one header. */
 .logo-group--compact {
   gap: 9px;
+  justify-content: center;
   padding: 8px 12px 0;
   background: rgba(10, 15, 26, 0.97);
   flex-shrink: 0;
 }
-.logo-group--compact .logo     { font-size: 20px; }
-.logo-group--compact .logo-sub { font-size: 11px; }
+/* the wordmark as tall as the mark beside it (32 px, see Brand) */
+.logo-group--compact .logo { font-size: 32px; line-height: 1; }
 
 .logo-group--clickable:hover .logo {
   opacity: 0.8;

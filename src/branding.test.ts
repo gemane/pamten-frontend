@@ -119,6 +119,12 @@ describe('the mark inside the app', () => {
     // …and the sidebar uses the same component, not a second copy of the markup
     expect(app.match(/<Brand /g)).toHaveLength(2)
     expect(app.match(/className="logo-mark"/g)).toHaveLength(1)
+    // centred on the phone
+    const css = readFileSync(join(__dirname, 'index.css'), 'utf8')
+    expect(css).toMatch(/\.logo-group--compact \{[^}]*justify-content: center/)
+    // …with the wordmark as tall as the mark beside it
+    const mark = Number(app.match(/const size = compact \? (\d+) :/)![1])
+    expect(css).toMatch(new RegExp(`\\.logo-group--compact \\.logo \\{ font-size: ${mark}px`))
   })
 
   it('stays off the start screen, where the wordmark carries it alone', () => {
