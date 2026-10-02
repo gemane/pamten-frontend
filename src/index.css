@@ -4309,3 +4309,55 @@ select.graph-filters__select {
   .graph-action-btn--clear .graph-action-btn__label { display: none; }
   .graph-action-btn--clear { padding: 0; width: 32px; height: 32px; justify-content: center; }
 }
+
+/* ── The three bars in violet ──────────────────────────────
+   The top (logo, navigation, search), the Overview/Timeline bar and the
+   phone's footer were the panel's own colour — bars only by their hairlines.
+   One violet makes them the frame around the content: a deep one with light
+   labels in the dark theme, lavender with dark labels in the light theme.
+   (A medium violet with white labels was tried for the light theme: too
+   heavy, and the logo's mark needed a white tile to survive on it.)
+
+   Each selector twice — bare and under the light theme — because the older
+   light-theme rules for these bars are more specific than a bare selector. */
+:root {
+  --bar-bg: #322a63;
+  --bar-border: #463c85;
+  --bar-text: #cdc7ea;               /* inactive labels: 8:1 on the deep violet */
+  --bar-active: #ffffff;             /* the active one: white, bold and underlined */
+  --bar-hover: #ffffff;
+  --bar-hover-bg: rgba(255, 255, 255, 0.10);
+}
+[data-theme="light"] {
+  --bar-bg: #cfc4f0;
+  --bar-border: #b3a5e3;
+  --bar-text: #3b3558;               /* 7:1 on the lavender */
+  --bar-active: #4527a0;             /* deep violet, bold and underlined */
+  --bar-hover: #1a202c;
+  --bar-hover-bg: rgba(69, 39, 160, 0.10);
+}
+.left-panel__header, [data-theme="light"] .left-panel__header,
+.graph-topbar, [data-theme="light"] .graph-topbar,
+.panel-tabs, [data-theme="light"] .panel-tabs,
+.app-bottom-nav, [data-theme="light"] .app-bottom-nav { background: var(--bar-bg); }
+.left-panel__header, [data-theme="light"] .left-panel__header,
+.panel-tabs, [data-theme="light"] .panel-tabs { border-bottom-color: var(--bar-border); }
+.graph-topbar, [data-theme="light"] .graph-topbar { border-color: var(--bar-border); }
+.app-bottom-nav, [data-theme="light"] .app-bottom-nav { border-top-color: var(--bar-border); }
+.tab-btn, [data-theme="light"] .tab-btn,
+.tab-toggle .tab-btn, [data-theme="light"] .tab-toggle .tab-btn,
+.panel-tab, [data-theme="light"] .panel-tab,
+.bottom-nav-btn, [data-theme="light"] .bottom-nav-btn,
+.left-panel__header .logo-sub, [data-theme="light"] .left-panel__header .logo-sub { color: var(--bar-text); }
+.tab-btn:hover, [data-theme="light"] .tab-btn:hover,
+.tab-toggle .tab-btn:hover, [data-theme="light"] .tab-toggle .tab-btn:hover,
+.panel-tab:hover, [data-theme="light"] .panel-tab:hover,
+.bottom-nav-btn:hover, [data-theme="light"] .bottom-nav-btn:hover { color: var(--bar-hover); }
+.tab-toggle .tab-btn:hover, [data-theme="light"] .tab-toggle .tab-btn:hover { background: var(--bar-hover-bg); }
+.tab-toggle .tab-btn.tab-btn--active, [data-theme="light"] .tab-toggle .tab-btn.tab-btn--active,
+.tab-toggle .tab-btn.tab-btn--active:hover, [data-theme="light"] .tab-toggle .tab-btn.tab-btn--active:hover,
+.panel-tab--active, [data-theme="light"] .panel-tab--active,
+.bottom-nav-btn--active, [data-theme="light"] .bottom-nav-btn--active { color: var(--bar-active); font-weight: 700; }
+.tab-toggle .tab-btn.tab-btn--active, [data-theme="light"] .tab-toggle .tab-btn.tab-btn--active,
+.tab-toggle .tab-btn.tab-btn--active:hover, [data-theme="light"] .tab-toggle .tab-btn.tab-btn--active:hover,
+.panel-tab--active, [data-theme="light"] .panel-tab--active { border-bottom-color: var(--bar-active); }
