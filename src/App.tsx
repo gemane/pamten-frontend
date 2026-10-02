@@ -1141,7 +1141,7 @@ function AppInner() {
                     allLevels={allLevels}
                     onAllLevelsChange={handleAllLevelsChange}
                     asOf={asOf}
-                    onAsOfClear={() => handleAsOfChange(null)}
+                    onAsOfChange={handleAsOfChange}
                     country={searchCountry}
                     onCountryChange={setSearchCountry}
                     countries={searchCountries}
@@ -1266,7 +1266,7 @@ function AppInner() {
                     allLevels={allLevels}
                     onAllLevelsChange={handleAllLevelsChange}
                     asOf={asOf}
-                    onAsOfClear={() => handleAsOfChange(null)}
+                    onAsOfChange={handleAsOfChange}
                     country={searchCountry}
                     onCountryChange={setSearchCountry}
                     countries={searchCountries}

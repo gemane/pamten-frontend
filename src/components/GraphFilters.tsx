@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiSliders, FiX, FiChevronDown } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
-import { asOfYear } from '../utils/asOf'
+import { asOfFromYear, asOfYear } from '../utils/asOf'
+import { getHistory } from '../services/api'
 import { DEFAULT_STAKE, STAKE_FILTERS, filterLabel, type StakeFilter } from './GraphStakeFilter'
 
 /**
@@ -29,10 +30,26 @@ interface GraphFiltersProps {
   allLevels: boolean
   onAllLevelsChange?: (on: boolean) => void
   asOf: string | null
-  onAsOfClear?: () => void
+  /** A year chosen (as its 31 December) or null = back to the present. */
+  onAsOfChange?: (asOf: string | null) => void
+  /** The company at the centre: its dated relationships say how far back the
+   *  year list goes. */
+  centerId?: string | null
   country: string
   onCountryChange?: (country: string) => void
   countries: { country: string; count: number }[]
+}
+
+/** How far back the year list goes when the centre's history says nothing. */
+export const DEFAULT_YEARS_BACK = 25
+
+/** The years on offer, newest first: from this year back to the earliest year
+ *  the centre's dated relationships mention — every year in between too, since
+ *  the graph can be shown as of any of them, not only those something began in. */
+export function yearOptions(dates: (string | null | undefined)[], thisYear: number): number[] {
+  const years = dates.map(d => Number((d ?? '').slice(0, 4))).filter(y => y > 1000 && y <= thisYear)
+  const first = years.length ? Math.min(...years) : thisYear - DEFAULT_YEARS_BACK
+  return Array.from({ length: thisYear - first + 1 }, (_, i) => thisYear - i)
 }
 
 const PHONE_WIDTH = 640      // the stylesheet's phone breakpoint
@@ -50,7 +67,7 @@ export function activeFilterCount(
 
 export default function GraphFilters(props: GraphFiltersProps) {
   const { hasGraph, stake, onStakeChange, stated, total, allLevels, onAllLevelsChange,
-          asOf, onAsOfClear, country, onCountryChange, countries } = props
+          asOf, onAsOfChange, centerId, country, onCountryChange, countries } = props
   const { t, i18n } = useTranslation()
   const [open, setOpen] = useState(false)
   const [countryOpen, setCountryOpen] = useState(false)
@@ -81,6 +98,26 @@ export default function GraphFilters(props: GraphFiltersProps) {
     }
   }, [open])
   useEffect(() => { if (!open) { setCountryOpen(false); setCountryQuery('') } }, [open])
+
+  // The year list, fetched when the panel is first opened for a centre: from
+  // its history (what the Timeline tab shows). A centre without one — a person,
+  // a failed request — gets the default span.
+  const thisYear = new Date().getFullYear()
+  const [years, setYears] = useState<{ for: string; list: number[] } | null>(null)
+  useEffect(() => {
+    if (!open || !hasGraph || !centerId || years?.for === centerId) return
+    let stale = false
+    const done = (dates: (string | null | undefined)[]) => {
+      if (!stale) setYears({ for: centerId, list: yearOptions(dates, thisYear) })
+    }
+    getHistory(centerId)
+      .then(({ data }) => done((data as { since?: string | null; until?: string | null }[])
+        .flatMap(e => [e.since, e.until])))
+      .catch(() => done([]))
+    return () => { stale = true }
+  }, [open, hasGraph, centerId, years, thisYear])
+  const yearList = years && years.for === centerId ? years.list : yearOptions([], thisYear)
+  const chosen = asOf ? Number(asOfYear(asOf)) : null
 
   const count = activeFilterCount(props)
   const year = hasGraph && asOf ? asOfYear(asOf) : null
@@ -153,23 +190,36 @@ export default function GraphFilters(props: GraphFiltersProps) {
             </section>
           )}
 
-          {hasGraph && (
+          {hasGraph && onAsOfChange && (
             <section className="graph-filters__row">
-              <h4 className="graph-filters__label">{t('graph.filtersYear')}</h4>
+              <h4 className="graph-filters__label" id="graph-filters-year">{t('graph.filtersYear')}</h4>
+              <div className="graph-filters__value">
+                <select
+                  className="graph-filters__select" aria-labelledby="graph-filters-year"
+                  value={chosen ?? ''}
+                  onChange={e => {
+                    onAsOfChange(e.target.value ? asOfFromYear(e.target.value) : null)
+                    setOpen(false)
+                  }}
+                >
+                  <option value="">{t('graph.filtersPresent')}</option>
+                  {/* a year from a shared link that the list does not reach stays selectable */}
+                  {chosen && !yearList.includes(chosen) && <option value={chosen}>{chosen}</option>}
+                  {yearList.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                {asOf && (
+                  <button type="button" className="graph-filters__clear"
+                          onClick={() => { onAsOfChange(null); setOpen(false) }}
+                          title={t('asOf.clear')} aria-label={t('asOf.clear')}>
+                    <FiX />
+                  </button>
+                )}
+              </div>
               {asOf ? (
-                <>
-                  <div className="graph-filters__value" role="status">
-                    <span>{t('asOf.chip', { year: asOfYear(asOf) })}</span>
-                    <button type="button" className="graph-filters__clear" onClick={() => { onAsOfClear?.(); setOpen(false) }}
-                            title={t('asOf.clear')} aria-label={t('asOf.clear')}>
-                      <FiX />
-                    </button>
-                  </div>
-                  <p className="graph-filters__note">
-                    <span className="graph-filters__swatch" aria-hidden="true" />
-                    {t('asOf.legend')}
-                  </p>
-                </>
+                <p className="graph-filters__note" role="status">
+                  <span className="graph-filters__swatch" aria-hidden="true" />
+                  {t('asOf.legend')}
+                </p>
               ) : (
                 <p className="graph-filters__note">{t('graph.filtersYearHint')}</p>
               )}

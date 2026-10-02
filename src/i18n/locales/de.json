@@ -88,7 +88,8 @@
     "filtersActive_one": "{{count}} Filter aktiv",
     "filtersActive_other": "{{count}} Filter aktiv",
     "filtersYear": "Jahr",
-    "filtersYearHint": "Zeigt die Gegenwart. Klicken Sie im Reiter „Zeitverlauf“ auf ein Jahr, um den Graphen von damals zu sehen.",
+    "filtersPresent": "Gegenwart",
+    "filtersYearHint": "Der Graph zum Ende eines Jahres. Der Reiter „Zeitverlauf“ zeigt, was wann geschah.",
     "filtersCountry": "Suchen in"
   },
   "legend": {

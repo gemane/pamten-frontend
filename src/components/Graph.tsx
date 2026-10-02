@@ -678,7 +678,8 @@ interface GraphProps {
   onAllLevelsChange?: (on: boolean) => void
   /** The day the graph shows (time travel), YYYY-MM-DD; null = the present. */
   asOf?: string | null
-  onAsOfClear?: () => void
+  /** A year chosen (as its 31 December) or null = back to the present. */
+  onAsOfChange?: (asOf: string | null) => void
   /** The country the SEARCH is scoped to ('' = all), set in the Filters panel. */
   country?: string
   onCountryChange?: (country: string) => void
@@ -692,7 +693,7 @@ interface GraphProps {
 const NO_COUNTRIES: { country: string; count: number }[] = []
 
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, asOf = null, onAsOfClear, country = '', onCountryChange, countries = NO_COUNTRIES, focusedId = null, onNodeHover }: GraphProps,
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, asOf = null, onAsOfChange, country = '', onCountryChange, countries = NO_COUNTRIES, focusedId = null, onNodeHover }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
@@ -1052,7 +1053,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
                     stake={stakeFilter} onStakeChange={onStakeFilterChange}
                     stated={stakeCoverage.stated} total={stakeCoverage.total}
                     allLevels={allLevels} onAllLevelsChange={onAllLevelsChange}
-                    asOf={asOf} onAsOfClear={onAsOfClear}
+                    asOf={asOf} onAsOfChange={onAsOfChange} centerId={centerId}
                     country={country} onCountryChange={onCountryChange} countries={countries} />
 
       {tooltip && (

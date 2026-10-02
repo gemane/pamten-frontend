@@ -88,7 +88,8 @@
     "filtersActive_one": "{{count}} filter active",
     "filtersActive_other": "{{count}} filters active",
     "filtersYear": "Year",
-    "filtersYearHint": "Showing the present. Click a year in the Timeline tab to see the graph as it stood then.",
+    "filtersPresent": "Present",
+    "filtersYearHint": "The graph as it stood at the end of a year. The Timeline tab shows what happened when.",
     "filtersCountry": "Search in"
   },
   "legend": {

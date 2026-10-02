@@ -88,7 +88,8 @@
     "filtersActive_one": "{{count}} filtro activo",
     "filtersActive_other": "{{count}} filtros activos",
     "filtersYear": "Año",
-    "filtersYearHint": "Muestra el presente. Haga clic en un año en la pestaña «Cronología» para ver el grafo de entonces.",
+    "filtersPresent": "Presente",
+    "filtersYearHint": "El grafo tal como estaba al final de un año. La pestaña «Cronología» muestra qué ocurrió y cuándo.",
     "filtersCountry": "Buscar en"
   },
   "legend": {

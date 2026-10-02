@@ -4196,6 +4196,15 @@ a.source-item__name:hover { color: #4A90D9; }
   text-align: left;
   cursor: pointer;
 }
+/* The year: a native select — on a phone that is the system's own picker. */
+select.graph-filters__select {
+  display: block;
+  font-family: inherit;
+  font-size: 16px;                   /* below 16px iOS zooms the page on focus */
+  background: #1e2a45;
+  color-scheme: dark;
+}
+[data-theme="light"] select.graph-filters__select { background: #fff; color-scheme: light; }
 .graph-filters__clear {
   display: flex;
   align-items: center;
