@@ -15,6 +15,7 @@ import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
 import { FOCUS_ATTR, scrollingPanel, useGraphHoverHighlight } from '../utils/graphFocus'
+import { byStakeDesc } from '../utils/ordering'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
@@ -22,32 +23,9 @@ import { asOfYear, edgePresence, endedBy, rowPresence, startedAfter, type Tenure
 
 // Ordering helpers for the related-node lists (owners, subsidiaries, …), which
 // otherwise render in arbitrary backend order.
-// - byStakeDesc: largest ownership stake first (the most meaningful order for an
+// - byStakeDesc (utils/ordering, shared with the graph's tree): largest ownership stake first (the most meaningful order for an
 //   ownership map); rows with no known stake sort last, ties alphabetical.
 // - byName: plain A→Z, for people/relationships without a stake.
-export function byStakeDesc<T>(getStake: (x: T) => number | null | undefined,
-                               getName: (x: T) => string,
-                               getShares?: (x: T) => number | null | undefined) {
-  // Three tiers: rows with a percentage (desc), then rows that only know a
-  // share count (desc — a 13F holding in a company with no known shares
-  // outstanding is still bigger or smaller than its neighbours), then name.
-  // Percent and shares are never compared with each other: a percent needs a
-  // denominator and a bare count doesn't have one, so ordering across the two
-  // would be a guess dressed as a ranking.
-  return (a: T, b: T) => {
-    const sa = getStake(a), sb = getStake(b)
-    if (sa != null && sb != null && sa !== sb) return sb - sa
-    if (sa != null && sb == null) return -1
-    if (sa == null && sb != null) return 1
-    if (sa == null && sb == null) {
-      const ha = getShares?.(a), hb = getShares?.(b)
-      if (ha != null && hb != null && ha !== hb) return hb - ha
-      if (ha != null && hb == null) return -1
-      if (ha == null && hb != null) return 1
-    }
-    return getName(a).localeCompare(getName(b))
-  }
-}
 function byName<T>(getName: (x: T) => string) {
   return (a: T, b: T) => getName(a).localeCompare(getName(b))
 }

@@ -431,3 +431,43 @@ describe('a centred person: what they run sits in the tree with what they own', 
     expect([...routes.keys()]).toEqual(['c__owns__a'])
   })
 })
+
+describe('the tree is in the panel\'s order', () => {
+  /** The children of `parent` as the eye reads the tree: down each column, columns left to right. */
+  const readingOrder = (els: GraphElement[], center: string, parent: string) => {
+    const { positions, routes } = computeTreeLayout(els, center)
+    const kids = [...routes.keys()].filter(id => id.startsWith(`${parent}__owns__`)).map(id => id.split('__owns__')[1])
+    const left = (id: string) => Math.round(positions.get(id)!.x - nodeSize(els.find(e => e.data.id === id)!.data as { label: string }).w / 2)
+    return kids.sort((a, b) => left(a) - left(b) || positions.get(a)!.y - positions.get(b)!.y)
+  }
+  const labelled = (edges: [string, string, number | null][], labels: Record<string, string> = {}) => {
+    const ids = [...new Set(edges.flatMap(([s, t]) => [s, t]))]
+    return [
+      ...ids.map(id => ({ data: { id, label: labels[id] ?? id, nodeType: 'entity', raw: {} } }) as unknown as GraphElement),
+      ...edges.map(([s, t, pct]) => ({ data: { id: `${s}__owns__${t}`, source: s, target: t, label: '', edgeType: 'owns',
+                                               edgeDir: 'out', stakePct: pct } }) as unknown as GraphElement),
+    ]
+  }
+
+  it('alphabetical where no stake is stated — whatever order the elements arrive in, however wide the names', () => {
+    const names = ['Zeta Holdings International Limited', 'Alpha', 'Mu Media Pty Ltd', 'Beta Broadcasting Corporation of America',
+                   'Omega', 'Gamma Newspapers', 'Delta', 'Kappa Publishing Group Limited', 'Eta', 'Theta Digital']
+    const els = labelled(names.map((n, i) => ['c', `s${i}`, null]), Object.fromEntries(names.map((n, i) => [`s${i}`, n])))
+    const read = readingOrder(els, 'c', 'c').map(id => names[Number(id.slice(1))])
+    expect(read).toEqual([...names].sort((a, b) => a.localeCompare(b)))
+  })
+
+  it('largest stake first, unstated stakes last, names break ties — the list\'s rule', () => {
+    const els = labelled([['c', 'b', null], ['c', 'small', 5], ['c', 'a', null], ['c', 'big', 80], ['c', 'mid2', 40], ['c', 'mid1', 40]])
+    expect(readingOrder(els, 'c', 'c')).toEqual(['big', 'mid1', 'mid2', 'small', 'a', 'b'])
+  })
+
+  it('single companies still come before sub-branches, each group in the list\'s order', () => {
+    const els = labelled([['c', 'zbranch', 90], ['zbranch', 'x1', null], ['zbranch', 'x2', null],
+                          ['c', 'leaf2', 10], ['c', 'leaf1', 50], ['c', 'abranch', 20], ['abranch', 'y1', null]])
+    const { positions } = computeTreeLayout(els, 'c')
+    const xs = (id: string) => positions.get(id)!.x
+    expect(Math.max(xs('leaf1'), xs('leaf2'))).toBeLessThan(Math.min(xs('zbranch'), xs('abranch')))
+    expect(readingOrder(els, 'c', 'c').filter(id => id.startsWith('leaf'))).toEqual(['leaf1', 'leaf2'])
+  })
+})

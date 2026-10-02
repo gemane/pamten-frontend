@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byStakeDesc, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRow, googleSearchHref } from './NodePanel'
+import { formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRow, googleSearchHref } from './NodePanel'
+import { byStakeDesc } from '../utils/ordering'
 import type { Entity, Person } from '../types'
 
 type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }

@@ -45,6 +45,7 @@
  * smaller holding.
  */
 import type { GraphElement } from '../types'
+import { byStakeDesc } from './ordering'
 
 /** Left of every company: room for its column's trunk and the stub into it. */
 export const TREE_GUTTER = 34
@@ -232,6 +233,12 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
   // Children in element order (the profile's: largest stake first).
   const children = new Map<string, string[]>()
   const owned = new Set<string>()                    // placed by a holding, not only by a role
+  const rank = new Map<string, { stake: number | null; shares: number | null }>()   // of that holding
+  const name = new Map<string, string>()
+  for (const el of elements) if (!('source' in el.data)) name.set(el.data.id, String(el.data.label ?? ''))
+  // The panel's order (largest stake, then share count, then name): scrolling
+  // its list walks down the tree's columns one box after the next.
+  const likeTheList = byStakeDesc<string>(id => rank.get(id)?.stake, id => name.get(id) ?? '', id => rank.get(id)?.shares)
   const lineLabel = new Map<string, { role: string; holding: string; edge: string }>()
   const route = new Map<string, Route>()             // by child id
   const sizes = new Map<string, { w: number; h: number }>()
@@ -250,7 +257,10 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
     if (!('source' in d) || !placesFrom(d, centerId) || parent.get(d.target) !== d.source) continue
     if (!children.has(d.source)) children.set(d.source, [])
     if (!children.get(d.source)!.includes(d.target)) children.get(d.source)!.push(d.target)
-    if (d.edgeType === 'owns') owned.add(d.target)
+    if (d.edgeType === 'owns') {
+      owned.add(d.target)
+      rank.set(d.target, { stake: d.stakePct ?? null, shares: (d as { shares?: number | null }).shares ?? null })
+    }
     // one label per company: what the parent IS there (roles), then what it holds
     const said = lineLabel.get(d.target) ?? { role: '', holding: '', edge: d.id }
     if (d.edgeType === 'owns') { said.holding ||= String(d.label ?? ''); said.edge = d.id }
@@ -268,14 +278,16 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
   const cost = (w: number, h: number) => Math.max(w, h * TARGET_ASPECT)
 
   const box = (id: string): Box => {
-    // Narrow before wide (otherwise in the profile's order, largest stake
-    // first): a wide sub-branch placed first pushes its small siblings a
-    // whole branch-width away from their parent — Huatai sat 7,000 px from
-    // Chubb INA Holdings, behind INA Corporation's sub-tree.
+    // In the panel's order — so the box that lights up follows the list down a
+    // column instead of jumping about (sorted by box width, News Corp's 300
+    // direct subsidiaries lit up at random). Two things come before it:
+    // what a person owns before what they only run, and single companies
+    // before sub-branches, narrow branches before wide — a wide sub-branch
+    // placed first pushes its small siblings a whole branch-width away from
+    // their parent (Huatai sat 7,000 px from Chubb INA Holdings).
     const kids = (children.get(id) ?? []).map(k => ({ id: k, box: box(k), branch: children.has(k) }))
-      .map((k, i) => ({ k, i, roleOnly: owned.has(k.id) ? 0 : 1 }))
-      // …and what a person owns before what they only run
-      .sort((a, b) => a.roleOnly - b.roleOnly || a.k.box.width - b.k.box.width || a.i - b.i).map(x => x.k)
+      .map(k => ({ k, roleOnly: owned.has(k.id) ? 0 : 1, wide: k.branch ? k.box.width : 0 }))
+      .sort((a, b) => a.roleOnly - b.roleOnly || a.wide - b.wide || likeTheList(a.k.id, b.k.id)).map(x => x.k)
     const { w: w0, h: h0 } = size(id)
     const cellW = TREE_GUTTER + w0
     if (kids.length === 0) {
