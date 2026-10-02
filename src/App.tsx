@@ -158,6 +158,9 @@ function AppInner() {
   // Country list for the search filter — fetched once here (not in SearchBar) so it's
   // available whichever tab the app opens on, not only after the graph SearchBar mounts.
   const [searchCountries, setSearchCountries] = useState<{ country: string; count: number }[]>([])
+  // The country the search is scoped to ('' = all): chosen in the graph's Filters
+  // panel, used by the search bar — so it lives above both.
+  const [searchCountry, setSearchCountry] = useState<string>('')
   const [mapFlyTo,        setMapFlyTo]        = useState<{ center: [number, number]; zoom: number } | null>(null)
   const loadedIds          = useRef<Set<string>>(new Set())
   // On-demand enrichment: a monotonically-increasing token invalidates a stale phase-2
@@ -1116,7 +1119,7 @@ function AppInner() {
             {activeTab === 'graph' && (
               <>
                 <div className="graph-topbar">
-                  <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
+                  <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} country={searchCountry} onCountryChange={setSearchCountry} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
                 </div>
                 <div className="mobile-canvas">
                   {elements.length > 0 && <GraphLegend />}
@@ -1138,7 +1141,10 @@ function AppInner() {
                     allLevels={allLevels}
                     onAllLevelsChange={handleAllLevelsChange}
                     asOf={asOf}
-                    onAsOfClear={() => handleAsOfChange(null)}
+                    onAsOfChange={handleAsOfChange}
+                    country={searchCountry}
+                    onCountryChange={setSearchCountry}
+                    countries={searchCountries}
                     focusedId={graphFocusId}
                     onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />
@@ -1225,7 +1231,7 @@ function AppInner() {
           <>
             {activeTab === 'graph' && (
               <div className="graph-topbar">
-                <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} countries={searchCountries} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
+                <SearchBar ref={searchBarRef} onSelect={handleSearchSelect} selectedLabel={searchLabel} country={searchCountry} onCountryChange={setSearchCountry} onScrapeQuery={handleScrapeQuery} canScrape={userCanScrape} onRequestLogin={() => setShowAuth(true)} />
               </div>
             )}
             <div className="graph-area">
@@ -1260,7 +1266,10 @@ function AppInner() {
                     allLevels={allLevels}
                     onAllLevelsChange={handleAllLevelsChange}
                     asOf={asOf}
-                    onAsOfClear={() => handleAsOfChange(null)}
+                    onAsOfChange={handleAsOfChange}
+                    country={searchCountry}
+                    onCountryChange={setSearchCountry}
+                    countries={searchCountries}
                     focusedId={graphFocusId}
                     onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />

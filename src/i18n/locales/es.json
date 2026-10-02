@@ -53,7 +53,8 @@
     "alsoScrape": "¿No está? Buscar \"{{query}}\" en las fuentes",
     "scrapeSignIn": "Inicia sesión y verifica tu correo para buscar en fuentes externas.",
     "noResultsScrapeIn": "¿Sin coincidencias — buscar \"{{query}}\" en fuentes de {{country}}?",
-    "alsoScrapeIn": "¿No es esta? Buscar \"{{query}}\" en fuentes de {{country}}"
+    "alsoScrapeIn": "¿No es esta? Buscar \"{{query}}\" en fuentes de {{country}}",
+    "countryChipClear": "Buscando en {{country}} — haga clic para buscar en todos los países"
   },
   "scrape": {
     "title": "Buscando {{company}} en las fuentes…",
@@ -81,7 +82,15 @@
     "levelsDirect": "Directas",
     "levelsAll": "Todos los niveles",
     "levelsDirectHint": "Solo las empresas en propiedad directa",
-    "levelsAllHint": "El árbol completo: todos los niveles bajo esta empresa"
+    "levelsAllHint": "El árbol completo: todos los niveles bajo esta empresa",
+    "filters": "Filtros",
+    "filtersWithYear": "Filtros · {{year}}",
+    "filtersActive_one": "{{count}} filtro activo",
+    "filtersActive_other": "{{count}} filtros activos",
+    "filtersYear": "Año",
+    "filtersPresent": "Presente",
+    "filtersYearHint": "El grafo tal como estaba al final de un año. La pestaña «Cronología» muestra qué ocurrió y cuándo.",
+    "filtersCountry": "Buscar en"
   },
   "legend": {
     "nodes": "Nodos",

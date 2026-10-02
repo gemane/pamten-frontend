@@ -53,7 +53,8 @@
     "alsoScrape": "Nicht dabei? Quellen nach \"{{query}}\" durchsuchen",
     "scrapeSignIn": "Melde dich an und bestätige deine E-Mail, um die Quellen zu durchsuchen.",
     "noResultsScrapeIn": "Kein Treffer — Quellen in {{country}} nach \"{{query}}\" durchsuchen?",
-    "alsoScrapeIn": "Nicht die richtige? Quellen in {{country}} nach \"{{query}}\" durchsuchen"
+    "alsoScrapeIn": "Nicht die richtige? Quellen in {{country}} nach \"{{query}}\" durchsuchen",
+    "countryChipClear": "Suche in {{country}} — klicken, um in allen Ländern zu suchen"
   },
   "scrape": {
     "title": "Quellen nach {{company}} durchsuchen…",
@@ -81,7 +82,15 @@
     "levelsDirect": "Direkt",
     "levelsAll": "Alle Ebenen",
     "levelsDirectHint": "Nur die direkt gehaltenen Unternehmen",
-    "levelsAllHint": "Der ganze Baum: jede Ebene unter diesem Unternehmen"
+    "levelsAllHint": "Der ganze Baum: jede Ebene unter diesem Unternehmen",
+    "filters": "Filter",
+    "filtersWithYear": "Filter · {{year}}",
+    "filtersActive_one": "{{count}} Filter aktiv",
+    "filtersActive_other": "{{count}} Filter aktiv",
+    "filtersYear": "Jahr",
+    "filtersPresent": "Gegenwart",
+    "filtersYearHint": "Der Graph zum Ende eines Jahres. Der Reiter „Zeitverlauf“ zeigt, was wann geschah.",
+    "filtersCountry": "Suchen in"
   },
   "legend": {
     "nodes": "Knoten",

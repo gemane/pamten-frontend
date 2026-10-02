@@ -5,10 +5,9 @@ import cytoscape from 'cytoscape'
 import type { EdgeData, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
-import GraphStakeFilter, { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
-import GraphLevelsToggle from './GraphLevelsToggle'
+import { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
+import GraphFilters from './GraphFilters'
 import { computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
-import GraphAsOfChip from './GraphAsOfChip'
 import { edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 
 export interface GraphHandle {
@@ -679,15 +678,22 @@ interface GraphProps {
   onAllLevelsChange?: (on: boolean) => void
   /** The day the graph shows (time travel), YYYY-MM-DD; null = the present. */
   asOf?: string | null
-  onAsOfClear?: () => void
+  /** A year chosen (as its 31 December) or null = back to the present. */
+  onAsOfChange?: (asOf: string | null) => void
+  /** The country the SEARCH is scoped to ('' = all), set in the Filters panel. */
+  country?: string
+  onCountryChange?: (country: string) => void
+  countries?: { country: string; count: number }[]
   /** Node whose row is in focus in the node panel — grown slightly (see applyNodeFocus). */
   focusedId?: string | null
   /** Called with the id of the node under the mouse, null when it leaves (see bindNodeHover). */
   onNodeHover?: (id: string | null) => void
 }
 
+const NO_COUNTRIES: { country: string; count: number }[] = []
+
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, asOf = null, onAsOfClear, focusedId = null, onNodeHover }: GraphProps,
+  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, asOf = null, onAsOfChange, country = '', onCountryChange, countries = NO_COUNTRIES, focusedId = null, onNodeHover }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
@@ -1016,8 +1022,9 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       {elements.length > 0 && (
         <div className="graph-actions">
           {onClear && (
-            <button className="graph-action-btn graph-action-btn--clear" onClick={onClear}>
-              <FiX /> {t('graph.clear')}
+            <button className="graph-action-btn graph-action-btn--clear" onClick={onClear}
+                    title={t('graph.clear')} aria-label={t('graph.clear')}>
+              <FiX /> <span className="graph-action-btn__label">{t('graph.clear')}</span>
             </button>
           )}
           {showNodeActions && (
@@ -1040,14 +1047,14 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         </div>
       )}
 
-      {elements.length > 0 && asOf && <GraphAsOfChip asOf={asOf} onClear={onAsOfClear} />}
-      {elements.length > 0 && (
-        <GraphStakeFilter value={stakeFilter} onChange={onStakeFilterChange}
-                          stated={stakeCoverage.stated} total={stakeCoverage.total} />
-      )}
-      {elements.length > 0 && onAllLevelsChange && (
-        <GraphLevelsToggle on={allLevels} onChange={onAllLevelsChange} />
-      )}
+      {/* One button for everything that decides WHAT is shown. Also without a
+          graph: the country scopes the search, which starts on the empty canvas. */}
+      <GraphFilters hasGraph={elements.length > 0}
+                    stake={stakeFilter} onStakeChange={onStakeFilterChange}
+                    stated={stakeCoverage.stated} total={stakeCoverage.total}
+                    allLevels={allLevels} onAllLevelsChange={onAllLevelsChange}
+                    asOf={asOf} onAsOfChange={onAsOfChange} centerId={centerId}
+                    country={country} onCountryChange={onCountryChange} countries={countries} />
 
       {tooltip && (
         <div className="graph-tooltip" style={{ left: tooltip.x + 14, top: tooltip.y + 14 }}>

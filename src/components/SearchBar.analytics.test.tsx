@@ -37,8 +37,8 @@ beforeEach(() => {
   mockReport.mockReset()
 })
 
-const show = (countries: { country: string; count: number }[] = []) =>
-  render(<SearchBar onSelect={vi.fn()} countries={countries} canScrape />)
+const show = (country = '') =>
+  render(<SearchBar onSelect={vi.fn()} country={country} canScrape />)
 
 describe('a search is reported once, when it settles', () => {
   it('reports NOTHING while the user is still typing', async () => {
@@ -87,9 +87,7 @@ describe('a search is reported once, when it settles', () => {
 
   it('carries the country when one is chosen', async () => {
     resolves([hit('e1', 'Alphabet GmbH')])
-    show([{ country: 'DE', count: 3 }])
-    await userEvent.click(screen.getByRole('button', { name: /All countries/i }))
-    await userEvent.click(await screen.findByText('Germany'))
+    show('DE')
     await type('alphabet')
     await userEvent.click(await screen.findByText('Alphabet GmbH'))
 
@@ -149,7 +147,7 @@ describe('measurement never gets in the way', () => {
     mockReport.mockImplementation(() => { throw new Error('offline') })
     resolves([hit('e1', 'Microsoft Corporation')])
     const onSelect = vi.fn()
-    render(<SearchBar onSelect={onSelect} countries={[]} canScrape />)
+    render(<SearchBar onSelect={onSelect} canScrape />)
     await type('microsoft')
 
     // The click must still select, even though reporting threw.
