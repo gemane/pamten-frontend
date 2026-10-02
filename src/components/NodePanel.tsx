@@ -1271,6 +1271,24 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         )}
       </div>
 
+      {/* Right under the facts at the top: the rest of them (collapsed), then who
+          founded it — both are about the company itself, before who holds what. */}
+      <DetailsSection entity={entity} hasOwners={owners.length > 0} />
+      {founders.length > 0 && (
+        <Section title={t('panel.foundedBy')} count={founders.length}>
+          {[...founders].sort(byName(f => f.person?.full_name ?? '')).map((f, i) => (
+            <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}
+              rel={relFromRole(f.role, {
+                     fromId: f.person.id, toId: entity.id,
+                     role: f.role?.role || 'Founder', label: f.person.full_name,
+                     sourceName: sourceName.get(f.role?.source_id ?? '') })}>
+              <span className="rel-item__name">{f.person.full_name}</span>
+              <CorroborationBadge rel={f.role} />
+            </RelRow>
+          ))}
+        </Section>
+      )}
+
       {/* Parties to a filing group. Their own section because membership is not
           ownership — they arrive over RELATED_TO, and the owners query cannot
           see them, which is how this section first shipped empty. */}
@@ -1388,21 +1406,6 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      {founders.length > 0 && (
-        <Section title={t('panel.foundedBy')} count={founders.length}>
-          {[...founders].sort(byName(f => f.person?.full_name ?? '')).map((f, i) => (
-            <RelRow key={i} node={personToNode(f.person)} onNavigate={onNavigate}
-              rel={relFromRole(f.role, {
-                     fromId: f.person.id, toId: entity.id,
-                     role: f.role?.role || 'Founder', label: f.person.full_name,
-                     sourceName: sourceName.get(f.role?.source_id ?? '') })}>
-              <span className="rel-item__name">{f.person.full_name}</span>
-              <CorroborationBadge rel={f.role} />
-            </RelRow>
-          ))}
-        </Section>
-      )}
-
       {tree && tree.nodes.length > 0 && (
         <SubsidiaryTreeList tree={tree} onNavigate={onNavigate} sourceName={sourceName} asOf={asOf} />
       )}
@@ -1488,7 +1491,6 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
         </Section>
       )}
 
-      <DetailsSection entity={entity} hasOwners={owners.length > 0} />
       {onReScrape && (
         <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} />
       )}

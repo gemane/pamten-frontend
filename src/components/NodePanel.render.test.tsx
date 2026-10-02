@@ -1863,3 +1863,41 @@ describe('"all levels" and the as-of day together', () => {
     expect(screen.getByText('Later Listed Ltd').closest('.rel-item')).toHaveClass('rel-item--unknown')
   })
 })
+
+describe('the order of the company panel: its own facts first', () => {
+  it('puts Details (collapsed) and Founded by right under the top facts, before who owns it', async () => {
+    const p = profile('e1', 'Acme Corp')
+    p.entity = { ...p.entity, legal_form: 'Limited company', founded: 1975 } as never
+    p.owners = [{ owner: { id: 'o1', name: 'Big Holder', type: 'company' } as never,
+                  relationship: { stake_percent: 60, source_id: 's1' } as never }]
+    p.subsidiaries = [{ entity: { id: 'c1', name: 'Child Ltd', type: 'company' } as never,
+                        relationship: { stake_percent: 100, source_id: 's1' } as never }]
+    p.executives = [
+      { person: { id: 'f1', full_name: 'Fay Founder' } as never, role: { role: 'Founder', source_id: 's1' } as never },
+      { person: { id: 'x1', full_name: 'Ed Exec' } as never, role: { role: 'CEO', source_id: 's1' } as never },
+    ]
+    mockProfile.mockResolvedValue({ data: p } as never)
+    mockSources.mockResolvedValue({ data: [] } as never)
+    const { container } = render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Fay Founder')
+
+    // a section's title, with or without its count pill ("Founded by" + "1")
+    const at = (title: string) => {
+      const hits = [...container.querySelectorAll('*')].filter(e => new RegExp(`^${title}\\d*$`).test((e.textContent ?? '').trim()))
+      expect(hits.length, title).toBeGreaterThan(0)
+      return hits[hits.length - 1] as Element          // the innermost
+    }
+    const before = (a: Element, b: Element) =>
+      expect(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const meta = container.querySelector('.panel-meta') as Element
+    const details = at('Details'), founded = at('Founded by'), owned = at('Owned by')
+    before(meta, details)
+    before(details, founded)
+    before(founded, owned)
+    before(owned, at('Subsidiaries'))
+    before(at('Subsidiaries'), at('Executives'))
+    // still collapsed: its rows are not rendered until it is opened
+    expect(details.closest('[aria-expanded]')?.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByText('Limited company')).toBeNull()
+  })
+})
