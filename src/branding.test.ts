@@ -106,7 +106,19 @@ describe('the mark inside the app', () => {
   })
 
   it('is sized in the markup, so the layout does not jump while it loads', () => {
-    expect(app).toMatch(/className="logo-mark"[\s\S]*?width=\{\d+\} height=\{\d+\}/)
+    // one component, two sizes: the sidebar's and the phone's compact row
+    expect(app).toMatch(/const size = compact \? \d+ : \d+/)
+    expect(app).toMatch(/className="logo-mark"[\s\S]*?width=\{size\} height=\{size\}/)
+  })
+
+  it('sits above the search bar on a phone, which has no sidebar to carry it', () => {
+    const mobile = app.slice(app.indexOf('{isMobile ? ('))
+    const brand = mobile.indexOf('<Brand compact'), search = mobile.indexOf('<SearchBar')
+    expect(brand).toBeGreaterThan(-1)
+    expect(brand).toBeLessThan(search)
+    // …and the sidebar uses the same component, not a second copy of the markup
+    expect(app.match(/<Brand /g)).toHaveLength(2)
+    expect(app.match(/className="logo-mark"/g)).toHaveLength(1)
   })
 
   it('stays off the start screen, where the wordmark carries it alone', () => {
