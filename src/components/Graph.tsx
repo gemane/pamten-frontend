@@ -572,6 +572,11 @@ function pickRandom(arr: string[], n: number): string[] {
 
 /** How much a node grows while its panel row is in focus — "slightly". */
 export const FOCUS_SCALE = 1.2
+/** …and how much darker it is drawn meanwhile (Cytoscape's `background-blacken`,
+ *  0 = its own colour, 1 = black). Twenty percent larger alone was easy to miss
+ *  among a column of same-coloured boxes; a shade darker makes it the one that
+ *  stands out, whatever its colour (company, person, group). */
+export const FOCUS_DARKEN = 0.28
 const FOCUS_BASE = '_focusBase'
 // Cytoscape's animation runtime accepts `spring(tension, friction)` (a
 // Runge-Kutta spring sized to the animation's duration) but its type
@@ -617,7 +622,7 @@ function growNode(n: cytoscape.CollectionReturnValue, animate: boolean): void {
   }
   const target = { padding: base.padding * FOCUS_SCALE, 'font-size': base.fontSize * FOCUS_SCALE,
                    'text-max-width': `${base.textMaxWidth * FOCUS_SCALE}px` }
-  n.style('z-index', 10)
+  n.style({ 'z-index': 10, 'background-blacken': FOCUS_DARKEN })
   if (animate) n.animate({ style: target, easing: FOCUS_SPRING, duration: 480 })
   else n.style(target)
 }
@@ -627,6 +632,9 @@ function releaseNode(n: cytoscape.CollectionReturnValue, animate: boolean): void
   const base = n.scratch(FOCUS_BASE) as FocusBase | undefined
   if (!base) return
   n.stop(true)
+  // its own colour back at once: only the box in focus is the darker one, not
+  // also the one still shrinking
+  n.removeStyle('background-blacken')
   const restore = () => {
     n.removeStyle('padding font-size text-max-width z-index')
     n.removeScratch(FOCUS_BASE)

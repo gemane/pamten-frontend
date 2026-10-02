@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import cytoscape from 'cytoscape'
-import { applyNodeFocus, bindNodeHover, buildStylesheet, FOCUS_SCALE } from './Graph'
+import { applyNodeFocus, bindNodeHover, buildStylesheet, FOCUS_DARKEN, FOCUS_SCALE } from './Graph'
 
 // A headless graph with the real stylesheet, so the base sizes the focus grows
 // from are the ones the app draws: 14px padding, 12px font, and an importance-
@@ -38,6 +38,31 @@ describe('applyNodeFocus (reduced motion: instant)', () => {
     expect(before.wrap).toBe(120)
     expect(after.wrap).toBeCloseTo(before.wrap * FOCUS_SCALE)
     expect(cy.getElementById('sub').numericStyle('z-index')).toBe(10)
+  })
+
+  it('draws the focused node a shade darker, and only that one', () => {
+    const cy = graph()
+    const dark = (id: string) => cy.getElementById(id).numericStyle('background-blacken')
+    expect(dark('sub')).toBe(0)
+    applyNodeFocus(cy, null, 'sub', false)
+    expect(dark('sub')).toBe(FOCUS_DARKEN)
+    expect(FOCUS_DARKEN).toBeGreaterThan(0.15)           // visible…
+    expect(FOCUS_DARKEN).toBeLessThan(0.4)               // …but "slightly": the label must stay readable
+    expect(dark('own')).toBe(0)
+    // focus moves on: the one left behind has its own colour back at once
+    applyNodeFocus(cy, 'sub', 'own', false)
+    expect(dark('sub')).toBe(0)
+    expect(dark('own')).toBe(FOCUS_DARKEN)
+    applyNodeFocus(cy, 'own', null, false)
+    expect(dark('own')).toBe(0)
+  })
+
+  it('the node being released is not dark while it shrinks (animated)', () => {
+    const cy = graph()
+    applyNodeFocus(cy, null, 'sub', true)
+    expect(cy.getElementById('sub').numericStyle('background-blacken')).toBe(FOCUS_DARKEN)
+    applyNodeFocus(cy, 'sub', null, true)
+    expect(cy.getElementById('sub').numericStyle('background-blacken')).toBe(0)
   })
 
   it('grows an importance-sized owner from ITS size, not the default', () => {
