@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
+import { FiSearch, FiX } from 'react-icons/fi'
 import { search, reportEvent } from '../services/api'
 import { countryName } from '../utils/isoCountries'
 import type { SearchResult } from '../types'
@@ -9,9 +9,11 @@ interface SearchBarProps {
   onSelect: (result: SearchResult) => void
   selectedLabel?: string   // set by parent when navigating programmatically
   placeholder?: string
-  // Fetched once at the App level (tab-independent) so the country filter is available
-  // from the start, not only after the graph-tab SearchBar first mounts.
-  countries: { country: string; count: number }[]
+  /** The country the search is scoped to ('' = all). Chosen in the graph's
+   *  Filters panel; shown here as a chip, because a scope nobody can see is a
+   *  search that silently finds less. */
+  country?: string
+  onCountryChange?: (country: string) => void
   // When a search finds nothing in the DB, verified users can scrape the typed query.
   // The chosen country travels with it: the sources have no idea one was picked
   // unless they are told, and each answers "Alphabet" with the American company.
@@ -46,7 +48,7 @@ export interface SearchBarHandle {
 }
 
 const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar(
-  { onSelect, selectedLabel, countries, onScrapeQuery, canScrape, onRequestLogin }: SearchBarProps,
+  { onSelect, selectedLabel, country = '', onCountryChange, onScrapeQuery, canScrape, onRequestLogin }: SearchBarProps,
   ref,
 ) {
   const { t, i18n } = useTranslation()
@@ -54,13 +56,9 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
   const [results, setResults]       = useState<SearchResult[]>([])
   const [open, setOpen]             = useState<boolean>(false)
   const [loading, setLoading]       = useState<boolean>(false)
-  const [country, setCountry]       = useState<string>('')
-  const [countryQuery, setCountryQuery] = useState<string>('')
-  const [countryOpen, setCountryOpen]   = useState<boolean>(false)
   const timer      = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapRef    = useRef<HTMLDivElement>(null)
   const inputRef   = useRef<HTMLInputElement>(null)
-  const countryRef = useRef<HTMLDivElement>(null)
   const skipQuery  = useRef<string | null>(null)
   const reqSeq     = useRef<number>(0)
   /**
@@ -72,15 +70,6 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
    * a sharper picture of someone's typing than of their intent.
    */
   const pending    = useRef<{ query: string; country: string; hits: number } | null>(null)
-
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (countryRef.current && !countryRef.current.contains(e.target as Node))
-        setCountryOpen(false)
-    }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [])
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -212,10 +201,6 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
     )
   }
 
-  const filteredCountries = countries.filter(c =>
-    countryName(c.country, i18n.language).toLowerCase().includes(countryQuery.toLowerCase())
-  )
-
   /**
    * The row that lets a user start a fresh source search for what they typed.
    *
@@ -286,6 +271,17 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
           onChange={e => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
         />
+        {/* The scope, where the search is typed: chosen in the Filters panel,
+            removable right here. */}
+        {country && (
+          <button type="button" className="search-country-chip"
+                  title={t('search.countryChipClear', { country: countryName(country, i18n.language) })}
+                  aria-label={t('search.countryChipClear', { country: countryName(country, i18n.language) })}
+                  onMouseDown={e => { e.preventDefault(); onCountryChange?.('') }}>
+            <span>{countryName(country, i18n.language)}</span>
+            <FiX aria-hidden="true" />
+          </button>
+        )}
         {loading && <span className="search-spinner" />}
         {query && !loading && (
           <button className="search-clear-btn" onMouseDown={handleClear} tabIndex={-1} title="Clear">
@@ -293,55 +289,6 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
           </button>
         )}
       </div>
-
-      {countries.length > 0 && (
-        <div className="country-filter" ref={countryRef}>
-          <button
-            className={`country-filter__toggle ${country ? 'country-filter__toggle--active' : ''}`}
-            onClick={() => { setCountryOpen(o => !o); setCountryQuery('') }}
-            type="button"
-          >
-            <span className="country-filter__label">
-              {country ? countryName(country, i18n.language) : t('search.allCountries')}
-            </span>
-            {country
-              ? <FiX className="country-filter__icon" onMouseDown={e => { e.stopPropagation(); setCountry(''); setCountryOpen(false) }} />
-              : <FiChevronDown className="country-filter__icon" />
-            }
-          </button>
-
-          {countryOpen && (
-            <div className="country-filter__dropdown">
-              <input
-                className="country-filter__search"
-                type="text"
-                placeholder={t('search.filterCountries')}
-                value={countryQuery}
-                onChange={e => setCountryQuery(e.target.value)}
-                autoFocus
-              />
-              <ul className="country-filter__list">
-                <li
-                  className={`country-filter__item ${!country ? 'country-filter__item--active' : ''}`}
-                  onMouseDown={() => { setCountry(''); setCountryOpen(false) }}
-                >
-                  {t('search.allCountries')}
-                </li>
-                {filteredCountries.map(c => (
-                  <li
-                    key={c.country}
-                    className={`country-filter__item ${country === c.country ? 'country-filter__item--active' : ''}`}
-                    onMouseDown={() => { setCountry(c.country); setCountryOpen(false) }}
-                  >
-                    <span>{countryName(c.country, i18n.language)}</span>
-                    <span className="country-filter__count">{c.count.toLocaleString()}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
 
       {open && results.length > 0 && (
         <ul className="search-dropdown">

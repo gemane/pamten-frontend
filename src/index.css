@@ -763,8 +763,6 @@ body {
   border-bottom-color: #4A90D9;
 }
 
-
-
 /* Moderator flag-queue FAB, stacked above the share FAB (defined after so it wins). */
 
 .tab-btn {
@@ -945,17 +943,6 @@ body {
 .graph-topbar .search-icon  { font-size: 19px; }
 .graph-topbar .search-input { font-size: 16px; }
 
-/* Match the roomier size on the country filter so it lines up with the search box */
-.graph-topbar .country-filter__toggle {
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 15px;
-}
-.graph-topbar .country-filter__icon   { font-size: 16px; }
-.graph-topbar .country-filter__search { padding: 10px 14px; font-size: 15px; }
-.graph-topbar .country-filter__item   { padding: 8px 14px; font-size: 14px; }
-.graph-topbar .country-filter__count  { font-size: 12px; }
-
 .mobile-toggle--topbar {
   display: none;
   align-items: center;
@@ -1117,83 +1104,6 @@ body {
 .search-item__country {
   font-size: 11px;
   color: #8892a4;
-}
-
-/* ── Country filter ────────────────────────────────────── */
-.country-filter {
-  position: relative;
-  margin: 6px 0 0;
-}
-
-.country-filter__toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  background: #1e2a45;
-  border: 1px solid #2a3a5a;
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  color: #8892a4;
-  font-size: 12px;
-  text-align: left;
-  transition: border-color 0.15s, color 0.15s;
-}
-.country-filter__toggle:hover { border-color: #4A90D9; color: #c8d0dc; }
-.country-filter__toggle--active { border-color: #4A90D9; color: #eaeaea; }
-
-.country-filter__label { flex: 1; }
-.country-filter__icon  { font-size: 13px; flex-shrink: 0; }
-
-.country-filter__dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0; right: 0;
-  background: #1a2540;
-  border: 1px solid #2a3a5a;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  z-index: 60;
-  overflow: hidden;
-}
-
-.country-filter__search {
-  width: 100%;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #2a3a5a;
-  outline: none;
-  color: #eaeaea;
-  font-size: 12px;
-  padding: 8px 12px;
-  box-sizing: border-box;
-}
-.country-filter__search::placeholder { color: #4a5568; }
-
-.country-filter__list {
-  list-style: none;
-  margin: 0; padding: 4px 0;
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-.country-filter__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  font-size: 12px;
-  color: #c8d0dc;
-  cursor: pointer;
-  transition: background 0.12s;
-}
-.country-filter__item:hover          { background: #253454; }
-.country-filter__item--active        { color: #4A90D9; background: rgba(74,144,217,0.08); }
-
-.country-filter__count {
-  font-size: 10px;
-  color: #4a5568;
 }
 
 /* ── Node panel ────────────────────────────────────────── */
@@ -2902,9 +2812,7 @@ a.source-item__name:hover { color: #4A90D9; }
 /* A <button> does not inherit the page's font — these fell back to the
    browser's Arial while everything around them used the app's type. */
 .graph-action-btn,
-.graph-filter__toggle,
-.graph-legend__toggle,
-.graph-filter__option { font-family: inherit; }
+.graph-legend__toggle { font-family: inherit; }
 
 .graph-action-btn {
   display: flex;
@@ -2942,18 +2850,7 @@ a.source-item__name:hover { color: #4A90D9; }
 /* ── Graph legend ───────────────────────────────────────── */
 .graph-legend {
   position: absolute;
-  /* Below the stake filter, which owns the top of this corner: 12 + 32 + 6. */
-  top: 50px;
-  right: 12px;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-.graph-filter {
-  position: absolute;
+  /* The corner itself; the Filters button sits to its left. */
   top: 12px;
   right: 12px;
   z-index: 999;
@@ -2962,121 +2859,10 @@ a.source-item__name:hover { color: #4A90D9; }
   align-items: flex-end;
   gap: 6px;
 }
-
-/* Which subsidiaries are shown: on the left, under Clear, in two lines — the
-   word it is about, then the two choices as one segmented button: edge to
-   edge inside the box, a line between them, no padding around. */
-.graph-levels {
-  position: absolute;
-  top: 52px;
-  left: 12px;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;                 /* the segments take the box's rounded corners */
-  background: rgba(20, 20, 40, 0.85);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
-  font-size: 12px;
-}
-/* The same type as the action buttons above it (Clear, Expand…): 12px, 600. */
-.graph-levels__label {
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #8892a4;
-  white-space: nowrap;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.graph-levels__options { display: flex; }
-.graph-levels__option {
-  flex: 1;
-  padding: 5px 10px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: #8892a4;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.graph-levels__option + .graph-levels__option { border-left: 1px solid rgba(255,255,255,0.1); }
-.graph-levels__option:hover { background: rgba(255,255,255,0.08); color: #eaeaea; }
-.graph-levels__option--active,
-.graph-levels__option--active:hover {
-  background: #4A90D9;
-  color: #fff;
-  cursor: default;
-}
-[data-theme="light"] .graph-levels { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); }
-[data-theme="light"] .graph-levels__label { color: #4a5568; border-bottom-color: rgba(0,0,0,0.12); }
-[data-theme="light"] .graph-levels__option { color: #4a5568; }
-[data-theme="light"] .graph-levels__option + .graph-levels__option { border-left-color: rgba(0,0,0,0.12); }
-[data-theme="light"] .graph-levels__option:hover { background: rgba(0,0,0,0.06); color: #1a202c; }
-[data-theme="light"] .graph-levels__option--active,
-[data-theme="light"] .graph-levels__option--active:hover { background: #4A90D9; color: #fff; }
-/* Time travel: the year the canvas shows, the way back, the meaning of the
-   dimmed lines. Same glass as the filter button beside it. */
-.graph-asof {
-  position: absolute;
-  top: 12px;
-  right: 84px;            /* left of the stake-filter button (which is wider than its icon), keeping its corner */
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-.graph-asof__chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 4px 0 10px;
-  height: 32px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #e8e8f0;
-  background: rgba(74, 144, 217, 0.28);
-  border: 1px solid rgba(74, 144, 217, 0.6);
-  border-radius: 8px;
-}
-.graph-asof__clear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-.graph-asof__clear:hover { background: rgba(255,255,255,0.15); }
-.graph-asof__legend {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 220px;
-  font-size: 10px;
-  line-height: 1.3;
-  text-align: right;
-  color: #8892a4;
-}
-.graph-asof__swatch {
-  flex: none;
-  width: 18px;
-  border-top: 2px dashed rgba(136,146,164,0.7);
-}
-[data-theme="light"] .graph-asof__chip { color: #1f2937; background: rgba(74,144,217,0.16); }
-[data-theme="light"] .graph-asof__legend { color: #4a5568; }
 
 /* The filter button is the ⓘ's twin — same size, same glass, same corner — so
    one definition covers both and they cannot drift apart. */
-.graph-legend__toggle,
-.graph-filter__toggle {
+.graph-legend__toggle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3090,60 +2876,7 @@ a.source-item__name:hover { color: #4A90D9; }
   backdrop-filter: blur(6px);
   transition: color 0.15s, border-color 0.15s;
 }
-.graph-legend__toggle:hover,
-.graph-filter__toggle:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
-
-/* Wider than the ⓘ once a band is chosen: it carries the band's label. */
-.graph-filter__toggle { width: auto; min-width: 32px; gap: 5px; padding: 0 8px; }
-.graph-filter__toggle--on { color: #eaeaea; border-color: rgba(74,144,217,0.6); }
-.graph-filter__value { font-size: 11px; font-weight: 600; }
-
-.graph-filter__panel {
-  background: rgba(20, 20, 40, 0.9);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  padding: 8px;
-  backdrop-filter: blur(8px);
-  min-width: 150px;
-  /* Without a ceiling the panel takes its width from the coverage sentence's
-     max-content — one long line, and every band row trailing empty space. */
-  max-width: 215px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.graph-filter__heading {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #8892a4;
-  padding: 2px 8px 5px;
-}
-.graph-filter__option {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 8px;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: #c0c8d8;
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-.graph-filter__option:hover { background: rgba(255,255,255,0.07); color: #fff; }
-.graph-filter__option--active { color: #fff; }
-.graph-filter__note p + p { margin-top: 3px; }
-.graph-filter__note {
-  margin-top: 6px;
-  padding: 6px 8px 0;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  font-size: 10px;
-  line-height: 1.4;
-  color: #8892a4;
-}
+.graph-legend__toggle:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
 
 .graph-legend__panel {
   background: rgba(20, 20, 40, 0.9);
@@ -3784,17 +3517,6 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .mobile-toggle--topbar { border-color: #b8c4d4; color: #4a5568; }
 [data-theme="light"] .mobile-toggle--topbar:hover { color: #1a202c; border-color: #2b6cb0; }
 
-[data-theme="light"] .country-filter__toggle { background: #ffffff; border-color: #b8c4d4; color: #718096; }
-[data-theme="light"] .country-filter__toggle:hover { border-color: #2b6cb0; color: #4a5568; }
-[data-theme="light"] .country-filter__toggle--active { border-color: #2b6cb0; color: #1a202c; }
-[data-theme="light"] .country-filter__dropdown { background: #ffffff; border-color: #b8c4d4; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
-[data-theme="light"] .country-filter__search { color: #1a202c; border-color: #b8c4d4; }
-[data-theme="light"] .country-filter__search::placeholder { color: #718096; }
-[data-theme="light"] .country-filter__item { color: #4a5568; }
-[data-theme="light"] .country-filter__item:hover { background: #eef2f7; }
-[data-theme="light"] .country-filter__item--active { color: #2b6cb0; background: #eef2f7; }
-[data-theme="light"] .country-filter__count { color: #a0aec0; }
-
 [data-theme="light"] .panel-empty p { color: #718096; }
 [data-theme="light"] .panel-spinner { border-color: #d1d9e6; border-top-color: #2b6cb0; }
 [data-theme="light"] .panel-name { color: #1a202c; }
@@ -3852,18 +3574,11 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 [data-theme="light"] .graph-welcome__chip:hover { border-color: #2b6cb0; color: #2b6cb0; background: rgba(43,108,176,0.06); }
 
-[data-theme="light"] .graph-filter__panel { background: rgba(255,255,255,0.95); border-color: rgba(0,0,0,0.1); }
-[data-theme="light"] .graph-filter__heading,
-[data-theme="light"] .graph-filter__note { color: #718096; }
-[data-theme="light"] .graph-filter__option { color: #1a202c; }
-[data-theme="light"] .graph-filter__option:hover { background: rgba(0,0,0,0.06); color: #000; }
-[data-theme="light"] .graph-filter__toggle,
 [data-theme="light"] .graph-legend__toggle {
   background: rgba(255,255,255,0.9);
   border-color: rgba(0,0,0,0.12);
   color: #4a5568;
 }
-[data-theme="light"] .graph-filter__toggle:hover,
 [data-theme="light"] .graph-legend__toggle:hover { color: #1a202c; border-color: rgba(0,0,0,0.25); }
 [data-theme="light"] .graph-legend__panel { background: rgba(255,255,255,0.95); border-color: rgba(0,0,0,0.1); }
 [data-theme="light"] .graph-legend__section { color: #718096; }
@@ -4361,3 +4076,227 @@ a.source-item__name:hover { color: #4A90D9; }
   user-select: text;
 }
 [data-theme="light"] .settings-version { color: #4a5568; }
+
+/* ── Graph filters: one button, one panel ──────────────────
+   Everything that decides WHAT the graph shows — stake band, subsidiaries'
+   levels, the year, the search's country — behind one button left of the ⓘ.
+   Each used to sit on the canvas on its own and, on a phone, on each other. */
+.graph-filters {
+  position: absolute;
+  top: 12px;
+  right: 52px;                       /* the ⓘ: 12 + 32 + 8 */
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.graph-filters button { font-family: inherit; }
+.graph-filters__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px;
+  background: rgba(22,33,62,0.85);
+  border: 1px solid #2a3a5a;
+  border-radius: 8px;
+  color: #8892a4;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.graph-filters__toggle:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+.graph-filters__toggle--on { color: #cfe3fa; border-color: #4A90D9; }
+.graph-filters__badge {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #4A90D9;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+}
+.graph-filters__panel {
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  background: rgba(20, 20, 40, 0.96);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 4px 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+}
+.graph-filters__row { padding: 11px 0; }
+.graph-filters__row + .graph-filters__row { border-top: 1px solid rgba(255,255,255,0.08); }
+.graph-filters__label {
+  margin: 0 0 7px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8892a4;
+}
+.graph-filters__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.graph-filters__chip,
+.graph-filters__segment {
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid #2a3a5a;
+  color: #c3cad6;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.graph-filters__chip { border-radius: 14px; }
+.graph-filters__segments { display: inline-flex; }
+.graph-filters__segment:first-child { border-radius: 8px 0 0 8px; }
+.graph-filters__segment:last-child  { border-radius: 0 8px 8px 0; border-left: 0; }
+.graph-filters__chip:hover,
+.graph-filters__segment:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+.graph-filters__chip--active,
+.graph-filters__chip--active:hover,
+.graph-filters__segment--active,
+.graph-filters__segment--active:hover { background: #4A90D9; border-color: #4A90D9; color: #fff; }
+.graph-filters__note {
+  margin: 7px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #8892a4;
+}
+.graph-filters__swatch {
+  display: inline-block;
+  width: 18px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-top: 2px dashed currentColor;
+  opacity: 0.6;
+}
+.graph-filters__value { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #e2e8f0; }
+.graph-filters__select {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid #2a3a5a;
+  border-radius: 8px;
+  color: #c3cad6;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.graph-filters__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: 1px solid #2a3a5a;
+  border-radius: 8px;
+  color: #8892a4;
+  cursor: pointer;
+}
+.graph-filters__clear:hover { color: #e87c6e; border-color: #e87c6e; }
+.graph-filters__countries { margin-top: 7px; }
+.graph-filters__search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 9px;
+  background: #1e2a45;
+  border: 1px solid #2a3a5a;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 16px;                   /* below 16px iOS zooms the page on focus */
+}
+.graph-filters__list { list-style: none; margin: 6px 0 0; padding: 0; max-height: 190px; overflow-y: auto; }
+.graph-filters__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #c3cad6;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.graph-filters__item:hover { background: rgba(255,255,255,0.06); }
+.graph-filters__item--active { color: #4A90D9; font-weight: 700; }
+.graph-filters__count { color: #8892a4; font-variant-numeric: tabular-nums; }
+
+/* The search's country, where the search is typed. */
+.search-country-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  max-width: 45%;
+  padding: 3px 8px;
+  background: rgba(74,144,217,0.16);
+  border: 1px solid #4A90D9;
+  border-radius: 12px;
+  color: #cfe3fa;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.search-country-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+[data-theme="light"] .graph-filters__toggle { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); color: #4a5568; }
+[data-theme="light"] .graph-filters__toggle:hover { color: #1a202c; border-color: rgba(0,0,0,0.25); }
+[data-theme="light"] .graph-filters__toggle--on { color: #2b6cb0; border-color: #4A90D9; }
+[data-theme="light"] .graph-filters__panel { background: rgba(255,255,255,0.98); border-color: rgba(0,0,0,0.1); box-shadow: 0 8px 28px rgba(0,0,0,0.14); }
+[data-theme="light"] .graph-filters__row + .graph-filters__row { border-top-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .graph-filters__label,
+[data-theme="light"] .graph-filters__note,
+[data-theme="light"] .graph-filters__count { color: #718096; }
+[data-theme="light"] .graph-filters__chip,
+[data-theme="light"] .graph-filters__segment,
+[data-theme="light"] .graph-filters__select,
+[data-theme="light"] .graph-filters__clear { border-color: #cbd5e0; color: #4a5568; }
+[data-theme="light"] .graph-filters__chip:hover,
+[data-theme="light"] .graph-filters__segment:hover { color: #1a202c; border-color: rgba(0,0,0,0.3); }
+[data-theme="light"] .graph-filters__chip--active,
+[data-theme="light"] .graph-filters__chip--active:hover,
+[data-theme="light"] .graph-filters__segment--active,
+[data-theme="light"] .graph-filters__segment--active:hover { background: #4A90D9; border-color: #4A90D9; color: #fff; }
+[data-theme="light"] .graph-filters__value { color: #1a202c; }
+[data-theme="light"] .graph-filters__search { background: #fff; border-color: #cbd5e0; color: #1a202c; }
+[data-theme="light"] .graph-filters__item { color: #2d3748; }
+[data-theme="light"] .graph-filters__item:hover { background: rgba(0,0,0,0.05); }
+[data-theme="light"] .graph-filters__item--active { color: #2b6cb0; }
+[data-theme="light"] .search-country-chip { background: rgba(74,144,217,0.12); color: #2b6cb0; }
+
+/* On a phone the panel lies over the page (see GraphFilters): the short canvas
+   would clip it. `top` and `max-height` come from the component. */
+.graph-filters__panel--sheet {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  width: auto;
+  max-width: none;
+}
+/* The chip must not push the search box wider than the screen. */
+.search-box .search-input { min-width: 0; }
+
+/* A phone: Clear is its icon alone — the label cost a third of the row. */
+@media (max-width: 640px) {
+  .graph-action-btn--clear .graph-action-btn__label { display: none; }
+  .graph-action-btn--clear { padding: 0; width: 32px; height: 32px; justify-content: center; }
+}

@@ -34,7 +34,7 @@ describe('SearchBar (render)', () => {
   it('shows results and calls onSelect when a result is clicked', async () => {
     resolveSearch([entityResult('e1', 'Microsoft Corporation')])
     const onSelect = vi.fn()
-    render(<SearchBar onSelect={onSelect} countries={[]} canScrape />)
+    render(<SearchBar onSelect={onSelect} canScrape />)
 
     await type('microsoft')
     const row = await screen.findByText('Microsoft Corporation')
@@ -47,7 +47,7 @@ describe('SearchBar (render)', () => {
   it('offers "search sources for X" alongside results and calls onScrapeQuery', async () => {
     resolveSearch([entityResult('e1', 'Micro Focus')])
     const onScrapeQuery = vi.fn()
-    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} countries={[]} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} canScrape />)
 
     await type('microsoft')
     await screen.findByText('Micro Focus')            // results present
@@ -60,7 +60,7 @@ describe('SearchBar (render)', () => {
   it('offers "search sources" when there are no results, for verified users', async () => {
     resolveSearch([])
     const onScrapeQuery = vi.fn()
-    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} countries={[]} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} canScrape />)
 
     await type('nonesuchco')
     const scrapeRow = await screen.findByText(/search sources for/i)
@@ -72,7 +72,7 @@ describe('SearchBar (render)', () => {
   it('shows a sign-in hint (no scrape) when the user cannot scrape', async () => {
     resolveSearch([])
     const onScrapeQuery = vi.fn()
-    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} countries={[]} canScrape={false} />)
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} canScrape={false} />)
 
     await type('nonesuchco')
     // Wait for the dropdown to settle, then assert the scrape action is absent.
@@ -85,7 +85,7 @@ describe('SearchBar (render)', () => {
     resolveSearch([])
     const onRequestLogin = vi.fn()
     render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} onRequestLogin={onRequestLogin}
-                      countries={[]} canScrape={false} />)
+                      canScrape={false} />)
 
     await type('nonesuchco')
     const hint = await screen.findByText(/sign in/i)
@@ -104,7 +104,7 @@ describe('SearchBar (render)', () => {
   it('offers to search the sources even when a result already matched', async () => {
     resolveSearch([entityResult('e1', 'SCI LF ALPHABET')])
     const onScrapeQuery = vi.fn()
-    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} countries={[]} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} canScrape />)
 
     await type('Alphabet')
     const row = await screen.findByText(/alphabet/i, { selector: '.search-item--scrape .search-item__name' })
@@ -116,7 +116,7 @@ describe('SearchBar (render)', () => {
     resolveSearch([entityResult('e1', 'SCI LF ALPHABET')])
     const onRequestLogin = vi.fn()
     render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} onRequestLogin={onRequestLogin}
-                      countries={[]} canScrape={false} />)
+                      canScrape={false} />)
 
     await type('Alphabet')
     // Previously this branch rendered nothing — the dead end being fixed.
@@ -129,7 +129,7 @@ describe('SearchBar (render)', () => {
     resolveSearch([entityResult('e1', 'SCI LF ALPHABET')])
     const onScrapeQuery = vi.fn()
     render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} onRequestLogin={vi.fn()}
-                      countries={[]} canScrape={false} />)
+                      canScrape={false} />)
 
     await type('Alphabet')
     await screen.findByText(/sign in/i)
@@ -147,20 +147,12 @@ describe('SearchBar (render)', () => {
  * and imports the wrong company under a German search.
  */
 describe('the chosen country travels with the scrape', () => {
-  const germany = [{ country: 'DE', count: 12 }]
-
-  const pickGermany = async () => {
-    await userEvent.click(screen.getByRole('button', { name: /All countries/i }))
-    await userEvent.click(await screen.findByText('Germany'))
-  }
-
+  // The country is chosen in the graph's Filters panel and handed in.
   it('hands the country to onScrapeQuery', async () => {
     resolveSearch([])
     const onScrapeQuery = vi.fn()
-    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery}
-                      countries={germany} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} country="DE" canScrape />)
 
-    await pickGermany()
     await type('alphabet')
     await userEvent.click(await screen.findByText(/search .* sources for/i))
 
@@ -169,30 +161,37 @@ describe('the chosen country travels with the scrape', () => {
 
   it('names the country in the row, so an empty result reads as "not in Germany"', async () => {
     resolveSearch([])
-    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()}
-                      countries={germany} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} country="DE" canScrape />)
 
-    await pickGermany()
     await type('alphabet')
     expect(await screen.findByText(/Germany sources/i)).toBeInTheDocument()
   })
 
   it('says nothing about a country when none is chosen', async () => {
     resolveSearch([])
-    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} countries={germany} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} canScrape />)
 
     await type('alphabet')
     const row = await screen.findByText(/search sources for/i)
     expect(row.textContent).not.toMatch(/Germany/)
+    expect(document.querySelector('.search-country-chip')).toBeNull()
   })
 
   it('restricts the database search to it as well', async () => {
     resolveSearch([])
-    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} countries={germany} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={vi.fn()} country="DE" canScrape />)
 
-    await pickGermany()
     await type('alphabet')
     await waitFor(() => expect(search).toHaveBeenCalledWith('alphabet', 'DE'))
+  })
+
+  it('shows the scope as a chip in the box, and one click removes it', async () => {
+    const onCountryChange = vi.fn()
+    render(<SearchBar onSelect={vi.fn()} country="DE" onCountryChange={onCountryChange} canScrape />)
+    const chip = screen.getByRole('button', { name: /Searching in Germany/ })
+    expect(chip).toHaveTextContent('Germany')
+    await userEvent.click(chip)
+    expect(onCountryChange).toHaveBeenCalledWith('')
   })
 })
 
@@ -210,7 +209,7 @@ describe('the result badge names what the node IS', () => {
       typed('e4', 'The Vanguard Group', 'fund'),
       typed('e5', 'Voting group · 9 parties', 'voting_group'),
     ])
-    render(<SearchBar onSelect={vi.fn()} countries={[]} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} canScrape />)
     await type('alphabet')
 
     await screen.findByText('Alphabet Inc.')
@@ -225,7 +224,7 @@ describe('the result badge names what the node IS', () => {
       type: 'Person', score: 1,
       node: { id: 'p1', full_name: 'Larry Page' } as SearchResult['node'],
     }])
-    render(<SearchBar onSelect={vi.fn()} countries={[]} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} canScrape />)
     await type('larry')
 
     await screen.findByText('Larry Page')
@@ -236,7 +235,7 @@ describe('the result badge names what the node IS', () => {
     // GLEIF imports plenty of these; the node panel shows them as Company too,
     // so the dropdown must not disagree with the panel it opens.
     resolveSearch([entityResult('e9', 'ALPHABET CAPITAL US LLC')])
-    render(<SearchBar onSelect={vi.fn()} countries={[]} canScrape />)
+    render(<SearchBar onSelect={vi.fn()} canScrape />)
     await type('alphabet')
 
     await screen.findByText('ALPHABET CAPITAL US LLC')
@@ -245,7 +244,7 @@ describe('the result badge names what the node IS', () => {
 
   it('carries the type through to the CSS class the legend colours use', async () => {
     resolveSearch([typed('e2', 'Exor N.V.', 'holding')])
-    const { container } = render(<SearchBar onSelect={vi.fn()} countries={[]} canScrape />)
+    const { container } = render(<SearchBar onSelect={vi.fn()} canScrape />)
     await type('exor')
 
     await screen.findByText('Exor N.V.')

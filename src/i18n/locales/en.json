@@ -53,7 +53,8 @@
     "alsoScrape": "Not the one? Search sources for \"{{query}}\"",
     "scrapeSignIn": "Sign in and verify your email to search external sources.",
     "noResultsScrapeIn": "No match — search {{country}} sources for \"{{query}}\"?",
-    "alsoScrapeIn": "Not the one? Search {{country}} sources for \"{{query}}\""
+    "alsoScrapeIn": "Not the one? Search {{country}} sources for \"{{query}}\"",
+    "countryChipClear": "Searching in {{country}} — click to search all countries"
   },
   "scrape": {
     "title": "Searching sources for {{company}}…",
@@ -81,7 +82,14 @@
     "levelsDirect": "Direct",
     "levelsAll": "All levels",
     "levelsDirectHint": "Only the companies held directly",
-    "levelsAllHint": "The whole tree: every level below this company"
+    "levelsAllHint": "The whole tree: every level below this company",
+    "filters": "Filters",
+    "filtersWithYear": "Filters · {{year}}",
+    "filtersActive_one": "{{count}} filter active",
+    "filtersActive_other": "{{count}} filters active",
+    "filtersYear": "Year",
+    "filtersYearHint": "Showing the present. Click a year in the Timeline tab to see the graph as it stood then.",
+    "filtersCountry": "Search in"
   },
   "legend": {
     "nodes": "Nodes",
