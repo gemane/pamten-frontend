@@ -1,6 +1,8 @@
-// The ink tree behind the graph (public/graph-tree.png): a company structure
-// drawn the way nature draws one — a trunk that splits in two or three, level
-// by level, every branch thinner than the one it grew from.
+// The ink tree behind the graph (public/graph-tree.png): the graph's own
+// shape drawn as a tree. Above the company its owners stand on a wide,
+// shallow arc, each on its own line from the hub — here an umbrella crown of
+// long radial branches ending on a flat ellipse. Below it the subsidiaries
+// hang as a tree, level under level — here deep, many-branched roots.
 //
 //   node scripts/graph-tree.mjs [seed] [size]        default: 23, 1400
 //
@@ -26,39 +28,71 @@ const paths = []
 const pts = []   // every stroke end, for the trimmed canvas
 
 /** A branch from (x, y) heading `angle` (radians, 0 = up), `len` long, `w`
- *  wide at the base: a tapered, slightly bowed stroke, then its children. */
-function branch(x, y, angle, len, w, depth) {
-  const bend = between(-0.18, 0.18)
+ *  wide at the base: a tapered, slightly bowed stroke, then its children.
+ *  `o`: how it grows — the spread of its children, their length as a share
+ *  of this one, how bowed the stroke is. */
+function branch(x, y, angle, len, w, depth, o) {
+  const bend = between(-o.bow, o.bow)
   const ex = x + Math.sin(angle + bend) * len
   const ey = y - Math.cos(angle + bend) * len
-  const cx = (x + ex) / 2 + Math.cos(angle) * len * between(-0.12, 0.12)
-  const cy = (y + ey) / 2 + Math.sin(angle) * len * between(-0.12, 0.12)
-  const w2 = Math.max(0.8, w * between(0.6, 0.76))
+  const cx = (x + ex) / 2 + Math.cos(angle) * len * between(-o.bow * 0.7, o.bow * 0.7)
+  const cy = (y + ey) / 2 + Math.sin(angle) * len * between(-o.bow * 0.7, o.bow * 0.7)
+  const w2 = Math.max(0.8, w * between(o.taper[0], o.taper[1]))
   pts.push([x, y], [ex, ey])
   const nx = Math.cos(angle), ny = Math.sin(angle)
   const f = v => v.toFixed(1)
   paths.push(`M${f(x - nx * w / 2)},${f(y - ny * w / 2)} Q${f(cx - nx * w / 2)},${f(cy - ny * w / 2)} ${f(ex - nx * w2 / 2)},${f(ey - ny * w2 / 2)} `
     + `L${f(ex + nx * w2 / 2)},${f(ey + ny * w2 / 2)} Q${f(cx + nx * w / 2)},${f(cy + ny * w / 2)} ${f(x + nx * w / 2)},${f(y + ny * w / 2)} Z`)
-  if (depth === 0 || w2 < 1.2) return
+  if (depth === 0 || w2 < 1.0) return
   // two or three children fanned apart — the org chart's spread — the middle one straighter
-  const n = depth > 6 ? (rnd() < 0.45 ? 3 : 2) : (rnd() < 0.6 ? 3 : 2)
-  const spread = between(0.8, 1.25) * (depth > 7 ? 0.85 : 1)
+  const n = rnd() < o.three ? 3 : 2
+  const spread = between(o.spread[0], o.spread[1])
   for (let i = 0; i < n; i++) {
     const t = (i / (n - 1)) * 2 - 1          // -1 … 1
-    const a = angle + t * spread / 2 + between(-0.1, 0.1)
-    const l = len * between(0.7, 0.88) * (Math.abs(t) > 0.5 ? 0.95 : 1)
-    branch(ex, ey, a, l, w2, depth - 1)
+    const a = angle + t * spread / 2 + between(-0.08, 0.08)
+    const l = len * between(o.shorter[0], o.shorter[1]) * (Math.abs(t) > 0.5 ? 0.95 : 1)
+    branch(ex, ey, a, l, w2, depth - 1, o)
   }
   // an occasional small side twig
-  if (depth > 2 && rnd() < 0.35) {
+  if (depth > 2 && rnd() < o.twig) {
     const side = rnd() < 0.5 ? -1 : 1
-    branch(x + (ex - x) * 0.55, y + (ey - y) * 0.55, angle + side * between(0.7, 1.1), len * 0.4, w2 * 0.6, Math.max(0, depth - 3))
+    branch(x + (ex - x) * 0.55, y + (ey - y) * 0.55, angle + side * between(0.7, 1.1), len * 0.4, w2 * 0.6, Math.max(0, depth - 3), o)
   }
 }
 
-branch(W / 2, H * 0.93, between(-0.05, 0.05), H * 0.17, 64, 10)           // the trunk, with a slight lean
-for (let i = 0; i < 5; i++)                                                 // roots into the ground line
-  branch(W / 2 + between(-18, 18), H * 0.93, Math.PI + between(-1.1, 1.1), H * between(0.03, 0.06), 14, 1)
+// ── The tree: the graph's own shape ───────────────────────────────────────
+// Above the company its owners stand on a wide, shallow arc, each on its own
+// straight line from the hub — an umbrella of rays. Below it the
+// subsidiaries hang as a tree, level under level. So: a short trunk, a crown
+// of many long radial branches ending on a flat ellipse, and deep roots.
+const TOP = { x: W / 2, y: H * 0.56 }                                       // where the trunk ends: the hub
+const trunkTop = { x: TOP.x, y: TOP.y }
+
+// the trunk: from the ground line up to the hub
+branch(W / 2, H * 0.78, between(-0.03, 0.03), H * 0.22, 60, 0, { bow: 0.06, taper: [0.72, 0.8], three: 0, spread: [0, 0], shorter: [1, 1], twig: 0 })
+
+// the crown: rays from the hub to a wide ellipse (a = half the width, b = the
+// height above the hub), the spacing jittered so it reads drawn, not plotted;
+// each ray splits a few times near its end, in a narrow fan, like the twigs
+// of a winter tree
+const A = W * 0.49, B = H * 0.29
+const RAYS = 58
+const ray = { bow: 0.07, taper: [0.64, 0.76], three: 0.45, spread: [0.28, 0.5], shorter: [0.4, 0.55], twig: 0.3 }
+for (let i = 0; i < RAYS; i++) {
+  const theta = -1.45 + (2.9 * (i + 0.5)) / RAYS + between(-0.025, 0.025)  // −83° … 83° from up
+  const r = (1 / Math.sqrt((Math.sin(theta) / A) ** 2 + (Math.cos(theta) / B) ** 2)) * between(0.9, 1.08)
+  const w = 4 + 7 * Math.cos(theta)                                           // thicker towards the middle
+  branch(trunkTop.x + Math.sin(theta) * 10, trunkTop.y - Math.cos(theta) * 6, theta, r * 0.6, w, 4, ray)
+}
+
+// the roots: many, long, splitting like the subsidiaries' columns
+const root = { bow: 0.12, taper: [0.62, 0.74], three: 0.5, spread: [0.7, 1.1], shorter: [0.62, 0.8], twig: 0.3 }
+const ROOTS = 9
+for (let i = 0; i < ROOTS; i++) {
+  const theta = Math.PI + (-1.25 + (2.5 * (i + 0.5)) / ROOTS) + between(-0.06, 0.06)   // fanned below the ground line
+  const depthShare = 0.6 + 0.4 * Math.abs(Math.cos(theta))                           // the middle ones go deepest
+  branch(W / 2 + between(-22, 22), H * 0.78, theta, H * 0.1 * depthShare, 16 + 6 * Math.abs(Math.cos(theta)), 4, root)
+}
 
 const xs = pts.map(q => q[0]), ys = pts.map(q => q[1])
 const pad = 60
