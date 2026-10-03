@@ -70,7 +70,9 @@
     "clear": "Limpiar",
     "export": "Exportar",
     "exportPng": "Imagen PNG",
-    "exportCsv": "Datos CSV",
+    "exportOds": "Hoja de cálculo (.ods)",
+
+    "exportOdsError": "No se pudo generar la hoja de cálculo. Inténtalo de nuevo.",
     "expandGraph": "Ampliar grafo",
     "openAsCenter": "Abrir como centro",
     "expandHint": "Doble clic para expandir",

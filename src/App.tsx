@@ -9,7 +9,7 @@ import SearchBar, { type SearchBarHandle } from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
 import Graph         from './components/Graph'
 import type { GraphHandle } from './components/Graph'
-import { buildCsvContent } from './utils/exportCsv'
+import { downloadBlob, exportParams, filenameFromDisposition } from './utils/exportOds'
 import GraphLegend   from './components/GraphLegend'
 import NodePanel     from './components/NodePanel'
 import ScrapeOverlay from './components/ScrapeOverlay'
@@ -48,6 +48,7 @@ import {
   runSec13f,
   runSecEx21,
   reportEvent,
+  exportSpreadsheet,
 } from './services/api'
 import { readMapBasis, MAP_BASIS_KEY, NO_COUNTRY, type MapBasis } from './utils/mapBasis'
 import { isSubdivision } from './utils/isoSubdivisions'
@@ -119,6 +120,8 @@ function AppInner() {
 
   const [elements,        setElements]        = useState<GraphElement[]>([])
   const [stakeFilter,     setStakeFilter]     = useState<StakeFilter>(DEFAULT_STAKE)
+  const stakeFilterRef = useRef<StakeFilter>(DEFAULT_STAKE)   // read by the export outside React's deps
+  stakeFilterRef.current = stakeFilter
   // "All levels": load the whole subsidiary tree below the centre, not only the
   // direct holdings. A ref too — loadEntity reads it outside React's deps.
   const [allLevels,       setAllLevels]       = useState<boolean>(false)
@@ -583,16 +586,22 @@ function AppInner() {
     graphRef.current?.exportPng()
   }, [])
 
-  const handleExportCsv = useCallback(() => {
-    reportEvent({ kind: 'usage', event: 'export.csv' })
-    const csv = buildCsvContent(elementsRef.current, t, i18n.language)
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = 'owlgraph-graph.csv'
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }, [t])
+  // The spreadsheet is the server's: the company whose panel is open, as of
+  // the day and with the levels and the stake band the graph shows — every
+  // row, where the graph is capped. (It replaced a CSV built from the graph's
+  // elements: two tables in one file, every number a string.)
+  const handleExportSpreadsheet = useCallback(async (entityId: string) => {
+    reportEvent({ kind: 'usage', event: 'export.ods' })
+    try {
+      const res = await exportSpreadsheet(entityId, exportParams({
+        asOf: asOfRef.current, allLevels: allLevelsRef.current, stake: stakeFilterRef.current,
+        link: window.location.href,
+      }))
+      downloadBlob(res.data, filenameFromDisposition(res.headers['content-disposition'], 'owlgraph.ods'))
+    } catch {
+      showToast(t('graph.exportOdsError'), 'error')
+    }
+  }, [t, showToast])
 
   const handleShare = useCallback(async () => {
     reportEvent({ kind: 'usage', event: 'share.link' })
@@ -1062,7 +1071,7 @@ function AppInner() {
                   refreshKey={enrichNonce}
                   refreshingId={refreshing?.id ?? null}
                   onExportPng={elements.length > 0 ? handleExportPng : undefined}
-                  onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
+                  onExportSpreadsheet={handleExportSpreadsheet}
                   onViewOnMap={() => handleTabChange('map')}
                   onShare={handleShare}
                   onNavigate={handleNavigateTo}
@@ -1163,7 +1172,7 @@ function AppInner() {
                     refreshKey={enrichNonce}
                   refreshingId={refreshing?.id ?? null}
                     onExportPng={elements.length > 0 ? handleExportPng : undefined}
-                    onExportCsv={elements.length > 0 ? handleExportCsv : undefined}
+                    onExportSpreadsheet={handleExportSpreadsheet}
                     onViewOnMap={() => handleTabChange('map')}
                     onShare={handleShare}
                     onNavigate={handleNavigateTo}

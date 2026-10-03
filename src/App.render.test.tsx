@@ -23,9 +23,10 @@ vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
 vi.mock('./components/AuthModal', () => ({ default: () => null }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
 vi.mock('./components/NodePanel', () => ({
-  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId }: {
+  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId, onExportSpreadsheet }: {
                 node?: { id: string; label: string } | null
                 onReScrape?: (n: unknown) => void
+                onExportSpreadsheet?: (id: string) => void
                 refreshingId?: string | null
                 onGraphFocus?: (id: string | null) => void
                 graphFocusMode?: string
@@ -42,6 +43,7 @@ vi.mock('./components/NodePanel', () => ({
           {refreshingId === node.id ? 'refreshing' : 'refresh-from-sources'}
         </button>
       )}
+      {onExportSpreadsheet && node && <button onClick={() => onExportSpreadsheet(node.id)}>export-ods</button>}
     </div>
   ),
 }))
@@ -81,10 +83,11 @@ vi.mock('./services/api', () => ({
   getCountries: vi.fn(),
   setUnauthorizedHandler: vi.fn(),
   authVerifyEmail: vi.fn(),
+  exportSpreadsheet: vi.fn(),
 }))
 
 import App from './App'
-import { search, ensureScrape, getFullProfile, getCountries, runSec13f, runSecEx21 } from './services/api'
+import { search, ensureScrape, getFullProfile, getCountries, runSec13f, runSecEx21, exportSpreadsheet, reportEvent } from './services/api'
 
 const mockSearch = vi.mocked(search)
 const mockEnsure = vi.mocked(ensureScrape)
@@ -496,5 +499,44 @@ describe('installed app version check', () => {
     render(<App />)
     await screen.findByTestId('node-panel')
     expect(screen.queryByRole('alertdialog')).toBeNull()
+  })
+})
+
+describe('the spreadsheet export', () => {
+  const mockExport = vi.mocked(exportSpreadsheet)
+
+  async function openMicrosoft() {
+    mockSearch.mockResolvedValue({ data: [result('e1', 'Microsoft Corporation')] } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'microsoft', { delay: null })
+    await userEvent.click(await screen.findByText('Microsoft Corporation'))
+    await screen.findByText('export-ods')
+  }
+
+  it('asks the server for the open company with the view\'s parameters and downloads what it sends', async () => {
+    mockExport.mockReset()
+    mockExport.mockResolvedValue({ data: new Blob(['PK']), headers: { 'content-disposition': 'attachment; filename="Microsoft Corporation.ods"' } } as never)
+    const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:x')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const names: string[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { names.push(this.download) })
+    await openMicrosoft()
+
+    await userEvent.click(screen.getByText('export-ods'))
+    await waitFor(() => expect(mockExport).toHaveBeenCalledTimes(1))
+    // the default view: present, direct, ≥1 % — only the band is off its default — and the page's link
+    expect(mockExport).toHaveBeenCalledWith('e1', { min_stake: 1, link: window.location.href })
+    await waitFor(() => expect(names).toEqual(['Microsoft Corporation.ods']))
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(reportEvent)).toHaveBeenCalledWith({ kind: 'usage', event: 'export.ods' })
+    vi.restoreAllMocks()
+  })
+
+  it('says so when the server cannot build it', async () => {
+    mockExport.mockReset()
+    mockExport.mockRejectedValue(new Error('500'))
+    await openMicrosoft()
+    await userEvent.click(screen.getByText('export-ods'))
+    expect(await screen.findByText(/spreadsheet could not be built/i)).toBeInTheDocument()
   })
 })

@@ -32,6 +32,7 @@ import type {
   Suppression,
   Pin,
   ScraperHealth, WeeklyReport, SubsidiaryTree } from '../types'
+import type { ExportParams } from '../utils/exportOds'
 
 // The backend serves everything under /v1. It still answers on the unversioned
 // paths, but those are deprecated and hidden from the schema, so the prefix is
@@ -222,6 +223,11 @@ export const getOwners = (id: string): Promise<AxiosResponse<unknown[]>> =>
 
 export const getHistory = (id: string): Promise<AxiosResponse<HistoryEntry[]>> =>
   client.get(`/relationships/history/${id}`)
+
+/** A company as an .ods spreadsheet, built server-side (every row, not what
+ *  the graph loaded): the file as a blob, its name in Content-Disposition. */
+export const exportSpreadsheet = (id: string, params: ExportParams): Promise<AxiosResponse<Blob>> =>
+  client.get(`/export/entity/${id}`, { params, responseType: 'blob' })
 
 export const getEntity = (id: string): Promise<AxiosResponse<unknown>> =>
   client.get(`/entities/${id}`)
