@@ -107,6 +107,16 @@ describe('computeTreePositions', () => {
     expect(overlaps(computeTreePositions(els, 'c'))).toBe(false)
   })
 
+  it('packs towards the canvas\'s shape when told it: squarer on a phone, wider on a wide screen', () => {
+    const els = tree([['c', 'uspi'], ...leavesOf('uspi', 120)])
+    const shape = (aspect?: number) => { const { w, h } = extent(computeTreePositions(els, 'c', undefined, aspect)); return w / h }
+    expect(shape(1.2)).toBeLessThan(shape())           // a phone's canvas: fewer columns, taller
+    expect(shape(2.6)).toBeGreaterThan(shape())        // an ultra-wide one: more
+    expect(shape(1.2)).toBeGreaterThan(0.8)
+    expect(shape(1.2)).toBeLessThan(1.8)
+    expect(shape()).toBe(shape(1.7))                   // the default is the wide screen's
+  })
+
   it('places a co-held company once', () => {
     const els = tree([['c', 'a'], ['c', 'b'], ['a', 'shared'], ['b', 'shared']])
     const pos = computeTreePositions(els, 'c')

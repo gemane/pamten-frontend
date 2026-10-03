@@ -7,7 +7,7 @@ import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
 import { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
 import GraphFilters from './GraphFilters'
-import { computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
+import { DEFAULT_ASPECT, computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
 import { edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 
 export interface GraphHandle {
@@ -225,6 +225,17 @@ const T_END        = Math.PI * 5/6 // 150°
 const T_RANGE      = T_END - T_START
 const MIN_ZOOM      = 0.15          // how far the user (and a fit) can zoom out
 const TREE_MIN_ZOOM = 0.02          // …in "all levels", where the whole tree must still fit
+const MAX_ZOOM      = 4
+/** A fit keeps this much canvas clear around the graph — on a large canvas;
+ *  a small one gives a twelfth of its shorter side (a phone's 354 px: 30). */
+const FIT_PADDING   = 80
+/** On a canvas this narrow (the stylesheet's phone breakpoint) the buttons
+ *  laid over its top — Clear, Filters, ⓘ — would cover the owners… */
+const SMALL_CANVAS  = 640
+/** …so the fit starts below them: their 12 px from the top and 32 px height,
+ *  and a gap. */
+const CONTROLS_INSET = 44
+const CONTROLS_GAP   = 12
 const MIN_NODE_GAP = 72             // min arc-length (px) at the densest point (bottom)
 const SUB_B        = 280            // fixed vertical semi-axis for subsidiaries
 const OWNER_B_MIN  = 120            // vertical distance for most-important owner
@@ -341,8 +352,9 @@ export function layoutGraph(
   elements: GraphElement[],
   centerId: string | null,
   measure?: Measure,
+  aspect?: number,
 ): { positions: Map<string, { x: number; y: number }>; tree: TreeLayout } {
-  const tree = computeTreeLayout(elements, centerId, measure)
+  const tree = computeTreeLayout(elements, centerId, measure, aspect)
   return { positions: computeArcPositions(elements, centerId, tree.positions), tree }
 }
 
@@ -352,6 +364,53 @@ export const measureWith = (cy: cytoscape.Core): Measure => id => {
   const n = cy.$id(id)
   return n.nonempty() ? { w: n.outerWidth(), h: n.outerHeight() } : undefined
 }
+
+type Rect = { x1: number; y1: number; w: number; h: number }
+
+/** The part of the canvas a graph is fitted into (canvas pixels): the whole
+ *  canvas less the padding on a desktop. On a phone, where the canvas is a
+ *  third of the screen, the padding is what the canvas can spare — 80 px on
+ *  every side of 390 left the tree the middle 60 % — and the buttons laid over
+ *  its top are kept clear, or they covered the owners. */
+export function fitRegion(canvas: { w: number; h: number }): Rect {
+  const pad = Math.min(FIT_PADDING, Math.round(Math.min(canvas.w, canvas.h) / 12))
+  const top = canvas.w <= SMALL_CANVAS ? CONTROLS_INSET + CONTROLS_GAP : pad
+  return { x1: pad, y1: top, w: canvas.w - 2 * pad, h: canvas.h - top - pad }
+}
+
+/** The shape the tree is packed towards: the fit region's, width over height
+ *  (a wide desktop canvas 1.6, a phone's canvas under its buttons 1.2); the
+ *  default when the canvas has no size yet. */
+export function canvasAspect(canvas: { w: number; h: number }): number {
+  const { w, h } = fitRegion(canvas)
+  return w > 0 && h > 0 ? w / h : DEFAULT_ASPECT
+}
+
+/** Where to put the viewport so `bb` (the graph's bounding box, model
+ *  coordinates) fills the fit region: `cy.fit`, into a rectangle. */
+export function fitViewport(
+  canvas: { w: number; h: number }, bb: Rect, zoomRange: { min: number; max: number },
+): { zoom: number; pan: { x: number; y: number } } | null {
+  if (bb.w <= 0 && bb.h <= 0) return null
+  const room = fitRegion(canvas)
+  if (room.w <= 0 || room.h <= 0) return null
+  const zoom = Math.min(zoomRange.max, Math.max(zoomRange.min,
+    Math.min(room.w / Math.max(bb.w, 1), room.h / Math.max(bb.h, 1))))
+  return { zoom, pan: {
+    x: room.x1 + (room.w - bb.w * zoom) / 2 - bb.x1 * zoom,
+    y: room.y1 + (room.h - bb.h * zoom) / 2 - bb.y1 * zoom,
+  } }
+}
+
+/** Fit the drawn elements into the canvas's fit region. */
+function fitGraph(cy: cytoscape.Core) {
+  const shown = cy.elements().filter(el => el.style('display') !== 'none')
+  const view = fitViewport({ w: cy.width(), h: cy.height() }, shown.boundingBox(),
+                           { min: cy.minZoom(), max: cy.maxZoom() })
+  if (view) cy.viewport(view)
+}
+
+const aspectOf = (cy: cytoscape.Core) => canvasAspect({ w: cy.width(), h: cy.height() })
 
 const ROUTE_STYLE = 'curve-style edge-distances segment-weights segment-distances'
 const LABEL_STYLE = 'target-label target-text-offset target-text-margin-x target-text-margin-y'
@@ -744,7 +803,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       userZoomingEnabled: true,
       userPanningEnabled: true,
       minZoom: MIN_ZOOM,
-      maxZoom: 4,
+      maxZoom: MAX_ZOOM,
     })
 
     const cy = cyRef.current
@@ -874,7 +933,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     // A whole tree is far wider than one ring of subsidiaries — Chubb's nine
     // levels ran off both edges because the fit stopped at the usual floor.
     cy.minZoom(allLevels ? TREE_MIN_ZOOM : MIN_ZOOM)
-    const { positions, tree } = layoutGraph(elements, centerId ?? null, measureWith(cy))
+    const { positions, tree } = layoutGraph(elements, centerId ?? null, measureWith(cy), aspectOf(cy))
     const place = () => {
       if (positions.size === 0) return
       cy.nodes().forEach(node => {
@@ -882,7 +941,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         if (p) node.position(p)
       })
       applyTreeRoutes(cy, tree)
-      cy.fit(undefined, 80)
+      fitGraph(cy)
     }
     // The same company with more or fewer elements (a node expanded, "all
     // levels" switched): go straight to the final positions. The concentric
@@ -939,7 +998,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     // stake filter's and the day's), once: judged on everything, a 0.1 %
     // holder the filter hides could still make the 99.9 % holder's line
     // "redundant", and the company was left with no line at all.
-    const { positions, tree } = layoutGraph(visible, centerId ?? null, measureWith(cy))
+    const { positions, tree } = layoutGraph(visible, centerId ?? null, measureWith(cy), aspectOf(cy))
     if (positions.size > 0) {
       cy.nodes().forEach(node => {
         const p = positions.get(node.id())
@@ -949,7 +1008,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       // a line the tree makes redundant stays hidden whatever the filter says
       // (the display set above is a bypass, which outranks the class's rule)
       cy.edges('.implied').style('display', 'none')
-      cy.fit(undefined, 80)
+      fitGraph(cy)
     }
   }, [stakeFilter, elements, centerId, asOf])
 
