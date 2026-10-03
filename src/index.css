@@ -1329,6 +1329,20 @@ button.rel-item--clickable:hover { background: #253454; }
   background: #d6e4f7;
   box-shadow: inset 0 0 0 1px #4a90d9, 0 0 10px rgba(74, 144, 217, 0.25);
 }
+/* The row whose graph node is in focus — under the mouse on a desktop, at
+   the panel's centre on a phone: a shade darker, as the graph draws its box
+   darker and larger at the same moment, so list and picture answer each
+   other. Wins over the lighter hover shade: in focus IS the hover. */
+.rel-item.rel-item--graph-focus,
+button.rel-item--clickable.rel-item--graph-focus:hover {
+  background: #111a30;
+  box-shadow: inset 0 0 0 1px #2d4170;
+}
+[data-theme="light"] .rel-item.rel-item--graph-focus,
+[data-theme="light"] button.rel-item--clickable.rel-item--graph-focus:hover {
+  background: #d5dde9;
+  box-shadow: inset 0 0 0 1px #b8c4d6;
+}
 @media (prefers-reduced-motion: reduce) {
   .rel-item, button.rel-item--clickable, .rel-item.rel-item--graph-hover { transition: none; }
 }

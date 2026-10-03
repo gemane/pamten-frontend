@@ -23,15 +23,16 @@ vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
 vi.mock('./components/AuthModal', () => ({ default: () => null }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
 vi.mock('./components/NodePanel', () => ({
-  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId, onExportSpreadsheet }: {
+  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId, graphFocusId, onExportSpreadsheet }: {
                 node?: { id: string; label: string } | null
                 onReScrape?: (n: unknown) => void
                 onExportSpreadsheet?: (id: string) => void
+                graphFocusId?: string | null
                 refreshingId?: string | null
                 onGraphFocus?: (id: string | null) => void
                 graphFocusMode?: string
                 graphHoverId?: string | null }) => (
-    <div data-testid="node-panel" data-focus-mode={graphFocusMode ?? ''} data-graph-hover={graphHoverId ?? ''}>
+    <div data-testid="node-panel" data-focus-mode={graphFocusMode ?? ''} data-graph-hover={graphHoverId ?? ''} data-graph-focus={graphFocusId ?? ''}>
       {/* Stand-ins for a row coming into / going out of focus in the real panel. */}
       {onGraphFocus && <button onClick={() => onGraphFocus('sub1')}>focus-sub1</button>}
       {onGraphFocus && <button onClick={() => onGraphFocus(null)}>focus-none</button>}
@@ -449,8 +450,10 @@ describe('panel row focus reaches the graph', () => {
     expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('')
     await user.click(screen.getByText('focus-sub1'))
     expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('sub1')
+    expect(panel.getAttribute('data-graph-focus')).toBe('sub1')      // …and back to the panel, for the darker row
     await user.click(screen.getByText('focus-none'))
     expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('')
+    expect(panel.getAttribute('data-graph-focus')).toBe('')
   })
 
   it('desktop: the graph node under the mouse is handed to the panel', async () => {
@@ -477,6 +480,7 @@ describe('panel row focus reaches the graph', () => {
       expect(panel.getAttribute('data-graph-hover')).toBe('')
       await user.click(screen.getByText('focus-sub1'))
       expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('sub1')
+      expect(panel.getAttribute('data-graph-focus')).toBe('sub1')    // the phone's only sign of which row it is
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
     }

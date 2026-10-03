@@ -1083,6 +1083,7 @@ function AppInner() {
                   onGraphFocus={setGraphFocusId}
                   graphFocusMode={isMobile ? 'center' : 'hover'}
                   graphHoverId={isMobile ? null : graphHoverId}
+                    graphFocusId={graphFocusId}
                 />
               </div>
             </>
@@ -1184,6 +1185,7 @@ function AppInner() {
                     onGraphFocus={setGraphFocusId}
                     graphFocusMode={isMobile ? 'center' : 'hover'}
                     graphHoverId={isMobile ? null : graphHoverId}
+                    graphFocusId={graphFocusId}
                   />
                 </div>
               </>

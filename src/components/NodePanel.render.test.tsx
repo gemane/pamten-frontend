@@ -1681,6 +1681,28 @@ describe('NodePanel graph focus', () => {
     expect(onFocus).toHaveBeenLastCalledWith(null)
   })
 
+  it('the row of the node in focus is marked darker, in both modes, and moves with the focus', async () => {
+    // the graph grows and darkens the box of the focused row; the row itself
+    // says so too — on a phone, where nothing is hovered, this is the only sign
+    const marked = () => [...document.querySelectorAll('.rel-item--graph-focus')]
+      .map(el => el.getAttribute('data-graph-focus'))
+    const { rerender } = render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0}
+                                          onNavigate={() => {}} graphFocusMode="center" graphFocusId={null} />)
+    await screen.findByText('Sub One')
+    expect(marked()).toEqual([])
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                        graphFocusMode="center" graphFocusId="sub1" />)
+    expect(marked()).toEqual(['sub1'])
+    // independent of the desktop hover glow: both can be on, on different rows
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                        graphFocusMode="hover" graphFocusId="own1" graphHoverId="sub1" />)
+    expect(marked()).toEqual(['own1'])
+    expect([...document.querySelectorAll('.rel-item--graph-hover')].map(el => el.getAttribute('data-graph-focus'))).toEqual(['sub1'])
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
+                        graphFocusMode="hover" graphFocusId={null} />)
+    expect(marked()).toEqual([])
+  })
+
   it('desktop: the row of the graph node under the mouse lights up, and moves with it', async () => {
     const lit = () => [...document.querySelectorAll('.rel-item--graph-hover')]
       .map(el => el.getAttribute('data-graph-focus'))
