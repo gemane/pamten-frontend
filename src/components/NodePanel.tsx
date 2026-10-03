@@ -202,7 +202,8 @@ function NodeActions({ label, nodeId, targetKind, onShare }: {
 interface NodePanelProps {
   node: NodeData | null
   onExportPng?: () => void
-  onExportCsv?: () => void
+  /** The company's spreadsheet, built server-side; given the entity's id. */
+  onExportSpreadsheet?: (entityId: string) => void
   onViewOnMap?: () => void
   onShare?: () => void
   onNavigate?: (node: NodeData) => void
@@ -1031,7 +1032,8 @@ interface EntityOverviewProps {
   tree?: SubsidiaryTree | null
   asOf?: string | null
   onExportPng?: () => void
-  onExportCsv?: () => void
+  /** The company's spreadsheet, built server-side; given the entity's id. */
+  onExportSpreadsheet?: (entityId: string) => void
   onViewOnMap?: () => void
   onShare?: () => void
   onNavigate?: (node: NodeData) => void
@@ -1113,7 +1115,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, node, onReScrape, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, node, onReScrape, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
@@ -1475,16 +1477,16 @@ function EntityOverview({ profile, sources, onExportPng, onExportCsv, onViewOnMa
       <SourcesSection sources={sources} />
       <SourceStatements ids={entity.source_statement_ids} />
 
-      {(onExportPng || onExportCsv) && (
+      {(onExportPng || onExportSpreadsheet) && (
         <div className="panel-export">
           {onExportPng && (
             <button className="panel-export__btn" onClick={onExportPng}>
               <FiDownload /> {t('graph.exportPng')}
             </button>
           )}
-          {onExportCsv && (
-            <button className="panel-export__btn" onClick={onExportCsv}>
-              <FiDownload /> {t('graph.exportCsv')}
+          {onExportSpreadsheet && (
+            <button className="panel-export__btn" onClick={() => onExportSpreadsheet(profile.entity.id)}>
+              <FiDownload /> {t('graph.exportOds')}
             </button>
           )}
         </div>
@@ -1520,7 +1522,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1596,7 +1598,7 @@ export default function NodePanel({ node, onExportPng, onExportCsv, onViewOnMap,
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
         ? <div ref={focusScopeRef}>
-            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportCsv={onExportCsv} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
+            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportSpreadsheet={onExportSpreadsheet} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
           </div>
         : <TimelinePanel entityId={profile.entity.id} asOf={asOf} onYearSelect={onYearSelect} />}
     </>

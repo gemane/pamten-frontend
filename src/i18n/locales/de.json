@@ -70,7 +70,9 @@
     "clear": "Löschen",
     "export": "Exportieren",
     "exportPng": "PNG-Bild",
-    "exportCsv": "CSV-Daten",
+    "exportOds": "Tabelle (.ods)",
+
+    "exportOdsError": "Die Tabelle konnte nicht erstellt werden. Bitte erneut versuchen.",
     "expandGraph": "Graph erweitern",
     "openAsCenter": "Als Zentrum öffnen",
     "expandHint": "Doppelklick zum Erweitern",

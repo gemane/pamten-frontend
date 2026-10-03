@@ -1901,3 +1901,22 @@ describe('the order of the company panel: its own facts first', () => {
     expect(screen.queryByText('Limited company')).toBeNull()
   })
 })
+
+describe('the spreadsheet export button', () => {
+  it('asks for the spreadsheet of the company whose panel is open', async () => {
+    mockProfile.mockResolvedValue({ data: profile('lei:X', 'Acme Corp') } as Awaited<ReturnType<typeof getFullProfile>>)
+    const onExportSpreadsheet = vi.fn()
+    render(<NodePanel node={entityNode('lei:X', 'Acme Corp')} refreshKey={0} onExportSpreadsheet={onExportSpreadsheet} />)
+    await screen.findByText('Acme Corp')
+    await userEvent.click(screen.getByRole('button', { name: /Spreadsheet \(\.ods\)/ }))
+    expect(onExportSpreadsheet).toHaveBeenCalledWith('lei:X')
+    expect(screen.queryByText(/CSV/)).toBeNull()
+  })
+
+  it('is not offered when there is no handler', async () => {
+    mockProfile.mockResolvedValue({ data: profile('e1', 'Acme Corp') } as Awaited<ReturnType<typeof getFullProfile>>)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+    expect(screen.queryByRole('button', { name: /Spreadsheet/ })).toBeNull()
+  })
+})
