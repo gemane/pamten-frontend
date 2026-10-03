@@ -78,8 +78,9 @@ const microsoft: FullProfile = {
     relationship: { ownership_type: 'full', stake_percent: 100 } as OwnsRelationship,
   }, {
     // No coordinates on either basis — one of the ~230 registered offices
-    // OpenStreetMap cannot place.
-    entity: ent('e-unplaced', 'UNPLACEABLE HOLDINGS LTD'),
+    // OpenStreetMap cannot place — and no country either, or the map would
+    // stand a ring at the country's centre and fly to that.
+    entity: { ...ent('e-unplaced', 'UNPLACEABLE HOLDINGS LTD'), country: undefined, hq_country: undefined } as Entity,
     relationship: { ownership_type: 'full', stake_percent: 100 } as OwnsRelationship,
   }],
   executives: [],
@@ -178,10 +179,15 @@ describe('back from a subsidiary on the map', () => {
   })
 })
 
+// Microsoft's map shows Redmond AND Dublin: the view that holds both, between
+// them over the Atlantic, as close as that allows. It used to be Redmond at
+// zoom 4, with the Irish subsidiary painted off screen.
+const BOTH = '50.44,-65.49@2.92'
+
 describe('the map moves to whatever it is showing', () => {
-  it('flies to the company when the tab is opened', async () => {
+  it('fits the company and its subsidiaries when the tab is opened', async () => {
     await openMicrosoftOnTheMap()
-    await waitFor(() => expect(flyTo()).toBe('47.64,-122.13@4'))
+    await waitFor(() => expect(flyTo()).toBe(BOTH))
   })
 
   it('flies to a subsidiary when it is selected', async () => {
@@ -197,13 +203,13 @@ describe('the map moves to whatever it is showing', () => {
     // Snapping out to the world would be worse than staying put: the reader
     // clicked a company, not "show me everywhere".
     await openMicrosoftOnTheMap()
-    await waitFor(() => expect(flyTo()).toBe('47.64,-122.13@4'))
+    await waitFor(() => expect(flyTo()).toBe(BOTH))
 
     await userEvent.click(await screen.findByRole('button',
       { name: /UNPLACEABLE HOLDINGS LTD/i }))
 
     await waitFor(() => expect(panelContext()).toBe('UNPLACEABLE HOLDINGS LTD'))
-    expect(flyTo()).toBe('47.64,-122.13@4')       // unchanged, not 'none'
+    expect(flyTo()).toBe(BOTH)                    // unchanged, not 'none'
   })
 
   it('flies back when Back returns to the parent', async () => {
@@ -214,7 +220,7 @@ describe('the map moves to whatever it is showing', () => {
 
     pressBack('#map/n/e-msft')
 
-    await waitFor(() => expect(flyTo()).toBe('47.64,-122.13@4'))  // Redmond again
+    await waitFor(() => expect(flyTo()).toBe(BOTH))               // Redmond and Dublin again
     expect(panelContext()).toBe('MICROSOFT CORPORATION')
   })
 })

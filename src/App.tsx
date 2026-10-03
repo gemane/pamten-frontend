@@ -52,6 +52,7 @@ import {
 import { readMapBasis, MAP_BASIS_KEY, NO_COUNTRY, type MapBasis } from './utils/mapBasis'
 import { isSubdivision } from './utils/isoSubdivisions'
 import { buildContextCountries } from './utils/contextCountries'
+import { anchorOf, fitView } from './utils/mapFit'
 import { canScrape, canManageScrapes } from './utils/scrapeAccess'
 import { scheduleIdle } from './utils/idle'
 import { isPersonResult } from './types'
@@ -699,28 +700,34 @@ function AppInner() {
     () => buildContextCountries(selectedNode, elements, mapBasis, entityCountryCache.current),
     [selectedNode, elements, mapBasis],
   )
-  // Fly to whichever company the map is currently about: on opening the tab, when
-  // a subsidiary is clicked in the panel, and when Back restores the one before it.
+  // Fly to what the map is currently about: on opening the tab, when a
+  // subsidiary is clicked in the panel, and when Back restores the one before
+  // it. The view is fitted to EVERY highlighted country — the company and its
+  // subsidiaries, each at its coordinates or its country's centre — not to the
+  // company alone at a fixed zoom, which showed Redmond and left the Irish and
+  // Indian subsidiaries painted off screen.
   //
   // This used to be computed once, in the tab handler, from a snapshot — so
   // selecting a subsidiary left the viewport on the parent's country while the
   // panel talked about somewhere else entirely.
-  const mapPrimary = contextCountries.find(
-    c => c.role === 'primary' && c.lat != null && c.lng != null)
-  const flyLat = mapPrimary?.lat ?? null
-  const flyLng = mapPrimary?.lng ?? null
+  const mapFit = useMemo(
+    () => fitView(contextCountries.map(anchorOf).flatMap(a => a ? [a.point] : [])),
+    [contextCountries])
+  const fitKey = mapFit ? `${mapFit.center[0]},${mapFit.center[1]}@${mapFit.zoom}` : null
   const hasContext = !!selectedNode
   useEffect(() => {
     if (activeTab !== 'map') return
-    if (flyLat != null && flyLng != null) {
-      setMapFlyTo({ center: [flyLng, flyLat], zoom: 4 })
+    if (mapFit) {
+      setMapFlyTo(mapFit)
     } else if (!hasContext) {
       setMapFlyTo(null)           // nothing selected → back to the world view
     }
-    // A company selected but not placeable keeps the current viewport: there is
-    // nowhere to fly to, and snapping out to the world would be worse than
-    // leaving the map where the reader put it.
-  }, [activeTab, flyLat, flyLng, hasContext])
+    // A company selected but not placeable — not even its country known —
+    // keeps the current viewport: there is nowhere to fly to, and snapping
+    // out to the world would be worse than leaving the map where the reader
+    // put it. (`fitKey` stands in for `mapFit`: the same view, recomputed
+    // because the graph grew, must not fly again.)
+  }, [activeTab, fitKey, hasContext])  // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Switching basis invalidates every count and list derived from the old one.
    *  Refetching without clearing would leave one basis's counts beside the

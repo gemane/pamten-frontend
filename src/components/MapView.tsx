@@ -6,6 +6,7 @@ import { ALPHA2_TO_NUMERIC, NUMERIC_TO_ALPHA2, countryName, toAlpha2 } from '../
 import { subdivisionForFips, subdivisionName, DRILLABLE_COUNTRIES } from '../utils/isoSubdivisions'
 import { loadDetailedWorld, loadedWorld, loadUsStates, loadedUsStates, type Topology } from '../utils/mapGeography'
 import { pinFill, type MapBasis } from '../utils/mapBasis'
+import { countryCentroid, WORLD_CENTER } from '../utils/mapFit'
 import { FiRotateCcw, FiArrowLeft } from 'react-icons/fi'
 import type { MapDetailData } from './MapDetail'   // type only — no Leaflet at import
 import type { CountryEntityGroup, ContextCountry } from '../types'
@@ -242,6 +243,15 @@ export default function MapView({
   const gpsMarkers = useMemo(() =>
     spreadOverlapping(contextCountries.filter(c => c.lat != null && c.lng != null)),
   [contextCountries])
+  // A ring at the centre of every highlighted country WITHOUT a pin: painting
+  // the country alone left Switzerland a ten-pixel speck on the world and
+  // Bermuda nothing at all (it is not even in the coarse geometry).
+  const countryRings = useMemo(() =>
+    spreadOverlapping(contextCountries.filter(c => c.lat == null || c.lng == null).flatMap(c => {
+      const at = countryCentroid(c.country)
+      return at ? [{ ...c, lat: at.lat, lng: at.lng }] : []
+    })),
+  [contextCountries])
 
   // Guard against NaN coordinates that would corrupt the d3-zoom transform
   const safeCenter = flyTo && isFinite(flyTo.center[0]) && isFinite(flyTo.center[1]) ? flyTo : null
@@ -343,7 +353,7 @@ export default function MapView({
       >
         <ZoomableGroup
           key={`${resetKey}-${safeCenter ? `${safeCenter.center[0]},${safeCenter.center[1]}` : 'default'}`}
-          center={safeCenter?.center ?? [0, 20]}
+          center={safeCenter?.center ?? WORLD_CENTER}
           zoom={safeCenter?.zoom ?? 1}
           minZoom={1}
           maxZoom={12}
@@ -402,6 +412,34 @@ export default function MapView({
               })
             }
           </Geographies>
+
+          {countryRings.map(({ c, ox, oy, clustered }, i) => {
+            const text = `${c.label} — ${countryName(c.country, i18n.language)}`
+            return (
+              <Marker key={`ring-${i}`} coordinates={[c.lng!, c.lat!]} className="map-country-ring"
+                onClick={() => setTooltip(t => t?.text === text ? null : { x: 0, y: 0, text })}
+                onMouseEnter={() => setTooltip({ x: 0, y: 0, text })}
+                onMouseLeave={() => setTooltip(null)}
+              >
+                <g transform={`translate(${ox / zoom} ${oy / zoom})`}>
+                  {clustered && (ox !== 0 || oy !== 0) && (
+                    <line x1={-ox / zoom} y1={-oy / zoom} x2={0} y2={0}
+                      stroke={theme === 'dark' ? '#6b7280' : '#9ca3af'} strokeWidth={1 / zoom}
+                      style={{ pointerEvents: 'none' }} />
+                  )}
+                  <circle r={(clustered ? 15 : 24) / zoom} fill="transparent" style={{ cursor: 'pointer' }} />
+                  {/* hollow, unlike a pin: the country, not an address in it */}
+                  <circle
+                    r={(c.role === 'primary' ? 9 : 8) / zoom}
+                    fill={pinFill(c.role, c.basis ?? basis)} fillOpacity={0.25}
+                    stroke={pinFill(c.role, c.basis ?? basis)}
+                    strokeWidth={2.5 / zoom}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                </g>
+              </Marker>
+            )
+          })}
 
           {gpsMarkers.map(({ c, ox, oy, clustered }, i) => (
             <Marker key={i} coordinates={[c.lng!, c.lat!]}
