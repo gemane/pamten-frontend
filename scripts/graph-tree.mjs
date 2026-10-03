@@ -1,8 +1,8 @@
-// The ink tree behind the graph (public/graph-tree.png): the graph's own
-// shape drawn as a tree. Above the company its owners stand on a wide,
-// shallow arc, each on its own line from the hub — here an umbrella crown of
-// long radial branches ending on a flat ellipse. Below it the subsidiaries
-// hang as a tree, level under level — here deep, many-branched roots.
+// The ink tree behind the graph (public/graph-tree.png): an acacia — the
+// umbrella thorn of the Sahara — which is the graph's own shape. A short
+// trunk splits low into limbs that rise and fan out (the owners' lines from
+// the hub) and turn flat into a wide, shallow canopy (their arc); below, the
+// subsidiaries hang as a tree, level under level — deep, many-branched roots.
 //
 //   node scripts/graph-tree.mjs [seed] [size]        default: 23, 1400
 //
@@ -60,29 +60,80 @@ function branch(x, y, angle, len, w, depth, o) {
   }
 }
 
-// ── The tree: the graph's own shape ───────────────────────────────────────
-// Above the company its owners stand on a wide, shallow arc, each on its own
-// straight line from the hub — an umbrella of rays. Below it the
-// subsidiaries hang as a tree, level under level. So: a short trunk, a crown
-// of many long radial branches ending on a flat ellipse, and deep roots.
-const TOP = { x: W / 2, y: H * 0.56 }                                       // where the trunk ends: the hub
-const trunkTop = { x: TOP.x, y: TOP.y }
+// ── The tree: an acacia, the graph's own shape ────────────────────────────
+// The umbrella thorn of the Sahara: a short trunk that splits low into limbs
+// rising and fanning out — the owners' lines from the hub — then turning flat
+// into a dense canopy, wide and shallow, like the owners' arc; below, the
+// subsidiaries' tree as deep roots.
+const GROUND = H * 0.8
+const HUB = H * 0.6                  // where the trunk splits: the company
+const CANOPY = H * 0.34              // the canopy's underside at the middle
+const TOP = H * 0.22                 // its top
+const HALF = W * 0.49                // its half width
+// the crown's outline: a flat ellipse whose top is TOP, centred on the
+// underside, so its edge droops at the sides as the umbrella thorn's does
+const EA = HALF, EB = CANOPY - TOP
+const outside = (x, y) => Math.abs((x - W / 2) / EA) ** 2.6 + Math.abs((y - CANOPY) / EB) ** 2.6 > 1   // a superellipse: flatter on top
+const twig = { bow: 0.25, taper: [0.55, 0.7], three: 0.4, spread: [0.9, 1.4], shorter: [0.5, 0.7], twig: 0 }
 
-// the trunk: from the ground line up to the hub
-branch(W / 2, H * 0.78, between(-0.03, 0.03), H * 0.22, 60, 0, { bow: 0.06, taper: [0.72, 0.8], three: 0, spread: [0, 0], shorter: [1, 1], twig: 0 })
+/** A limb of the acacia: rises from (x, y) at `angle`; as it nears the canopy
+ *  its children turn towards the horizontal and shorten, so the crown ends
+ *  flat; nothing grows past the crown's outline; inside the canopy every tip
+ *  spreads a lace of fine twigs. */
+function limb(x, y, angle, len, w, depth) {
+  const bend = between(-0.1, 0.1)
+  let ex = x + Math.sin(angle + bend) * len
+  let ey = y - Math.cos(angle + bend) * len
+  // shorten to the outline: the top, or the ellipse when the end is in its reach
+  if (ey < TOP) { const k = (y - TOP) / (y - ey); ex = x + (ex - x) * k; ey = y + (ey - y) * k; len *= k }
+  if (ey < CANOPY + EB && outside(ex, ey)) {
+    let lo = 0, hi = 1
+    for (let i = 0; i < 18; i++) { const m = (lo + hi) / 2; if (outside(x + (ex - x) * m, y + (ey - y) * m)) hi = m; else lo = m }
+    ex = x + (ex - x) * lo; ey = y + (ey - y) * lo; len *= lo
+  }
+  if (len < 3) return
+  const w2 = Math.max(0.8, w * between(0.66, 0.8))
+  pts.push([x, y], [ex, ey])
+  const nx = Math.cos(angle), ny = Math.sin(angle)
+  const cx = (x + ex) / 2 + nx * len * between(-0.08, 0.08), cy = (y + ey) / 2 + ny * len * between(-0.08, 0.08)
+  const f = v => v.toFixed(1)
+  paths.push(`M${f(x - nx * w / 2)},${f(y - ny * w / 2)} Q${f(cx - nx * w / 2)},${f(cy - ny * w / 2)} ${f(ex - nx * w2 / 2)},${f(ey - ny * w2 / 2)} `
+    + `L${f(ex + nx * w2 / 2)},${f(ey + ny * w2 / 2)} Q${f(cx + nx * w / 2)},${f(cy + ny * w / 2)} ${f(x + nx * w / 2)},${f(y + ny * w / 2)} Z`)
+  const side = angle >= 0 ? 1 : -1
+  if (ey < CANOPY + 25) {
+    // the lace: fine twigs out to both sides and a few up, each forking once
+    const n = 2 + Math.floor(between(0, 3))
+    for (let i = 0; i < n; i++) {
+      const dir = rnd() < 0.7 ? side : -side
+      branch(ex, ey, dir * between(0.8, 1.55) * (rnd() < 0.25 ? 0.35 : 1), between(8, 20), between(0.9, 1.6), 1, twig)
+    }
+  }
+  if (depth === 0 || w2 < 1.0) return
+  // nearing the canopy, the children lean towards the horizontal and shorten
+  const nearness = Math.max(0, Math.min(1, (CANOPY + 110 - ey) / 200))
+  const flat = side * between(1.15, 1.45)
+  const n = rnd() < (nearness > 0.4 ? 0.6 : 0.4) ? 3 : 2
+  const spread = between(0.45, 0.8) * (1 - 0.35 * nearness)
+  for (let i = 0; i < n; i++) {
+    const t = (i / (n - 1)) * 2 - 1
+    const own = angle + t * spread / 2 + between(-0.08, 0.08)
+    const a = own * (1 - nearness * 0.7) + flat * nearness * 0.7
+    const l = len * between(0.66, 0.84) * (1 - 0.3 * nearness)
+    limb(ex, ey, a, l, w2, depth - 1)
+  }
+  if (depth > 1 && rnd() < 0.35) limb(x + (ex - x) * 0.6, y + (ey - y) * 0.6, angle + side * between(0.45, 0.85), len * 0.5, w2 * 0.55, Math.max(0, depth - 2))
+}
 
-// the crown: rays from the hub to a wide ellipse (a = half the width, b = the
-// height above the hub), the spacing jittered so it reads drawn, not plotted;
-// each ray splits a few times near its end, in a narrow fan, like the twigs
-// of a winter tree
-const A = W * 0.49, B = H * 0.29
-const RAYS = 58
-const ray = { bow: 0.07, taper: [0.64, 0.76], three: 0.45, spread: [0.28, 0.5], shorter: [0.4, 0.55], twig: 0.3 }
-for (let i = 0; i < RAYS; i++) {
-  const theta = -1.45 + (2.9 * (i + 0.5)) / RAYS + between(-0.025, 0.025)  // −83° … 83° from up
-  const r = (1 / Math.sqrt((Math.sin(theta) / A) ** 2 + (Math.cos(theta) / B) ** 2)) * between(0.9, 1.08)
-  const w = 4 + 7 * Math.cos(theta)                                           // thicker towards the middle
-  branch(trunkTop.x + Math.sin(theta) * 10, trunkTop.y - Math.cos(theta) * 6, theta, r * 0.6, w, 4, ray)
+// the trunk: short, a slight lean, splitting low
+const lean = between(-0.08, 0.08)
+branch(W / 2, GROUND, lean, GROUND - HUB, 40, 0, { bow: 0.05, taper: [0.8, 0.88], three: 0, spread: [0, 0], shorter: [1, 1], twig: 0 })
+const hubX = W / 2 + Math.sin(lean) * (GROUND - HUB)
+// the limbs: fanned wide, the outer ones longer, so the crown is as wide as it is flat
+const LIMBS = 9
+for (let i = 0; i < LIMBS; i++) {
+  const theta = -1.1 + (2.2 * (i + 0.5)) / LIMBS + between(-0.05, 0.05)
+  const reach = 1 + 0.7 * Math.abs(Math.sin(theta))
+  limb(hubX + Math.sin(theta) * 10, HUB - Math.cos(theta) * 8 + between(-6, 6), theta, (HUB - CANOPY) * 0.5 * reach, 11 + 5 * Math.cos(theta), 8)
 }
 
 // the roots: many, long, splitting like the subsidiaries' columns
@@ -91,13 +142,14 @@ const ROOTS = 9
 for (let i = 0; i < ROOTS; i++) {
   const theta = Math.PI + (-1.25 + (2.5 * (i + 0.5)) / ROOTS) + between(-0.06, 0.06)   // fanned below the ground line
   const depthShare = 0.6 + 0.4 * Math.abs(Math.cos(theta))                           // the middle ones go deepest
-  branch(W / 2 + between(-22, 22), H * 0.78, theta, H * 0.1 * depthShare, 16 + 6 * Math.abs(Math.cos(theta)), 4, root)
+  branch(W / 2 + between(-22, 22), GROUND, theta, H * 0.1 * depthShare, 16 + 6 * Math.abs(Math.cos(theta)), 4, root)
 }
 
-const xs = pts.map(q => q[0]), ys = pts.map(q => q[1])
+let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+for (const [x, y] of pts) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y) }
 const pad = 60
-const bx = Math.floor(Math.min(...xs) - pad), by = Math.floor(Math.min(...ys) - pad)
-const bw = Math.ceil(Math.max(...xs) + pad) - bx, bh = Math.ceil(Math.max(...ys) + pad) - by
+const bx = Math.floor(minX - pad), by = Math.floor(minY - pad)
+const bw = Math.ceil(maxX + pad) - bx, bh = Math.ceil(maxY + pad) - by
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${bx} ${by} ${bw} ${bh}" width="${bw}" height="${bh}">`
   + `<g fill="#000" stroke="#000" stroke-width="0.6" stroke-linejoin="round">${paths.map(d => `<path d="${d}"/>`).join('')}</g></svg>`
 
