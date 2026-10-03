@@ -8,7 +8,7 @@ import { getStats, type StatsResponse } from '../services/api'
 import { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
 import GraphFilters from './GraphFilters'
 import { DEFAULT_ASPECT, computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
-import { edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
+import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, loadImage } from '../utils/exportPng'
 
 export interface GraphHandle {
@@ -1040,7 +1040,11 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         canvas.height = layout.height
         const ctx = canvas.getContext('2d')
         if (ctx) {
-          drawExport(ctx, layout, { graph, logo }, getComputedStyle(document.body).fontFamily || 'sans-serif')
+          const lang = i18n.language
+          const today = new Intl.DateTimeFormat(lang, { dateStyle: 'long' }).format(new Date())
+          const date = asOf ? `${t('asOf.chip', { year: asOfYear(asOf) })} · ${today}` : today
+          drawExport(ctx, layout, { graph, logo },
+                     { title: centerLabel, date, fontFamily: getComputedStyle(document.body).fontFamily || 'sans-serif', theme })
           href = canvas.toDataURL('image/png')
         }
       }
@@ -1049,7 +1053,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       a.download = `${centerLabel}.png`
       a.click()
     },
-  }), [theme, centerLabel])
+  }), [theme, centerLabel, asOf, t, i18n.language])
 
   // What the filter can actually judge on this graph: ownership links that state
   // a percentage, out of the ownership links there are.
