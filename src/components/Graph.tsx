@@ -7,7 +7,9 @@ import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
 import { keepsEdge, effectiveStakePct, filterLabel, type StakeFilter } from './GraphStakeFilter'
 import GraphFilters from './GraphFilters'
-import { DEFAULT_ASPECT, computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
+import { DEFAULT_ASPECT, computeTreeLayout, nodeSize, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
+import { arcSpacing, layoutArc, rowCentres } from '../utils/arcPack'
+import { byStakeDesc } from '../utils/ordering'
 import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
 
@@ -20,6 +22,15 @@ interface TooltipState {
   y: number
   lines: string[]
 }
+
+/** A label is drawn only while its text is at least this many device pixels
+ *  tall — below that it was an unreadable grey smear over the boxes.
+ *  Cytoscape judges this per texture level (zoom × pixel ratio rounded up to
+ *  a power of two), so 4 means: 12 px names and 10 px stakes stay down to a
+ *  zoom of ¼ on a plain screen (⅛ on a 2× one) — small, but there, as long
+ *  as they can be made out at all — and vanish at that step. The hover
+ *  tooltip names a node at any zoom. */
+export const MIN_LABEL_PX = 4
 
 export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
   const edgeLabelBg = theme === 'dark' ? '#1a1a2e' : '#f0f4f8'
@@ -41,6 +52,9 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
         'width': 'label',
         'height': 'label',
         padding: '14px',
+        // Zoomed out far enough that the text would be a smear, the label is
+        // not drawn; the box keeps its size (see MIN_LABEL_PX).
+        'min-zoomed-font-size': MIN_LABEL_PX,
       },
     },
     {
@@ -101,7 +115,8 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       // long name uses the room instead of wrapping early.
       selector: 'node.center',
       style: { width: 240, 'text-max-width': '210px', padding: '38px',
-               'font-size': '16px', 'font-weight': 700, 'corner-radius': '34px' },
+               'font-size': '16px', 'font-weight': 700, 'corner-radius': '34px',
+               'min-zoomed-font-size': 0 },   // the hub is named at any zoom
     },
     {
       selector: 'node:selected',
@@ -128,6 +143,7 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
         'text-background-padding': '3px',
         'line-color': edgeLine,
         'target-arrow-color': edgeLine,
+        'min-zoomed-font-size': MIN_LABEL_PX,
       },
     },
     {
@@ -218,13 +234,12 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
 
 // Semi-ellipse layout constants.
 // Nodes sit on x = a·cos(t), y = ±b·sin(t) for t ∈ [T_START, T_END].
-// a scales with node count so nodes never overlap; b is fixed.
+// a is the narrowest that keeps the boxes apart (utils/arcPack); b is fixed.
 // At t = π/2 the node is directly above/below Google; at t = T_START/T_END
 // nodes are wide to the sides with a smaller vertical offset — flat ellipse shape.
 const T_START      = Math.PI / 6   // 30° — side nodes are 0.5·b above/below Google
 const T_END        = Math.PI * 5/6 // 150°
-const T_RANGE      = T_END - T_START
-const MIN_ZOOM      = 0.15          // how far the user (and a fit) can zoom out
+const MIN_ZOOM      = 0.08          // how far the user (and a fit) can zoom out: a hundred owners' arc
 const TREE_MIN_ZOOM = 0.02          // …in "all levels", where the whole tree must still fit
 const MAX_ZOOM      = 4
 /** A fit keeps this much canvas clear around the graph — on a large canvas;
@@ -237,10 +252,10 @@ const SMALL_CANVAS  = 640
  *  and a gap. */
 const CONTROLS_INSET = 44
 const CONTROLS_GAP   = 12
-const MIN_NODE_GAP = 72             // min arc-length (px) at the densest point (bottom)
 const SUB_B        = 280            // fixed vertical semi-axis for subsidiaries
 const OWNER_B_MIN  = 120            // vertical distance for most-important owner
 const OWNER_B_MAX  = 300            // vertical distance for least-important owner
+const ARC_DEPTH    = 0.3            // a crowded arc's height, as a share of its half-width
 const LEVEL_GAP    = 220            // vertical px between hop levels beyond the 1st
 
 // Pure function — works on the React elements array, no Cytoscape required.
@@ -356,7 +371,7 @@ export function layoutGraph(
   aspect?: number,
 ): { positions: Map<string, { x: number; y: number }>; tree: TreeLayout } {
   const tree = computeTreeLayout(elements, centerId, measure, aspect)
-  return { positions: computeArcPositions(elements, centerId, tree.positions), tree }
+  return { positions: computeArcPositions(elements, centerId, tree.positions, measure), tree }
 }
 
 /** The size Cytoscape draws a node at — the tree is laid out on the real
@@ -471,6 +486,7 @@ export function computeArcPositions(
   elements: GraphElement[],
   centerId: string | null,
   placed?: Map<string, { x: number; y: number }>,
+  measure?: Measure,
 ): Map<string, { x: number; y: number }> {
   const pos = new Map<string, { x: number; y: number }>()
   if (!centerId) return pos
@@ -481,11 +497,22 @@ export function computeArcPositions(
   const outgoersOf  = new Map<string, string[]>()
   const nodeImportance = new Map<string, number>()
   const nodeLabel   = new Map<string, string>()
-  const edgeStake   = new Map<string, number | null>()   // key: edgeKey(src, tgt) → max stake%
+  // key: edgeKey(src, tgt) → the holding's stake and share count, as the
+  // panel's rows have them: from the owns line; a voting line only stands in
+  // when there is no owns line.
+  const holding     = new Map<string, { stake: number | null; shares: number | null; owns: boolean }>()
   const edgeKey = (a: string, b: string) => a + '\u0000' + b   // sep can't occur in node ids
+  // The box each node is drawn in — measured, else the stylesheet's rules in
+  // numbers — so the arcs can keep the boxes apart.
+  const sizes = new Map<string, { w: number; h: number }>()
+  const size = (id: string) => sizes.get(id) ?? { w: 152, h: 60 }
 
   for (const el of elements) {
     const d = el.data
+    if (!('source' in d)) {
+      const m = measure?.(d.id)
+      sizes.set(d.id, m && m.w > 0 && m.h > 0 ? m : nodeSize(d, d.id === centerId))
+    }
     if ('source' in d) {
       const src = d.source
       const tgt = d.target
@@ -493,28 +520,24 @@ export function computeArcPositions(
       outgoersOf.get(src)!.push(tgt)
       if (!incomersOf.has(tgt)) incomersOf.set(tgt, [])
       incomersOf.get(tgt)!.push(src)
-      // Keep the largest stake across parallel edges (an owner may have both an
-      // owns and a votes edge to the same target).
       const key  = edgeKey(src, tgt)
-      const st   = d.stakePct ?? null
-      const prev = edgeStake.get(key)
-      edgeStake.set(key, prev == null ? st : (st == null ? prev : Math.max(prev, st)))
+      const owns = d.edgeType !== 'votes'
+      const prev = holding.get(key)
+      if (!prev || (owns && !prev.owns)) {
+        holding.set(key, { stake: d.stakePct ?? null, shares: d.shares ?? null, owns })
+      }
     } else if (d.id) {
       if (d.importance != null) nodeImportance.set(d.id, d.importance)
       nodeLabel.set(d.id, d.label ?? '')
     }
   }
 
-  // Order arc nodes the same way the side panel does: largest ownership stake
-  // first, unknown stakes last, ties alphabetical by name.
-  const cmpByStake = (getStake: (id: string) => number | null | undefined) =>
-    (a: string, b: string) => {
-      const sa = getStake(a), sb = getStake(b)
-      if (sa != null && sb != null && sa !== sb) return sb - sa
-      if (sa != null && sb == null) return -1
-      if (sa == null && sb != null) return 1
-      return (nodeLabel.get(a) ?? '').localeCompare(nodeLabel.get(b) ?? '')
-    }
+  // Order arc nodes the same way the side panel does (utils/ordering, the
+  // one comparator): largest stake first, then the holdings that only know
+  // a share count, then by name. The small 13F holders have no percentage,
+  // and in name order they did not match the panel's list.
+  const cmpByStake = (key: (id: string) => string) => byStakeDesc<string>(
+    id => holding.get(key(id))?.stake, id => nodeLabel.get(id) ?? '', id => holding.get(key(id))?.shares)
 
   pos.set(centerId, { x: 0, y: 0 })
 
@@ -524,35 +547,40 @@ export function computeArcPositions(
     .filter(id => !topSet.has(id) && id !== centerId && !placed?.has(id))
 
   // Left-to-right order along each arc follows the panel's stake ordering.
-  topIds.sort(cmpByStake(id => edgeStake.get(edgeKey(id, centerId))))       // owners → center
-  bottomIds.sort(cmpByStake(id => edgeStake.get(edgeKey(centerId, id))))    // center → subsidiaries
+  topIds.sort(cmpByStake(id => edgeKey(id, centerId)))       // owners → center
+  bottomIds.sort(cmpByStake(id => edgeKey(centerId, id)))    // center → subsidiaries
 
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)
 
-  // Semi-ellipse for what the centre points at (below it) and is not `placed`.
-  // a scales so nodes get MIN_NODE_GAP spacing at the densest point (t ≈ π/2, bottom).
-  // At the bottom the tangent is nearly horizontal so arc-length ≈ a·Δt.
+  // Semi-ellipse for what the centre points at (below it) and is not `placed`:
+  // the boxes packed along it, none touching (utils/arcPack).
   if (bottomIds.length > 0) {
-    const n    = bottomIds.length
-    const a    = Math.max(350, MIN_NODE_GAP * (n + 1) / T_RANGE)
-    bottomIds.forEach((id, i) => {
-      const t  = T_START + T_RANGE / (n + 1) * (i + 1)
-      pos.set(id, { x: a * Math.cos(t), y: SUB_B * Math.sin(t) })
+    const sizes = bottomIds.map(size)
+    const xy = layoutArc(sizes, {
+      bOf: (_, a) => Math.max(SUB_B, a * ARC_DEPTH), sign: 1, tStart: T_START, tEnd: T_END,
+      aMin: 350, ...arcSpacing(sizes),
     })
+    bottomIds.forEach((id, i) => pos.set(id, xy[i]))
   }
 
   // Semi-ellipse for owners (above Google).
-  // b varies per node by importance: more important → smaller b → closer to Google.
+  // On one row b varies per node by importance: more important → smaller b →
+  // closer to Google. A crowd is packed close in two to four rows, and there
+  // the rows are what the eye follows: one b for all (importance still shows
+  // in the box's size and shade), and the arc as deep as it is wide.
   if (topIds.length > 0) {
-    const n    = topIds.length
-    const a    = Math.max(300, MIN_NODE_GAP * (n + 1) / T_RANGE)
-    topIds.forEach((id, i) => {
-      const t   = T_START + T_RANGE / (n + 1) * (i + 1)
-      const imp = nodeImportance.get(id) ?? 0
-      const b   = OWNER_B_MAX - Math.sqrt(imp / maxImp) * (OWNER_B_MAX - OWNER_B_MIN)
-      pos.set(id, { x: a * Math.cos(t), y: -b * Math.sin(t) })
+    const sizes = topIds.map(size)
+    const spacing = arcSpacing(sizes)
+    const bOf = (i: number, a: number) => {
+      if (spacing.rows > 1) return Math.max(OWNER_B_MAX, a * ARC_DEPTH)
+      const imp = nodeImportance.get(topIds[i]) ?? 0
+      return OWNER_B_MAX - Math.sqrt(imp / maxImp) * (OWNER_B_MAX - OWNER_B_MIN)
+    }
+    const xy = layoutArc(sizes, {
+      bOf, sign: -1, tStart: T_START, tEnd: T_END, aMin: 300, ...spacing,
     })
+    topIds.forEach((id, i) => pos.set(id, xy[i]))
   }
 
   // BFS: position any nodes beyond the 1st hop (expanded graph).
@@ -565,22 +593,22 @@ export function computeArcPositions(
     const id = queue[qi++]
     const parentPos = pos.get(id)!
 
+    // A row of boxes side by side, centred over (under) the node, each as
+    // wide as it is drawn.
     const newOwners = (incomersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
-    newOwners.sort(cmpByStake(nid => edgeStake.get(edgeKey(nid, id))))
-    const nOwners = newOwners.length
+    newOwners.sort(cmpByStake(nid => edgeKey(nid, id)))
+    const ownerX = rowCentres(newOwners.map(nid => size(nid).w), parentPos.x)
     newOwners.forEach((nid, i) => {
-      const xOff = nOwners > 1 ? (i - (nOwners - 1) / 2) * MIN_NODE_GAP : 0
-      pos.set(nid, { x: parentPos.x + xOff, y: parentPos.y - LEVEL_GAP })
+      pos.set(nid, { x: ownerX[i], y: parentPos.y - LEVEL_GAP })
       positioned.add(nid)
       queue.push(nid)
     })
 
     const newSubs = (outgoersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
-    newSubs.sort(cmpByStake(nid => edgeStake.get(edgeKey(id, nid))))
-    const nSubs = newSubs.length
+    newSubs.sort(cmpByStake(nid => edgeKey(id, nid)))
+    const subX = rowCentres(newSubs.map(nid => size(nid).w), parentPos.x)
     newSubs.forEach((nid, i) => {
-      const xOff = nSubs > 1 ? (i - (nSubs - 1) / 2) * MIN_NODE_GAP : 0
-      pos.set(nid, { x: parentPos.x + xOff, y: parentPos.y + LEVEL_GAP })
+      pos.set(nid, { x: subX[i], y: parentPos.y + LEVEL_GAP })
       positioned.add(nid)
       queue.push(nid)
     })
