@@ -122,7 +122,15 @@ src/
 - With a company selected, its **pin follows the basis**: the headquarters (amber) or the
   registered office (violet), which for an offshore company is its agent's door — Barclays Capital
   (Cayman) sits on Grand Cayman under Registered and in London under Headquarters. No fallback
-  between them: where that basis has no coordinates there is no pin, only the country shading
+  between them: where that basis has no coordinates there is no pin, only the country shading —
+  and a **hollow ring at the country's centre**, so a highlighted country too small to see
+  (Switzerland on the world, Bermuda, Singapore) is still found; a parent and a subsidiary in the
+  same unplaced country get two rings fanned apart. The ring's tooltip (tap it on a phone) names
+  the company and the country
+- With a company selected the map is **fitted to every highlighted country** — the company and
+  its subsidiaries, each at its pin or its country's centre — as close as that allows and no closer
+  than one company alone is shown; a spread too wide for the frame shows the whole world. A company
+  whose country is not even known leaves the view where it is
 - Scroll to zoom, drag to pan, reset button top-right
 - Click a country → left panel shows its entity list; click an entity to load it into the graph
 

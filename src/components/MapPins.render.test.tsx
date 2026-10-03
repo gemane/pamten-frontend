@@ -18,8 +18,8 @@ vi.mock('react-simple-maps', () => ({
   ZoomableGroup: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Geographies: () => null,
   Geography: () => null,
-  Marker: ({ coordinates, children }: { coordinates: [number, number]; children?: React.ReactNode }) => (
-    <div data-testid="pin" data-at={coordinates.join(',')}>{children}</div>
+  Marker: ({ coordinates, children, className }: { coordinates: [number, number]; children?: React.ReactNode; className?: string }) => (
+    <div data-testid={className === 'map-country-ring' ? 'ring' : 'pin'} data-at={coordinates.join(',')}>{children}</div>
   ),
 }))
 
@@ -33,17 +33,20 @@ const grandCayman: ContextCountry = {
   label: 'BARCLAYS CAPITAL (CAYMAN) LIMITED', basis: 'jurisdiction', precise: false,
 }
 
-const pinsFor = (contextCountries: ContextCountry[], basis: 'hq' | 'jurisdiction') => {
+const markersFor = (kind: 'pin' | 'ring', contextCountries: ContextCountry[], basis: 'hq' | 'jurisdiction') => {
   const { container, unmount } = render(
     <MapView countryData={[]} contextCountries={contextCountries}
              basis={basis} onCountryClick={vi.fn()} />,
   )
-  const pins = Array.from(container.querySelectorAll('[data-testid="pin"]'))
+  const pins = Array.from(container.querySelectorAll(`[data-testid="${kind}"]`))
     .map(p => ({ at: p.getAttribute('data-at'),
-                 fill: p.querySelector('circle[fill]:not([fill="transparent"])')?.getAttribute('fill') }))
+                 fill: p.querySelector('circle[fill]:not([fill="transparent"])')?.getAttribute('fill'),
+                 stroke: p.querySelector('circle[stroke]')?.getAttribute('stroke') }))
   unmount()
   return pins
 }
+const pinsFor = (contextCountries: ContextCountry[], basis: 'hq' | 'jurisdiction') => markersFor('pin', contextCountries, basis)
+const ringsFor = (contextCountries: ContextCountry[], basis: 'hq' | 'jurisdiction') => markersFor('ring', contextCountries, basis)
 
 describe('the pin follows the basis', () => {
   it('stands in London under Headquarters', () => {
@@ -70,6 +73,38 @@ describe('the pin follows the basis', () => {
     const unplaced: ContextCountry = { country: 'KY', role: 'primary',
                                        label: 'Somewhere Ltd', basis: 'jurisdiction' }
     expect(pinsFor([unplaced], 'jurisdiction')).toEqual([])
+  })
+})
+
+describe('a ring marks a highlighted country that has no pin', () => {
+  // Shading alone left Switzerland a ten-pixel speck on the world and the
+  // Cayman Islands nothing at all: the coarse geometry does not carry them.
+  const unplaced: ContextCountry = { country: 'KY', role: 'primary',
+                                     label: 'Somewhere Ltd', basis: 'jurisdiction' }
+
+  it('stands at the centre of the country, in the role\'s colour, hollow', () => {
+    const rings = ringsFor([unplaced], 'jurisdiction')
+    expect(rings).toHaveLength(1)
+    expect(rings[0].at).toBe('-81.3,19.3')                       // Grand Cayman
+    expect(rings[0].stroke).toBe(pinFill('primary', 'jurisdiction'))
+  })
+
+  it('does not double a pin: a company with coordinates gets the pin only', () => {
+    expect(ringsFor([grandCayman], 'jurisdiction')).toEqual([])
+    expect(pinsFor([grandCayman], 'jurisdiction')).toHaveLength(1)
+  })
+
+  it('needs a country the table knows; a company without one gets nothing', () => {
+    const nowhere: ContextCountry = { country: '', role: 'subsidiary', label: 'Nowhere Ltd' }
+    expect(ringsFor([nowhere], 'jurisdiction')).toEqual([])
+    expect(pinsFor([nowhere], 'jurisdiction')).toEqual([])
+  })
+
+  it('fans a parent and its subsidiary in the same unplaced country apart', () => {
+    const sub: ContextCountry = { country: 'KY', role: 'subsidiary', label: 'Sub Ltd', basis: 'jurisdiction' }
+    const rings = ringsFor([unplaced, sub], 'jurisdiction')
+    expect(rings).toHaveLength(2)
+    expect(rings[0].stroke).not.toBe(rings[1].stroke)
   })
 })
 
