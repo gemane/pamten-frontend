@@ -9,9 +9,10 @@ import { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilt
 import GraphFilters from './GraphFilters'
 import { DEFAULT_ASPECT, computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
 import { edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
+import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, loadImage } from '../utils/exportPng'
 
 export interface GraphHandle {
-  exportPng: () => void
+  exportPng: () => Promise<void>
 }
 
 interface TooltipState {
@@ -1024,12 +1025,27 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   }, [focusedId])
 
   useImperativeHandle(ref, () => ({
-    exportPng: () => {
+    exportPng: async () => {
       const cy = cyRef.current
       if (!cy) return
-      const uri = cy.png({ output: 'base64uri', bg: theme === 'dark' ? '#1a1a2e' : '#f0f4f8', full: true, scale: 2 })
+      const uri = cy.png({ output: 'base64uri', bg: theme === 'dark' ? '#1a1a2e' : '#f0f4f8', full: true, scale: EXPORT_SCALE })
+      // The graph in a white frame with the logo and the name on it; the bare
+      // graph when the page cannot compose it (no canvas, image blocked).
+      const [graph, logo] = await Promise.all([loadImage(uri), loadImage(LOGO_SRC)])
+      let href = uri
+      if (graph) {
+        const layout = exportLayout({ w: graph.naturalWidth, h: graph.naturalHeight })
+        const canvas = document.createElement('canvas')
+        canvas.width = layout.width
+        canvas.height = layout.height
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          drawExport(ctx, layout, { graph, logo }, getComputedStyle(document.body).fontFamily || 'sans-serif')
+          href = canvas.toDataURL('image/png')
+        }
+      }
       const a = document.createElement('a')
-      a.href = uri
+      a.href = href
       a.download = `${centerLabel}.png`
       a.click()
     },
