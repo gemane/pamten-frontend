@@ -1076,6 +1076,9 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
   return (
     <div className="graph-wrapper">
+      {/* An ink tree behind the canvas — a company structure drawn as nature
+          draws one. Faint, under everything, and not part of the PNG export. */}
+      <div className="graph-backdrop" aria-hidden="true" />
       <div ref={containerRef} className="graph-canvas" onMouseLeave={() => setTooltip(null)} />
 
       {elements.length === 0 && (
