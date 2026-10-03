@@ -5,11 +5,11 @@ import cytoscape from 'cytoscape'
 import type { EdgeData, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
-import { keepsEdge, effectiveStakePct, type StakeFilter } from './GraphStakeFilter'
+import { keepsEdge, effectiveStakePct, filterLabel, type StakeFilter } from './GraphStakeFilter'
 import GraphFilters from './GraphFilters'
 import { DEFAULT_ASPECT, computeTreeLayout, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
 import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
-import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, loadImage } from '../utils/exportPng'
+import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
 
 export interface GraphHandle {
   exportPng: () => Promise<void>
@@ -1043,8 +1043,14 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           const lang = i18n.language
           const today = new Intl.DateTimeFormat(lang, { dateStyle: 'long' }).format(new Date())
           const date = asOf ? `${t('asOf.chip', { year: asOfYear(asOf) })} · ${today}` : today
-          drawExport(ctx, layout, { graph, logo },
-                     { title: centerLabel, date, fontFamily: getComputedStyle(document.body).fontFamily || 'sans-serif', theme })
+          // the legend for what is drawn: the stake filter's and the day's survivors
+          const { visible } = classifyElements(elements, stakeFilter, centerId ?? null, asOf)
+          const filters = `${t('graph.levelsLabel')}: ${t(allLevels ? 'graph.levelsAll' : 'graph.levelsDirect')}`
+            + ` · ${t('graph.filterTitle')}: ${filterLabel(stakeFilter, t('graph.filterAny'))}`
+          drawExport(ctx, layout, { graph, logo }, {
+            title: centerLabel, date, legend: legendItems(visible, t), filters, link: window.location.href,
+            fontFamily: getComputedStyle(document.body).fontFamily || 'sans-serif', theme,
+          })
           href = canvas.toDataURL('image/png')
         }
       }
@@ -1053,7 +1059,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       a.download = `${centerLabel}.png`
       a.click()
     },
-  }), [theme, centerLabel, asOf, t, i18n.language])
+  }), [theme, centerLabel, asOf, t, i18n.language, elements, stakeFilter, centerId, allLevels])
 
   // What the filter can actually judge on this graph: ownership links that state
   // a percentage, out of the ownership links there are.
