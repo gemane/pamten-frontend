@@ -14,7 +14,7 @@ import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
-import { FOCUS_ATTR, scrollingPanel, useGraphHoverHighlight } from '../utils/graphFocus'
+import { FOCUS_ATTR, scrollingPanel, useGraphFocusHighlight, useGraphHoverHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree } from '../types'
@@ -237,6 +237,9 @@ interface NodePanelProps {
    * subsidiary row lights up, so the list shows which line a box stands for.
    */
   graphHoverId?: string | null
+  /** The graph node in focus (the row under the mouse, or at the phone's
+   *  centre) — its row is shown a shade darker, as the graph shows its box. */
+  graphFocusId?: string | null
 }
 
 
@@ -1522,7 +1525,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1533,6 +1536,7 @@ export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onVi
   const focusScopeRef = useRef<HTMLDivElement>(null)
   useGraphFocus(focusScopeRef, graphFocusMode, onGraphFocus, [node?.id, profile, activeView, loading])
   useGraphHoverHighlight(focusScopeRef, graphHoverId, [node?.id, profile, activeView, loading])
+  useGraphFocusHighlight(focusScopeRef, graphFocusId, [node?.id, profile, activeView, loading])
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {

@@ -89,16 +89,43 @@ export function useGraphHoverHighlight(
   hoverId: string | null,
   deps: readonly unknown[],
 ): void {
+  useRowClass(scopeRef, hoverId, GRAPH_HOVER_CLASS, deps)
+}
+
+export const GRAPH_FOCUS_CLASS = 'rel-item--graph-focus'
+
+/**
+ * Mark the row whose graph node is in focus — the row under the mouse on a
+ * desktop, the one at the panel's centre on a phone — a shade darker, as the
+ * graph draws its box darker and larger meanwhile. Until now only the box
+ * changed: on a phone nothing in the list said which row the growing box was
+ * answering to.
+ */
+export function useGraphFocusHighlight(
+  scopeRef: RefObject<HTMLElement | null>,
+  focusId: string | null,
+  deps: readonly unknown[],
+): void {
+  useRowClass(scopeRef, focusId, GRAPH_FOCUS_CLASS, deps)
+}
+
+/** The class on every marked row whose graph id is `id`, for as long as it is. */
+function useRowClass(
+  scopeRef: RefObject<HTMLElement | null>,
+  id: string | null,
+  className: string,
+  deps: readonly unknown[],
+): void {
   useEffect(() => {
     const scope = scopeRef.current
-    if (!scope || !hoverId) return
-    const lit: HTMLElement[] = []
+    if (!scope || !id) return
+    const marked: HTMLElement[] = []
     scope.querySelectorAll<HTMLElement>(`[${FOCUS_ATTR}]`).forEach(el => {
-      if (el.getAttribute(FOCUS_ATTR) === hoverId) {
-        el.classList.add(GRAPH_HOVER_CLASS)
-        lit.push(el)
+      if (el.getAttribute(FOCUS_ATTR) === id) {
+        el.classList.add(className)
+        marked.push(el)
       }
     })
-    return () => lit.forEach(el => el.classList.remove(GRAPH_HOVER_CLASS))
-  }, [hoverId, ...deps]) // eslint-disable-line react-hooks/exhaustive-deps
+    return () => marked.forEach(el => el.classList.remove(className))
+  }, [id, className, ...deps]) // eslint-disable-line react-hooks/exhaustive-deps
 }
