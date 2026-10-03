@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyTreeRoutes, computeArcPositions, buildStylesheet, classifyElements, diffElements, filterVisibleElements, layoutGraph } from './Graph'
+import { applyTreeRoutes, computeArcPositions, buildStylesheet, canvasAspect, classifyElements, diffElements, filterVisibleElements, fitRegion, fitViewport, layoutGraph } from './Graph'
 import { STAKE_FILTERS, ANY_STAKE } from './GraphStakeFilter'
 import type { GraphElement } from '../types'
 
@@ -164,6 +164,16 @@ describe('layoutGraph — owners on their arc, the subsidiaries as a tree', () =
     expect(pos.get('a1')!.y).toBeGreaterThan(pos.get('a')!.y)
     expect(pos.get('a')!.y).toBe(pos.get('b')!.y)
     expect(pos.get('a1')!.x).not.toBe(pos.get('a2')!.x)
+  })
+
+  it('packs the tree towards the canvas\'s shape it is given', () => {
+    const many = [n('c'), ...Array.from({ length: 60 }, (_, i) => n(`s${i}`)),
+                  ...Array.from({ length: 60 }, (_, i) => e('c', `s${i}`, 'out'))]
+    const width = (aspect: number) => {
+      const xs = [...layoutGraph(many, 'c', undefined, aspect).positions.values()].map(p => p.x)
+      return Math.max(...xs) - Math.min(...xs)
+    }
+    expect(width(1.2)).toBeLessThan(width(2.6))         // a phone's canvas: fewer columns
   })
 })
 
@@ -351,5 +361,48 @@ describe('classifyElements — the as-of view', () => {
     expect(edge.style['line-style']).toBe('dashed')
     expect(Number(edge.style.opacity)).toBeLessThan(1)
     expect(Number(nd.style.opacity)).toBeLessThan(1)
+  })
+})
+
+describe('fitting the graph into the canvas — the whole of a phone\'s, under its buttons', () => {
+  const desktop = { w: 2180, h: 1438 }
+  const phone = { w: 390, h: 354 }
+  const zoomRange = { min: 0.02, max: 4 }
+
+  it('keeps 80 px clear on a desktop canvas, what the canvas can spare on a phone', () => {
+    expect(fitRegion(desktop)).toEqual({ x1: 80, y1: 80, w: 2020, h: 1278 })
+    // a twelfth of the shorter side (30): the buttons (12 + 32) and a gap at the top
+    expect(fitRegion(phone)).toEqual({ x1: 30, y1: 56, w: 330, h: 268 })
+  })
+
+  it('packs the tree towards the region\'s shape; the default without a canvas', () => {
+    expect(canvasAspect(desktop)).toBeCloseTo(2020 / 1278, 3)
+    expect(canvasAspect(phone)).toBeCloseTo(330 / 268, 3)
+    expect(canvasAspect({ w: 0, h: 0 })).toBe(1.7)
+  })
+
+  it('on a phone the graph fills the region below the buttons', () => {
+    const bb = { x1: -600, y1: -400, w: 918, h: 835 }        // Microsoft, Direct
+    const view = fitViewport(phone, bb, zoomRange)!
+    expect(view.zoom).toBeCloseTo(268 / 835, 4)              // the height limits
+    // the graph's top edge in canvas pixels: right under the buttons' gap
+    expect(bb.y1 * view.zoom + view.pan.y).toBeCloseTo(56, 4)
+    // …and centred between the side paddings
+    const left = bb.x1 * view.zoom + view.pan.x, right = left + bb.w * view.zoom
+    expect(left - 30).toBeCloseTo(390 - 30 - right, 4)
+  })
+
+  it('on a desktop it is cy.fit with 80 px padding', () => {
+    const bb = { x1: 0, y1: 0, w: 1010, h: 1278 }
+    const view = fitViewport(desktop, bb, zoomRange)!
+    expect(view.zoom).toBe(1)
+    expect(view.pan).toEqual({ x: 80 + (2020 - 1010) / 2, y: 80 })
+  })
+
+  it('never zooms past the range, and gives up on nothing to fit', () => {
+    expect(fitViewport(phone, { x1: 0, y1: 0, w: 100000, h: 10 }, zoomRange)!.zoom).toBe(0.02)
+    expect(fitViewport(phone, { x1: 0, y1: 0, w: 10, h: 10 }, zoomRange)!.zoom).toBe(4)
+    expect(fitViewport(phone, { x1: 0, y1: 0, w: 0, h: 0 }, zoomRange)).toBeNull()
+    expect(fitViewport({ w: 40, h: 40 }, { x1: 0, y1: 0, w: 10, h: 10 }, zoomRange)).toBeNull()
   })
 })

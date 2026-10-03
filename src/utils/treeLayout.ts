@@ -32,11 +32,12 @@
  *     drawn this way is planar.
  *
  * And one keeps it readable: the NUMBER OF COLUMNS under each parent is the
- * one that makes that branch's box closest to the screen's shape. One row per
+ * one that makes that branch's box closest to the CANVAS's shape. One row per
  * level (the classic tree) made Chubb's ten levels 27,000 px wide and 1,700
  * tall — lines that never cross and names nobody can read; one column would be
- * as tall. Boxes of about the screen's shape pack into a picture of about the
- * screen's shape.
+ * as tall. Boxes of about the canvas's shape pack into a picture of about the
+ * canvas's shape — wide on a desktop, nearly square on a phone, where a tree
+ * laid out for a wide screen fitted at a fifth of its size.
  *
  * What can still cross: a genuine co-holder in ANOTHER branch (not an
  * ancestor) — Chubb has 32. Its line is real information, so it is drawn, but
@@ -75,8 +76,9 @@ const placesFrom = (d: EdgeLike, centerId: string) =>
 const stakeOfEdge = (d: EdgeLike) =>
   d.edgeType === 'role' ? ROLE_STAKE : typeof d.stakePct === 'number' ? d.stakePct : UNSTATED_STAKE
 const MAX_COLUMNS = 30
-/** The shape the picture should approach (a wide screen's canvas). */
-const TARGET_ASPECT = 1.7
+/** The shape the picture approaches when the canvas's own is not given: a
+ *  wide screen's (width over height). */
+export const DEFAULT_ASPECT = 1.7
 
 export type Point = { x: number; y: number }
 /** How a tree line reaches its child. `drop`: the bus, below the parent's
@@ -218,7 +220,11 @@ export function treeParents(elements: GraphElement[], centerId: string): Map<str
  *  asks Cytoscape); undefined → `nodeSize`'s estimate. */
 export type Measure = (id: string) => { w: number; h: number } | undefined
 
-export function computeTreeLayout(elements: GraphElement[], centerId: string | null, measure?: Measure): TreeLayout {
+/** `aspect`: the canvas's width over its height — the shape every branch, and
+ *  so the picture, is packed towards. */
+export function computeTreeLayout(
+  elements: GraphElement[], centerId: string | null, measure?: Measure, aspect = DEFAULT_ASPECT,
+): TreeLayout {
   const pos = new Map<string, Point>()
   const routes = new Map<string, Route>()
   const implied = new Set<string>()
@@ -274,8 +280,8 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
   }
   const LABEL_GAP = 4
   const labelRoom = (id: string) => labelOf.has(id) ? labelOf.get(id)!.h + LABEL_GAP : 0
-  // How far the picture must shrink to show a box of this size.
-  const cost = (w: number, h: number) => Math.max(w, h * TARGET_ASPECT)
+  // How far the picture must shrink to show a box of this size on the canvas.
+  const cost = (w: number, h: number) => Math.max(w, h * aspect)
 
   const box = (id: string): Box => {
     // In the panel's order — so the box that lights up follows the list down a
@@ -400,8 +406,8 @@ export function computeTreeLayout(elements: GraphElement[], centerId: string | n
   return layout
 }
 
-export const computeTreePositions = (elements: GraphElement[], centerId: string | null, measure?: Measure) =>
-  computeTreeLayout(elements, centerId, measure).positions
+export const computeTreePositions = (elements: GraphElement[], centerId: string | null, measure?: Measure, aspect?: number) =>
+  computeTreeLayout(elements, centerId, measure, aspect).positions
 
 /** The corners of a tree line between a parent and a child at these positions.
  *  From the positions and the route's own offsets, so a dragged node's lines
