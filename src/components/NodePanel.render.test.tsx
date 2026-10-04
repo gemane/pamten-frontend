@@ -1342,6 +1342,20 @@ describe('the counts behind a percentage', () => {
     expect(d?.textContent).toContain('2020-03-10')
   })
 
+  it('the day the numbers are as of, above the day they were filed', async () => {
+    const d = await openMenu({ stake_percent: 7.48, event_date: '2026-03-31', source_date: '2026-04-20' })
+    expect(d?.textContent).toContain('As of2026-03-31')
+    expect(d?.textContent).toContain('Filed2026-04-20')
+  })
+
+  it('no "as of" line when it is the filing day, or not stated', async () => {
+    let d = await openMenu({ stake_percent: 7.48, event_date: '2026-04-20', source_date: '2026-04-20' })
+    expect(d?.textContent).not.toContain('As of')
+    cleanup()
+    d = await openMenu({ stake_percent: 7.48, source_date: '2026-04-20' })
+    expect(d?.textContent).not.toContain('As of')
+  })
+
   it('no date when the total is the filing\'s own', async () => {
     const d = await openMenu({ stake_percent: 8.0534, shares: 159121937, shares_outstanding: 1975847422 })
     expect(d?.textContent).not.toContain('total as of')

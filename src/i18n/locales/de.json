@@ -599,6 +599,7 @@
     "class": "Gattung",
     "stake": "Anteil",
     "voting": "Stimmrechte",
+    "asOf": "Stand",
     "filed": "Gemeldet",
     "votingExceeds": "{{pct}}% — mehr als die gehaltenen {{stake}}%",
     "shares": "Aktien",

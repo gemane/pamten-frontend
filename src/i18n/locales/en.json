@@ -599,6 +599,7 @@
     "class": "Class",
     "stake": "Stake",
     "voting": "Voting",
+    "asOf": "As of",
     "filed": "Filed",
     "votingExceeds": "{{pct}}% — more than the {{stake}}% held",
     "shares": "Shares",

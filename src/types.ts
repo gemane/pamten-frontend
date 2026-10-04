@@ -118,6 +118,9 @@ export interface OwnsRelationship {
    *  holding's own filing — the backend re-divided an old count by the issuer's
    *  latest total (Bevco: its 2020 count of AB InBev's 2026 total). */
   denominator_date?: string | null
+  /** The day the filing states its numbers as of (13D/G "date of event") — not
+   *  the day it was filed (`source_date`), which can be weeks later. */
+  event_date?: string | null
   /** The count behind `voting_power_pct`. Belongs to the GROUP and is repeated
    *  by every member — display it, never sum it. */
   voting_shares?: number | null
