@@ -55,8 +55,16 @@ export function endedBy(rel: Tenure | null | undefined, asOf: string | null): bo
  *  older one — not proof, but the filings' own answer, and the user's call:
  *  hidden before that year). A lower bound (`first_listed`) never says
  *  "started after". */
+/** Every `since_basis` but `newly_listed` says only "at least since" — the
+ *  oldest Exhibit 21 naming it (`first_listed`), a 13D/G amendment
+ *  (`amendment`), the UK PSC register's first day (`register_start`), and
+ *  whatever the backend adds next. The backend's as-of clause reads the same
+ *  rule (owns_merge.STATED_BASES), so the panel and the graph agree. */
+export const isLowerBound = (basis: string | null | undefined): boolean =>
+  !!basis && basis !== 'newly_listed'
+
 export function startedAfter(rel: Tenure | null | undefined, asOf: string | null): boolean {
-  if (!asOf || !rel?.since || rel.since_basis === 'first_listed') return false
+  if (!asOf || !rel?.since || isLowerBound(rel.since_basis)) return false
   return rel.since > asOf
 }
 

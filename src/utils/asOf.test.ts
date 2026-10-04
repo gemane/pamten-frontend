@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  asOfFromYear, asOfYear, edgePresence, endedBy, evidenceDate, isAsOf, nodeExists,
+  asOfFromYear, asOfYear, edgePresence, endedBy, evidenceDate, isAsOf, isLowerBound, nodeExists,
   rowPresence, startedAfter, tenureOfEdge,
 } from './asOf'
 
@@ -38,6 +38,16 @@ describe('asOf rules', () => {
     expect(edgePresence({ since: '2023-06-30', since_basis: 'newly_listed' }, '2023-12-31')).toBe('present')
     expect(edgePresence({ since: '2023-06-30', since_basis: 'newly_listed' }, '2022-12-31')).toBe('absent')
     expect(edgePresence({ since: '2023-06-30', since_basis: 'newly_listed' }, null)).toBe('present')
+  })
+
+  it('every basis but newly_listed is a lower bound — a 13D/G amendment, the PSC register start, the next one', () => {
+    for (const basis of ['amendment', 'register_start', 'some_future_basis']) {
+      expect(edgePresence({ since: '2026-02-10', since_basis: basis }, Y19)).toBe('unknown')
+      expect(isLowerBound(basis)).toBe(true)
+    }
+    expect(isLowerBound('newly_listed')).toBe(false)
+    expect(isLowerBound(null)).toBe(false)
+    expect(isLowerBound('')).toBe(false)
   })
 
   it('an until on or before the day is absent; after it, still present', () => {

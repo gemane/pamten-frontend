@@ -142,8 +142,10 @@ export interface OwnsRelationship {
   ownership_type?: OwnershipType | null
   since?: string | null
   until?: string | null
-  /** "first_listed": `since` is a LOWER bound (the oldest Exhibit 21 naming the
-   *  subsidiary), not the stated start — see utils/asOf. */
+  /** How `since` is known when the source does not state the start. Every value
+   *  but "newly_listed" is a LOWER bound — "first_listed" (oldest Exhibit 21),
+   *  "amendment" (a 13D/G amendment), "register_start" (UK PSC, 2016-04-06) —
+   *  see utils/asOf.isLowerBound. */
   since_basis?: string | null
   /** "withdrawn": the register record vanished (a correction), not a cessation. */
   until_reason?: string | null
