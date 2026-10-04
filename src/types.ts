@@ -114,6 +114,10 @@ export interface OwnsRelationship {
    *  InBev issued more shares, though its holding never changed. */
   shares?: number | null
   shares_outstanding?: number | null
+  /** The filing date `shares_outstanding` comes from, when it is NEWER than this
+   *  holding's own filing — the backend re-divided an old count by the issuer's
+   *  latest total (Bevco: its 2020 count of AB InBev's 2026 total). */
+  denominator_date?: string | null
   /** The count behind `voting_power_pct`. Belongs to the GROUP and is repeated
    *  by every member — display it, never sum it. */
   voting_shares?: number | null

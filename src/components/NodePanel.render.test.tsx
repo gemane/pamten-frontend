@@ -1334,6 +1334,19 @@ describe('the counts behind a percentage', () => {
     expect(d?.textContent).toContain('1,975,847,422')
   })
 
+  it('says when the total is newer than the filing — the stake was restated against it', async () => {
+    // Bevco's 2020 count, AB InBev's 2026 total
+    const d = await openMenu({ stake_percent: 5.2158, shares: 102862718, shares_outstanding: 1972133054,
+                               denominator_date: '2026-05-15', source_date: '2020-03-10' })
+    expect(d?.textContent).toContain('102,862,718 of 1,972,133,054 (total as of 2026-05-15)')
+    expect(d?.textContent).toContain('2020-03-10')
+  })
+
+  it('no date when the total is the filing\'s own', async () => {
+    const d = await openMenu({ stake_percent: 8.0534, shares: 159121937, shares_outstanding: 1975847422 })
+    expect(d?.textContent).not.toContain('total as of')
+  })
+
   it('shows the holding alone when no total was stated', async () => {
     const d = await openMenu({ stake_percent: null, shares: 771096582 })
     expect(d?.textContent).toContain('771,096,582')

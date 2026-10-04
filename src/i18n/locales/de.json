@@ -603,6 +603,7 @@
     "votingExceeds": "{{pct}}% — mehr als die gehaltenen {{stake}}%",
     "shares": "Aktien",
     "sharesOf": "{{shares}} von {{total}}",
+    "sharesOfAsOf": "{{shares}} von {{total}} (Gesamtzahl vom {{date}})",
     "votingShares": "Stimmrechtsaktien"
   },
   "health": {

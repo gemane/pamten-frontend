@@ -812,6 +812,8 @@ export interface RelTarget {
   filedDate?: string | null
   shares?: number | null
   sharesOutstanding?: number | null
+  /** when that total is from, if newer than the filing (see OwnsRelationship) */
+  denominatorDate?: string | null
   votingShares?: number | null
 }
 
@@ -856,6 +858,7 @@ function relFromOwns(rel: OwnsRelationship | undefined, ids: {
     filedDate: rel?.source_date,
     shares: rel?.shares,
     sharesOutstanding: rel?.shares_outstanding,
+    denominatorDate: rel?.denominator_date,
     votingShares: rel?.voting_shares,
   }
 }
@@ -936,8 +939,12 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
     const n = rel.shares.toLocaleString()
     details.push({
       label: t('menu.shares'),
+      // A total newer than the filing says so: the count is the filing's,
+      // the total (and with it the stake above) the issuer's latest.
       value: rel.sharesOutstanding != null
-        ? t('menu.sharesOf', { shares: n, total: rel.sharesOutstanding.toLocaleString() })
+        ? t(rel.denominatorDate ? 'menu.sharesOfAsOf' : 'menu.sharesOf',
+            { shares: n, total: rel.sharesOutstanding.toLocaleString(),
+              date: rel.denominatorDate?.slice(0, 10) })
         : n,
     })
   }
