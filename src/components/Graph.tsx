@@ -2,7 +2,7 @@ import { forwardRef, Fragment, useEffect, useImperativeHandle, useMemo, useRef, 
 import { useTranslation } from 'react-i18next'
 import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
-import type { EdgeData, GraphElement, NodeData } from '../types'
+import type { EdgeData, Entity, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
 import { getStats, type StatsResponse } from '../services/api'
 import { keepsEdge, effectiveStakePct, filterLabel, type StakeFilter } from './GraphStakeFilter'
@@ -10,6 +10,7 @@ import GraphFilters from './GraphFilters'
 import { DEFAULT_ASPECT, computeTreeLayout, nodeSize, routePoints, segmentStyle, type Measure, type Route, type TreeLayout } from '../utils/treeLayout'
 import { arcSpacing, layoutArc, rowCentres } from '../utils/arcPack'
 import { byStakeDesc } from '../utils/ordering'
+import { displayName } from '../utils/displayName'
 import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
 
@@ -862,6 +863,11 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const d   = evt.target.data()
       const me  = evt.originalEvent as MouseEvent
       const lines: string[] = [d.label]
+      // the company's other name (legal or Latin), where it has one
+      if (d.nodeType === 'entity' && d.raw) {
+        const other = displayName(d.raw as Entity).secondary
+        if (other && other !== d.label) lines.push(other)
+      }
       if (d.entitySubtype)    lines.push(d.entitySubtype.charAt(0).toUpperCase() + d.entitySubtype.slice(1))
       if (d.raw?.country)     lines.push(`${t('panel.country')}: ${d.raw.country}`)
       if (d.raw?.founded)     lines.push(`${t('panel.founded')}: ${d.raw.founded}`)

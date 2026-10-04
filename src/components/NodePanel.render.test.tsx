@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { setViewerLanguages } from '../utils/displayName'
 import { render, screen, waitFor, fireEvent, within, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import NodePanel from './NodePanel'
+import NodePanel, { entityToNode } from './NodePanel'
 import type { NodeData, FullProfile, Entity } from '../types'
 
 // Mock the api + the children that do their own fetching, so the test isolates NodePanel's
@@ -1940,5 +1941,58 @@ describe('the spreadsheet export button', () => {
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
     await screen.findByText('Acme Corp')
     expect(screen.queryByRole('button', { name: /Spreadsheet/ })).toBeNull()
+  })
+})
+
+describe('company names in the viewer\'s order', () => {
+  const korea = { id: 'kr', name: '네슬레코리아 유한책임회사', other_names: ['Nestle Korea'], type: 'company', verified: false } as Entity
+  afterEach(() => { setViewerLanguages(null); cleanup() })
+
+  it('the header: the Latin name as title, the legal name under it, marked as such', async () => {
+    setViewerLanguages(['de-AT'])
+    mockProfile.mockResolvedValue({ data: { entity: korea, owners: [], subsidiaries: [], executives: [] } } as never)
+    render(<NodePanel node={entityNode('kr', 'Nestle Korea')} refreshKey={0} />)
+    expect(await screen.findByRole('heading', { name: 'Nestle Korea' })).toBeInTheDocument()
+    const alt = document.querySelector('.panel-name-alt')!
+    expect(alt).toHaveTextContent('네슬레코리아 유한책임회사')
+    expect(alt).toHaveTextContent('legal name')
+  })
+
+  it('for a reader of Hangul the other way round', async () => {
+    setViewerLanguages(['ko-KR', 'en'])
+    mockProfile.mockResolvedValue({ data: { entity: korea, owners: [], subsidiaries: [], executives: [] } } as never)
+    render(<NodePanel node={entityNode('kr', 'x')} refreshKey={0} />)
+    expect(await screen.findByRole('heading', { name: '네슬레코리아 유한책임회사' })).toBeInTheDocument()
+    expect(document.querySelector('.panel-name-alt')).toHaveTextContent('Nestle Korea')
+    expect(document.querySelector('.panel-name-alt')).toHaveTextContent('in Latin script')
+  })
+
+  it('a row hands the graph the name the viewer reads (entityToNode)', () => {
+    setViewerLanguages(['en'])
+    expect(entityToNode(korea).label).toBe('Nestle Korea')
+    setViewerLanguages(['ko'])
+    expect(entityToNode(korea).label).toBe('네슬레코리아 유한책임회사')
+  })
+
+  it('no second line for a Latin name', async () => {
+    mockProfile.mockResolvedValue({ data: profile('e1', 'Acme Corp') } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByRole('heading', { name: 'Acme Corp' })
+    expect(document.querySelector('.panel-name-alt')).toBeNull()
+  })
+
+  it('rows: subsidiary and owner in the first name, the other on hover', async () => {
+    setViewerLanguages(['en'])
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'n', name: 'Nestle S.A.', type: 'company', verified: false } as Entity,
+      owners: [{ owner: { ...korea, id: 'o' }, relationship: { stake_percent: 1 } }],
+      subsidiaries: [{ entity: korea, relationship: { stake_percent: 100 } }],
+      executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('n', 'Nestle S.A.')} refreshKey={0} />)
+    const rows = await screen.findAllByText('Nestle Korea')
+    expect(rows).toHaveLength(2)
+    for (const r of rows) expect(r).toHaveAttribute('title', '네슬레코리아 유한책임회사')
+    expect(screen.queryByText('네슬레코리아 유한책임회사')).toBeNull()
   })
 })

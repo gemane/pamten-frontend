@@ -1,3 +1,4 @@
+import { displayName, entityLabel } from '../utils/displayName'
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiSearch, FiX } from 'react-icons/fi'
@@ -159,7 +160,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
 
   const handleSelect = (result: SearchResult, rank?: number) => {
     settle('selected', rank)
-    const nodeName = 'name' in result.node ? result.node.name : ('full_name' in result.node ? result.node.full_name : '')
+    const nodeName = 'name' in result.node ? entityLabel(result.node) : ('full_name' in result.node ? result.node.full_name : '')
     // Setting query to the selected name must NOT re-trigger the debounced search
     // (which would reopen the dropdown). Also drop any in-flight request.
     skipQuery.current = nodeName || ''
@@ -301,8 +302,9 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
               onMouseDown={() => handleSelect(r, i)}
             >
               {badge(r)}
-              <span className="search-item__name">
-                {'name' in r.node ? r.node.name : ('full_name' in r.node ? r.node.full_name : '')}
+              <span className="search-item__name"
+                    title={'name' in r.node ? displayName(r.node).secondary ?? undefined : undefined}>
+                {'name' in r.node ? entityLabel(r.node) : ('full_name' in r.node ? r.node.full_name : '')}
               </span>
               {'country' in r.node && r.node.country && (
                 <span className="search-item__country">{countryName(r.node.country, i18n.language)}</span>

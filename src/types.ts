@@ -57,6 +57,10 @@ export interface Entity {
   reg_geo_precision?: string
   jurisdiction_code?: string  // ISO 3166-2 registration, e.g. 'US-DE' — sparse; absent means "not stated"
   founded_date?: string     // full YYYY-MM-DD incorporation/creation date (headline `founded` stays the year)
+  /** The register's other names — alternative-language legal names, a Latin
+   *  transliteration of a non-Latin one (GLEIF: 네슬레코리아 유한책임회사 → "Nestle
+   *  Korea"), previous names. utils/displayName picks what to show first. */
+  other_names?: string[]
   // GLEIF Level 2 *reporting exceptions* — why the company names no parent. An LEI
   // holder must report its parent or file a reason, so these say "asked and declined",
   // which is a different fact from having no parent recorded at all. Direct and

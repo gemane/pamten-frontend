@@ -162,6 +162,8 @@
     "ownershipExceeds": "Angegebene Anteile summieren sich auf {{pct}} % — überlappende Quellen oder Daten",
     "nominee": "Treuhänder",
     "nomineeHint": "Nominee / Depotverwalter — nur eingetragener Halter, kein wirtschaftlicher Eigentümer",
+    "legalName": "Firmenname laut Register",
+    "latinName": "in lateinischer Schrift · Register",
     "crossHoldings": "Überkreuzbeteiligung",
     "crossHoldingsHint": "Dieses Unternehmen und die unten genannten besitzen sich gegenseitig (wechselseitige Beteiligung)",
     "indirectHoldings": "Indirekt gehalten",

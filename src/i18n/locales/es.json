@@ -162,6 +162,8 @@
     "ownershipExceeds": "La propiedad declarada suma {{pct}} % — fuentes o fechas solapadas",
     "nominee": "Fiduciario",
     "nomineeHint": "Nominee / custodio — titular registral, no propietario beneficiario",
+    "legalName": "nombre legal",
+    "latinName": "en alfabeto latino · registro",
     "crossHoldings": "Propiedad circular",
     "crossHoldingsHint": "Esta entidad y la(s) siguiente(s) se poseen mutuamente (participación recíproca)",
     "indirectHoldings": "En posesión indirecta",
