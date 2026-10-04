@@ -329,6 +329,8 @@ export interface EdgeData {
   sinceBasis?: string | null
   until?: string | null
   sourceDate?: string | null
+  /** the staleness mark of the relationship (see utils/asOf.edgePresence) */
+  stale?: boolean | null
 }
 
 export type GraphElement =

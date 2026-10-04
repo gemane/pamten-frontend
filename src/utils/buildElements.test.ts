@@ -613,9 +613,9 @@ describe('buildTreeElements — the "all levels" view', () => {
 })
 
 describe('the as-of view: dates travel on the edges', () => {
-  it('every builder carries since / sinceBasis / until / sourceDate on its ownership edges', () => {
+  it('every builder carries since / sinceBasis / until / sourceDate / stale on its ownership edges', () => {
     const rel = { stake_percent: 10, since: '2013-06-30', since_basis: 'first_listed',
-                  until: null, source_date: '2026-08-07' }
+                  until: null, source_date: '2026-08-07', stale: true }
     const prof: FullProfile = {
       entity: entity('c', 'Centre'),
       owners: [{ owner: entity('o', 'Owner'), relationship: rel }],
@@ -626,8 +626,8 @@ describe('the as-of view: dates travel on the edges', () => {
                          buildElementsDownward(prof, new Set())]) {
       for (const e of edges(built)) {
         const d = e.data as EdgeData
-        expect([d.since, d.sinceBasis, d.until, d.sourceDate])
-          .toEqual(['2013-06-30', 'first_listed', null, '2026-08-07'])
+        expect([d.since, d.sinceBasis, d.until, d.sourceDate, d.stale])
+          .toEqual(['2013-06-30', 'first_listed', null, '2026-08-07', true])
       }
     }
   })
