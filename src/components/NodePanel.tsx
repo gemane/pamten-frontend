@@ -812,6 +812,10 @@ export interface RelTarget {
   filedDate?: string | null
   shares?: number | null
   sharesOutstanding?: number | null
+  /** when that total is from, if newer than the filing (see OwnsRelationship) */
+  denominatorDate?: string | null
+  /** the day the filing's numbers are as of (13D/G date of event) */
+  eventDate?: string | null
   votingShares?: number | null
 }
 
@@ -856,6 +860,8 @@ function relFromOwns(rel: OwnsRelationship | undefined, ids: {
     filedDate: rel?.source_date,
     shares: rel?.shares,
     sharesOutstanding: rel?.shares_outstanding,
+    denominatorDate: rel?.denominator_date,
+    eventDate: rel?.event_date,
     votingShares: rel?.voting_shares,
   }
 }
@@ -936,8 +942,12 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
     const n = rel.shares.toLocaleString()
     details.push({
       label: t('menu.shares'),
+      // A total newer than the filing says so: the count is the filing's,
+      // the total (and with it the stake above) the issuer's latest.
       value: rel.sharesOutstanding != null
-        ? t('menu.sharesOf', { shares: n, total: rel.sharesOutstanding.toLocaleString() })
+        ? t(rel.denominatorDate ? 'menu.sharesOfAsOf' : 'menu.sharesOf',
+            { shares: n, total: rel.sharesOutstanding.toLocaleString(),
+              date: rel.denominatorDate?.slice(0, 10) })
         : n,
     })
   }
@@ -948,7 +958,11 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
     details.push({ label: t('menu.votingShares'),
                    value: rel.votingShares.toLocaleString() })
   }
-  if (rel.filedDate) details.push({ label: t('menu.filed'), value: rel.filedDate.slice(0, 10) })
+  // The day the numbers were true, above the day they were said — only when
+  // the filing states one and it differs (a 13G/A of a quarter-end, filed weeks on).
+  const asOf = rel.eventDate?.slice(0, 10), filed = rel.filedDate?.slice(0, 10)
+  if (asOf && asOf !== filed) details.push({ label: t('menu.asOf'), value: asOf })
+  if (filed) details.push({ label: t('menu.filed'), value: filed })
 
   // Provenance first, then the record, then the complaint — the order you would
   // read it in: where did this come from, let me see it, this is wrong.

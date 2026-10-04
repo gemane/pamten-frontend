@@ -599,10 +599,12 @@
     "class": "Clase",
     "stake": "Participación",
     "voting": "Votos",
+    "asOf": "A fecha de",
     "filed": "Presentado",
     "votingExceeds": "{{pct}}% — más que el {{stake}}% en cartera",
     "shares": "Acciones",
     "sharesOf": "{{shares}} de {{total}}",
+    "sharesOfAsOf": "{{shares}} de {{total}} (total a {{date}})",
     "votingShares": "Acciones votadas"
   },
   "health": {
