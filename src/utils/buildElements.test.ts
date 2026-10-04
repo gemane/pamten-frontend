@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
+import { setViewerLanguages } from './displayName'
 import { buildElements, buildElementsUpward, buildElementsDownward, buildPersonElements, buildPersonProfileElements, buildTreeElements, isDrawableOwnership } from './buildElements'
 import type { Entity, Person, FullProfile, PersonProfile, OwnerEntry, SubsidiaryEntry, ExecutiveEntry, OwnsRelationship, EdgeData, SubsidiaryTree } from '../types'
 
@@ -649,5 +650,43 @@ describe('the as-of view: dates travel on the edges', () => {
     expect(ids(edges(buildPersonProfileElements(prof, new Set(), '2015-12-31')))).toEqual(['p__role__b'])
     const b = edges(buildPersonProfileElements(prof, new Set(), '2015-12-31'))[0].data as EdgeData
     expect(b.since).toBe('2011-08-24')
+  })
+})
+
+// ── names the viewer reads ───────────────────────────────────────────────────
+
+describe('company labels follow utils/displayName', () => {
+  const korea: Entity = { ...entity('kr', '네슬레코리아 유한책임회사'), other_names: ['Nestle Korea'] }
+  const label = (els: { data: { id: string; label?: string } }[], id: string) => els.find(e => e.data.id === id)?.data.label
+  afterEach(() => setViewerLanguages(null))
+
+  it('a subsidiary, an owner and the centre in the Latin name for a non-Hangul reader', () => {
+    setViewerLanguages(['de-AT'])
+    const els = buildElements(makeProfile(korea, {
+      subsidiaries: [{ entity: { ...korea, id: 'sub' }, relationship: rel({ stake_percent: 100 }) }],
+      owners: [{ owner: { ...korea, id: 'own' }, relationship: rel({ stake_percent: 100 }) }],
+    }), new Set())
+    expect(label(els, 'kr')).toBe('Nestle Korea')
+    expect(label(els, 'sub')).toBe('Nestle Korea')
+    expect(label(els, 'own')).toBe('Nestle Korea')
+  })
+
+  it('the legal name for a reader of Hangul; a person keeps their name', () => {
+    setViewerLanguages(['ko-KR'])
+    const els = buildElements(makeProfile(entity('acme'), {
+      subsidiaries: [{ entity: korea, relationship: rel({ stake_percent: 100 }) }],
+      owners: [{ owner: person('p', '김철수'), relationship: rel({ stake_percent: 10 }) }],
+    }), new Set())
+    expect(label(els, 'kr')).toBe('네슬레코리아 유한책임회사')
+    expect(label(els, 'p')).toBe('김철수')
+  })
+
+  it('a person\'s companies too — held and run', () => {
+    setViewerLanguages(['en'])
+    const held = buildPersonElements({ person: person('p') }, [{ entity: korea, relationship: rel({ stake_percent: 5 }) }] as never)
+    expect(label(held, 'kr')).toBe('Nestle Korea')
+    const run = buildPersonProfileElements({ person: person('p'), holdings: [],
+      positions: [{ entity: korea, role: { role: 'CEO' } }] } as never)
+    expect(label(run, 'kr')).toBe('Nestle Korea')
   })
 })

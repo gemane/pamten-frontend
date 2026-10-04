@@ -1,3 +1,4 @@
+import { entityLabel } from './displayName'
 import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType, SubsidiaryTree } from '../types'
 import { endedBy, evidenceDate, startedAfter, type Tenure } from './asOf'
 
@@ -79,7 +80,7 @@ function membershipElements(
     if (!loadedIds.has(g.group.id)) {
       loadedIds.add(g.group.id)
       els.push({ data: {
-        id: g.group.id, label: g.group.name, nodeType: 'entity',
+        id: g.group.id, label: entityLabel(g.group), nodeType: 'entity',
         entitySubtype: g.group.type ?? null, raw: g.group,
       } })
     }
@@ -132,7 +133,8 @@ function ownershipElements(
     loadedIds.add(other.id)
     els.push({ data: {
       id:            other.id,
-      label:         (other.name ?? other.full_name) || '?',
+      // a company in the name the viewer reads (utils/displayName)
+      label:         (other.full_name === undefined ? entityLabel(other) : other.full_name) || '?',
       // A Person carries full_name; an Entity carries name. The profile's
       // owner objects have exactly one of the two.
       nodeType:      other.full_name !== undefined ? 'person' : 'entity',
@@ -200,7 +202,7 @@ export function buildElements(profile: FullProfile, loadedIds: Set<string>): Gra
     loadedIds.add(entity.id)
     els.push({ data: {
       id:            entity.id,
-      label:         entity.name,
+      label:         entityLabel(entity),
       nodeType:      'entity',
       entitySubtype: entity.type,
       raw:           entity,
@@ -291,7 +293,7 @@ function roleElements(
     if (!loadedIds.has(entity.id)) {
       loadedIds.add(entity.id)
       els.push({ data: {
-        id: entity.id, label: entity.name || '?', nodeType: 'entity',
+        id: entity.id, label: entityLabel(entity) || '?', nodeType: 'entity',
         entitySubtype: entity.type ?? null, raw: entity,
       } })
     }

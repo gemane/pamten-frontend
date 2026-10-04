@@ -16,6 +16,7 @@ import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
 import { FOCUS_ATTR, scrollingPanel, useGraphFocusHighlight, useGraphHoverHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
+import { displayName, entityLabel } from '../utils/displayName'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
@@ -89,8 +90,16 @@ export function byRoleImportance<T>(getRole: (x: T) => string | null | undefined
 // Build a NodeData (as the graph uses) from a related entity/person so the
 // panel rows can navigate the same way clicking a graph node does.
 export function entityToNode(e: Entity): NodeData {
-  return { id: e.id, label: e.name, nodeType: 'entity', entitySubtype: e.type, raw: e }
+  return { id: e.id, label: entityLabel(e), nodeType: 'entity', entitySubtype: e.type, raw: e }
 }
+/** A company's name in a row: the one the viewer reads (utils/displayName),
+ *  the other on hover. */
+function CompanyName({ e }: { e: Entity }) {
+  const d = displayName(e)
+  return <span className="rel-item__name" title={d.secondary ?? undefined}>{d.primary}</span>
+}
+const ownerName = (o: Entity | Person) => 'name' in o ? entityLabel(o) : o.full_name
+
 export function personToNode(p: Person): NodeData {
   return { id: p.id, label: p.full_name, nodeType: 'person', raw: p }
 }
@@ -665,7 +674,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
         <Section title={t('panel.votesIn')}>
           {votingGroups.map((g, i) => (
             <RelRow key={i} node={entityToNode(g.group)} onNavigate={onNavigate}>
-              <span className="rel-item__name">{g.group.name}</span>
+              <CompanyName e={g.group} />
             </RelRow>
           ))}
         </Section>
@@ -679,7 +688,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
                      fromId: node.id, toId: p.entity.id,
                      role: p.role?.role ?? '', label: p.entity.name,
                      sourceName: sourceName.get(p.role?.source_id ?? '') })}>
-              <span className="rel-item__name">{p.entity.name}</span>
+              <CompanyName e={p.entity} />
               <CorroborationBadge rel={p.role} />
               <span className="role-badge">{p.role?.role}</span>
             </RelRow>
@@ -695,7 +704,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
                      fromId: node.id, toId: p.entity.id,
                      role: p.role?.role ?? '', label: p.entity.name,
                      sourceName: sourceName.get(p.role?.source_id ?? '') })}>
-              <span className="rel-item__name">{p.entity.name}</span>
+              <CompanyName e={p.entity} />
               <CorroborationBadge rel={p.role} />
               <span className="role-badge role-badge--former">{p.role?.role}</span>
               <span className="rel-item__year">{tenure(p.role, t)}</span>
@@ -706,12 +715,12 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
 
       {holdings.length > 0 && (
         <Section title={t('panel.ownerships')}>
-          {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity?.name ?? '', h => h.relationship?.shares)).map((h, i) => (
+          {[...holdings].sort(byStakeDesc(h => h.relationship?.stake_percent, h => h.entity ? entityLabel(h.entity) : '', h => h.relationship?.shares)).map((h, i) => (
             <RelRow key={i} node={entityToNode(h.entity)} onNavigate={onNavigate}
               rel={relFromOwns(h.relationship, {
                      fromId: node.id, toId: h.entity.id, label: h.entity.name,
                      sourceName: sourceName.get(h.relationship?.source_id ?? '') })}>
-              <span className="rel-item__name">{h.entity.name}</span>
+              <CompanyName e={h.entity} />
               <CorroborationBadge rel={h.relationship} />
               <OwnershipBadge
                 type={h.relationship?.ownership_type}
@@ -994,7 +1003,7 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
     }
     const rel = (n: SubsidiaryTree['nodes'][number]) => relOf.get(`${n.parent_id}\u0000${n.entity.id}`)
     const order = byStakeDesc<SubsidiaryTree['nodes'][number]>(
-      n => rel(n)?.stake_percent, n => n.entity.name ?? '', n => rel(n)?.shares)
+      n => rel(n)?.stake_percent, n => entityLabel(n.entity), n => rel(n)?.shares)
     const out: { node: SubsidiaryTree['nodes'][number]; rel: OwnsRelationship | undefined }[] = []
     const walk = (parentId: string) => {
       for (const n of [...(kids.get(parentId) ?? [])].sort(order)) {
@@ -1015,7 +1024,7 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
             unknownFor={asOf && rowPresence(n.entity, rel, asOf) === 'unknown' ? asOfYear(asOf) : null}
             rel={relFromOwns(rel, { fromId: n.parent_id, toId: n.entity.id, label: n.entity.name,
                                     sourceName: sourceName.get(rel?.source_id ?? '') })}>
-            <span className="rel-item__name">{n.entity.name}</span>
+            <CompanyName e={n.entity} />
             <OwnershipBadge type={rel?.ownership_type} percent={rel?.stake_percent} shares={rel?.shares} />
           </RelRow>
         </div>
@@ -1126,6 +1135,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
   // Which source asserted each relationship, for the row menu's header — the
   // edge's own source_id, not the node's source list.
   const sourceName = sourceNames(sources)
+  // the legal name and the register's Latin one, in the viewer's order
+  const names = displayName(entity)
 
   // The stake filter shared with the graph hides small DISCLOSED holdings from
   // the list too (undisclosed stakes are kept — keepsEdge keeps null). The
@@ -1216,9 +1227,18 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
       )}
       <div className="panel-header-row">
-        <h2 className="panel-name">{entity.name}</h2>
-        <NodeActions label={entity.name} nodeId={entity.id} targetKind="entity" onShare={onShare} />
+        <h2 className="panel-name">{names.primary}</h2>
+        <NodeActions label={names.primary} nodeId={entity.id} targetKind="entity" onShare={onShare} />
       </div>
+      {names.secondary && (
+        // The other name, and which it is: the legal name is what the
+        // register files the company under; the Latin one is the register's
+        // own, stated beside it — nothing here is translated.
+        <p className="panel-name-alt">
+          <span className="panel-name-alt__name">{names.secondary}</span>
+          <span className="panel-name-alt__kind">{t(names.secondaryKind === 'legal' ? 'panel.legalName' : 'panel.latinName')}</span>
+        </p>
+      )}
       <NodeFlags nodeId={entity.id} targetKind="entity" label={entity.name} />
       {entity.description && <p className="panel-desc">{entity.description}</p>}
 
@@ -1283,7 +1303,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                             ? personToNode(m.party as Person)
                             : entityToNode(m.party as Entity)}
                     onNavigate={onNavigate}>
-              <span className="rel-item__name">{m.party.name ?? m.party.full_name}</span>
+              <span className="rel-item__name">{m.kind === 'person' ? (m.party as Person).full_name : entityLabel(m.party as Entity)}</span>
             </RelRow>
           ))}
         </Section>
@@ -1293,7 +1313,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         <Section title={t('panel.ownedBy')} count={counts?.owners} shown={owners.length}>
           {[...ownersShown].sort(byStakeDesc(
             o => o.relationship?.stake_percent,
-            o => o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '',
+            o => o.owner ? ownerName(o.owner) : '',
             o => o.relationship?.shares,
           )).map((o, i) => (
             <RelRow key={i} node={o.owner ? ownerToNode(o.owner) : null} onNavigate={onNavigate}
@@ -1301,11 +1321,12 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
               rel={o.owner
                 ? relFromOwns(o.relationship, {
                     fromId: o.owner.id, toId: entity.id,
-                    label: ('name' in o.owner ? o.owner.name : o.owner.full_name),
+                    label: ownerName(o.owner),
                     sourceName: sourceName.get(o.relationship?.source_id ?? '') })
                 : undefined}>
-              <span className="rel-item__name">
-                {o.owner ? ('name' in o.owner ? o.owner.name : o.owner.full_name) : '—'}
+              <span className="rel-item__name"
+                    title={o.owner && 'name' in o.owner ? displayName(o.owner).secondary ?? undefined : undefined}>
+                {o.owner ? ownerName(o.owner) : '—'}
                 {o.owner && 'name' in o.owner && o.owner.is_nominee && (
                   <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
                 )}
@@ -1351,7 +1372,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
           <div className="ownership-warning">↻ {t('panel.crossHoldingsHint')}</div>
           {[...cross_holdings].sort(byName(c => c.name ?? '')).map((c, i) => (
             <RelRow key={i} node={entityToNode(c)} onNavigate={onNavigate}>
-              <span className="rel-item__name">{c.name}</span>
+              <CompanyName e={c} />
             </RelRow>
           ))}
         </Section>
@@ -1361,7 +1382,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         <Section title={t('panel.dualListedWith')}>
           {[...dual_listed].sort(byName(d => d.name ?? '')).map((d, i) => (
             <RelRow key={i} node={entityToNode(d)} onNavigate={onNavigate}>
-              <span className="rel-item__name">{d.name}</span>
+              <CompanyName e={d} />
             </RelRow>
           ))}
         </Section>
@@ -1371,7 +1392,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         <Section title={t('panel.succeededBy')}>
           {[...succeeded_by].sort(byName(s => s.name ?? '')).map((s, i) => (
             <RelRow key={i} node={entityToNode(s)} onNavigate={onNavigate}>
-              <span className="rel-item__name">{s.name}</span>
+              <CompanyName e={s} />
               {s.since && <span className="rel-item__year">{s.since.slice(0, 4)}</span>}
             </RelRow>
           ))}
@@ -1382,7 +1403,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         <Section title={t('panel.replaces')}>
           {[...replaces].sort(byName(p => p.name ?? '')).map((p, i) => (
             <RelRow key={i} node={entityToNode(p)} onNavigate={onNavigate}>
-              <span className="rel-item__name">{p.name}</span>
+              <CompanyName e={p} />
               {p.since && <span className="rel-item__year">{p.since.slice(0, 4)}</span>}
             </RelRow>
           ))}
@@ -1397,7 +1418,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                  count={counts?.subsidiaries} shown={subsidiaries.length}>
           {(() => {
             const sorted = [...subsidiariesShown].sort(
-              byStakeDesc(s => s.relationship?.stake_percent, s => s.entity?.name ?? '',
+              byStakeDesc(s => s.relationship?.stake_percent, s => s.entity ? entityLabel(s.entity) : '',
                           s => s.relationship?.shares))
             const row = (s: SubsidiaryEntry, i: number) => (
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
@@ -1405,7 +1426,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                 rel={relFromOwns(s.relationship, {
                        fromId: entity.id, toId: s.entity.id, label: s.entity.name,
                        sourceName: sourceName.get(s.relationship?.source_id ?? '') })}>
-                <span className="rel-item__name">{s.entity.name}</span>
+                <CompanyName e={s.entity} />
                 <CorroborationBadge rel={s.relationship} />
                 {/* The marker belongs on this side too. Altria's panel lists AB
                     InBev as something it holds 8.1% of — while voting 51.9% —

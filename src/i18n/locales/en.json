@@ -162,6 +162,8 @@
     "ownershipExceeds": "Disclosed ownership sums to {{pct}}% — overlapping sources or dates",
     "nominee": "Nominee",
     "nomineeHint": "Nominee / custodian — holder of record, not a beneficial owner",
+    "legalName": "legal name",
+    "latinName": "in Latin script · register",
     "crossHoldings": "Circular ownership",
     "crossHoldingsHint": "This entity and the one(s) below own each other (reciprocal holding)",
     "indirectHoldings": "Held indirectly",
