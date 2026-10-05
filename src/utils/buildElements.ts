@@ -189,7 +189,8 @@ function ownershipElements(
  *  the graph decides per edge whether it existed on the chosen day. */
 function tenureData(rel: Tenure | null | undefined) {
   return { since: rel?.since ?? null, sinceBasis: rel?.since_basis ?? null,
-           until: rel?.until ?? null, sourceDate: rel?.source_date ?? null }
+           until: rel?.until ?? null, sourceDate: rel?.source_date ?? null,
+           stale: rel?.stale ?? null }
 }
 
 export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {

@@ -34,6 +34,8 @@ export interface Tenure {
   since_basis?: string | null
   until?: string | null
   source_date?: string | null
+  /** No newer list or quarter confirms it (13F, Exhibit 21): silence, not an end. */
+  stale?: boolean | null
 }
 
 export const isAsOf = (s: string | null | undefined): s is string =>
@@ -76,6 +78,12 @@ export function evidenceDate(rel: Tenure | null | undefined): string | null {
 export function edgePresence(rel: Tenure | null | undefined, asOf: string | null): Presence {
   if (!asOf) return 'present'
   if (startedAfter(rel, asOf) || endedBy(rel, asOf)) return 'absent'
+  // A STALE edge was last confirmed on its source_date and not since — a 13F
+  // position missing from the next quarter, a subsidiary a newer Exhibit 21
+  // no longer lists. Silence is not an end, so after that date it is not
+  // hidden, but not asserted either: dimmed. It used to show as present in
+  // every later year.
+  if (rel?.stale && rel.source_date && asOf > rel.source_date) return 'unknown'
   const evidence = evidenceDate(rel)
   return evidence && evidence <= asOf ? 'present' : 'unknown'
 }
@@ -104,5 +112,5 @@ export function rowPresence(
 /** Edge data is camelCase; the rules read the API's snake_case shape. */
 export function tenureOfEdge(d: EdgeData): Tenure {
   return { since: d.since ?? null, since_basis: d.sinceBasis ?? null,
-           until: d.until ?? null, source_date: d.sourceDate ?? null }
+           until: d.until ?? null, source_date: d.sourceDate ?? null, stale: d.stale ?? null }
 }

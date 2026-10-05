@@ -50,6 +50,15 @@ describe('asOf rules', () => {
     expect(isLowerBound('')).toBe(false)
   })
 
+  it('a stale edge is dimmed after its last confirmation, present up to it', () => {
+    const stale = { since: '2020-03-31', since_basis: 'first_reported', source_date: '2024-12-31', stale: true }
+    expect(edgePresence(stale, '2023-12-31')).toBe('present')
+    expect(edgePresence(stale, '2024-12-31')).toBe('present')
+    expect(edgePresence(stale, '2025-12-31')).toBe('unknown')      // silence, not an end
+    expect(edgePresence({ ...stale, stale: false }, '2025-12-31')).toBe('present')
+    expect(edgePresence(stale, null)).toBe('present')
+  })
+
   it('an until on or before the day is absent; after it, still present', () => {
     expect(edgePresence({ since: '2010-01-01', until: '2019-12-31' }, Y19)).toBe('absent')
     expect(edgePresence({ since: '2010-01-01', until: '2020-01-01' }, Y19)).toBe('present')
@@ -92,7 +101,8 @@ describe('asOf rules', () => {
   it('edge data maps back to the API shape', () => {
     expect(tenureOfEdge({ id: 'e', source: 'a', target: 'b', label: '', edgeType: 'owns',
                           since: '2010-01-01', sinceBasis: 'first_listed', until: null,
-                          sourceDate: '2026-01-01' } as never))
-      .toEqual({ since: '2010-01-01', since_basis: 'first_listed', until: null, source_date: '2026-01-01' })
+                          sourceDate: '2026-01-01', stale: true } as never))
+      .toEqual({ since: '2010-01-01', since_basis: 'first_listed', until: null, source_date: '2026-01-01',
+                 stale: true })
   })
 })
