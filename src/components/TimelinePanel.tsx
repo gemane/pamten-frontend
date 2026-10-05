@@ -64,8 +64,15 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   // "first_listed" — the oldest list naming it, the holding may be older;
   // "newly_listed" — the list for the year before does not name it, nor any
   // older one: it first appears that year.
-  const listed = ev.since && (ev.since_basis === 'first_listed' || ev.since_basis === 'newly_listed')
-    ? { year: ev.since.slice(0, 4), newly: ev.since_basis === 'newly_listed' } : null
+  // Any other basis is a lower bound too (utils/asOf.isLowerBound) — a 13D/G
+  // amendment, the UK PSC register's first day — with its own reason on hover.
+  const listed = ev.since && ev.since_basis
+    ? { year: ev.since.slice(0, 4), newly: ev.since_basis === 'newly_listed', basis: ev.since_basis } : null
+  const boundHint = !listed ? '' : listed.newly ? 'timeline.firstListedHint'
+    : listed.basis === 'first_listed' ? 'timeline.sinceAtLeastHint'
+    : listed.basis === 'amendment' ? 'timeline.sinceAmendmentHint'
+    : listed.basis === 'register_start' ? 'timeline.sinceRegisterHint'
+    : 'timeline.sinceLowerBoundHint'
   const name  = partyName(ev.party)
   const ended = ev.until ? ev.until.slice(0, 4) : null
 
@@ -80,7 +87,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
           </span>
           {listed && (
             <span className="tl-event__badge tl-event__badge--bound"
-              title={t(listed.newly ? 'timeline.firstListedHint' : 'timeline.sinceAtLeastHint', { year: listed.year })}>
+              title={t(boundHint, { year: listed.year })}>
               {t(listed.newly ? 'timeline.firstListed' : 'timeline.sinceAtLeast', { year: listed.year })}
             </span>
           )}

@@ -51,6 +51,20 @@ describe('TimelinePanel', () => {
     expect(screen.getAllByText(/first listed/)).toHaveLength(1)
   })
 
+  it('an amendment and the PSC register start are lower bounds too, each with its reason', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2025-12-31', since_basis: 'amendment',
+           party: { id: 'v', name: 'Vanguard Group' } }),
+      ev({ kind: 'ownership_in', since: '2016-04-06', since_basis: 'register_start',
+           party: { id: 'g', name: 'Group Holdings Ltd' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="nc" />)
+    const amend = await screen.findByText('since 2025 or earlier')
+    expect(amend).toHaveAttribute('title', expect.stringContaining('amendment'))
+    const reg = screen.getByText('since 2016 or earlier')
+    expect(reg).toHaveAttribute('title', expect.stringContaining('6 April 2016'))
+  })
+
   it('a subsidiary list without a start date sits under "No date recorded", not this year', async () => {
     mockHistory.mockResolvedValue({ data: [
       ev({ kind: 'ownership_out', since: null, party: { id: 'st', name: 'Storyful Limited' } }),
