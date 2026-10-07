@@ -1488,6 +1488,9 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
 [data-theme="light"] .corroboration-badge--community { color: #718096; }
 
 /* Computed (not sourced) rows/badges — e.g. free-float residual */
+/* The country that tells a company from a namesake in the same list. */
+.rel-item__place { color: #8b95a7; font-weight: 400; }
+[data-theme="light"] .rel-item__place { color: #718096; }
 .rel-item__name--muted { color: #8b95a7; font-style: italic; font-weight: 400; }
 [data-theme="light"] .rel-item__name--muted { color: #718096; }
 

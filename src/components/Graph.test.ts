@@ -538,3 +538,22 @@ describe('fitting the graph into the canvas — the whole of a phone\'s, under i
     expect(fitViewport({ w: 40, h: 40 }, { x1: 0, y1: 0, w: 10, h: 10 }, zoomRange)).toBeNull()
   })
 })
+
+describe('syncLabels', () => {
+  it('relabels a node on the canvas when a namesake arrives, and back when it leaves', async () => {
+    const { syncLabels } = await import('./Graph')
+    const { relabelNamesakes } = await import('../utils/namesakes')
+    const cytoscape = (await import('cytoscape')).default
+    const node = (id: string, country: string) =>
+      ({ data: { id, label: 'Perfect Corp.', nodeType: 'entity', raw: { id, name: 'Perfect Corp.', country } } })
+    const cy = cytoscape({ headless: true, elements: [node('jp', 'JP')] as never })
+    const both = relabelNamesakes([node('jp', 'JP'), node('us', 'US')] as never, 'en')
+    cy.add(both[1] as never)
+    syncLabels(cy, both)
+    expect(cy.$id('jp').data('label')).toBe('Perfect Corp. (Japan)')
+    expect(cy.$id('us').data('label')).toBe('Perfect Corp. (United States)')
+    cy.$id('us').remove()
+    syncLabels(cy, relabelNamesakes([node('jp', 'JP')] as never, 'en'))
+    expect(cy.$id('jp').data('label')).toBe('Perfect Corp.')
+  })
+})
