@@ -11,6 +11,7 @@ import { DEFAULT_ASPECT, computeTreeLayout, nodeSize, routePoints, segmentStyle,
 import { arcSpacing, layoutArc, rowCentres } from '../utils/arcPack'
 import { byStakeDesc } from '../utils/ordering'
 import { displayName } from '../utils/displayName'
+import { relabelNamesakes } from '../utils/namesakes'
 import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
 
@@ -789,11 +790,25 @@ interface GraphProps {
 
 const NO_COUNTRIES: { country: string; count: number }[] = []
 
+/** A node already on the canvas keeps the data it was added with; a namesake
+ *  arriving (or leaving) changes its label all the same — "Perfect Corp."
+ *  becomes "Perfect Corp. (Japan)" once the US one is expanded next to it. */
+export function syncLabels(cy: cytoscape.Core, elements: GraphElement[]): void {
+  for (const el of elements) {
+    if ('source' in el.data) continue
+    const node = cy.$id(el.data.id)
+    if (node.nonempty() && node.data('label') !== el.data.label) node.data('label', el.data.label)
+  }
+}
+
 const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
-  { elements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, asOf = null, onAsOfChange, country = '', onCountryChange, countries = NO_COUNTRIES, focusedId = null, onNodeHover }: GraphProps,
+  { elements: rawElements, centerId, selectedNode, onNodeClick, onExampleClick, onClear, onNavigateTo, onExpand, expandingId, theme, stakeFilter, onStakeFilterChange, allLevels = false, onAllLevelsChange, asOf = null, onAsOfChange, country = '', onCountryChange, countries = NO_COUNTRIES, focusedId = null, onNodeHover }: GraphProps,
   ref
 ) {
   const { t, i18n } = useTranslation()
+  // Two companies of one name on the canvas carry their country after it
+  // ("Agrointegral Andina S.A.S. (Ecuador)") — before the layout measures them.
+  const elements = useMemo(() => relabelNamesakes(rawElements, i18n.language), [rawElements, i18n.language])
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
@@ -953,6 +968,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       for (const id of toRemove) cy.$id(id).remove()
       cy.add(toAdd as cytoscape.ElementDefinition[])
     }
+    syncLabels(cy, elements)
 
     // Mark the hub BEFORE laying out and fitting: node.center is a fixed 240px
     // box, much wider than its label, and fitting with the base width first

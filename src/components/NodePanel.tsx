@@ -17,6 +17,7 @@ import { useLongPress } from '../hooks/useLongPress'
 import { FOCUS_ATTR, scrollingPanel, useGraphFocusHighlight, useGraphHoverHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
 import { displayName, entityLabel } from '../utils/displayName'
+import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
 import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
@@ -94,9 +95,15 @@ export function entityToNode(e: Entity): NodeData {
 }
 /** A company's name in a row: the one the viewer reads (utils/displayName),
  *  the other on hover. */
-function CompanyName({ e }: { e: Entity }) {
+/** ``place``: the country that tells this company apart from a namesake in
+ *  the same list (``namesakeCountries``) — shown only then. */
+function CompanyName({ e, place }: { e: Entity; place?: string }) {
   const d = displayName(e)
-  return <span className="rel-item__name" title={d.secondary ?? undefined}>{d.primary}</span>
+  return (
+    <span className="rel-item__name" title={d.secondary ?? undefined}>
+      {d.primary}{place && <span className="rel-item__place"> ({place})</span>}
+    </span>
+  )
 }
 const ownerName = (o: Entity | Person) => 'name' in o ? entityLabel(o) : o.full_name
 
@@ -1007,7 +1014,9 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
   /** Time travel: rows the sources do not document for the day are dimmed. */
   asOf?: string | null
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const places = useMemo(() => namesakeCountries(tree.nodes.map(n => n.entity), i18n.language),
+                         [tree, i18n.language])
   const rows = useMemo(() => {
     const relOf = new Map(tree.edges.map(e => [`${e.from_id}\u0000${e.to_id}`, e.relationship]))
     const kids = new Map<string, SubsidiaryTree['nodes']>()
@@ -1038,7 +1047,7 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
             unknownFor={asOf && rowPresence(n.entity, rel, asOf) === 'unknown' ? asOfYear(asOf) : null}
             rel={relFromOwns(rel, { fromId: n.parent_id, toId: n.entity.id, label: n.entity.name,
                                     sourceName: sourceName.get(rel?.source_id ?? '') })}>
-            <CompanyName e={n.entity} />
+            <CompanyName e={n.entity} place={places.get(n.entity.id)} />
             <OwnershipBadge type={rel?.ownership_type} percent={rel?.stake_percent} shares={rel?.shares} />
           </RelRow>
         </div>
@@ -1162,6 +1171,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
   const ownersShown = owners
     .filter(o => keepsEdge(effectiveStakePct(o.relationship?.stake_percent, o.relationship?.shares, o.relationship?.shares_outstanding), stakeFilter))
     .filter(o => rowPresence(o.owner, o.relationship, asOf) !== 'absent')
+  // A person owner is never a namesake company; only entities can carry a country
+  const ownerPlaces = namesakeCountries(
+    ownersShown.map(o => (o.owner && 'name' in o.owner ? o.owner : null)), i18n.language)
   const subsidiariesShown = subsidiaries
     .filter(s => keepsEdge(effectiveStakePct(s.relationship?.stake_percent, s.relationship?.shares, s.relationship?.shares_outstanding), stakeFilter))
     .filter(s => rowPresence(s.entity, s.relationship, asOf) !== 'absent')
@@ -1341,6 +1353,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
               <span className="rel-item__name"
                     title={o.owner && 'name' in o.owner ? displayName(o.owner).secondary ?? undefined : undefined}>
                 {o.owner ? ownerName(o.owner) : '—'}
+                {o.owner && ownerPlaces.has(o.owner.id) && (
+                  <span className="rel-item__place"> ({ownerPlaces.get(o.owner.id)})</span>
+                )}
                 {o.owner && 'name' in o.owner && o.owner.is_nominee && (
                   <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
                 )}
@@ -1434,13 +1449,14 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
             const sorted = [...subsidiariesShown].sort(
               byStakeDesc(s => s.relationship?.stake_percent, s => s.entity ? entityLabel(s.entity) : '',
                           s => s.relationship?.shares))
+            const places = namesakeCountries(sorted.map(s => s.entity), i18n.language)
             const row = (s: SubsidiaryEntry, i: number) => (
               <RelRow key={i} node={entityToNode(s.entity)} onNavigate={onNavigate}
                 focusId={s.entity.id} unknownFor={unknownRow(s.entity, s.relationship)}
                 rel={relFromOwns(s.relationship, {
                        fromId: entity.id, toId: s.entity.id, label: s.entity.name,
                        sourceName: sourceName.get(s.relationship?.source_id ?? '') })}>
-                <CompanyName e={s.entity} />
+                <CompanyName e={s.entity} place={places.get(s.entity.id)} />
                 <CorroborationBadge rel={s.relationship} />
                 {/* The marker belongs on this side too. Altria's panel lists AB
                     InBev as something it holds 8.1% of — while voting 51.9% —

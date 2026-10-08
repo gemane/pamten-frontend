@@ -85,6 +85,44 @@ describe('NodePanel (render)', () => {
     expect(screen.queryByText('Tiny Sub')).toBeNull()                 // 0.4% < 1% hidden
   })
 
+  it('shows the country only beside subsidiaries that share a name', async () => {
+    // Lavoro lists "Agrointegral Andina S.A.S." in Colombia and in Ecuador
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Lavoro Ltd', type: 'company', verified: false } as Entity,
+      owners: [], executives: [],
+      subsidiaries: [
+        { entity: { id: 's1', name: 'Agrointegral Andina S.A.S.', type: 'company', country: 'CO' } as Entity,
+          relationship: {} },
+        { entity: { id: 's2', name: 'Agrointegral Andina S.A.S.', type: 'company', country: 'EC' } as Entity,
+          relationship: {} },
+        { entity: { id: 's3', name: 'Union Agro S.A.', type: 'company', country: 'BR' } as Entity,
+          relationship: {} },
+      ],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Lavoro Ltd')} refreshKey={0} />)
+    await screen.findByText('Lavoro Ltd')
+    const names = [...document.querySelectorAll('.rel-item__name')].map(n => n.textContent)
+    expect(names).toEqual(expect.arrayContaining(
+      ['Agrointegral Andina S.A.S. (Colombia)', 'Agrointegral Andina S.A.S. (Ecuador)', 'Union Agro S.A.']))
+  })
+
+  it('shows the country beside owners that share a name', async () => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Target Co', type: 'company', verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [
+        { owner: { id: 'o1', name: 'Alpha Holdings Ltd.', type: 'company', country: 'BM' } as Entity,
+          relationship: { stake_percent: 30 } },
+        { owner: { id: 'o2', name: 'Alpha Holdings Ltd.', type: 'company', country: 'KY' } as Entity,
+          relationship: { stake_percent: 20 } },
+      ],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Target Co')} refreshKey={0} />)
+    await screen.findByText('Target Co')
+    expect([...document.querySelectorAll('.rel-item__place')].map(n => n.textContent))
+      .toEqual([' (Bermuda)', ' (Cayman Islands)'])
+  })
+
   it('refetches the SAME node when refreshKey bumps (enrichment landed)', async () => {
     mockProfile.mockResolvedValue({ data: profile('e1', 'Sparse Co') } as Awaited<ReturnType<typeof getFullProfile>>)
     const node = entityNode('e1', 'Sparse Co')
