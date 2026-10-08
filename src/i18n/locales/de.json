@@ -302,7 +302,17 @@
     "community": "Community",
     "communityHint": "Nur eine Community-Quelle (Wikidata) nennt diese Beziehung — kein Register und keine Pflichtmeldung bestätigt sie bisher.",
     "corroboratedHint": "Unabhängig bestätigt durch: {{sources}}",
-    "staleHint": "Seit über sechs Monaten von keiner Quelle bestätigt — abgeblendet dargestellt, bleibt bestehen, bis eine Quelle sie bestätigt oder zurückzieht."
+    "staleHint": "Seit über sechs Monaten von keiner Quelle bestätigt — abgeblendet dargestellt, bleibt bestehen, bis eine Quelle sie bestätigt oder zurückzieht.",
+    "readFrom": {
+      "field": "strukturiertes Feld",
+      "table": "Tabellenzelle",
+      "layout": "abgeleitet",
+      "prose": "aus Text"
+    },
+    "readFromHint": {
+      "layout": "Aus dem Seitenlayout gelesen (eine Einrückung, eine Überschrift, eine fortgesetzte Tabelle), nicht aus einem beschrifteten Feld — Meldung prüfen.",
+      "prose": "Per Muster aus Fließtext gelesen, nicht aus einem beschrifteten Feld — die unsicherste Lesart; Meldung prüfen."
+    }
   },
   "tooltip": {
     "type": "Typ",
@@ -608,7 +618,8 @@
     "shares": "Aktien",
     "sharesOf": "{{shares}} von {{total}}",
     "sharesOfAsOf": "{{shares}} von {{total}} (Gesamtzahl vom {{date}})",
-    "votingShares": "Stimmrechtsaktien"
+    "votingShares": "Stimmrechtsaktien",
+    "readFrom": "Gelesen aus"
   },
   "health": {
     "title": "Quellen-Status",
@@ -641,7 +652,8 @@
       "dimmedSample": "gedimmter Eintrag",
       "corroborated": "Unabhängig bestätigt durch so viele Quellen — die Zahl zeigt, wie viele übereinstimmen",
       "edgeWidth": "Liniendicke folgt dem Anteil: dünn für kleine, dick für große Beteiligungen",
-      "votingEdge": "Gepunktete gelbe Linie: Stimmrechte, getrennt gezeichnet, wo sie vom wirtschaftlichen Anteil abweichen"
+      "votingEdge": "Gepunktete gelbe Linie: Stimmrechte, getrennt gezeichnet, wo sie vom wirtschaftlichen Anteil abweichen",
+      "readFrom": "Ein grauer Chip „aus Text“ / „abgeleitet“: der Wert wurde aus dem Text oder dem Layout der Seite gelesen, nicht aus einem strukturierten Feld — Meldung prüfen"
     }
   },
   "weekly": {

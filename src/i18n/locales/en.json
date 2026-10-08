@@ -302,7 +302,17 @@
     "community": "community",
     "communityHint": "Only a community source (Wikidata) asserts this relationship — no register or filing confirms it yet.",
     "corroboratedHint": "Confirmed independently by: {{sources}}",
-    "staleHint": "Not confirmed by any source for over six months — shown dimmed, kept until a source confirms or retracts it."
+    "staleHint": "Not confirmed by any source for over six months — shown dimmed, kept until a source confirms or retracts it.",
+    "readFrom": {
+      "field": "structured field",
+      "table": "table cell",
+      "layout": "inferred",
+      "prose": "from text"
+    },
+    "readFromHint": {
+      "layout": "Read from the page's layout (an indentation, a heading, a continued table), not from a labelled field — check the filing.",
+      "prose": "Read out of running text by a pattern, not from a labelled field — the least certain reading; check the filing."
+    }
   },
   "tooltip": {
     "type": "Type",
@@ -608,7 +618,8 @@
     "shares": "Shares",
     "sharesOf": "{{shares}} of {{total}}",
     "sharesOfAsOf": "{{shares}} of {{total}} (total as of {{date}})",
-    "votingShares": "Voted shares"
+    "votingShares": "Voted shares",
+    "readFrom": "Read from"
   },
   "health": {
     "title": "Source health",
@@ -641,7 +652,8 @@
       "dimmedSample": "dimmed entry",
       "corroborated": "Confirmed independently by that many sources — the count shows how many agree",
       "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",
-      "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake"
+      "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake",
+      "readFrom": "A grey 'from text' / 'inferred' chip: the value was read off the page's text or layout, not a structured field — check the filing"
     }
   },
   "weekly": {

@@ -1487,6 +1487,27 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
 }
 [data-theme="light"] .corroboration-badge--community { color: #718096; }
 
+/* How surely WE read the value (not who said it). Only the two grades worth a
+   hint are ever rendered: "inferred" (layout) in the muted grey, "from text"
+   (prose) a shade warmer so the weakest reading is the one the eye lands on.
+   Dotted, to differ from the dashed community marker beside it. */
+.reading-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: #8b95a7;
+  border: 1px dotted rgba(139,149,167,0.6);
+}
+.reading-badge--prose {
+  color: #d4a24c;
+  border-color: rgba(212,162,76,0.55);
+}
+[data-theme="light"] .reading-badge { color: #718096; }
+[data-theme="light"] .reading-badge--prose { color: #b7791f; }
+
 /* Computed (not sourced) rows/badges — e.g. free-float residual */
 /* The country that tells a company from a namesake in the same list. */
 .rel-item__place { color: #8b95a7; font-weight: 400; }

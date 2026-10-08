@@ -7,6 +7,7 @@ import { ageFrom } from '../utils/age'
 import { isSubdivision, subdivisionName } from '../utils/isoSubdivisions'
 import { colorFor, typeLabelKey } from '../utils/entityColors'
 import CorroborationBadge from './CorroborationBadge'
+import ReadingBadge, { readingGrade } from './ReadingBadge'
 import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
@@ -19,7 +20,7 @@ import { byStakeDesc } from '../utils/ordering'
 import { displayName, entityLabel } from '../utils/displayName'
 import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
-import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree, ReadFrom } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
 import { asOfYear, edgePresence, endedBy, rowPresence, startedAfter, type Tenure } from '../utils/asOf'
 
@@ -697,6 +698,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
                      sourceName: sourceName.get(p.role?.source_id ?? '') })}>
               <CompanyName e={p.entity} />
               <CorroborationBadge rel={p.role} />
+              <ReadingBadge rel={p.role} />
               <span className="role-badge">{p.role?.role}</span>
             </RelRow>
           ))}
@@ -713,6 +715,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
                      sourceName: sourceName.get(p.role?.source_id ?? '') })}>
               <CompanyName e={p.entity} />
               <CorroborationBadge rel={p.role} />
+              <ReadingBadge rel={p.role} />
               <span className="role-badge role-badge--former">{p.role?.role}</span>
               <span className="rel-item__year">{tenure(p.role, t)}</span>
             </RelRow>
@@ -729,6 +732,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
                      sourceName: sourceName.get(h.relationship?.source_id ?? '') })}>
               <CompanyName e={h.entity} />
               <CorroborationBadge rel={h.relationship} />
+              <ReadingBadge rel={h.relationship} />
               <OwnershipBadge
                 type={h.relationship?.ownership_type}
                 percent={h.relationship?.stake_percent}
@@ -824,6 +828,9 @@ export interface RelTarget {
   /** the day the filing's numbers are as of (13D/G date of event) */
   eventDate?: string | null
   votingShares?: number | null
+  /** How surely the parser read this relationship (see types.ReadFrom). Every
+   *  grade is listed in the menu — the row itself badges only layout/prose. */
+  readFrom?: ReadFrom | null
 }
 
 
@@ -870,6 +877,7 @@ function relFromOwns(rel: OwnsRelationship | undefined, ids: {
     denominatorDate: rel?.denominator_date,
     eventDate: rel?.event_date,
     votingShares: rel?.voting_shares,
+    readFrom: rel?.read_from,
   }
 }
 
@@ -888,6 +896,7 @@ function relFromRole(rel: RoleRelationship | undefined, ids: {
     assertedBy: rel?.asserted_by,
     stale: rel?.stale,
     filedDate: rel?.source_date,
+    readFrom: rel?.read_from,
   }
 }
 
@@ -970,6 +979,10 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
   const asOf = rel.eventDate?.slice(0, 10), filed = rel.filedDate?.slice(0, 10)
   if (asOf && asOf !== filed) details.push({ label: t('menu.asOf'), value: asOf })
   if (filed) details.push({ label: t('menu.filed'), value: filed })
+  // How surely it was read. The row badges only the two weak grades; the menu
+  // names every one, so a reader can see that a silent row is a structured
+  // field and not merely ungraded.
+  if (rel.readFrom) details.push({ label: t('menu.readFrom'), value: t(`trust.readFrom.${rel.readFrom}`) })
 
   // Provenance first, then the record, then the complaint — the order you would
   // read it in: where did this come from, let me see it, this is wrong.
@@ -1097,6 +1110,9 @@ function SourcesSection({ sources }: { sources: Source[] }) {
         // (a 13G stake beside a 13F position), and the kind is what tells a
         // reader which register rules the fact lives under.
         const label = s.filing_type ? `${s.name} · ${s.filing_type}` : s.name
+        // The reading grade, only when it is worth a hint (layout/prose) —
+        // the same silence on the normal case as the row badges keep.
+        const grade = readingGrade(s.read_from)
         return (
           <div key={`${s.id}-${s.url ?? ''}-${i}`} className="source-item">
             <div className="source-item__header">
@@ -1106,6 +1122,12 @@ function SourcesSection({ sources }: { sources: Source[] }) {
                   </a>
                 : <span className="source-item__name">{label}</span>
               }
+              {grade && (
+                <span className={`reading-badge reading-badge--${grade}`}
+                      title={t(`trust.readFromHint.${grade}`)}>
+                  {t(`trust.readFrom.${grade}`)}
+                </span>
+              )}
               <span className="source-type-badge">{s.type}</span>
             </div>
             <div className="credibility-bar" title={`${t('panel.credibility')}: ${s.credibility_score}/100`}>
@@ -1313,6 +1335,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                      sourceName: sourceName.get(f.role?.source_id ?? '') })}>
               <span className="rel-item__name">{f.person.full_name}</span>
               <CorroborationBadge rel={f.role} />
+              <ReadingBadge rel={f.role} />
             </RelRow>
           ))}
         </Section>
@@ -1361,6 +1384,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                 )}
               </span>
               <CorroborationBadge rel={o.relationship} />
+              <ReadingBadge rel={o.relationship} />
               <OwnershipBadge
                 type={o.relationship?.ownership_type}
                 percent={o.relationship?.stake_percent}
@@ -1458,6 +1482,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                        sourceName: sourceName.get(s.relationship?.source_id ?? '') })}>
                 <CompanyName e={s.entity} place={places.get(s.entity.id)} />
                 <CorroborationBadge rel={s.relationship} />
+                <ReadingBadge rel={s.relationship} />
                 {/* The marker belongs on this side too. Altria's panel lists AB
                     InBev as something it holds 8.1% of — while voting 51.9% —
                     and without this the disproportion is visible only from AB
@@ -1519,6 +1544,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                      sourceName: sourceName.get(e.role?.source_id ?? '') })}>
               <span className="rel-item__name">{e.person.full_name}</span>
               <CorroborationBadge rel={e.role} />
+              <ReadingBadge rel={e.role} />
               <span className="role-badge">{e.role?.role}</span>
             </RelRow>
           ))}
