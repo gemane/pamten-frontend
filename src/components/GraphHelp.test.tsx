@@ -15,6 +15,10 @@ describe('GraphHelp — the reading-the-graph glossary', () => {
     render(<GraphHelp />)
     expect(screen.getByText('✓ 2')).toBeInTheDocument()
     expect(screen.getByText('⚡')).toBeInTheDocument()
+    // The reading chip: the sample is the weakest grade, with its explanation.
+    const chip = screen.getByText('from text')
+    expect(chip.className).toContain('reading-badge--prose')
+    expect(screen.getByText(/read off the page's text or layout/i)).toBeInTheDocument()
     expect(document.querySelectorAll('.help-dot').length).toBeGreaterThanOrEqual(9)
     expect(document.querySelector('.help-edge--dashed')).toBeTruthy()
     expect(document.querySelector('.help-edge--dotted')).toBeTruthy()

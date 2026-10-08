@@ -89,6 +89,19 @@ export interface Person {
   verified: boolean
 }
 
+/** How surely a value was READ — not who said it (that is the source's
+ *  credibility) but how much of the value is our parser's doing:
+ *  - `field`: a named field of structured data (XML/JSON) — the normal case
+ *    (GLEIF, PSC, Wikidata, 13F, modern 13D/G).
+ *  - `table`: a cell under a header the filer wrote (most Exhibit 21 rows) —
+ *    also normal.
+ *  - `layout`: inferred from the page's layout (an indented parent, a heading,
+ *    a header carried onto the next page, a headerless table).
+ *  - `prose`: pulled out of running text by a pattern (an old 13D/G cover
+ *    page, a subsidiary list written as sentences) — the weakest.
+ *  - null: unknown (manual entry, data from before the grade). */
+export type ReadFrom = 'field' | 'table' | 'layout' | 'prose'
+
 export interface Source {
   id: string
   name: string
@@ -99,6 +112,8 @@ export interface Source {
   source_date?: string      // date the fact was recorded/published in the source
   last_scraped_at?: string  // when we last confirmed it against the source
   filing_type?: string      // which KIND of record: "13F", "13G/A", "RR", "PSC"…
+  /** How surely the record's values were read (see ReadFrom). */
+  read_from?: ReadFrom | null
 }
 
 // Relationship types
@@ -158,6 +173,9 @@ export interface OwnsRelationship {
    *  which is different from unknown, so the backend always sends both. */
   corroborations?: number
   asserted_by?: string[]
+  /** How surely the parser read this relationship off its filing (see
+   *  ReadFrom): field/table are the normal case, layout/prose get a hint. */
+  read_from?: ReadFrom | null
 }
 
 export interface RoleRelationship {
@@ -179,6 +197,8 @@ export interface RoleRelationship {
    *  which is different from unknown, so the backend always sends both. */
   corroborations?: number
   asserted_by?: string[]
+  /** How surely the parser read this role off its filing (see ReadFrom). */
+  read_from?: ReadFrom | null
 }
 
 // API response types

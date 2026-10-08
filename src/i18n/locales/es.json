@@ -302,7 +302,17 @@
     "community": "comunidad",
     "communityHint": "Solo una fuente comunitaria (Wikidata) afirma esta relación — ningún registro ni declaración obligatoria la confirma todavía.",
     "corroboratedHint": "Confirmada de forma independiente por: {{sources}}",
-    "staleHint": "Sin confirmación de ninguna fuente desde hace más de seis meses — se muestra atenuada y se conserva hasta que una fuente la confirme o la retire."
+    "staleHint": "Sin confirmación de ninguna fuente desde hace más de seis meses — se muestra atenuada y se conserva hasta que una fuente la confirme o la retire.",
+    "readFrom": {
+      "field": "campo estructurado",
+      "table": "celda de tabla",
+      "layout": "inferido",
+      "prose": "del texto"
+    },
+    "readFromHint": {
+      "layout": "Leído del diseño de la página (una sangría, un encabezado, una tabla continuada), no de un campo etiquetado — compruebe la declaración.",
+      "prose": "Extraído del texto corrido mediante un patrón, no de un campo etiquetado — la lectura menos segura; compruebe la declaración."
+    }
   },
   "tooltip": {
     "type": "Tipo",
@@ -608,7 +618,8 @@
     "shares": "Acciones",
     "sharesOf": "{{shares}} de {{total}}",
     "sharesOfAsOf": "{{shares}} de {{total}} (total a {{date}})",
-    "votingShares": "Acciones votadas"
+    "votingShares": "Acciones votadas",
+    "readFrom": "Leído de"
   },
   "health": {
     "title": "Estado de las fuentes",
@@ -641,7 +652,8 @@
       "dimmedSample": "entrada atenuada",
       "corroborated": "Confirmado de forma independiente por ese número de fuentes — la cifra muestra cuántas coinciden",
       "edgeWidth": "El grosor de la línea sigue la participación: fina para pequeñas, gruesa para grandes",
-      "votingEdge": "Línea punteada ámbar: derechos de voto, dibujados aparte cuando difieren de la participación económica"
+      "votingEdge": "Línea punteada ámbar: derechos de voto, dibujados aparte cuando difieren de la participación económica",
+      "readFrom": "Un chip gris «del texto» / «inferido»: el valor se leyó del texto o del diseño de la página, no de un campo estructurado — compruebe la declaración"
     }
   },
   "weekly": {

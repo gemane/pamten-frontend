@@ -1095,6 +1095,103 @@ describe('the trust cue on an owner row', () => {
 })
 
 
+describe('how surely a row was read', () => {
+  // A second cue beside the corroboration badge: not who said it, but how
+  // much of the value is the parser's own doing. Same rule — the normal case
+  // (a structured field, a table cell) stays silent; a layout or prose
+  // reading gets a chip; the menu names every grade.
+  const withOwner = async (relationship: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company', verified: false } as Entity,
+      subsidiaries: [], executives: [],
+      owners: [{ owner: { id: 'p1', full_name: 'Sergey Brin' },
+                 relationship: { stake_percent: 6.16, ownership_type: 'minority',
+                                 ...relationship } }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Alphabet Inc.')} refreshKey={0} />)
+    await screen.findByText('Sergey Brin')
+  }
+
+  const withExecutive = async (role: Record<string, unknown>) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'SpaceX', type: 'company', verified: false } as Entity,
+      subsidiaries: [], owners: [],
+      executives: [{ person: { id: 'p1', full_name: 'Elon Musk' },
+                     role: { role: 'Director', ...role } }],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'SpaceX')} refreshKey={0} />)
+    await screen.findByText('Elon Musk')
+  }
+
+  it('marks a holding read out of running text', async () => {
+    await withOwner({ read_from: 'prose' })
+    const badge = screen.getByText('from text')
+    expect(badge.className).toContain('reading-badge--prose')
+  })
+
+  it('stays silent on a holding read from a structured field', async () => {
+    // The normal case must not grow a chip, or every GLEIF row becomes noise.
+    await withOwner({ read_from: 'field' })
+    expect(document.querySelector('.reading-badge')).toBeNull()
+    expect(screen.queryByText('from text')).toBeNull()
+    expect(screen.queryByText('inferred')).toBeNull()
+  })
+
+  it('stays silent when the backend sent no grade', async () => {
+    await withOwner({})
+    expect(document.querySelector('.reading-badge')).toBeNull()
+  })
+
+  it('names even a silent grade in the row menu', async () => {
+    // A reader should be able to tell a structured reading from an ungraded
+    // one, and the row cannot say so without badging the normal case.
+    await withOwner({ read_from: 'table' })
+    expect(document.querySelector('.reading-badge')).toBeNull()
+    const row = screen.getByText('Sergey Brin').closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    const details = document.querySelector('.action-menu__details') as HTMLElement
+    expect(within(details).getByText('Read from')).toBeInTheDocument()
+    expect(within(details).getByText('table cell')).toBeInTheDocument()
+  })
+
+  it('leaves the menu alone when there is no grade', async () => {
+    await withOwner({})
+    const row = screen.getByText('Sergey Brin').closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    expect(document.querySelector('.action-menu__details')?.textContent ?? '')
+      .not.toContain('Read from')
+  })
+
+  it('marks a seat inferred from the page layout', async () => {
+    await withExecutive({ read_from: 'layout' })
+    const badge = screen.getByText('inferred')
+    expect(badge.className).toContain('reading-badge--layout')
+    expect(screen.queryByText('from text')).toBeNull()
+  })
+
+  it('a source row carries the chip for a prose reading and none for a field', async () => {
+    const p = profile('e1', 'Filed Co')
+    mockProfile.mockResolvedValue({ data: p } as never)
+    mockSources.mockResolvedValue({ data: [
+      { id: 's1', name: 'SEC EDGAR', type: 'register', credibility_score: 98,
+        url: 'https://example.test/f', filing_type: 'SC 13D', read_from: 'prose' },
+      { id: 's2', name: 'GLEIF', type: 'register', credibility_score: 92, read_from: 'field' },
+    ] } as never)
+    const { container } = render(<NodePanel node={entityNode('e1', 'Filed Co')} refreshKey={0} />)
+    await userEvent.click(await screen.findByRole('button', { name: /Sources/i }))
+
+    const rows = [...container.querySelectorAll('.source-item')] as HTMLElement[]
+    const sec = rows.find(r => r.textContent?.includes('SEC EDGAR'))!
+    const gleif = rows.find(r => r.textContent?.includes('GLEIF'))!
+    const chip = sec.querySelector('.reading-badge') as HTMLElement
+    expect(chip.textContent).toBe('from text')
+    expect(chip.className).toContain('reading-badge--prose')
+    expect(chip.getAttribute('title')).toMatch(/running text/i)
+    expect(gleif.querySelector('.reading-badge')).toBeNull()
+  })
+})
+
+
 describe('a stale community assertion', () => {
   const withOwnerRel = async (relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {

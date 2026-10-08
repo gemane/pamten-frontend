@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { ENTITY_COLORS } from '../utils/entityColors'
 
 /** "Help — reading the graph": the marker glossary — node colours, the dimmed
- *  entry, the corroboration badges, the ⚡ and nominee marks, edge widths and
+ *  entry, the corroboration and reading badges, the ⚡ and nominee marks, edge widths and
  *  styles. Lives on the Data page next to the sources it explains, always
  *  open: a reader who came here wondering what a badge means should not
  *  have to find and click a toggle first. */
@@ -32,6 +32,10 @@ export default function GraphHelp() {
         <div className="help-item">
           <span className="help-sample"><span className="corroboration-badge corroboration-badge--community">{t('trust.community')}</span></span>
           <span className="help-text">{t('trust.communityHint')}</span>
+        </div>
+        <div className="help-item">
+          <span className="help-sample"><span className="reading-badge reading-badge--prose">{t('trust.readFrom.prose')}</span></span>
+          <span className="help-text">{t('coverage.help.readFrom')}</span>
         </div>
         <div className="help-item">
           <span className="help-sample"><span className="help-marker">⚡</span></span>
