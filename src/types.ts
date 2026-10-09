@@ -95,12 +95,16 @@ export interface Person {
  *    (GLEIF, PSC, Wikidata, 13F, modern 13D/G).
  *  - `table`: a cell under a header the filer wrote (most Exhibit 21 rows) —
  *    also normal.
+ *  - `form`: a numbered item of a regulator's form found in its text (an old
+ *    13D/G cover page: the SEC's label, the filer's figure) — normal too.
  *  - `layout`: inferred from the page's layout (an indented parent, a heading,
  *    a header carried onto the next page, a headerless table).
- *  - `prose`: pulled out of running text by a pattern (an old 13D/G cover
- *    page, a subsidiary list written as sentences) — the weakest.
+ *  - `prose`: items written as text lines (a subsidiary list of
+ *    "Name (Jurisdiction)" paragraphs).
+ *  - `narrative`: a fact picked out of running text (an 8-K's departure
+ *    sentence) — the weakest.
  *  - null: unknown (manual entry, data from before the grade). */
-export type ReadFrom = 'field' | 'table' | 'layout' | 'prose'
+export type ReadFrom = 'field' | 'table' | 'form' | 'layout' | 'prose' | 'narrative'
 
 export interface Source {
   id: string

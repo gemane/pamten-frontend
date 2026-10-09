@@ -306,12 +306,15 @@
     "readFrom": {
       "field": "strukturiertes Feld",
       "table": "Tabellenzelle",
+      "form": "Formularfeld",
       "layout": "abgeleitet",
-      "prose": "aus Text"
+      "prose": "aus Text",
+      "narrative": "aus Fließtext"
     },
     "readFromHint": {
       "layout": "Aus dem Seitenlayout gelesen (eine Einrückung, eine Überschrift, eine fortgesetzte Tabelle), nicht aus einem beschrifteten Feld — Meldung prüfen.",
-      "prose": "Per Muster aus Fließtext gelesen, nicht aus einem beschrifteten Feld — die unsicherste Lesart; Meldung prüfen."
+      "prose": "Aus einer als Textzeilen geschriebenen Liste gelesen, nicht aus einem beschrifteten Feld oder einer Tabelle — Meldung prüfen.",
+      "narrative": "Aus Fließtext herausgelesen — ein Name, ein Datum, eine Zahl in einem Satz — die unsicherste Lesart; Meldung prüfen."
     }
   },
   "tooltip": {
@@ -653,7 +656,7 @@
       "corroborated": "Unabhängig bestätigt durch so viele Quellen — die Zahl zeigt, wie viele übereinstimmen",
       "edgeWidth": "Liniendicke folgt dem Anteil: dünn für kleine, dick für große Beteiligungen",
       "votingEdge": "Gepunktete gelbe Linie: Stimmrechte, getrennt gezeichnet, wo sie vom wirtschaftlichen Anteil abweichen",
-      "readFrom": "Ein grauer Chip „aus Text“ / „abgeleitet“: der Wert wurde aus dem Text oder dem Layout der Seite gelesen, nicht aus einem strukturierten Feld — Meldung prüfen"
+      "readFrom": "Ein Chip „abgeleitet“ / „aus Text“ / „aus Fließtext“: der Wert wurde aus dem Layout der Seite, einer Liste im Text oder einem Satz gelesen, nicht aus einem strukturierten Feld — je wärmer der Chip, desto unsicherer die Lesart; Meldung prüfen"
     }
   },
   "weekly": {

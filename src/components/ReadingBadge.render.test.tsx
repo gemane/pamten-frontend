@@ -1,26 +1,29 @@
 /**
  * The reading cue on a relationship row.
  *
- * Four grades, two of them worth a mark. The boundary is the whole component:
- * a structured field and a table cell — the normal case — must stay silent,
- * as must "unknown" (null, or no field at all), or every GLEIF row grows a
- * chip. Layout and prose each get their own label and their own hint, and
- * the two must not be swapped: "inferred" is a weaker warning than "from
- * text", and the hint has to explain the one the reader is looking at.
+ * Six grades, three of them worth a mark. The boundary is the whole
+ * component: a structured field, a table cell and a form item — the normal
+ * case — must stay silent, as must "unknown" (null, or no field at all), or
+ * every GLEIF row grows a chip. Layout, prose and narrative each get their
+ * own label and their own hint, and they must not be swapped: "inferred" is
+ * a weaker warning than "from text", which is weaker than "from narrative",
+ * and the hint has to explain the one the reader is looking at.
  */
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import ReadingBadge, { readingGrade } from './ReadingBadge'
 
 describe('readingGrade', () => {
-  it('passes the two weak grades through', () => {
+  it('passes the three weak grades through', () => {
     expect(readingGrade('layout')).toBe('layout')
     expect(readingGrade('prose')).toBe('prose')
+    expect(readingGrade('narrative')).toBe('narrative')
   })
 
   it('says nothing about the normal and unknown cases', () => {
     expect(readingGrade('field')).toBeNull()
     expect(readingGrade('table')).toBeNull()
+    expect(readingGrade('form')).toBeNull()
     expect(readingGrade(null)).toBeNull()
     expect(readingGrade(undefined)).toBeNull()
   })
@@ -34,6 +37,11 @@ describe('what it renders', () => {
 
   it('renders nothing for a table cell', () => {
     const { container } = render(<ReadingBadge rel={{ read_from: 'table' }} />)
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('renders nothing for a form item — a regulator\'s numbered row is a normal reading', () => {
+    const { container } = render(<ReadingBadge rel={{ read_from: 'form' }} />)
     expect(container.firstChild).toBeNull()
   })
 
@@ -55,11 +63,20 @@ describe('what it renders', () => {
     expect(badge.getAttribute('title')).not.toMatch(/running text/i)
   })
 
-  it('marks a prose reading as from text, with the prose hint', () => {
+  it('marks a prose reading as from text, with the list hint', () => {
     render(<ReadingBadge rel={{ read_from: 'prose' }} />)
     const badge = screen.getByText('from text')
     expect(badge.className).toContain('reading-badge--prose')
-    expect(badge.className).not.toContain('reading-badge--layout')
+    expect(badge.className).not.toContain('reading-badge--narrative')
+    expect(badge.getAttribute('title')).toMatch(/lines of text/i)
+    expect(badge.getAttribute('title')).not.toMatch(/least certain/i)
+  })
+
+  it('marks a narrative reading as from narrative, with the sentence hint', () => {
+    render(<ReadingBadge rel={{ read_from: 'narrative' }} />)
+    const badge = screen.getByText('from narrative')
+    expect(badge.className).toContain('reading-badge--narrative')
+    expect(badge.className).not.toContain('reading-badge--prose')
     expect(badge.getAttribute('title')).toMatch(/running text/i)
     expect(badge.getAttribute('title')).toMatch(/least certain/i)
   })

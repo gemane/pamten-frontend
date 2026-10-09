@@ -306,12 +306,15 @@
     "readFrom": {
       "field": "campo estructurado",
       "table": "celda de tabla",
+      "form": "casilla del formulario",
       "layout": "inferido",
-      "prose": "del texto"
+      "prose": "del texto",
+      "narrative": "del texto corrido"
     },
     "readFromHint": {
       "layout": "Leído del diseño de la página (una sangría, un encabezado, una tabla continuada), no de un campo etiquetado — compruebe la declaración.",
-      "prose": "Extraído del texto corrido mediante un patrón, no de un campo etiquetado — la lectura menos segura; compruebe la declaración."
+      "prose": "Leído de una lista escrita como líneas de texto, no de un campo etiquetado ni de una tabla — compruebe la declaración.",
+      "narrative": "Extraído del texto corrido — un nombre, una fecha, una cifra en una frase — la lectura menos segura; compruebe la declaración."
     }
   },
   "tooltip": {
@@ -653,7 +656,7 @@
       "corroborated": "Confirmado de forma independiente por ese número de fuentes — la cifra muestra cuántas coinciden",
       "edgeWidth": "El grosor de la línea sigue la participación: fina para pequeñas, gruesa para grandes",
       "votingEdge": "Línea punteada ámbar: derechos de voto, dibujados aparte cuando difieren de la participación económica",
-      "readFrom": "Un chip gris «del texto» / «inferido»: el valor se leyó del texto o del diseño de la página, no de un campo estructurado — compruebe la declaración"
+      "readFrom": "Un chip «inferido» / «del texto» / «del texto corrido»: el valor se leyó del diseño de la página, de una lista en el texto o de una frase, no de un campo estructurado — cuanto más cálido el chip, menos segura la lectura; compruebe la declaración"
     }
   },
   "weekly": {
