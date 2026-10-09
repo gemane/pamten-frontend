@@ -1487,10 +1487,11 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
 }
 [data-theme="light"] .corroboration-badge--community { color: #718096; }
 
-/* How surely WE read the value (not who said it). Only the two grades worth a
-   hint are ever rendered: "inferred" (layout) in the muted grey, "from text"
-   (prose) a shade warmer so the weakest reading is the one the eye lands on.
-   Dotted, to differ from the dashed community marker beside it. */
+/* How surely WE read the value (not who said it). Only the three grades worth
+   a hint are ever rendered, warmer the weaker: "inferred" (layout) in the
+   muted grey, "from text" (prose) amber, "from narrative" a red-brown so the
+   weakest reading is the one the eye lands on. Dotted, to differ from the
+   dashed community marker beside it. */
 .reading-badge {
   font-size: 10px;
   font-weight: 700;
@@ -1505,8 +1506,13 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
   color: #d4a24c;
   border-color: rgba(212,162,76,0.55);
 }
+.reading-badge--narrative {
+  color: #e0875a;
+  border-color: rgba(224,135,90,0.6);
+}
 [data-theme="light"] .reading-badge { color: #718096; }
 [data-theme="light"] .reading-badge--prose { color: #b7791f; }
+[data-theme="light"] .reading-badge--narrative { color: #c05621; }
 
 /* Computed (not sourced) rows/badges — e.g. free-float residual */
 /* The country that tells a company from a namesake in the same list. */

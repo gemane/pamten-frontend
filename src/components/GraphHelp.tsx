@@ -34,7 +34,7 @@ export default function GraphHelp() {
           <span className="help-text">{t('trust.communityHint')}</span>
         </div>
         <div className="help-item">
-          <span className="help-sample"><span className="reading-badge reading-badge--prose">{t('trust.readFrom.prose')}</span></span>
+          <span className="help-sample"><span className="reading-badge reading-badge--narrative">{t('trust.readFrom.narrative')}</span></span>
           <span className="help-text">{t('coverage.help.readFrom')}</span>
         </div>
         <div className="help-item">

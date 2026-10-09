@@ -306,12 +306,15 @@
     "readFrom": {
       "field": "structured field",
       "table": "table cell",
+      "form": "form item",
       "layout": "inferred",
-      "prose": "from text"
+      "prose": "from text",
+      "narrative": "from narrative"
     },
     "readFromHint": {
       "layout": "Read from the page's layout (an indentation, a heading, a continued table), not from a labelled field — check the filing.",
-      "prose": "Read out of running text by a pattern, not from a labelled field — the least certain reading; check the filing."
+      "prose": "Read from a list written as lines of text, not from a labelled field or a table — check the filing.",
+      "narrative": "Picked out of running text — a name, a date, a figure in a sentence — the least certain reading; check the filing."
     }
   },
   "tooltip": {
@@ -653,7 +656,7 @@
       "corroborated": "Confirmed independently by that many sources — the count shows how many agree",
       "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",
       "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake",
-      "readFrom": "A grey 'from text' / 'inferred' chip: the value was read off the page's text or layout, not a structured field — check the filing"
+      "readFrom": "An 'inferred' / 'from text' / 'from narrative' chip: the value was read off the page's layout, a list in text or a sentence, not a structured field — the warmer the chip, the less certain the reading; check the filing"
     }
   },
   "weekly": {

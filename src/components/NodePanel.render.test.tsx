@@ -1123,10 +1123,28 @@ describe('how surely a row was read', () => {
     await screen.findByText('Elon Musk')
   }
 
-  it('marks a holding read out of running text', async () => {
+  it('marks a holding read from a list written as text', async () => {
     await withOwner({ read_from: 'prose' })
     const badge = screen.getByText('from text')
     expect(badge.className).toContain('reading-badge--prose')
+  })
+
+  it('marks a holding picked out of a sentence, the weakest reading', async () => {
+    await withOwner({ read_from: 'narrative' })
+    const badge = screen.getByText('from narrative')
+    expect(badge.className).toContain('reading-badge--narrative')
+    expect(screen.queryByText('from text')).toBeNull()
+  })
+
+  it('stays silent on a stake read from a numbered row of an SEC form', async () => {
+    // A pre-2024 13D/G cover page: the SEC's label, the filer's figure — a
+    // normal reading, named in the menu but never badged.
+    await withOwner({ read_from: 'form' })
+    expect(document.querySelector('.reading-badge')).toBeNull()
+    const row = screen.getByText('Sergey Brin').closest('.rel-row') as HTMLElement
+    fireEvent.contextMenu(row)
+    const details = document.querySelector('.action-menu__details') as HTMLElement
+    expect(within(details).getByText('form item')).toBeInTheDocument()
   })
 
   it('stays silent on a holding read from a structured field', async () => {
@@ -1174,7 +1192,7 @@ describe('how surely a row was read', () => {
     mockProfile.mockResolvedValue({ data: p } as never)
     mockSources.mockResolvedValue({ data: [
       { id: 's1', name: 'SEC EDGAR', type: 'register', credibility_score: 98,
-        url: 'https://example.test/f', filing_type: 'SC 13D', read_from: 'prose' },
+        url: 'https://example.test/f', filing_type: 'EX-8.1', read_from: 'prose' },
       { id: 's2', name: 'GLEIF', type: 'register', credibility_score: 92, read_from: 'field' },
     ] } as never)
     const { container } = render(<NodePanel node={entityNode('e1', 'Filed Co')} refreshKey={0} />)
@@ -1186,7 +1204,7 @@ describe('how surely a row was read', () => {
     const chip = sec.querySelector('.reading-badge') as HTMLElement
     expect(chip.textContent).toBe('from text')
     expect(chip.className).toContain('reading-badge--prose')
-    expect(chip.getAttribute('title')).toMatch(/running text/i)
+    expect(chip.getAttribute('title')).toMatch(/lines of text/i)
     expect(gleif.querySelector('.reading-badge')).toBeNull()
   })
 })

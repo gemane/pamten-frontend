@@ -1110,8 +1110,8 @@ function SourcesSection({ sources }: { sources: Source[] }) {
         // (a 13G stake beside a 13F position), and the kind is what tells a
         // reader which register rules the fact lives under.
         const label = s.filing_type ? `${s.name} · ${s.filing_type}` : s.name
-        // The reading grade, only when it is worth a hint (layout/prose) —
-        // the same silence on the normal case as the row badges keep.
+        // The reading grade, only when it is worth a hint (layout / prose /
+        // narrative) — the same silence on the normal case as the row badges keep.
         const grade = readingGrade(s.read_from)
         return (
           <div key={`${s.id}-${s.url ?? ''}-${i}`} className="source-item">
