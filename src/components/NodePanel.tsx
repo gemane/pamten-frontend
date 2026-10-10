@@ -1639,7 +1639,8 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   // above the scrolling body, not inside it, so the body is a sibling.
   const pick = (tab: string) => (e: { currentTarget: HTMLElement }) => {
     onChange(tab)
-    e.currentTarget.closest('.node-panel')?.querySelector<HTMLElement>('.node-panel__scroll')?.scrollTo({ top: 0 })
+    const body = e.currentTarget.closest('.node-panel')?.querySelector<HTMLElement>('.node-panel__scroll')
+    if (typeof body?.scrollTo === 'function') body.scrollTo({ top: 0 })   // jsdom has no scrollTo
   }
   return (
     <div className="panel-tabs">
