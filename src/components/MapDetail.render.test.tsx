@@ -44,10 +44,11 @@ const fakes = vi.hoisted(() => {
     addTo() { return this }
     remove() { FakeMarker.live = FakeMarker.live.filter(m => m !== this) }
   }
-  return { FakeMap, FakeMarker, flags }
+  const workerUrls: string[] = []
+  return { FakeMap, FakeMarker, flags, workerUrls }
 })
 const { FakeMap, FakeMarker } = fakes
-vi.mock('maplibre-gl', () => ({ Map: fakes.FakeMap, Marker: fakes.FakeMarker }))
+vi.mock('maplibre-gl', () => ({ Map: fakes.FakeMap, Marker: fakes.FakeMarker, setWorkerUrl: (u: string) => fakes.workerUrls.push(u) }))
 
 import MapDetail, { basemapStyle, circlePolygon, OPENFREEMAP_STYLES } from './MapDetail'
 
@@ -124,6 +125,15 @@ describe('without WebGL', () => {
     } finally {
       fakes.flags.throwOnConstruct = false
     }
+  })
+})
+
+describe('the tile worker', () => {
+  it('is the worker file MapLibre ships, served by the app itself — not looked up beside the bundle', () => {
+    // the style loaded and not one tile rendered until this was told: MapLibre 6
+    // resolves its worker relative to its own module, which a bundler has moved
+    expect(fakes.workerUrls).toHaveLength(1)
+    expect(fakes.workerUrls[0]).toMatch(/maplibre-gl-worker\.mjs$/)
   })
 })
 

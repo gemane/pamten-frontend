@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiExternalLink } from 'react-icons/fi'
 import * as maplibregl from 'maplibre-gl'
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { countryName } from '../utils/isoCountries'
 import { osmLargeUrl, osmAddressUrl } from '../utils/osm'
 
@@ -21,6 +22,15 @@ export interface MapDetailData {
  *  used before, began watermarking every keyless tile "API KEY REQUIRED" in
  *  2026, with a 200 status, so nothing failed and the map simply went grey.
  *  One style per theme. */
+// MapLibre 6 decodes tiles in a worker it ships as a SEPARATE file and looks
+// for next to its own module (`new URL('./maplibre-gl-worker.mjs', import.meta.url)`).
+// Under a bundler that file is not there — Vite's dev server answered 404 and
+// the build never copied it — so the style loaded (background, attribution)
+// and not one tile: a beige box. Importing it as an asset makes Vite serve
+// and ship it, and MapLibre is told where; same origin, so the CSP's
+// `worker-src 'self'` covers it.
+maplibregl.setWorkerUrl(maplibreWorkerUrl)
+
 export const OPENFREEMAP_STYLES = {
   light: 'https://tiles.openfreemap.org/styles/liberty',
   dark:  'https://tiles.openfreemap.org/styles/dark',
@@ -77,7 +87,8 @@ function Basemap({ lat, lng, zoom, precise }: Target) {
         center: [lng, lat], zoom,
         attributionControl: { compact: true },
       })
-    } catch {
+    } catch (e) {
+      console.warn('MapLibre could not start; the pop-up falls back to the link', e)
       setUnsupported(true)
       return
     }
