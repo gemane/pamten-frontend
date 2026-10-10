@@ -1061,7 +1061,7 @@ body {
   transition: background 0.1s;
 }
 
-.search-item:hover { background: #253454; }
+.search-item:hover, .search-item--active { background: #253454; }
 
 /* The node badge is shared with the panel header, where it sits on its own line
    above the name and needs the gap below it. In a search row it is one flex item
@@ -3590,7 +3590,7 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .search-clear-btn:hover { color: #1a202c; }
 [data-theme="light"] .search-spinner { border-color: #d1d9e6; border-top-color: #2b6cb0; }
 [data-theme="light"] .search-dropdown { background: #ffffff; border-color: #b8c4d4; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
-[data-theme="light"] .search-item:hover { background: #eef2f7; }
+[data-theme="light"] .search-item:hover, [data-theme="light"] .search-item--active { background: #eef2f7; }
 [data-theme="light"] .search-item__name { color: #1a202c; }
 [data-theme="light"] .search-item__country { color: #4a5568; }
 
