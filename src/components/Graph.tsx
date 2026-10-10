@@ -1,6 +1,6 @@
 import { forwardRef, Fragment, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
+import { FiX, FiPlusCircle } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
 import type { EdgeData, Entity, GraphElement, NodeData } from '../types'
 import { ENTITY_COLORS, ENTITY_SUBTYPES } from '../utils/entityColors'
@@ -1175,22 +1175,17 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
               <FiX /> <span className="graph-action-btn__label">{t('graph.clear')}</span>
             </button>
           )}
+          {/* One action: Expand graph. Centring on a box is the panel row's
+              click (and a person's double-click); the button for it only
+              repeated that and crowded the corner. */}
           {showNodeActions && (
-            <>
-              <button
-                className="graph-action-btn"
-                onClick={() => onExpand?.(selectedNode!.id)}
-                disabled={expandingId === selectedNode!.id}
-              >
-                <FiPlusCircle /> {t('graph.expandGraph')}
-              </button>
-              <button
-                className="graph-action-btn"
-                onClick={() => onNavigateTo?.(selectedNode!)}
-              >
-                <FiNavigation /> {t('graph.openAsCenter')}
-              </button>
-            </>
+            <button
+              className="graph-action-btn"
+              onClick={() => onExpand?.(selectedNode!.id)}
+              disabled={expandingId === selectedNode!.id}
+            >
+              <FiPlusCircle /> {t('graph.expandGraph')}
+            </button>
           )}
         </div>
       )}

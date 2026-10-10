@@ -108,7 +108,7 @@ function AppInner() {
   // The owner/subsidiary row in focus in the node panel; the graph grows its node.
   const [graphFocusId, setGraphFocusId] = useState<string | null>(null)
   // The box last tapped in the graph: the open panel scrolls to its row, and
-  // the graph's own actions (Expand graph, Open as centre) act on it.
+  // the graph's own action (Expand graph) acts on it.
   const [graphPick, setGraphPick] = useState<NodeData | null>(null)
   // …and the other way round: the graph node under the mouse lights up its row
   // in the panel. Desktop only — a phone has no hover.
@@ -1165,7 +1165,7 @@ function AppInner() {
                     ref={graphRef}
                     elements={elements}
                     centerId={centerId}
-                    selectedNode={graphPick ?? selectedNode}   /* the tapped box, else the panel's node: what Expand graph / Open as centre act on */
+                    selectedNode={graphPick ?? selectedNode}   /* the tapped box, else the panel's node: what Expand graph acts on */
                     onNodeClick={handleNodeClick}
                     onExampleClick={handleExampleClick}
                     onClear={elements.length > 0 ? handleClearGraph : null}
@@ -1292,7 +1292,7 @@ function AppInner() {
                     ref={graphRef}
                     elements={elements}
                     centerId={centerId}
-                    selectedNode={graphPick ?? selectedNode}   /* the tapped box, else the panel's node: what Expand graph / Open as centre act on */
+                    selectedNode={graphPick ?? selectedNode}   /* the tapped box, else the panel's node: what Expand graph acts on */
                     onNodeClick={handleNodeClick}
                     onExampleClick={handleExampleClick}
                     onClear={elements.length > 0 ? handleClearGraph : null}
