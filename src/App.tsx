@@ -334,6 +334,9 @@ function AppInner() {
   // absent), build the fresh graph, then deepen on idle.
   // Force a fresh re-scrape of a company already in the graph (the node-panel button).
   const handleReScrape = useCallback((node: NodeData) => {
+    // The button is always there; a reader who is not signed in with a
+    // verified account is shown the sign-in instead of a refresh.
+    if (!canScrape(user)) { setShowAuth(true); return }
     // The company's own country, so a refresh cannot walk off to a same-named
     // company somewhere else — the sources would happily hand one over.
     const country = (node.raw as { country?: string | null } | undefined)?.country || undefined
@@ -1075,7 +1078,7 @@ function AppInner() {
                   onViewOnMap={() => handleTabChange('map')}
                   onShare={handleShare}
                   onNavigate={handleNavigateTo}
-                  onReScrape={userCanScrape ? handleReScrape : undefined}
+                  onReScrape={handleReScrape} canReScrape={userCanScrape}
                   stakeFilter={stakeFilter}
                   allLevels={allLevels}
                   asOf={asOf}
@@ -1177,7 +1180,7 @@ function AppInner() {
                     onViewOnMap={() => handleTabChange('map')}
                     onShare={handleShare}
                     onNavigate={handleNavigateTo}
-                    onReScrape={userCanScrape ? handleReScrape : undefined}
+                    onReScrape={handleReScrape} canReScrape={userCanScrape}
                     stakeFilter={stakeFilter}
                     allLevels={allLevels}
                     asOf={asOf}

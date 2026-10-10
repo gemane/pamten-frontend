@@ -20,7 +20,8 @@ vi.mock('./components/MapPanel', () => ({ default: () => null }))
 vi.mock('./components/GraphLegend', () => ({ default: () => null }))
 vi.mock('./components/ScraperPanel', () => ({ default: () => null }))
 vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
-vi.mock('./components/AuthModal', () => ({ default: () => null }))
+// Rendered as a marker, so a test can see that the sign-in was asked for.
+vi.mock('./components/AuthModal', () => ({ default: () => <div data-testid="auth-modal" /> }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
 vi.mock('./components/NodePanel', () => ({
   default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId, graphFocusId, onExportSpreadsheet }: {
@@ -60,11 +61,11 @@ vi.mock('./utils/notify', () => ({
 
 // Signed-in, email-verified user so on-demand scraping is allowed. The role is
 // mutable so a test can be a contributor (the 13F follow-up is role-gated).
-const auth = vi.hoisted(() => ({ role: 'viewer' }))
+const auth = vi.hoisted(() => ({ role: 'viewer', signedOut: false }))
 vi.mock('./context/AuthContext', () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useAuth: () => ({
-    user: { id: 'u1', email: 'x@example.com', role: auth.role, email_verified: true },
+    user: auth.signedOut ? null : { id: 'u1', email: 'x@example.com', role: auth.role, email_verified: true },
     logout: vi.fn(),
   }),
 }))
@@ -119,6 +120,7 @@ beforeEach(() => {
   mockAsk.mockClear()
   mockNotify.mockClear()
   auth.role = 'viewer'
+  auth.signedOut = false
   mockProfile.mockResolvedValue({ data: fullProfile('e1', 'Microsoft Corporation') } as never)
   mockEnsure.mockResolvedValue({
     data: { scraped: false, reason: 'fresh', entity_id: 'e1', depth_reached: 1, sources_run: [], profile: null },
@@ -189,6 +191,21 @@ describe('refreshing a company from its panel', () => {
     await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
     await screen.findByText(/finished/)          // the refresh settles before cleanup
   }
+
+  it('is offered to a reader who is not signed in, and opens the sign-in instead of refreshing', async () => {
+    auth.signedOut = true
+    const res = result('e1', 'Acme GmbH', 'DE')
+    mockSearch.mockResolvedValue({ data: [res] } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'acme', { delay: null })
+    await userEvent.click(await screen.findByText((res.node as Entity).name))
+    await screen.findByTestId('node-panel')
+    mockEnsure.mockClear()
+    expect(screen.queryByTestId('auth-modal')).toBeNull()
+    await userEvent.click(await screen.findByRole('button', { name: 'refresh-from-sources' }))   // still there
+    expect(await screen.findByTestId('auth-modal')).toBeInTheDocument()
+    expect(mockEnsure).not.toHaveBeenCalled()
+  })
 
   it('scopes the refresh to the company own country', async () => {
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
