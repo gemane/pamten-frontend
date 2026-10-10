@@ -2193,7 +2193,7 @@ describe('companies below a subsidiary', () => {
     await show([sub('s1', 'Holding Sub', { stake_percent: 100, descendants: 12 }),
                 sub('s2', 'Leaf Sub', { stake_percent: 100, descendants: 0 }),
                 sub('s3', 'Unknown Sub', { stake_percent: 100 })])
-    const badge = screen.getByText('12 below')
+    const badge = screen.getByText('12 subsidiaries')
     expect(badge.className).toBe('rel-item__below')
     expect(badge.closest('.rel-item')!.textContent).toContain('Holding Sub')
     // before the ownership badge, so every row still ends on its stake
@@ -2205,7 +2205,7 @@ describe('companies below a subsidiary', () => {
   it('writes a lower bound as ≥ 12 when the walk behind it was capped', async () => {
     await show([sub('s1', 'Holding Sub', { stake_percent: 100, descendants: 12 }),
                 sub('s2', 'Leaf Sub', { stake_percent: 100, descendants: 0 })], true)
-    expect(screen.getByText('≥ 12 below')).toBeInTheDocument()
+    expect(screen.getByText('≥ 12 subsidiaries')).toBeInTheDocument()
     expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)   // a 0 floor is still nothing to say
   })
 
@@ -2232,8 +2232,8 @@ describe('companies below a subsidiary', () => {
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Parent Co')} refreshKey={0} allLevels />)
     await screen.findByText('Beta Leaf')
-    expect(screen.getByText('≥ 1 below').closest('.rel-tree__row')!.textContent).toContain('Alpha Holding')
-    const row = screen.getByText('≥ 1 below').closest('.rel-tree__row')!
+    expect(screen.getByText('≥ 1 subsidiary').closest('.rel-tree__row')!.textContent).toContain('Alpha Holding')
+    const row = screen.getByText('≥ 1 subsidiary').closest('.rel-tree__row')!
     const below = row.querySelector('.rel-item__below')!, stake = row.querySelector('.ownership-badge')!
     expect(below.compareDocumentPosition(stake) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)

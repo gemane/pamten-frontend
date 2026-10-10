@@ -46,7 +46,7 @@ export default function GraphHelp() {
           <span className="help-text">{t('panel.nomineeHint')}</span>
         </div>
         <div className="help-item">
-          <span className="help-sample"><span className="rel-item__below">{t('panel.companiesBelow', { n: 12 })}</span></span>
+          <span className="help-sample"><span className="rel-item__below">{t('panel.companiesBelow', { count: 12, n: 12 })}</span></span>
           <span className="help-text">{t('coverage.help.below')}</span>
         </div>
         <div className="help-item">

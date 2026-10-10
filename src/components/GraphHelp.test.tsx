@@ -23,8 +23,8 @@ describe('GraphHelp — the reading-the-graph glossary', () => {
     expect(document.querySelector('.help-edge--dashed')).toBeTruthy()
     expect(document.querySelector('.help-edge--dotted')).toBeTruthy()
     // the companies-below figure, worded as the row words it
-    expect(screen.getByText('12 below').className).toContain('rel-item__below')
-    expect(screen.getByText(/companies below a subsidiary/i)).toBeInTheDocument()
+    expect(screen.getByText('12 subsidiaries').className).toContain('rel-item__below')
+    expect(screen.getByText(/own subsidiaries, at all levels/i)).toBeInTheDocument()
   })
 
   it('carries no settings-page class', () => {

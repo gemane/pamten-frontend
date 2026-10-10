@@ -137,7 +137,7 @@ export function buildStylesheet(theme: 'dark' | 'light',
       selector: 'edge',
       style: {
         // The stake, and what hangs below the company the line reaches —
-        // "100% · 12 below" — so a holding company can be told from a shell
+        // "100% · 12 subsidiaries" — so a holding company can be told from a shell
         // without opening it. A line with neither says nothing.
         label: (ele: cytoscape.EdgeSingular) => {
           const base = String(ele.data('label') ?? '')

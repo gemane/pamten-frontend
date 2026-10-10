@@ -906,12 +906,13 @@ function relFromRole(rel: RoleRelationship | undefined, ids: {
 }
 
 /** "12", or "≥ 12" when the walk behind the figure was capped and the
- *  figure is a lower bound. */
+ *  figure is a lower bound. The chip and the menu pluralise on the number
+ *  itself (`count`) and print this (`n`). */
 function belowText(n: number, bound?: boolean): string {
   return (bound && n > 0 ? '≥ ' : '') + n.toLocaleString()
 }
 
-/** "12 below": the companies under a subsidiary at any level — what tells a
+/** "12 subsidiaries": the companies under a subsidiary at any level — what tells a
  *  holding company from a shell in a flat Exhibit 21 list, where no stake is
  *  stated. Nothing below, nothing said; the row's order is not changed by it. */
 function BelowBadge({ n, bound }: { n: number | null | undefined; bound?: boolean }) {
@@ -919,7 +920,7 @@ function BelowBadge({ n, bound }: { n: number | null | undefined; bound?: boolea
   if (n == null || n <= 0) return null
   return (
     <span className="rel-item__below" title={t('panel.companiesBelowHint')}>
-      {t('panel.companiesBelow', { n: belowText(n, bound) })}
+      {t('panel.companiesBelow', { count: n, n: belowText(n, bound) })}
     </span>
   )
 }
