@@ -597,7 +597,7 @@ describe('tapping a box in the graph', () => {
     expect(panel.getAttribute('data-node')).toBe('e1')             // not sub1
     expect(panel.getAttribute('data-graph-pick')).toBe('sub1')
     expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('sub1')
-    // …and the graph's Expand graph / Open as centre act on the tapped box
+    // …and the graph's Expand graph acts on the tapped box
     expect(screen.getByTestId('graph').getAttribute('data-action-node')).toBe('sub1')
   })
 
