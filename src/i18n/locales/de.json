@@ -378,7 +378,8 @@
     "refreshPartCooldown": "Quellen in Wartezeit (kürzlich aktualisiert)",
     "refreshNotifyTitle": "Owlgraph — Aktualisierung abgeschlossen",
     "refreshPartInProgress": "eine weitere Aktualisierung dieses Unternehmens läuft noch",
-    "treeTruncated": "Der Baum ist groß: die ersten {{count}} Unternehmen werden angezeigt"
+    "treeTruncated": "Der Baum ist groß: die ersten {{count}} Unternehmen werden angezeigt",
+    "treeTruncatedOf": "Der Baum ist groß: die ersten {{count}} von {{total}} Unternehmen werden angezeigt"
   },
   "map": {
     "resetView": "Ansicht zurücksetzen",

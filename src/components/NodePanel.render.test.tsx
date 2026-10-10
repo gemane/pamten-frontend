@@ -2009,6 +2009,23 @@ describe('the subsidiary list in "all levels" mode', () => {
     expect(screen.getByText('4')).toBeInTheDocument()          // the tree's count, not the profile's 1
   })
 
+  it('a capped tree says so at the top, before the rows, and the heading counts the whole tree', async () => {
+    await show(true, { ...tree, truncated: true, total: 4423 })
+    const section = screen.getByText('Subsidiaries — all levels').closest('.panel-section')!
+    expect(section.textContent).toContain('4,423')                       // the whole tree, not the rows shown
+    const note = section.querySelector('[role="note"]')!
+    expect(note.textContent).toMatch(/showing the first 4 of 4,423 companies/)
+    const firstRow = section.querySelector('.rel-tree__row')!
+    expect(note.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()   // note above the rows
+  })
+
+  it('a capped tree whose count also gave up says the rows shown', async () => {
+    await show(true, { ...tree, truncated: true, total: null })
+    const note = document.querySelector('.panel-section [role="note"]')!
+    expect(note.textContent).toMatch(/showing the first 4 companies/)
+    expect(screen.getByText('Subsidiaries — all levels').closest('.panel-section')!.textContent).toContain('4')
+  })
+
   it('off: the flat list of direct holdings, and no tree is fetched', async () => {
     vi.mocked(getSubsidiaryTree).mockClear()
     await show(false)

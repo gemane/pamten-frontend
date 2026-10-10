@@ -1055,8 +1055,9 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
 
 /** The subsidiary list in "all levels" mode: the whole tree, depth-first, each
  *  company indented under its parent. Siblings in the panel's usual order
- *  (largest stake first, then by name). The count is the tree's companies; a
- *  truncated tree says so the way a capped section does. */
+ *  (largest stake first, then by name). The count is the WHOLE tree's size,
+ *  which the backend counts on past its node cap; a capped tree says so at the
+ *  top, before the rows, where a reader sees it before scrolling 2,000 lines. */
 function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
   tree: SubsidiaryTree
   onNavigate?: (node: NodeData) => void
@@ -1088,8 +1089,16 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
     return out
   }, [tree])
 
+  const total = tree.total ?? tree.nodes.length
   return (
-    <Section title={t('panel.subsidiariesAllLevels')} count={tree.nodes.length}>
+    <Section title={t('panel.subsidiariesAllLevels')} count={total}>
+      {tree.truncated && (
+        <div className="panel-section__cut" role="note">
+          {tree.total != null
+            ? t('toast.treeTruncatedOf', { count: tree.nodes.length, total: tree.total.toLocaleString(i18n.language) })
+            : t('toast.treeTruncated', { count: tree.nodes.length })}
+        </div>
+      )}
       {rows.map(({ node: n, rel }) => (
         <div key={n.entity.id} className="rel-tree__row" data-depth={n.depth}
              style={{ paddingLeft: `${(n.depth - 1) * 14}px` }}>
@@ -1105,9 +1114,6 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
           </RelRow>
         </div>
       ))}
-      {tree.truncated && (
-        <div className="panel-section__cut" role="note">{t('toast.treeTruncated', { count: tree.nodes.length })}</div>
-      )}
     </Section>
   )
 }
