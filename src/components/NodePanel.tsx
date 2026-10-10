@@ -439,19 +439,21 @@ export function googleSearchHref(name?: string | null, opts?: { quote?: boolean 
   return 'https://www.google.com/search?q=' + encodeURIComponent(opts?.quote ? `"${n}"` : n)
 }
 
-/** The panel's one web row: the entity's own site when a source stated one
- *  (host as text, full URL as the link), otherwise a Google search for the
- *  name. An unusable stored URL counts as absent — the search link is more
- *  honest than a dead row. */
-export function webLinkRow(entity: Entity): DetailRow | null {
+/** The panel's web rows: the entity's own site when a source stated one
+ *  (host as text, full URL as the link), and a Google search for the name
+ *  always — a site answers one question, a search the rest, so the search
+ *  is not withdrawn when a site is known. An unusable stored URL counts as
+ *  absent: a dead row says less than none. */
+export function webLinkRows(entity: Entity): DetailRow[] {
+  const rows: DetailRow[] = []
   const websiteHref = safeHref(entity.website ?? null)
   if (websiteHref) {
-    return { icon: FiGlobe, labelKey: 'panel.website',
-             value: linkHost(entity.website) ?? websiteHref, href: websiteHref }
+    rows.push({ icon: FiGlobe, labelKey: 'panel.website',
+                value: linkHost(entity.website) ?? websiteHref, href: websiteHref })
   }
   const search = googleSearchHref(entity.name)
-  return search ? { icon: FiSearch, labelKey: 'panel.webSearch',
-                    value: 'Google', href: search } : null
+  if (search) rows.push({ icon: FiSearch, labelKey: 'panel.webSearch', value: 'Google', href: search })
+  return rows
 }
 
 const trimmed = (v?: string | null): string | null => v?.trim() || null
@@ -1331,7 +1333,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
   // from the Location node's street/city/state/zip/country.
   const address   = entity.hq_address || ''
   const hasCoords = entity.hq_lat != null && entity.hq_lng != null
-  const webRow    = webLinkRow(entity)
+  const webRows   = webLinkRows(entity)
 
   return (
     <div className="panel-body">
@@ -1386,10 +1388,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
             </span>
           </div>
         )}
-        {webRow && (
-          <MetaRow icon={webRow.icon} label={t(webRow.labelKey)}
-                   value={webRow.value} href={webRow.href} />
-        )}
+        {webRows.map(row => (
+          <MetaRow key={row.labelKey} icon={row.icon} label={t(row.labelKey)}
+                   value={row.value} href={row.href} />
+        ))}
       </div>
 
       {/* Right under the facts at the top: the rest of them (collapsed), then who

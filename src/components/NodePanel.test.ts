@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { entityToNode, personToNode, ownerToNode, personDisplayDetails, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRow, googleSearchHref } from './NodePanel'
+import { entityToNode, personToNode, ownerToNode, personDisplayDetails, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRows, googleSearchHref } from './NodePanel'
 import { byStakeDesc } from '../utils/ordering'
 import type { Entity, Person } from '../types'
 
@@ -483,36 +483,36 @@ describe('byStakeDesc with the shares tier', () => {
   })
 })
 
-describe('the web link row at the panel top', () => {
+describe('the web rows at the panel top', () => {
   const base = { id: 'e1', name: 'Apple Inc.', type: 'company', verified: false } as Record<string, unknown>
+  const keys = (rows: { labelKey: string }[]) => rows.map(r => r.labelKey)
 
-  it('a stated website shows the bare host and links the full url', () => {
-    const row = webLinkRow({ ...base, website: 'https://www.apple.com/' } as never)
-    expect(row?.labelKey).toBe('panel.website')
-    expect(row?.value).toBe('apple.com')
-    expect(row?.href).toBe('https://www.apple.com/')
+  it('a stated website shows the bare host and links the full url — and the search stays beside it', () => {
+    const rows = webLinkRows({ ...base, website: 'https://www.apple.com/' } as never)
+    expect(keys(rows)).toEqual(['panel.website', 'panel.webSearch'])
+    expect(rows[0].value).toBe('apple.com')
+    expect(rows[0].href).toBe('https://www.apple.com/')
+    expect(rows[1].href).toBe('https://www.google.com/search?q=Apple%20Inc.')
   })
 
-  it('no website falls back to a Google search for the name', () => {
-    const row = webLinkRow(base as never)
-    expect(row?.labelKey).toBe('panel.webSearch')
-    expect(row?.href).toBe('https://www.google.com/search?q=Apple%20Inc.')
+  it('no website: the Google search for the name alone', () => {
+    const rows = webLinkRows(base as never)
+    expect(keys(rows)).toEqual(['panel.webSearch'])
+    expect(rows[0].href).toBe('https://www.google.com/search?q=Apple%20Inc.')
   })
 
-  it('an unsafe scheme counts as absent — search, not a dead website row', () => {
-    const row = webLinkRow({ ...base, website: 'javascript:alert(1)' } as never)
-    expect(row?.labelKey).toBe('panel.webSearch')
+  it('an unsafe scheme counts as absent — search only, not a dead website row', () => {
+    expect(keys(webLinkRows({ ...base, website: 'javascript:alert(1)' } as never))).toEqual(['panel.webSearch'])
   })
 
   it('a non-http scheme WITH a host is still rejected', () => {
     // javascript: URLs happen to have no host, so linkHost alone filters them
     // by accident — ftp:// has one, and only the safeHref gate stops it.
-    const row = webLinkRow({ ...base, website: 'ftp://files.test' } as never)
-    expect(row?.labelKey).toBe('panel.webSearch')
+    expect(keys(webLinkRows({ ...base, website: 'ftp://files.test' } as never))).toEqual(['panel.webSearch'])
   })
 
   it('no website AND no name yields no row at all', () => {
-    expect(webLinkRow({ id: 'e1', verified: false } as never)).toBeNull()
+    expect(webLinkRows({ id: 'e1', verified: false } as never)).toEqual([])
   })
 
   it('the website never appears in the details rows anymore', () => {
