@@ -17,6 +17,7 @@ import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
 import { FOCUS_ATTR, scrollingPanel, useGraphFocusHighlight, useGraphHoverHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
+import { formatDate } from '../utils/dates'
 import { displayName, entityLabel } from '../utils/displayName'
 import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
@@ -115,20 +116,6 @@ export function ownerToNode(owner: Entity | Person): NodeData {
   return 'name' in owner ? entityToNode(owner) : personToNode(owner)
 }
 
-const PROV_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-// Format a provenance date/timestamp ('YYYY-MM-DD' or a full ISO string) into a
-// short, timezone-independent label like "Feb 14, 2025". Returns null for empty
-// or unparseable input so the caller can omit the line entirely.
-export function formatProvenanceDate(value?: string | null): string | null {
-  if (!value) return null
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
-  if (!m) return null
-  const month = PROV_MONTHS[Number(m[2]) - 1]
-  if (!month) return null
-  return `${month} ${Number(m[3])}, ${m[1]}`
-}
-
 // Derive the display detail shown for a person (birth/death formatted, the
 // nationality list resolved to localized names, and aliases). Kept pure and
 // exported so it can be unit-tested without rendering.
@@ -149,8 +136,8 @@ export function personDisplayDetails(p: Person, lang: string) {
     // record is read for; an age that changes every year cannot answer "who was
     // responsible for this company in 1985".
     age:  p.death_date ? null : ageFrom(p.birth_date),
-    born: p.death_date ? formatProvenanceDate(p.birth_date) : null,
-    died: formatProvenanceDate(p.death_date),
+    born: p.death_date ? formatDate(p.birth_date, lang) : null,
+    died: formatDate(p.death_date, lang),
     nationalities,
     aka: (p.alias ?? []).filter(Boolean),
   }
@@ -353,14 +340,14 @@ export interface DetailRow {
    *  trust, however plausible it looks. */
   href?: string
 }
-export function entityDetailRows(entity: Entity): DetailRow[] {
+export function entityDetailRows(entity: Entity, lang: string): DetailRow[] {
   const registeredAt = [entity.registration_authority, entity.registration_number]
     .filter(Boolean).join(' · ')
   const candidates: { icon: React.ElementType; labelKey: string; value?: string | null;
                       href?: string }[] = [
     { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
     { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
-    { icon: FiCalendar,  labelKey: 'panel.founded',      value: entity.founded_date },
+    { icon: FiCalendar,  labelKey: 'panel.founded',      value: formatDate(entity.founded_date, lang) },
     { icon: FiMapPin,    labelKey: 'panel.regAddress',   value: entity.address },
   ]
   return candidates.filter((r): r is DetailRow => !!r.value)
@@ -526,8 +513,8 @@ function ParentExceptionSection({ entity, hasOwners }: { entity: Entity; hasOwne
 // entity is registered, its registered address) that aren't part of the primary meta
 // or the relationship sections. Hidden entirely when the entity has none of them.
 function DetailsSection({ entity, hasOwners }: { entity: Entity; hasOwners: boolean }) {
-  const { t } = useTranslation()
-  const rows = entityDetailRows(entity)
+  const { t, i18n } = useTranslation()
+  const rows = entityDetailRows(entity, i18n.language)
   // The parent statement counts towards "does this section have anything to say".
   // `entityDetailRows` only knows about legal form, registration, founding date and
   // address, so a company that filed a reason and has none of those would otherwise
@@ -943,7 +930,7 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
   unknownFor?: string | null
   children: React.ReactNode
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null)
   const [reporting, setReporting] = useState(false)
   // Unconditional: a hook cannot be called behind an `if`, and a row with
@@ -1000,7 +987,7 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
       value: rel.sharesOutstanding != null
         ? t(rel.denominatorDate ? 'menu.sharesOfAsOf' : 'menu.sharesOf',
             { shares: n, total: rel.sharesOutstanding.toLocaleString(),
-              date: rel.denominatorDate?.slice(0, 10) })
+              date: formatDate(rel.denominatorDate, i18n.language) })
         : n,
     })
   }
@@ -1013,7 +1000,7 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
   }
   // The day the numbers were true, above the day they were said — only when
   // the filing states one and it differs (a 13G/A of a quarter-end, filed weeks on).
-  const asOf = rel.eventDate?.slice(0, 10), filed = rel.filedDate?.slice(0, 10)
+  const asOf = formatDate(rel.eventDate, i18n.language), filed = formatDate(rel.filedDate, i18n.language)
   if (asOf && asOf !== filed) details.push({ label: t('menu.asOf'), value: asOf })
   if (filed) details.push({ label: t('menu.filed'), value: filed })
   // How surely it was read. The row badges only the two weak grades; the menu
@@ -1139,13 +1126,13 @@ function credibilityColor(score: number): string {
 // Collapsible provenance list — the sources behind a node's facts. Shared by the
 // entity and person panels.
 function SourcesSection({ sources }: { sources: Source[] }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   if (!sources.length) return null
   return (
     <CollapsibleSection title={t('panel.sources')} count={sources.length}>
       {sources.map((s, i) => {
-        const reported    = formatProvenanceDate(s.source_date)
-        const lastChecked = formatProvenanceDate(s.last_scraped_at)
+        const reported    = formatDate(s.source_date, i18n.language)
+        const lastChecked = formatDate(s.last_scraped_at, i18n.language)
         // "SEC EDGAR · 13F" — a source can contribute several KINDS of record
         // (a 13G stake beside a 13F position), and the kind is what tells a
         // reader which register rules the fact lives under.

@@ -60,7 +60,7 @@ describe('SourceHealth', () => {
       last_publish_date: '2026-09-01 08:00:00', behind_days: 2,
     }] }))
     render(<SourceHealth />)
-    expect(await screen.findByText(/data as of 2026-09-01/)).toBeTruthy()
+    expect(await screen.findByText(/data as of Sep 1, 2026/)).toBeTruthy()
     expect(screen.getByText(/2 days behind/)).toBeTruthy()
     expect(screen.getByText('test subset')).toBeTruthy()
   })

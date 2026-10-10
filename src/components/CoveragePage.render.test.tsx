@@ -84,7 +84,7 @@ describe('CoveragePage', () => {
     const { container } = render(<CoveragePage />)
     await screen.findByText('GLEIF')
     const fresh = container.querySelector('.coverage__fresh')
-    expect(fresh?.textContent).toContain('data as of 2026-09-03')
+    expect(fresh?.textContent).toContain('data as of Sep 3, 2026')
     expect(fresh?.textContent).toContain('1 day behind')
     expect(fresh?.textContent).toContain('test subset')
   })
