@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiExternalLink } from 'react-icons/fi'
 import { getScraperSources, getScraperHealth, getStats } from '../services/api'
 import { ago } from '../utils/relativeTime'
+import { formatDate } from '../utils/dates'
 import GraphHelp from './GraphHelp'
 import type { ScraperSource, ScraperHealth } from '../types'
 
@@ -14,11 +15,11 @@ import type { ScraperSource, ScraperHealth } from '../types'
 interface Stats { companies: number; people: number; relationships: number; sources: number }
 
 function Freshness({ source, health }: { source: ScraperSource; health: ScraperHealth | null }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   if (!health) return null
   if (source.kind === 'bulk') {
     const ds = health.datasets.find(d => d.name === source.name)
-    const asOf = ds?.snapshot_date || (ds?.last_publish_date || '').slice(0, 10) || null
+    const asOf = formatDate(ds?.snapshot_date || ds?.last_publish_date, i18n.language)
     if (!asOf) return <span className="coverage__fresh coverage__fresh--muted">{t('health.notLoaded')}</span>
     return (
       <span className="coverage__fresh">

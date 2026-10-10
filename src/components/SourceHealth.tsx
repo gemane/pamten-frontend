@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiLoader, FiCheckCircle, FiAlertTriangle, FiClock, FiHeart, FiLock, FiMinus } from 'react-icons/fi'
 import { getScraperHealth } from '../services/api'
 import { ago } from '../utils/relativeTime'
+import { formatDate } from '../utils/dates'
 import type { ScraperHealth, SourceHealthEntry, DatasetHealth } from '../types'
 
 /** Per-source freshness and health — the OpenCorporates lesson: a data
@@ -50,8 +51,8 @@ function HealthRow({ s }: { s: SourceHealthEntry }) {
 }
 
 function DatasetRow({ d }: { d: DatasetHealth }) {
-  const { t } = useTranslation()
-  const asOf = d.snapshot_date || (d.last_publish_date || '').slice(0, 10) || null
+  const { t, i18n } = useTranslation()
+  const asOf = formatDate(d.snapshot_date || d.last_publish_date, i18n.language)
   return (
     <li className="src-health__row src-health__row--dataset">
       <span className="src-health__status"><FiCheckCircle size={13} /></span>

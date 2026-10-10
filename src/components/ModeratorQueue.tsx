@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { FiX, FiFlag, FiEye, FiEyeOff, FiEdit3, FiSlash, FiRotateCcw, FiLoader, FiInbox, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
+import { formatDate } from '../utils/dates'
 import {
   getFlags, getFlagGroups, updateFlagStatus, suppressFlag,
   getSuppressions, removeSuppression, getPins, removePin,
@@ -45,7 +46,7 @@ const asGroup = (f: Flag): FlagGroup => ({ ...f, count: 1, flag_ids: [f.id] })
  * and total are exact.
  */
 export default function ModeratorQueue({ onClose, relatedTo }: { onClose: () => void; relatedTo?: string }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [tab,       setTab]       = useState<string>('open')
   const [groups,    setGroups]    = useState<FlagGroup[]>([])
   const [sups,      setSups]      = useState<Suppression[]>([])
@@ -120,7 +121,7 @@ export default function ModeratorQueue({ onClose, relatedTo }: { onClose: () => 
               <div key={s.id} className="mod-flag">
                 <div className="mod-flag__main">
                   <span className="mod-flag__target" title={s.target_kind}>{describeTarget(s)}</span>
-                  <span className="mod-flag__meta">{(s.created_at || '').slice(0, 10)}</span>
+                  <span className="mod-flag__meta">{formatDate(s.created_at, i18n.language)}</span>
                 </div>
                 <div className="mod-flag__actions">
                   <button className="mod-flag__btn" disabled={busy === s.id}
@@ -142,7 +143,7 @@ export default function ModeratorQueue({ onClose, relatedTo }: { onClose: () => 
                       p.ownership_type ? t(`ownershipType.${p.ownership_type}`, { defaultValue: p.ownership_type }) : null]
                       .filter(Boolean).join(' · ')}
                   </span>
-                  <span className="mod-flag__meta">{(p.created_at || '').slice(0, 10)}</span>
+                  <span className="mod-flag__meta">{formatDate(p.created_at, i18n.language)}</span>
                 </div>
                 <div className="mod-flag__actions">
                   <button className="mod-flag__btn" disabled={busy === p.id}
@@ -164,7 +165,7 @@ export default function ModeratorQueue({ onClose, relatedTo }: { onClose: () => 
                   </span>
                   <span className="mod-flag__target" title={g.target_kind}>{describeTarget(g)}</span>
                   {g.note && <p className="mod-flag__note">{g.note}</p>}
-                  <span className="mod-flag__meta">{(g.created_at || '').slice(0, 10)}</span>
+                  <span className="mod-flag__meta">{formatDate(g.created_at, i18n.language)}</span>
                 </div>
                 {(tab === 'open' || tab === 'reviewing') && (
                   <div className="mod-flag__actions">

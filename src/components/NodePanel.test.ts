@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatProvenanceDate, entityToNode, personToNode, ownerToNode, personDisplayDetails, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRow, googleSearchHref } from './NodePanel'
+import { entityToNode, personToNode, ownerToNode, personDisplayDetails, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRow, googleSearchHref } from './NodePanel'
 import { byStakeDesc } from '../utils/ordering'
 import type { Entity, Person } from '../types'
 
@@ -10,28 +10,30 @@ const claim = (rank: string, value: string): Claim => ({
   mainsnak: { datavalue: { value } },
 })
 
-describe('formatProvenanceDate', () => {
+import { formatDate } from '../utils/dates'
+
+describe('formatDate, as the panel used it (English)', () => {
   it('returns null for empty / missing input', () => {
-    expect(formatProvenanceDate(undefined)).toBeNull()
-    expect(formatProvenanceDate(null)).toBeNull()
-    expect(formatProvenanceDate('')).toBeNull()
+    expect(formatDate(undefined, 'en')).toBeNull()
+    expect(formatDate(null, 'en')).toBeNull()
+    expect(formatDate('', 'en')).toBeNull()
   })
 
   it('formats a plain YYYY-MM-DD date', () => {
-    expect(formatProvenanceDate('2025-02-14')).toBe('Feb 14, 2025')
+    expect(formatDate('2025-02-14', 'en')).toBe('Feb 14, 2025')
   })
 
   it('formats a full ISO timestamp by its date part (timezone-independent)', () => {
-    expect(formatProvenanceDate('2026-07-12T09:00:00+00:00')).toBe('Jul 12, 2026')
+    expect(formatDate('2026-07-12T09:00:00+00:00', 'en')).toBe('Jul 12, 2026')
   })
 
   it('strips a leading zero from the day', () => {
-    expect(formatProvenanceDate('2025-12-03')).toBe('Dec 3, 2025')
+    expect(formatDate('2025-12-03', 'en')).toBe('Dec 3, 2025')
   })
 
   it('returns null for unparseable input or an invalid month', () => {
-    expect(formatProvenanceDate('not-a-date')).toBeNull()
-    expect(formatProvenanceDate('2025-13-01')).toBeNull()
+    expect(formatDate('not-a-date', 'en')).toBeNull()
+    expect(formatDate('2025-13-01', 'en')).toBeNull()
   })
 })
 
@@ -176,7 +178,7 @@ describe('entityDetailRows', () => {
   const base = { id: 'lei:1', name: 'Co', type: 'company', verified: false } as Entity
 
   it('returns no rows when the entity has no detail fields', () => {
-    expect(entityDetailRows(base)).toEqual([])
+    expect(entityDetailRows(base, 'en')).toEqual([])
   })
 
   it('surfaces legal form, registered-at (authority · number), founded date and address in order', () => {
@@ -187,24 +189,24 @@ describe('entityDetailRows', () => {
       registration_number: '07428111',
       founded_date: '2010-11-09',
       address: '1 Example Street, London, EC1A 1BB, GB',
-    })
+    }, 'en')
     expect(rows.map(r => [r.labelKey, r.value])).toEqual([
       ['panel.legalForm', 'Private Limited Company'],
       ['panel.registeredAt', 'Companies Register · 07428111'],
-      ['panel.founded', '2010-11-09'],
+      ['panel.founded', 'Nov 9, 2010'],
       ['panel.regAddress', '1 Example Street, London, EC1A 1BB, GB'],
     ])
   })
 
   it('shows the registration number alone when the authority is unknown', () => {
-    const rows = entityDetailRows({ ...base, registration_number: '07428111' })
+    const rows = entityDetailRows({ ...base, registration_number: '07428111' }, 'en')
     expect(rows).toHaveLength(1)
     expect(rows[0].labelKey).toBe('panel.registeredAt')
     expect(rows[0].value).toBe('07428111')
   })
 
   it('skips fields that are absent', () => {
-    const rows = entityDetailRows({ ...base, legal_form: 'Fund' })
+    const rows = entityDetailRows({ ...base, legal_form: 'Fund' }, 'en')
     expect(rows.map(r => r.labelKey)).toEqual(['panel.legalForm'])
   })
 })
@@ -515,7 +517,7 @@ describe('the web link row at the panel top', () => {
 
   it('the website never appears in the details rows anymore', () => {
     const rows = entityDetailRows({ ...base, website: 'https://a.test',
-                                    legal_form: 'PLC' } as never)
+                                    legal_form: 'PLC' } as never, 'en')
     expect(rows.find(r => r.labelKey === 'panel.website')).toBeUndefined()
     expect(rows[0].labelKey).toBe('panel.legalForm')
   })

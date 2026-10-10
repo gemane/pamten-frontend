@@ -1357,7 +1357,7 @@ describe("a relationship's own facts, in its menu", () => {
 
   it('shows the filing date without its timestamp', async () => {
     const d = await openMenuFor({ stake_percent: 9.7, source_date: '2025-02-14T00:00:00Z' })
-    expect(d?.textContent).toContain('2025-02-14')
+    expect(d?.textContent).toContain('Feb 14, 2025')   // the day, in the viewer's language, never the timestamp
     expect(d?.textContent).not.toContain('T00:00')
   })
 
@@ -1491,14 +1491,14 @@ describe('the counts behind a percentage', () => {
     // Bevco's 2020 count, AB InBev's 2026 total
     const d = await openMenu({ stake_percent: 5.2158, shares: 102862718, shares_outstanding: 1972133054,
                                denominator_date: '2026-05-15', source_date: '2020-03-10' })
-    expect(d?.textContent).toContain('102,862,718 of 1,972,133,054 (total as of 2026-05-15)')
-    expect(d?.textContent).toContain('2020-03-10')
+    expect(d?.textContent).toContain('102,862,718 of 1,972,133,054 (total as of May 15, 2026)')
+    expect(d?.textContent).toContain('Mar 10, 2020')
   })
 
   it('the day the numbers are as of, above the day they were filed', async () => {
     const d = await openMenu({ stake_percent: 7.48, event_date: '2026-03-31', source_date: '2026-04-20' })
-    expect(d?.textContent).toContain('As of2026-03-31')
-    expect(d?.textContent).toContain('Filed2026-04-20')
+    expect(d?.textContent).toContain('As ofMar 31, 2026')
+    expect(d?.textContent).toContain('FiledApr 20, 2026')
   })
 
   it('no "as of" line when it is the filing day, or not stated', async () => {
