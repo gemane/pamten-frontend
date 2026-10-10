@@ -925,6 +925,13 @@ function BelowBadge({ n, bound }: { n: number | null | undefined; bound?: boolea
   )
 }
 
+/** The ownership badge with the subsidiaries chip beneath it, as one column
+ *  at the row's end; just the badge where there is nothing to say. */
+function WithBelow({ n, bound, children }: { n: number | null | undefined; bound?: boolean; children: React.ReactNode }) {
+  if (n == null || n <= 0) return <>{children}</>
+  return <span className="rel-item__stack">{children}<BelowBadge n={n} bound={bound} /></span>
+}
+
 function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
   node: NodeData | null
   onNavigate?: (n: NodeData) => void
@@ -1092,8 +1099,9 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
                                     sourceName: sourceName.get(rel?.source_id ?? ''),
                                     descendantsBound: tree.truncated })}>
             <CompanyName e={n.entity} place={places.get(n.entity.id)} />
-            <BelowBadge n={rel?.descendants} bound={tree.truncated} />
-            <OwnershipBadge type={rel?.ownership_type} percent={rel?.stake_percent} shares={rel?.shares} />
+            <WithBelow n={rel?.descendants} bound={tree.truncated}>
+              <OwnershipBadge type={rel?.ownership_type} percent={rel?.stake_percent} shares={rel?.shares} />
+            </WithBelow>
           </RelRow>
         </div>
       ))}
@@ -1516,18 +1524,18 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                 <CompanyName e={s.entity} place={places.get(s.entity.id)} />
                 <CorroborationBadge rel={s.relationship} />
                 <ReadingBadge rel={s.relationship} />
-                {/* Before the ownership badge: the row ends on the stake, as every row does. */}
-                <BelowBadge n={s.relationship?.descendants} bound={profile.descendants_truncated} />
                 {/* The marker belongs on this side too. Altria's panel lists AB
                     InBev as something it holds 8.1% of — while voting 51.9% —
                     and without this the disproportion is visible only from AB
                     InBev's side. Suppressed on a voting group's own panel for
                     the same reason it is suppressed on its row: "this voting
                     group's control is voting" says nothing. */}
-                <OwnershipBadge type={s.relationship?.ownership_type}
-                                percent={s.relationship?.stake_percent}
-                                shares={s.relationship?.shares}
-                                votingPct={isGroup ? null : s.relationship?.voting_power_pct} />
+                <WithBelow n={s.relationship?.descendants} bound={profile.descendants_truncated}>
+                  <OwnershipBadge type={s.relationship?.ownership_type}
+                                  percent={s.relationship?.stake_percent}
+                                  shares={s.relationship?.shares}
+                                  votingPct={isGroup ? null : s.relationship?.voting_power_pct} />
+                </WithBelow>
               </RelRow>
             )
 

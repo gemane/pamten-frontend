@@ -557,25 +557,3 @@ describe('syncLabels', () => {
     expect(cy.$id('jp').data('label')).toBe('Perfect Corp.')
   })
 })
-
-describe('buildStylesheet — the line label says what hangs below', () => {
-  type LabelFn = (ele: { data: (k: string) => unknown }) => string
-  const labelOf = (data: Record<string, unknown>, below?: (n: number) => string) => {
-    const edge = buildStylesheet('dark', below).find(r => (r as { selector: string }).selector === 'edge')!
-    const fn = (edge as unknown as { style: { label: LabelFn } }).style.label
-    return fn({ data: (k: string) => data[k] })
-  }
-
-  it('adds the companies below to the stake, in the words it is given', () => {
-    expect(labelOf({ label: '60%', descendants: 12 }, n => `${n} below`)).toBe('60% · 12 below')
-    expect(labelOf({ label: '60%', descendants: 12 })).toBe('60% · ↓12')      // no translator: the glyph
-  })
-
-  it('says only the stake when nothing is below, and only the count when no stake is stated', () => {
-    expect(labelOf({ label: '60%', descendants: 0 })).toBe('60%')
-    expect(labelOf({ label: '60%', descendants: null })).toBe('60%')
-    expect(labelOf({ label: '60%' })).toBe('60%')
-    expect(labelOf({ label: '', descendants: 3 }, n => `${n} below`)).toBe('3 below')
-    expect(labelOf({ label: '', descendants: 0 })).toBe('')
-  })
-})

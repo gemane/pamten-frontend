@@ -2196,9 +2196,10 @@ describe('companies below a subsidiary', () => {
     const badge = screen.getByText('12 subsidiaries')
     expect(badge.className).toBe('rel-item__below')
     expect(badge.closest('.rel-item')!.textContent).toContain('Holding Sub')
-    // before the ownership badge, so every row still ends on its stake
-    const stake = badge.closest('.rel-item')!.querySelector('.ownership-badge')!
-    expect(badge.compareDocumentPosition(stake) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // beneath the ownership badge, the two as one column at the row's end
+    const stack = badge.closest('.rel-item__stack')!
+    expect(stack.querySelector('.ownership-badge')).toBeTruthy()
+    expect(stack.querySelector('.ownership-badge')!.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)
   })
 
@@ -2235,7 +2236,8 @@ describe('companies below a subsidiary', () => {
     expect(screen.getByText('≥ 1 subsidiary').closest('.rel-tree__row')!.textContent).toContain('Alpha Holding')
     const row = screen.getByText('≥ 1 subsidiary').closest('.rel-tree__row')!
     const below = row.querySelector('.rel-item__below')!, stake = row.querySelector('.ownership-badge')!
-    expect(below.compareDocumentPosition(stake) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(below.closest('.rel-item__stack')).toBe(stake.closest('.rel-item__stack'))
+    expect(stake.compareDocumentPosition(below) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)
     vi.mocked(getSubsidiaryTree).mockClear()
   })

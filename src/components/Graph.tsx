@@ -12,6 +12,7 @@ import { arcSpacing, layoutArc, rowCentres } from '../utils/arcPack'
 import { byStakeDesc } from '../utils/ordering'
 import { displayName } from '../utils/displayName'
 import { relabelNamesakes } from '../utils/namesakes'
+import { withLineLabels } from '../utils/lineLabels'
 import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
 
@@ -34,10 +35,7 @@ interface TooltipState {
  *  tooltip names a node at any zoom. */
 export const MIN_LABEL_PX = 4
 
-/** `below` words the companies under a line's target ("12 below"); the
- *  default is the language-free glyph for callers without a translator. */
-export function buildStylesheet(theme: 'dark' | 'light',
-                                below: (n: number) => string = n => `↓${n}`): cytoscape.StylesheetStyle[] {
+export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
   const edgeLabelBg = theme === 'dark' ? '#1a1a2e' : '#f0f4f8'
   const edgeColor   = theme === 'dark' ? '#8892a4' : '#4a5568'
   const edgeLine    = theme === 'dark' ? '#3a3a5c' : '#9ca3b8'
@@ -136,15 +134,6 @@ export function buildStylesheet(theme: 'dark' | 'light',
     {
       selector: 'edge',
       style: {
-        // The stake, and what hangs below the company the line reaches —
-        // "100% · 12 subsidiaries" — so a holding company can be told from a shell
-        // without opening it. A line with neither says nothing.
-        label: (ele: cytoscape.EdgeSingular) => {
-          const base = String(ele.data('label') ?? '')
-          const n = ele.data('descendants')
-          if (typeof n !== 'number' || n <= 0) return base
-          return base ? `${base} · ${below(n)}` : below(n)
-        },
         width: 2,
         'target-arrow-shape': 'triangle',
         'curve-style': 'bezier',
@@ -821,7 +810,10 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const belowLabel = useCallback((n: number) => t('graph.below', { count: n }), [t])
   // Two companies of one name on the canvas carry their country after it
   // ("Agrointegral Andina S.A.S. (Ecuador)") — before the layout measures them.
-  const elements = useMemo(() => relabelNamesakes(rawElements, i18n.language), [rawElements, i18n.language])
+  // Names told apart, then each holding's line label completed with what hangs
+  // below the company it reaches — the same wording as the panel's chip.
+  const elements = useMemo(() => withLineLabels(relabelNamesakes(rawElements, i18n.language), belowLabel),
+                           [rawElements, i18n.language, belowLabel])
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
@@ -856,7 +848,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   useEffect(() => {
     cyRef.current = cytoscape({
       container: containerRef.current,
-      style: buildStylesheet(theme, belowLabel),
+      style: buildStylesheet(theme),
       layout: { name: 'preset' },
       userZoomingEnabled: true,
       userPanningEnabled: true,
@@ -941,8 +933,8 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   useEffect(() => {
     const cy = cyRef.current
     if (!cy) return
-    cy.style(buildStylesheet(theme, belowLabel) as cytoscape.StylesheetStyle[])
-  }, [theme, belowLabel])
+    cy.style(buildStylesheet(theme) as cytoscape.StylesheetStyle[])
+  }, [theme])
 
   useEffect(() => {
     const cy = cyRef.current
