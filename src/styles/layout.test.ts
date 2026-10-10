@@ -254,3 +254,20 @@ describe('holding a relationship on a touch screen', () => {
     expect(outsideQueries.join(' ')).not.toMatch(/user-select:\s*none/)
   })
 })
+
+describe('the company panel scrolls under a fixed tab bar', () => {
+  // The bar used to be pinned inside the scrolling box: the scrollbar ran up
+  // behind it and a row slid into it. Now the box holding the panel does not
+  // scroll; the panel's own body does, below the bar.
+  it('the panel body is the scrolling box, on both layouts', () => {
+    expect(rulesFor('.node-panel__scroll').some(r => /overflow-y:\s*auto/.test(r))).toBe(true)
+    expect(rulesFor('.left-panel__detail--panel').some(r => /overflow:\s*hidden/.test(r))).toBe(true)
+    // the phone's box keeps scrolling for the map tab; only the graph tab's variant stops
+    expect(rulesFor('.mobile-panel').some(r => /overflow-y:\s*auto/.test(r))).toBe(true)
+    expect(rulesFor('.mobile-panel--panel').some(r => /overflow:\s*hidden/.test(r))).toBe(true)
+  })
+
+  it('the tab bar is no longer pinned inside a scroller', () => {
+    expect(rulesFor('.panel-tabs').some(r => /position:\s*sticky/.test(r))).toBe(false)
+  })
+})

@@ -894,6 +894,15 @@ body {
   padding-bottom: 16px;
 }
 
+/* Holding the company panel: the panel scrolls its own body under a fixed
+   tab bar (.node-panel), so this box must not scroll as well. */
+.left-panel__detail--panel { overflow: hidden; display: flex; flex-direction: column; padding-bottom: 0; }
+.node-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.node-panel__scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-bottom: 16px; }
+.node-panel__scroll::-webkit-scrollbar { width: 4px; }
+.node-panel__scroll::-webkit-scrollbar-track { background: transparent; }
+.node-panel__scroll::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+
 .left-panel__detail::-webkit-scrollbar { width: 4px; }
 .left-panel__detail::-webkit-scrollbar-track { background: transparent; }
 .left-panel__detail::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
@@ -1744,11 +1753,8 @@ a.source-item__name:hover { color: #4A90D9; }
   display: flex;
   border-bottom: 1px solid #2a2a4a;
   flex-shrink: 0;
-  /* Pinned to the top of the scrolling panel: the body below scrolls, the
-     bar stays reachable. Opaque so the rows do not show through it. */
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  /* Above the panel's scrolling body (.node-panel__scroll), not inside it:
+     the bar stays put, the scrollbar starts beneath it. */
   background: #16213e;
 }
 
@@ -3427,6 +3433,10 @@ a.source-item__name:hover { color: #4A90D9; }
        it here as well took another 58px out of every panel below the canvas. */
     padding-bottom: 16px;
   }
+  /* …except when it holds the company panel, which scrolls its own body under
+     its tab bar (.node-panel): then this box must not scroll as well. The map
+     tab's list keeps the plain rule. */
+  .mobile-panel--panel { overflow: hidden; display: flex; flex-direction: column; padding-bottom: 0; }
 
   /* Full-screen panel for scraper / settings */
   .mobile-full-panel {
@@ -3540,6 +3550,7 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .breadcrumb__btn:hover { color: #1a202c; background: rgba(74,144,217,0.1); }
 [data-theme="light"] .breadcrumb__current { color: #4a5568; }
 [data-theme="light"] .left-panel__detail::-webkit-scrollbar-thumb { background: #d1d9e6; }
+[data-theme="light"] .node-panel__scroll::-webkit-scrollbar-thumb { background: #d1d9e6; }
 
 @media (max-width: 640px) {
   [data-theme="light"] .mobile-panel { background: #ffffff; border-top-color: #d1d9e6; }
