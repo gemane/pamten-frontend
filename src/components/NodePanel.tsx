@@ -905,9 +905,10 @@ function relFromRole(rel: RoleRelationship | undefined, ids: {
   }
 }
 
-/** "12", or "12+" when the walk behind the figure was capped. */
+/** "12", or "≥ 12" when the walk behind the figure was capped and the
+ *  figure is a lower bound. */
 function belowText(n: number, bound?: boolean): string {
-  return n.toLocaleString() + (bound && n > 0 ? '+' : '')
+  return (bound && n > 0 ? '≥ ' : '') + n.toLocaleString()
 }
 
 /** "12 below": the companies under a subsidiary at any level — what tells a

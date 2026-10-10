@@ -657,7 +657,7 @@
       "title": "Help — reading the graph",
       "colors": "Node colours tell the kind: company, person, fund, holding, government, foundation, nonprofit, brand, voting group",
       "dimmedSample": "dimmed entry",
-      "below": "The companies below a subsidiary, at all levels, each counted once — on its row and on its line in the graph. With a + when the tree was too large to walk to the end.",
+      "below": "The companies below a subsidiary, at all levels, each counted once — on its row and on its line in the graph. Written ≥ when the tree was too large to walk to the end.",
       "corroborated": "Confirmed independently by that many sources — the count shows how many agree",
       "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",
       "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake",
