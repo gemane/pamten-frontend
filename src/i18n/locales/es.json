@@ -660,6 +660,7 @@
       "title": "Ayuda — leer el grafo",
       "colors": "Los colores indican el tipo: empresa, persona, fondo, holding, gobierno, fundación, sin ánimo de lucro, marca, grupo de voto",
       "dimmedSample": "entrada atenuada",
+      "holdToMove": "Mantén pulsada una caja medio segundo para moverla; un arrastre rápido desplaza la imagen",
       "below": "Las filiales propias de una filial, todos los niveles, cada una contada una vez — en su fila y en su línea del grafo. Escrito ≥ cuando el árbol era demasiado grande para recorrerlo hasta el final.",
       "corroborated": "Confirmado de forma independiente por ese número de fuentes — la cifra muestra cuántas coinciden",
       "edgeWidth": "El grosor de la línea sigue la participación: fina para pequeñas, gruesa para grandes",

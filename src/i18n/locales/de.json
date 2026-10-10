@@ -660,6 +660,7 @@
       "title": "Hilfe — den Graphen lesen",
       "colors": "Knotenfarben zeigen die Art: Unternehmen, Person, Fonds, Holding, Staat, Stiftung, Nonprofit, Marke, Stimmrechtsgruppe",
       "dimmedSample": "gedimmter Eintrag",
+      "holdToMove": "Ein Kästchen eine halbe Sekunde halten, um es zu verschieben; ein kurzes Ziehen verschiebt das Bild",
       "below": "Die eigenen Tochtergesellschaften einer Tochter, alle Ebenen, jede einmal gezählt — auf ihrer Zeile und an ihrer Linie im Graphen. Als ≥ geschrieben, wenn der Baum zu groß war, um ihn bis zum Ende zu durchlaufen.",
       "corroborated": "Unabhängig bestätigt durch so viele Quellen — die Zahl zeigt, wie viele übereinstimmen",
       "edgeWidth": "Liniendicke folgt dem Anteil: dünn für kleine, dick für große Beteiligungen",
