@@ -64,6 +64,8 @@
     "tagline": "Mapea la propiedad corporativa mundial",
     "tagline2": "Busca la propiedad",
     "statCompanies": "empresas",
+    "below_one": "{{count}} filial",
+    "below_other": "{{count}} filiales",
     "statPeople": "personas",
     "statRelationships": "relaciones de propiedad",
     "statSources": "fuentes",
@@ -186,7 +188,10 @@
     "webSearch": "Búsqueda web",
     "refreshing": "Actualizando…",
     "capped": "Se muestran {{shown}} de {{total}} — la lista está limitada",
-    "subsidiariesAllLevels": "Filiales — todos los niveles"
+    "subsidiariesAllLevels": "Filiales — todos los niveles",
+    "companiesBelow_one": "{{n}} filial",
+    "companiesBelow_other": "{{n}} filiales",
+    "companiesBelowHint": "Sus propias filiales, todos los niveles, cada una contada una vez"
   },
   "report": {
     "button": "Reportar",
@@ -619,6 +624,7 @@
     "filed": "Presentado",
     "votingExceeds": "{{pct}}% — más que el {{stake}}% en cartera",
     "shares": "Acciones",
+    "below": "Filiales (todos los niveles)",
     "sharesOf": "{{shares}} de {{total}}",
     "sharesOfAsOf": "{{shares}} de {{total}} (total a {{date}})",
     "votingShares": "Acciones votadas",
@@ -653,6 +659,7 @@
       "title": "Ayuda — leer el grafo",
       "colors": "Los colores indican el tipo: empresa, persona, fondo, holding, gobierno, fundación, sin ánimo de lucro, marca, grupo de voto",
       "dimmedSample": "entrada atenuada",
+      "below": "Las filiales propias de una filial, todos los niveles, cada una contada una vez — en su fila y en su línea del grafo. Escrito ≥ cuando el árbol era demasiado grande para recorrerlo hasta el final.",
       "corroborated": "Confirmado de forma independiente por ese número de fuentes — la cifra muestra cuántas coinciden",
       "edgeWidth": "El grosor de la línea sigue la participación: fina para pequeñas, gruesa para grandes",
       "votingEdge": "Línea punteada ámbar: derechos de voto, dibujados aparte cuando difieren de la participación económica",

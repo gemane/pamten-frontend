@@ -690,3 +690,36 @@ describe('company labels follow utils/displayName', () => {
     expect(label(run, 'kr')).toBe('Nestle Korea')
   })
 })
+
+describe('companies below the company a line reaches', () => {
+  it('carries the relationship\'s descendants onto the owns edge, and nothing onto the votes edge', () => {
+    const sub = entity('sub')
+    const profile = makeProfile(entity('top'), { subsidiaries: [
+      { entity: sub, relationship: rel({ stake_percent: 60, voting_power_pct: 80, descendants: 12 }) },
+    ] })
+    const els = buildElements(profile, new Set())
+    const owns = edges(els).find(e => e.data.id === 'top__owns__sub')!.data as EdgeData
+    const votes = edges(els).find(e => e.data.id === 'top__votes__sub')!.data as EdgeData
+    expect(owns.descendants).toBe(12)
+    expect(owns.label).toBe('60%')                  // the data label stays the stake; the stylesheet adds the rest
+    expect(votes.descendants).toBeUndefined()
+  })
+
+  it('is null when the profile did not say', () => {
+    const els = buildElements(makeProfile(entity('top'), { subsidiaries: [
+      { entity: entity('sub'), relationship: rel({}) },
+    ] }), new Set())
+    expect((edges(els)[0].data as EdgeData).descendants).toBeNull()
+  })
+
+  it('reaches the tree\'s lines too', () => {
+    const tree: SubsidiaryTree = {
+      root_id: 'top', truncated: false,
+      nodes: [{ entity: entity('a'), parent_id: 'top', depth: 1 }, { entity: entity('b'), parent_id: 'a', depth: 2 }],
+      edges: [{ from_id: 'top', to_id: 'a', depth: 1, relationship: rel({ descendants: 1 }) },
+              { from_id: 'a', to_id: 'b', depth: 2, relationship: rel({ descendants: 0 }) }],
+    }
+    const by = Object.fromEntries(edges(buildTreeElements(tree, new Set())).map(e => [e.data.id, (e.data as EdgeData).descendants]))
+    expect(by).toEqual({ top__owns__a: 1, a__owns__b: 0 })
+  })
+})

@@ -1,4 +1,4 @@
-import { forwardRef, Fragment, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, Fragment, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
@@ -12,6 +12,7 @@ import { arcSpacing, layoutArc, rowCentres } from '../utils/arcPack'
 import { byStakeDesc } from '../utils/ordering'
 import { displayName } from '../utils/displayName'
 import { relabelNamesakes } from '../utils/namesakes'
+import { withLineLabels } from '../utils/lineLabels'
 import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
 
@@ -806,9 +807,13 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   ref
 ) {
   const { t, i18n } = useTranslation()
+  const belowLabel = useCallback((n: number) => t('graph.below', { count: n }), [t])
   // Two companies of one name on the canvas carry their country after it
   // ("Agrointegral Andina S.A.S. (Ecuador)") — before the layout measures them.
-  const elements = useMemo(() => relabelNamesakes(rawElements, i18n.language), [rawElements, i18n.language])
+  // Names told apart, then each holding's line label completed with what hangs
+  // below the company it reaches — the same wording as the panel's chip.
+  const elements = useMemo(() => withLineLabels(relabelNamesakes(rawElements, i18n.language), belowLabel),
+                           [rawElements, i18n.language, belowLabel])
   const containerRef    = useRef<HTMLDivElement>(null)
   const cyRef           = useRef<cytoscape.Core | null>(null)
   const prevCenterIdRef = useRef<string | null | undefined>(null)
