@@ -398,6 +398,7 @@
     "viewLarger": "Ver mapa más grande",
     "close": "Cerrar",
     "approxLocation": "Aproximada — solo ciudad",
+    "webglMissing": "Este mapa necesita WebGL, que tu navegador tiene desactivado — el enlace de abajo lo abre en openstreetmap.org",
     "registeredAddr": "Registrada",
     "basisLabel": "Contar empresas por",
     "basisJurisdiction": "Registro",

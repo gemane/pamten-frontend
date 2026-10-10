@@ -398,6 +398,7 @@
     "viewLarger": "Größere Karte anzeigen",
     "close": "Schließen",
     "approxLocation": "Ungefähr — nur Stadt",
+    "webglMissing": "Diese Karte braucht WebGL, das in Ihrem Browser abgeschaltet ist — der Link unten öffnet sie auf openstreetmap.org",
     "registeredAddr": "Eingetragen",
     "basisLabel": "Unternehmen zählen nach",
     "basisJurisdiction": "Sitzland",
