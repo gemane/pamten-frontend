@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiExternalLink } from 'react-icons/fi'
-import { MapContainer, TileLayer, CircleMarker, Circle, useMap } from 'react-leaflet'
+import * as maplibregl from 'maplibre-gl'
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { countryName } from '../utils/isoCountries'
 import { osmLargeUrl, osmAddressUrl } from '../utils/osm'
 
@@ -16,27 +17,133 @@ export interface MapDetailData {
   precise?: boolean      // exact street-level pin vs approximate (city) circle
 }
 
-// Leaflet loads no tiles when it inits before its container is sized (a popup that
-// just appeared) — the map shows blank while SVG overlays still render. Recompute the
-// size once mounted so the tiles load.
-function InvalidateSize() {
-  const map = useMap()
-  useEffect(() => {
-    const id = setTimeout(() => map.invalidateSize(), 0)
-    return () => clearTimeout(id)
-  }, [map])
-  return null
+/** The basemap: OpenFreeMap's vector tiles — free, no account, no key, no
+ *  usage caps, served from Hetzner in Germany. CARTO's free raster basemap,
+ *  used before, began watermarking every keyless tile "API KEY REQUIRED" in
+ *  2026, with a 200 status, so nothing failed and the map simply went grey.
+ *  One style per theme. */
+// MapLibre 6 decodes tiles in a worker it ships as a SEPARATE file and looks
+// for next to its own module (`new URL('./maplibre-gl-worker.mjs', import.meta.url)`).
+// Under a bundler that file is not there — Vite's dev server answered 404 and
+// the build never copied it — so the style loaded (background, attribution)
+// and not one tile: a beige box. Importing it as an asset makes Vite serve
+// and ship it, and MapLibre is told where; same origin, so the CSP's
+// `worker-src 'self'` covers it.
+maplibregl.setWorkerUrl(maplibreWorkerUrl)
+
+export const OPENFREEMAP_STYLES = {
+  light: 'https://tiles.openfreemap.org/styles/liberty',
+  dark:  'https://tiles.openfreemap.org/styles/dark',
+} as const
+
+export function basemapStyle(theme: string | null | undefined): string {
+  return theme === 'dark' ? OPENFREEMAP_STYLES.dark : OPENFREEMAP_STYLES.light
 }
 
-// MapContainer's `center`/`zoom` are only read on mount, so clicking a different pin
-// (which re-renders this component with new props, without remounting) leaves the map
-// parked on the previous company. Drive the view imperatively whenever the target moves.
-function Recenter({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
-  const map = useMap()
+/** The theme the page is drawn in — useTheme writes it on <html>. */
+export function currentTheme(): 'dark' | 'light' {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
+}
+
+/** A circle of `radiusM` metres around a point as a GeoJSON polygon, for the
+ *  "somewhere in this city" mark: a vector map has no circle-in-metres of its
+ *  own, and a pixel circle would not scale with the zoom. */
+export function circlePolygon(lat: number, lng: number, radiusM: number, sides = 64): GeoJSON.Feature<GeoJSON.Polygon> {
+  const dLat = radiusM / 111_320
+  const dLng = radiusM / (111_320 * Math.cos(lat * Math.PI / 180))
+  const ring: [number, number][] = []
+  for (let i = 0; i <= sides; i++) {
+    const a = (i / sides) * 2 * Math.PI
+    ring.push([lng + dLng * Math.cos(a), lat + dLat * Math.sin(a)])
+  }
+  return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring] } }
+}
+
+interface Target { lat: number; lng: number; zoom: number; precise: boolean }
+
+const HQ_SOURCE = 'hq-area'
+
+/** The map itself: created once, re-aimed and re-marked whenever another
+ *  company is picked (the popup re-renders with new props, it does not
+ *  remount), restyled when the theme changes while it is open. */
+function Basemap({ lat, lng, zoom, precise }: Target) {
+  const { t } = useTranslation()
+  // MapLibre throws at construction without WebGL2 (a hardened or remote
+  // browser): the pop-up then says so and keeps its link to the large map,
+  // instead of taking the whole map view down with it.
+  const [unsupported, setUnsupported] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
+  const markerRef = useRef<maplibregl.Marker | null>(null)
+  const target = useRef<Target>({ lat, lng, zoom, precise })
+  target.current = { lat, lng, zoom, precise }
+
   useEffect(() => {
-    map.setView([lat, lng], zoom)
-  }, [map, lat, lng, zoom])
-  return null
+    let map: maplibregl.Map
+    try {
+      map = new maplibregl.Map({
+        container: box.current!,
+        style: basemapStyle(currentTheme()),
+        center: [lng, lat], zoom,
+        attributionControl: { compact: true },
+      })
+    } catch (e) {
+      console.warn('MapLibre could not start; the pop-up falls back to the link', e)
+      setUnsupported(true)
+      return
+    }
+    mapRef.current = map
+    // the popup is sized only after it appeared: measure again once mounted
+    const sized = setTimeout(() => map.resize(), 0)
+    // a style (re)load drops the marks: draw them again whenever one finishes
+    map.on('style.load', () => drawTarget(map, markerRef, target.current))
+    // the theme switched while open: the style follows the page
+    const themed = new MutationObserver(() => map.setStyle(basemapStyle(currentTheme())))
+    themed.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => {
+      clearTimeout(sized)
+      themed.disconnect()
+      markerRef.current?.remove()
+      markerRef.current = null
+      map.remove()
+      mapRef.current = null
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps — one map per mount
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    map.jumpTo({ center: [lng, lat], zoom })
+    if (map.isStyleLoaded()) drawTarget(map, markerRef, target.current)
+    // else the pending style.load draws it
+  }, [lat, lng, zoom, precise])
+
+  return (
+    <div ref={box} className="map-detail__map">
+      {unsupported && <p className="map-detail__unsupported" role="note">{t('map.webglMissing')}</p>}
+    </div>
+  )
+}
+
+/** The mark: a pin on the address when the geocoder found the house, a
+ *  1,500 m circle on the city when it did not. */
+function drawTarget(map: maplibregl.Map, markerRef: { current: maplibregl.Marker | null }, t: Target): void {
+  markerRef.current?.remove()
+  markerRef.current = null
+  if (map.getLayer(`${HQ_SOURCE}-fill`)) map.removeLayer(`${HQ_SOURCE}-fill`)
+  if (map.getLayer(`${HQ_SOURCE}-line`)) map.removeLayer(`${HQ_SOURCE}-line`)
+  if (map.getSource(HQ_SOURCE)) map.removeSource(HQ_SOURCE)
+  if (t.precise) {
+    const el = document.createElement('div')
+    el.className = 'map-detail__pin'
+    markerRef.current = new maplibregl.Marker({ element: el }).setLngLat([t.lng, t.lat]).addTo(map)
+    return
+  }
+  map.addSource(HQ_SOURCE, { type: 'geojson', data: circlePolygon(t.lat, t.lng, 1500) })
+  map.addLayer({ id: `${HQ_SOURCE}-fill`, type: 'fill', source: HQ_SOURCE,
+                 paint: { 'fill-color': '#f59e0b', 'fill-opacity': 0.15 } })
+  map.addLayer({ id: `${HQ_SOURCE}-line`, type: 'line', source: HQ_SOURCE,
+                 paint: { 'line-color': '#f59e0b', 'line-width': 1, 'line-dasharray': [4, 4] } })
 }
 
 // A closeable street-level detail map for one company, over the world map. Pins the HQ
@@ -67,22 +174,7 @@ export default function MapDetail({ data, onClose }: { data: MapDetailData; onCl
         </button>
       </div>
 
-      <MapContainer center={[data.lat, data.lng]} zoom={precise ? 16 : 12}
-                    scrollWheelZoom className="map-detail__map">
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
-          subdomains="abcd"
-          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-        />
-        <InvalidateSize />
-        <Recenter lat={data.lat} lng={data.lng} zoom={precise ? 16 : 12} />
-        {precise
-          ? <CircleMarker center={[data.lat, data.lng]} radius={9}
-              pathOptions={{ color: '#b45309', weight: 2, fillColor: '#fcd34d', fillOpacity: 0.95 }} />
-          : <Circle center={[data.lat, data.lng]} radius={1500}
-              pathOptions={{ color: '#f59e0b', weight: 1, dashArray: '4', fillColor: '#f59e0b', fillOpacity: 0.15 }} />
-        }
-      </MapContainer>
+      <Basemap lat={data.lat} lng={data.lng} zoom={precise ? 16 : 12} precise={precise} />
 
       <a className="map-detail__link"
          href={data.hqAddress ? osmAddressUrl(data.hqAddress) : osmLargeUrl(data.lat, data.lng, precise ? 17 : 13)}

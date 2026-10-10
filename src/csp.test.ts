@@ -18,8 +18,13 @@ describe('the production Content-Security-Policy', () => {
     // entity logos stored on the node: upload.wikimedia.org (+ commons for redirects)
     expect(imgSrc).toContain('https://upload.wikimedia.org')
     expect(imgSrc).toContain('https://commons.wikimedia.org')
-    // detail-map tiles
-    expect(imgSrc).toContain('https://*.basemaps.cartocdn.com')
+  })
+
+  it('lets the detail map fetch its style, tiles, sprites and glyphs from OpenFreeMap, and start its workers', () => {
+    const connectSrc = config.match(/`connect-src ([^`]+)`/)?.[1] ?? ''
+    expect(connectSrc).toContain('https://tiles.openfreemap.org')
+    expect(config).toMatch(/"worker-src 'self' blob:"/)
+    expect(imgSrc).not.toContain('cartocdn')                       // the keyless CARTO tiles went grey in 2026
   })
 
   it('lets the person-photo lookup reach Wikipedia', () => {

@@ -271,3 +271,13 @@ describe('the company panel scrolls under a fixed tab bar', () => {
     expect(rulesFor('.panel-tabs').some(r => /position:\s*sticky/.test(r))).toBe(false)
   })
 })
+
+describe('the pop-up map has a height of its own', () => {
+  // MapLibre sizes its canvas from the box; `height: 100%` inside the pop-up's
+  // flex column computed to 0 px and the map was simply not there.
+  it('is a fixed height, never a percentage', () => {
+    const rules = rulesFor('.map-detail__map')
+    expect(rules.some(r => /height:\s*240px/.test(r))).toBe(true)
+    expect(rules.some(r => /height:\s*100%/.test(r))).toBe(false)
+  })
+})

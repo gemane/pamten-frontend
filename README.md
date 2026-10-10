@@ -121,6 +121,8 @@ src/
 - Undated relationships appear under "No date recorded"
 
 ### Map view
+
+- **Street-level detail map on OpenFreeMap**: the pop-up map for one company draws OpenFreeMap's vector tiles (free, no account, no key, no usage caps, served from Hetzner in Germany) with MapLibre GL, Liberty style in the light theme and the dark style in the dark one. CARTO's free raster basemap, used before, began watermarking every keyless tile "API KEY REQUIRED" in 2026.
 - World SVG map with countries shaded by how many companies they hold
 - **Registered / Headquarters** switch on the map — where a company is legally registered versus where it is actually run. No fallback between them: a company with no recorded HQ is counted as "Not recorded" rather than shown under its registration country
 - With a company selected, the panel header names it, its country, and **the full address the pin
