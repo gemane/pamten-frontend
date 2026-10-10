@@ -1855,6 +1855,22 @@ describe('NodePanel graph focus', () => {
     expect(screen.getByText('Exec Person').closest('[data-graph-focus]')).toBeNull()
   })
 
+  it('a box tapped in the graph: its row is lit and brought into view, and stays lit', async () => {
+    const revealed: string[] = []
+    const orig = HTMLElement.prototype.scrollIntoView
+    HTMLElement.prototype.scrollIntoView = function (this: HTMLElement) { revealed.push(this.getAttribute('data-graph-focus') ?? '') }
+    try {
+      render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} graphPickId="sub1" />)
+      await screen.findByText('Sub One')
+      const row = document.querySelector('[data-graph-focus="sub1"]')!
+      await waitFor(() => expect(row.classList.contains('rel-item--graph-pick')).toBe(true))
+      expect(revealed).toContain('sub1')
+      expect(document.querySelectorAll('.rel-item--graph-pick')).toHaveLength(1)
+    } finally {
+      HTMLElement.prototype.scrollIntoView = orig
+    }
+  })
+
   it('desktop: reports the hovered row, and null when the mouse leaves the rows', async () => {
     const onFocus = vi.fn()
     render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}

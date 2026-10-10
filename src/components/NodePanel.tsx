@@ -15,7 +15,7 @@ import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
-import { FOCUS_ATTR, useGraphFocusHighlight, useGraphHoverHighlight } from '../utils/graphFocus'
+import { FOCUS_ATTR, useGraphFocusHighlight, useGraphHoverHighlight, useGraphPickHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
 import { formatDate } from '../utils/dates'
 import { displayName, entityLabel } from '../utils/displayName'
@@ -247,6 +247,10 @@ interface NodePanelProps {
   /** The graph node in focus (the row under the mouse, or at the phone's
    *  centre) — its row is shown a shade darker, as the graph shows its box. */
   graphFocusId?: string | null
+  /** The graph node last tapped: its row is scrolled into view and lit like
+   *  the hovered one, and stays lit until the next tap. The panel itself stays
+   *  on its node — the tap is a way to find the edge, not to leave. */
+  graphPickId?: string | null
 }
 
 
@@ -1660,7 +1664,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null, graphPickId = null }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1672,6 +1676,7 @@ export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onVi
   useGraphFocus(focusScopeRef, graphFocusMode, onGraphFocus, [node?.id, profile, activeView, loading])
   useGraphHoverHighlight(focusScopeRef, graphHoverId, [node?.id, profile, activeView, loading])
   useGraphFocusHighlight(focusScopeRef, graphFocusId, [node?.id, profile, activeView, loading])
+  useGraphPickHighlight(focusScopeRef, graphPickId, [node?.id, profile, activeView, loading])
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {

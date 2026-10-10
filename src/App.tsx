@@ -4,6 +4,7 @@ import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
 import { countryName } from './utils/isoCountries'
+import { panelRowFor } from './utils/graphFocus'
 import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiBookOpen } from 'react-icons/fi'
 import SearchBar, { type SearchBarHandle } from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
@@ -106,6 +107,8 @@ function AppInner() {
   const isMobile = useMobile()
   // The owner/subsidiary row in focus in the node panel; the graph grows its node.
   const [graphFocusId, setGraphFocusId] = useState<string | null>(null)
+  // The box last tapped in the graph: the open panel scrolls to its row.
+  const [graphPickId, setGraphPickId] = useState<string | null>(null)
   // …and the other way round: the graph node under the mouse lights up its row
   // in the panel. Desktop only — a phone has no hover.
   const [graphHoverId, setGraphHoverId] = useState<string | null>(null)
@@ -615,8 +618,21 @@ function AppInner() {
   }, [isMobile, showToast, t])
 
   const handleNodeClick = useCallback((nodeData: NodeData) => {
+    // A tap on a box whose row the open panel lists: stay on that panel and
+    // bring the row into view, lit as when the mouse rests on the box — the
+    // edge is read where it is listed, and the reader does not lose their
+    // place. A box with no row here (the hub itself, a company loaded from
+    // elsewhere) opens its own panel, as a tap always did.
+    if (panelRowFor(nodeData.id)) {
+      setGraphPickId(nodeData.id)
+      setGraphFocusId(nodeData.id)
+      return
+    }
+    setGraphPickId(null)
     setSelectedNode(nodeData)
   }, [])
+  // Another panel, another list: a pick from the last one means nothing here.
+  useEffect(() => { setGraphPickId(null) }, [selectedNode?.id])
 
   const handleBreadcrumbNav = useCallback((nodeData: NodeData, index: number) => {
     // Truncate trail before the target; handleNavigateTo will append it back
@@ -1087,6 +1103,7 @@ function AppInner() {
                   graphFocusMode={isMobile ? 'center' : 'hover'}
                   graphHoverId={isMobile ? null : graphHoverId}
                     graphFocusId={graphFocusId}
+                    graphPickId={graphPickId}
                 />
               </div>
             </>
@@ -1189,6 +1206,7 @@ function AppInner() {
                     graphFocusMode={isMobile ? 'center' : 'hover'}
                     graphHoverId={isMobile ? null : graphHoverId}
                     graphFocusId={graphFocusId}
+                    graphPickId={graphPickId}
                   />
                 </div>
               </>

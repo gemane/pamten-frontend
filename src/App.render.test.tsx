@@ -8,11 +8,15 @@ import type { FullProfile, Entity, SearchResult } from './types'
 // search → select → enrich flow without cytoscape, leaflet, or real network.
 vi.mock('./components/Graph', () => ({
   // Exposes the one prop the graph-focus wiring is about.
-  default: ({ focusedId, onNodeHover }: { focusedId?: string | null
-                                          onNodeHover?: (id: string | null) => void }) =>
+  default: ({ focusedId, onNodeHover, onNodeClick }: { focusedId?: string | null
+                                          onNodeHover?: (id: string | null) => void
+                                          onNodeClick?: (n: unknown) => void }) =>
     <div data-testid="graph" data-focused={focusedId ?? ''} data-hover-wired={onNodeHover ? 'yes' : 'no'}>
       {onNodeHover && <button onClick={() => onNodeHover('own1')}>hover-own1</button>}
       {onNodeHover && <button onClick={() => onNodeHover(null)}>hover-none</button>}
+      {/* A tap on a box the open panel lists (sub1), and on one it does not (far). */}
+      {onNodeClick && <button onClick={() => onNodeClick({ id: 'sub1', label: 'Sub One', nodeType: 'entity', raw: {} })}>tap-sub1</button>}
+      {onNodeClick && <button onClick={() => onNodeClick({ id: 'far', label: 'Far Co', nodeType: 'entity', raw: {} })}>tap-far</button>}
     </div>,
 }))
 vi.mock('./components/MapView', () => ({ default: () => null }))
@@ -24,16 +28,22 @@ vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
 vi.mock('./components/AuthModal', () => ({ default: () => <div data-testid="auth-modal" /> }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
 vi.mock('./components/NodePanel', () => ({
-  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId, graphFocusId, onExportSpreadsheet }: {
+  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId, graphFocusId, graphPickId, onExportSpreadsheet, onNavigate }: {
                 node?: { id: string; label: string } | null
                 onReScrape?: (n: unknown) => void
                 onExportSpreadsheet?: (id: string) => void
                 graphFocusId?: string | null
+                graphPickId?: string | null
+                onNavigate?: (n: unknown) => void
                 refreshingId?: string | null
                 onGraphFocus?: (id: string | null) => void
                 graphFocusMode?: string
                 graphHoverId?: string | null }) => (
-    <div data-testid="node-panel" data-focus-mode={graphFocusMode ?? ''} data-graph-hover={graphHoverId ?? ''} data-graph-focus={graphFocusId ?? ''}>
+    <div data-testid="node-panel" data-node={node?.id ?? ''} data-focus-mode={graphFocusMode ?? ''} data-graph-hover={graphHoverId ?? ''} data-graph-focus={graphFocusId ?? ''} data-graph-pick={graphPickId ?? ''}>
+      {/* The real panel lists the hub's owners and subsidiaries as rows; this
+          stands in for one such row, so App can tell a listed box from a stranger. */}
+      {node && <div className="node-panel"><div data-graph-focus="sub1" /></div>}
+      {onNavigate && <button onClick={() => onNavigate({ id: 'far', label: 'Far Co', nodeType: 'entity', raw: {} })}>navigate-far</button>}
       {/* Stand-ins for a row coming into / going out of focus in the real panel. */}
       {onGraphFocus && <button onClick={() => onGraphFocus('sub1')}>focus-sub1</button>}
       {onGraphFocus && <button onClick={() => onGraphFocus(null)}>focus-none</button>}
@@ -559,5 +569,49 @@ describe('the spreadsheet export', () => {
     await openMicrosoft()
     await userEvent.click(screen.getByText('export-ods'))
     expect(await screen.findByText(/spreadsheet could not be built/i)).toBeInTheDocument()
+  })
+})
+
+/**
+ * A tap on a box in the graph. The open panel lists the hub's owners and
+ * subsidiaries; a tap on one of those must not throw the reader out of that
+ * list — it finds the row instead. Only a box the panel does not list opens
+ * its own panel.
+ */
+describe('tapping a box in the graph', () => {
+  const open = async () => {
+    const res = result('e1', 'Acme GmbH', 'DE')
+    mockSearch.mockResolvedValue({ data: [res] } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'acme', { delay: null })
+    await userEvent.click(await screen.findByText((res.node as Entity).name))
+    await waitFor(() => expect(screen.getByTestId('node-panel').getAttribute('data-node')).toBe('e1'))
+  }
+
+  it('a box the panel lists: the panel stays, its row is picked and the box is in focus', async () => {
+    await open()
+    await userEvent.click(screen.getByRole('button', { name: 'tap-sub1' }))
+    const panel = screen.getByTestId('node-panel')
+    expect(panel.getAttribute('data-node')).toBe('e1')             // not sub1
+    expect(panel.getAttribute('data-graph-pick')).toBe('sub1')
+    expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('sub1')
+  })
+
+  it('a box the panel does not list opens its own panel, as a tap always did', async () => {
+    await open()
+    await userEvent.click(screen.getByRole('button', { name: 'tap-far' }))
+    const panel = screen.getByTestId('node-panel')
+    await waitFor(() => expect(panel.getAttribute('data-node')).toBe('far'))
+    expect(panel.getAttribute('data-graph-pick')).toBe('')
+  })
+
+  it('a pick does not outlive its panel', async () => {
+    await open()
+    await userEvent.click(screen.getByRole('button', { name: 'tap-sub1' }))
+    expect(screen.getByTestId('node-panel').getAttribute('data-graph-pick')).toBe('sub1')
+    // leaving by the panel's own row (navigation), not by another tap
+    await userEvent.click(screen.getByRole('button', { name: 'navigate-far' }))
+    await waitFor(() => expect(screen.getByTestId('node-panel').getAttribute('data-node')).toBe('far'))
+    expect(screen.getByTestId('node-panel').getAttribute('data-graph-pick')).toBe('')
   })
 })

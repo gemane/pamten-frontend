@@ -8,7 +8,7 @@
  * seeing which dot a line of text is about without clicking it.
  */
 
-import { useEffect, type RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 
 export const FOCUS_ATTR = 'data-graph-focus'
 
@@ -94,6 +94,47 @@ export function useGraphHoverHighlight(
 }
 
 export const GRAPH_FOCUS_CLASS = 'rel-item--graph-focus'
+
+export const GRAPH_PICK_CLASS = 'rel-item--graph-pick'
+
+function attrSelector(id: string): string {
+  return `[${FOCUS_ATTR}="${id.replace(/["\\]/g, '\\$&')}"]`
+}
+
+/** The open panel's row for a graph node, if it has one. */
+export function panelRowFor(id: string, root: ParentNode = document): HTMLElement | null {
+  return root.querySelector<HTMLElement>(`.node-panel ${attrSelector(id)}`)
+}
+
+/** Bring a row into view, centred — where the DOM can scroll at all (jsdom cannot). */
+export function revealRow(row: HTMLElement): void {
+  if (typeof row.scrollIntoView === 'function') row.scrollIntoView({ block: 'center', behavior: 'smooth' })
+}
+
+/**
+ * A box tapped in the graph: its row is brought into view and lit like the
+ * hovered one, and stays lit until the next tap or another panel. On a phone
+ * there is no hover, so this is how a box finds its line in the list.
+ */
+export function useGraphPickHighlight(
+  scopeRef: RefObject<HTMLElement | null>,
+  pickId: string | null,
+  deps: readonly unknown[],
+): void {
+  useRowClass(scopeRef, pickId, GRAPH_PICK_CLASS, deps)
+  // Scrolled to once per pick — on the first render that has the row, which
+  // may be a later one than the pick (the list still loading) — and not again
+  // on every re-render, which would drag the list back as the reader scrolls.
+  const revealed = useRef<string | null>(null)
+  useEffect(() => {
+    const scope = scopeRef.current
+    if (!scope || !pickId || revealed.current === pickId) return
+    const row = scope.querySelector<HTMLElement>(attrSelector(pickId))
+    if (!row) return
+    revealed.current = pickId
+    revealRow(row)
+  }, [pickId, ...deps]) // eslint-disable-line react-hooks/exhaustive-deps
+}
 
 /**
  * Mark the row whose graph node is in focus — the row under the mouse on a
