@@ -729,11 +729,24 @@ describe('the person timeline tab', () => {
     withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
                      role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
     const scrollTo = vi.fn()
-    const { container } = render(<div className="left-panel__detail"><NodePanel node={personNode} /></div>)
-    const panel = container.querySelector('.left-panel__detail') as HTMLElement
-    panel.scrollTo = scrollTo as unknown as typeof panel.scrollTo
-    await userEvent.click(await screen.findByRole('button', { name: /timeline/i }))
+    const { container } = render(<NodePanel node={personNode} />)
+    await screen.findByRole('button', { name: /timeline/i })
+    const body = container.querySelector('.node-panel__scroll') as HTMLElement
+    body.scrollTo = scrollTo as unknown as typeof body.scrollTo
+    await userEvent.click(screen.getByRole('button', { name: /timeline/i }))
     expect(scrollTo).toHaveBeenCalledWith({ top: 0 })
+  })
+
+  it('keeps the tab bar above the scrolling body, never inside it', async () => {
+    // The bar used to be pinned inside the scrolling box, so the scrollbar ran
+    // up behind it and rows slid into it. Now the body scrolls on its own.
+    withPositions([{ entity: { id: 'e1', name: 'Apple Inc.' },
+                     role: { role: 'CEO', since: '1997-09-01', until: '2011-08-23' } }])
+    const { container } = render(<NodePanel node={personNode} />)
+    await screen.findByRole('button', { name: /timeline/i })
+    expect(container.querySelector('.node-panel > .panel-tabs')).toBeTruthy()
+    expect(container.querySelector('.node-panel__scroll .panel-tabs')).toBeNull()
+    expect(container.querySelector('.node-panel__scroll .panel-body')).toBeTruthy()
   })
 
   it('puts the tab bar above the padded body, not inside it', async () => {
@@ -748,7 +761,9 @@ describe('the person timeline tab', () => {
     const tabs = container.querySelector('.panel-tabs') as HTMLElement
     const body = container.querySelector('.panel-body') as HTMLElement
     expect(body.contains(tabs)).toBe(false)
-    expect(tabs.nextElementSibling).toBe(body)
+    // the bar, then the scrolling box with the padded body first inside it
+    expect(tabs.nextElementSibling!.classList.contains('node-panel__scroll')).toBe(true)
+    expect(tabs.nextElementSibling!.firstElementChild).toBe(body)
   })
 
   it('nests them the same way on the timeline view', async () => {
@@ -760,7 +775,9 @@ describe('the person timeline tab', () => {
     const tabs = container.querySelector('.panel-tabs') as HTMLElement
     const body = container.querySelector('.panel-body') as HTMLElement
     expect(body.contains(tabs)).toBe(false)
-    expect(tabs.nextElementSibling).toBe(body)
+    // the bar, then the scrolling box with the padded body first inside it
+    expect(tabs.nextElementSibling!.classList.contains('node-panel__scroll')).toBe(true)
+    expect(tabs.nextElementSibling!.firstElementChild).toBe(body)
   })
 })
 
@@ -1854,8 +1871,8 @@ describe('NodePanel graph focus', () => {
     fireEvent.mouseOver(screen.getByText('Sub One'))
     expect(onFocus).toHaveBeenLastCalledWith('sub1')
     // leaving the overview altogether clears it (mouseleave does not bubble, so
-    // it is fired on the scope itself: the block under the pinned tab bar)
-    const scope = document.querySelector('.panel-tabs')!.nextElementSibling as HTMLElement
+    // it is fired on the scope itself: the block inside the scrolling body)
+    const scope = document.querySelector('.node-panel__scroll')!.firstElementChild as HTMLElement
     expect(scope.contains(screen.getByText('Sub One'))).toBe(true)
     fireEvent.mouseLeave(scope)
     expect(onFocus).toHaveBeenLastCalledWith(null)
@@ -1938,14 +1955,15 @@ describe('NodePanel graph focus', () => {
     const box = (top: number, height: number) =>
       ({ top, bottom: top + height, height, left: 0, right: 300, width: 300, x: 0, y: top,
          toJSON: () => ({}) }) as DOMRect
-    // The known scroll container class, 0..400 on screen → centre line at 200.
+    // The panel's own scrolling body (under its tab bar), 0..400 on screen →
+    // centre line at 200. The phone's .mobile-panel around it no longer scrolls.
     const { container } = render(
       <div className="mobile-panel">
         <NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
                    onGraphFocus={onFocus} graphFocusMode="center" />
       </div>)
     await screen.findByText('Sub One')
-    const panel = container.querySelector('.mobile-panel') as HTMLElement
+    const panel = container.querySelector('.node-panel__scroll') as HTMLElement
     panel.getBoundingClientRect = () => box(0, 400)
     const row = (id: string) => document.querySelector(`[data-graph-focus="${id}"]`) as HTMLElement
     // "Scroll" so that the subsidiary row sits across the centre line.

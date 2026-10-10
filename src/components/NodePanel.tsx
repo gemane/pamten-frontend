@@ -15,7 +15,7 @@ import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
-import { FOCUS_ATTR, scrollingPanel, useGraphFocusHighlight, useGraphHoverHighlight } from '../utils/graphFocus'
+import { FOCUS_ATTR, useGraphFocusHighlight, useGraphHoverHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
 import { formatDate } from '../utils/dates'
 import { displayName, entityLabel } from '../utils/displayName'
@@ -635,18 +635,21 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
   // it. Inside, it was inset by that padding and sat flush against the avatar.
   if (showTimeline && activeView === 'timeline' && profile) {
     return (
-      <>
+      <div className="node-panel">
         <PanelTabs active={activeView} onChange={setActiveView} />
-        <div className="panel-body">
-          <PersonTimeline profile={profile} />
+        <div className="node-panel__scroll">
+          <div className="panel-body">
+            <PersonTimeline profile={profile} />
+          </div>
         </div>
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div className="node-panel">
       {showTimeline && <PanelTabs active={activeView} onChange={setActiveView} />}
+      <div className="node-panel__scroll">
       <div className="panel-body">
       {imgSrc && (
         <img className="panel-avatar" src={imgSrc} alt={raw.full_name} />
@@ -759,7 +762,8 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
 
       <SourcesSection sources={sources} />
       </div>
-    </>
+      </div>
+    </div>
   )
 }
 
@@ -1631,10 +1635,12 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
 function PanelTabs({ active, onChange }: { active: string; onChange: (tab: string) => void }) {
   const { t } = useTranslation()
   // Switching views deep in a long list left the reader mid-way down the
-  // other view; a tab click starts the new view at its top.
+  // other view; a tab click starts the new view at its top. The bar sits
+  // above the scrolling body, not inside it, so the body is a sibling.
   const pick = (tab: string) => (e: { currentTarget: HTMLElement }) => {
     onChange(tab)
-    scrollingPanel(e.currentTarget)?.scrollTo({ top: 0 })
+    const body = e.currentTarget.closest('.node-panel')?.querySelector<HTMLElement>('.node-panel__scroll')
+    if (typeof body?.scrollTo === 'function') body.scrollTo({ top: 0 })   // jsdom has no scrollTo
   }
   return (
     <div className="panel-tabs">
@@ -1726,14 +1732,19 @@ export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onVi
 
   if (!profile) return null
 
+  // The tab bar above a body that scrolls on its own, so the bar is never
+  // part of what scrolls: the scrollbar starts under it, and a row never
+  // slides up into it. Same shape in PersonView.
   return (
-    <>
+    <div className="node-panel">
       <PanelTabs active={activeView} onChange={setActiveView} />
+      <div className="node-panel__scroll">
       {activeView === 'overview'
         ? <div ref={focusScopeRef}>
             <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} canReScrape={canReScrape} onExportPng={onExportPng} onExportSpreadsheet={onExportSpreadsheet} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
           </div>
         : <TimelinePanel entityId={profile.entity.id} asOf={asOf} onYearSelect={onYearSelect} />}
-    </>
+      </div>
+    </div>
   )
 }

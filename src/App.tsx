@@ -1068,7 +1068,7 @@ function AppInner() {
           {activeTab === 'graph' && (
             <>
               <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
-              <div className="left-panel__detail">
+              <div className="left-panel__detail left-panel__detail--panel">
                 <NodePanel
                   node={selectedNode}
                   refreshKey={enrichNonce}
@@ -1169,7 +1169,7 @@ function AppInner() {
                     onNodeHover={isMobile ? undefined : setGraphHoverId}
                   />
                 </div>
-                <div className="mobile-panel">
+                <div className="mobile-panel mobile-panel--panel">
                   <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
                   <NodePanel
                     node={selectedNode}

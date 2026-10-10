@@ -63,7 +63,8 @@ export function focusIdAt(target: EventTarget | null): string | null {
 
 /** The panel that scrolls around `el` — the one the sticky tab bar pins to. */
 export function scrollingPanel(el: HTMLElement): HTMLElement | null {
-  const known = el.closest<HTMLElement>('.left-panel__detail, .mobile-panel, .mobile-full-panel')
+  // The panel's own body first: the tab bar above it does not scroll.
+  const known = el.closest<HTMLElement>('.node-panel__scroll, .left-panel__detail, .mobile-panel, .mobile-full-panel')
   if (known) return known
   for (let p = el.parentElement; p; p = p.parentElement) {
     const o = getComputedStyle(p).overflowY
