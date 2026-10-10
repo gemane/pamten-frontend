@@ -660,6 +660,7 @@
       "title": "Help — reading the graph",
       "colors": "Node colours tell the kind: company, person, fund, holding, government, foundation, nonprofit, brand, voting group",
       "dimmedSample": "dimmed entry",
+      "holdToMove": "Hold a box for half a second to move it; a quick drag pans the picture",
       "below": "A subsidiary's own subsidiaries, at all levels, each counted once — on its row and on its line in the graph. Written ≥ when the tree was too large to walk to the end.",
       "corroborated": "Confirmed independently by that many sources — the count shows how many agree",
       "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",

@@ -61,6 +61,10 @@ export default function GraphHelp() {
           <span className="help-sample"><span className="help-edge help-edge--dotted" /></span>
           <span className="help-text">{t('coverage.help.votingEdge')}</span>
         </div>
+        <div className="help-item">
+          <span className="help-sample"><span className="help-marker">✋</span></span>
+          <span className="help-text">{t('coverage.help.holdToMove')}</span>
+        </div>
       </div>
     </section>
   )

@@ -150,6 +150,11 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       },
     },
     {
+      // Held long enough to be moved: a halo says so until it is let go.
+      selector: 'node.movable',
+      style: { 'overlay-color': '#4A90D9', 'overlay-opacity': 0.2, 'overlay-padding': 6 },
+    },
+    {
       // The subsidiary tree: a line it already explains (the holder is further
       // up the same branch) is not drawn — it would cut across the picture.
       selector: 'edge.implied',
@@ -750,6 +755,41 @@ export function bindNodeHover(cy: cytoscape.Core, onHover: (id: string | null) =
   cy.on('mouseout', 'node', () => onHover(null))
 }
 
+/** How long a box must be held still before a drag moves it. */
+export const HOLD_TO_MOVE_MS = 500
+
+/** Moving a box takes a hold first: HOLD_TO_MOVE_MS still on it, then the
+ *  drag. A quick drag on a box pans the picture instead, exactly as a drag on
+ *  the background does — in a dense tree there is hardly any background to
+ *  grab, and a flick meant to scroll kept carrying a box off with it. A box
+ *  held long enough shows a halo (class `movable`) until it is let go; a move
+ *  before the hold is up makes the whole gesture a pan. */
+export function bindHoldToMove(cy: cytoscape.Core, holdMs = HOLD_TO_MOVE_MS): void {
+  let hold: { node: cytoscape.NodeSingular; at: cytoscape.Position; last: cytoscape.Position | null
+              timer: ReturnType<typeof setTimeout>; armed: boolean } | null = null
+  cy.on('grab', 'node', evt => {
+    const node = evt.target as cytoscape.NodeSingular
+    if (hold) clearTimeout(hold.timer)
+    const p = evt.renderedPosition
+    hold = { node, at: { ...node.position() }, last: p ? { x: p.x, y: p.y } : null, armed: false,
+             timer: setTimeout(() => { if (hold?.node === node) { hold.armed = true; node.addClass('movable') } }, holdMs) }
+  })
+  cy.on('drag', 'node', evt => {
+    if (!hold || evt.target !== hold.node || hold.armed) return
+    clearTimeout(hold.timer)                      // moved before the hold was up: this gesture pans
+    const p = evt.renderedPosition
+    if (p && hold.last) cy.panBy({ x: p.x - hold.last.x, y: p.y - hold.last.y })
+    if (p) hold.last = { x: p.x, y: p.y }
+    hold.node.position(hold.at)                    // the box stays; the picture moves under the pointer
+  })
+  cy.on('free', 'node', evt => {
+    if (!hold || evt.target !== hold.node) return
+    clearTimeout(hold.timer)
+    hold.node.removeClass('movable')
+    hold = null
+  })
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined'
     && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -899,6 +939,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     })
 
     bindNodeHover(cy, id => onNodeHoverRef.current?.(id))
+    bindHoldToMove(cy)
 
     cy.on('mouseover', 'edge', (evt) => {
       const d   = evt.target.data()
