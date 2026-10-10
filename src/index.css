@@ -1450,7 +1450,7 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
 }
 [data-theme="light"] .rel-item__below { color: #4a5568; border-color: rgba(74,85,104,0.6); }
 /* the ownership badge with the chip beneath it */
-.rel-item__stack { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.rel-item__stack { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
 
 /* Said in place of a total the data cannot support — e.g. filings measuring
    different share classes, whose percentages are not addable. */
