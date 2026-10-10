@@ -15,7 +15,7 @@ import PersonTimeline, { hasDatedRows } from './PersonTimeline'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
-import { FOCUS_ATTR, useGraphFocusHighlight, useGraphHoverHighlight, useGraphPickHighlight } from '../utils/graphFocus'
+import { FOCUS_ATTR, attrSelector, useGraphFocusHighlight, useGraphHoverHighlight, useGraphPickHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
 import { formatDate } from '../utils/dates'
 import { displayName, entityLabel } from '../utils/displayName'
@@ -251,6 +251,9 @@ interface NodePanelProps {
    *  the hovered one, and stays lit until the next tap. The panel itself stays
    *  on its node — the tap is a way to find the edge, not to leave. */
   graphPickId?: string | null
+  /** The picked box has no row here (the hub itself, a company loaded from
+   *  elsewhere, a person's panel): the app then opens the box's own panel. */
+  onPickMiss?: (id: string) => void
 }
 
 
@@ -1664,7 +1667,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null, graphPickId = null }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null, graphPickId = null, onPickMiss }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1677,6 +1680,20 @@ export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onVi
   useGraphHoverHighlight(focusScopeRef, graphHoverId, [node?.id, profile, activeView, loading])
   useGraphFocusHighlight(focusScopeRef, graphFocusId, [node?.id, profile, activeView, loading])
   useGraphPickHighlight(focusScopeRef, graphPickId, [node?.id, profile, activeView, loading])
+  // A pick finds its row in the Overview, so a Timeline view gives way to it —
+  // the year chosen there stays in force, the rows are as of that year.
+  useEffect(() => {
+    if (graphPickId && activeView !== 'overview') setActiveView('overview')
+  }, [graphPickId]) // eslint-disable-line react-hooks/exhaustive-deps
+  // …and a box the panel does not list is reported back once the rows are
+  // there to be looked at (the Overview rendered, nothing loading).
+  useEffect(() => {
+    if (!graphPickId || !onPickMiss) return
+    if (node?.nodeType === 'person') { onPickMiss(graphPickId); return }   // no rows to pick here
+    if (loading || activeView !== 'overview' || !profile) return
+    const scope = focusScopeRef.current
+    if (scope && !scope.querySelector(attrSelector(graphPickId))) onPickMiss(graphPickId)
+  }, [graphPickId, loading, activeView, profile, node?.nodeType]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {

@@ -1871,6 +1871,33 @@ describe('NodePanel graph focus', () => {
     }
   })
 
+  it('a pick while the Timeline is open brings the Overview back, year kept, and lights the row', async () => {
+    const onPickMiss = vi.fn()
+    const { rerender } = render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} asOf="2019-12-31" onPickMiss={onPickMiss} />)
+    await screen.findByText('Sub One')
+    await userEvent.click(screen.getByRole('button', { name: /timeline/i }))
+    expect(screen.queryByText('Sub One')).toBeNull()                      // the Timeline view
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} asOf="2019-12-31" onPickMiss={onPickMiss} graphPickId="sub1" />)
+    const row = await screen.findByText('Sub One')                         // the Overview again
+    await waitFor(() => expect(row.closest('[data-graph-focus]')!.classList.contains('rel-item--graph-pick')).toBe(true))
+    expect(screen.getByRole('button', { name: /overview/i }).className).toContain('panel-tab--active')
+    expect(onPickMiss).not.toHaveBeenCalled()
+  })
+
+  it('a pick the panel does not list is reported back; one it lists is not', async () => {
+    const onPickMiss = vi.fn()
+    render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} onPickMiss={onPickMiss} graphPickId="stranger" />)
+    await screen.findByText('Sub One')
+    await waitFor(() => expect(onPickMiss).toHaveBeenCalledWith('stranger'))
+    expect(onPickMiss).not.toHaveBeenCalledWith('sub1')
+  })
+
+  it("a person's panel has no rows to pick: every pick is reported back", async () => {
+    const onPickMiss = vi.fn()
+    render(<NodePanel node={{ id: 'p1', label: 'A Person', nodeType: 'person', raw: {} as never }} refreshKey={0} onPickMiss={onPickMiss} graphPickId="sub1" />)
+    await waitFor(() => expect(onPickMiss).toHaveBeenCalledWith('sub1'))
+  })
+
   it('desktop: reports the hovered row, and null when the mouse leaves the rows', async () => {
     const onFocus = vi.fn()
     render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}
