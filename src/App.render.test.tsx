@@ -30,21 +30,22 @@ vi.mock('./components/SettingsPanel', () => ({ default: () => null }))
 vi.mock('./components/AuthModal', () => ({ default: () => <div data-testid="auth-modal" /> }))
 vi.mock('./components/ModeratorQueue', () => ({ default: () => null }))
 vi.mock('./components/NodePanel', () => ({
-  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId, graphFocusId, graphPickId, onExportSpreadsheet, onNavigate }: {
+  default: ({ node, onReScrape, refreshingId, onGraphFocus, graphFocusMode, graphHoverId, graphFocusId, graphPickId, onPickMiss, onExportSpreadsheet, onNavigate }: {
                 node?: { id: string; label: string } | null
                 onReScrape?: (n: unknown) => void
                 onExportSpreadsheet?: (id: string) => void
                 graphFocusId?: string | null
                 graphPickId?: string | null
+                onPickMiss?: (id: string) => void
                 onNavigate?: (n: unknown) => void
                 refreshingId?: string | null
                 onGraphFocus?: (id: string | null) => void
                 graphFocusMode?: string
                 graphHoverId?: string | null }) => (
     <div data-testid="node-panel" data-node={node?.id ?? ''} data-focus-mode={graphFocusMode ?? ''} data-graph-hover={graphHoverId ?? ''} data-graph-focus={graphFocusId ?? ''} data-graph-pick={graphPickId ?? ''}>
-      {/* The real panel lists the hub's owners and subsidiaries as rows; this
-          stands in for one such row, so App can tell a listed box from a stranger. */}
-      {node && <div className="node-panel"><div data-graph-focus="sub1" /></div>}
+      {/* The real panel lists the hub's owners and subsidiaries and reports a
+          pick it cannot find; this stand-in lists exactly one box, sub1. */}
+      {graphPickId && graphPickId !== 'sub1' && onPickMiss && (() => { setTimeout(() => onPickMiss(graphPickId), 0); return null })()}
       {onNavigate && <button onClick={() => onNavigate({ id: 'far', label: 'Far Co', nodeType: 'entity', raw: {} })}>navigate-far</button>}
       {/* Stand-ins for a row coming into / going out of focus in the real panel. */}
       {onGraphFocus && <button onClick={() => onGraphFocus('sub1')}>focus-sub1</button>}

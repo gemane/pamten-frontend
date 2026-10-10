@@ -1871,6 +1871,53 @@ describe('NodePanel graph focus', () => {
     }
   })
 
+  it('a pick while the Timeline is open brings the Overview back, year kept, and lights the row', async () => {
+    const onPickMiss = vi.fn()
+    const { rerender } = render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} asOf="2019-12-31" onPickMiss={onPickMiss} />)
+    await screen.findByText('Sub One')
+    await userEvent.click(screen.getByRole('button', { name: /timeline/i }))
+    expect(screen.queryByText('Sub One')).toBeNull()                      // the Timeline view
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} asOf="2019-12-31" onPickMiss={onPickMiss} graphPickId="sub1" />)
+    const row = await screen.findByText('Sub One')                         // the Overview again
+    await waitFor(() => expect(row.closest('[data-graph-focus]')!.classList.contains('rel-item--graph-pick')).toBe(true))
+    expect(screen.getByRole('button', { name: /overview/i }).className).toContain('panel-tab--active')
+    expect(onPickMiss).not.toHaveBeenCalled()
+  })
+
+  it('a pick inside the collapsed "Held indirectly" group opens the group and lights the row', async () => {
+    // Faraday Capital sits under Berkshire as an indirect holding: its row is in
+    // a group that starts collapsed, so the DOM had no row and the pick missed.
+    const sub = (id: string, name: string, relationship: Record<string, unknown>) =>
+      ({ entity: { id, name, type: 'company' } as Entity, relationship })
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Hub Co', type: 'company', verified: false } as Entity,
+      owners: [], executives: [],
+      subsidiaries: [sub('d0', 'Direct 0', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d1', 'Direct 1', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d2', 'Direct 2', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d3', 'Direct 3', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d4', 'Direct 4', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d5', 'Direct 5', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d6', 'Direct 6', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d7', 'Direct 7', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d8', 'Direct 8', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d9', 'Direct 9', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d10', 'Direct 10', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d11', 'Direct 11', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d12', 'Direct 12', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('far', 'Faraday Capital', { direct_or_indirect: 'indirect' })],
+    } } as never)
+    const onPickMiss = vi.fn()
+    const { rerender } = render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} onPickMiss={onPickMiss} />)
+    await screen.findByText('Direct 0')
+    expect(screen.queryByText('Faraday Capital')).toBeNull()                 // inside the closed group
+    rerender(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} onPickMiss={onPickMiss} graphPickId="far" />)
+    const row = await screen.findByText('Faraday Capital')                   // the group opened
+    await waitFor(() => expect(row.closest('[data-graph-focus]')!.classList.contains('rel-item--graph-pick')).toBe(true))
+    expect(onPickMiss).not.toHaveBeenCalled()
+  })
+
+  it('a pick the panel does not list is reported back; one it lists is not', async () => {
+    const onPickMiss = vi.fn()
+    render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}} onPickMiss={onPickMiss} graphPickId="stranger" />)
+    await screen.findByText('Sub One')
+    await waitFor(() => expect(onPickMiss).toHaveBeenCalledWith('stranger'))
+    expect(onPickMiss).not.toHaveBeenCalledWith('sub1')
+  })
+
+  it("a person's panel has no rows to pick: every pick is reported back", async () => {
+    const onPickMiss = vi.fn()
+    render(<NodePanel node={{ id: 'p1', label: 'A Person', nodeType: 'person', raw: {} as never }} refreshKey={0} onPickMiss={onPickMiss} graphPickId="sub1" />)
+    await waitFor(() => expect(onPickMiss).toHaveBeenCalledWith('sub1'))
+  })
+
   it('desktop: reports the hovered row, and null when the mouse leaves the rows', async () => {
     const onFocus = vi.fn()
     render(<NodePanel node={entityNode('e1', 'Hub Co')} refreshKey={0} onNavigate={() => {}}

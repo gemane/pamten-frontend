@@ -97,13 +97,8 @@ export const GRAPH_FOCUS_CLASS = 'rel-item--graph-focus'
 
 export const GRAPH_PICK_CLASS = 'rel-item--graph-pick'
 
-function attrSelector(id: string): string {
+export function attrSelector(id: string): string {
   return `[${FOCUS_ATTR}="${id.replace(/["\\]/g, '\\$&')}"]`
-}
-
-/** The open panel's row for a graph node, if it has one. */
-export function panelRowFor(id: string, root: ParentNode = document): HTMLElement | null {
-  return root.querySelector<HTMLElement>(`.node-panel ${attrSelector(id)}`)
 }
 
 /** Bring a row into view, centred — where the DOM can scroll at all (jsdom cannot). */

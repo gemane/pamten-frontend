@@ -4,7 +4,6 @@ import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from './i18n'
 import { countryName } from './utils/isoCountries'
-import { panelRowFor } from './utils/graphFocus'
 import { FiSearch, FiDatabase, FiGlobe, FiSettings, FiBookOpen } from 'react-icons/fi'
 import SearchBar, { type SearchBarHandle } from './components/SearchBar'
 import Breadcrumb    from './components/Breadcrumb'
@@ -619,18 +618,24 @@ function AppInner() {
   }, [isMobile, showToast, t])
 
   const handleNodeClick = useCallback((nodeData: NodeData) => {
-    // A tap on a box whose row the open panel lists: stay on that panel and
-    // bring the row into view, lit as when the mouse rests on the box — the
-    // edge is read where it is listed, and the reader does not lose their
-    // place. A box with no row here (the hub itself, a company loaded from
-    // elsewhere) opens its own panel, as a tap always did.
-    if (panelRowFor(nodeData.id)) {
-      setGraphPick(nodeData)
-      setGraphFocusId(nodeData.id)
-      return
-    }
+    // A tap on a box: the open panel stays and brings the box's row into
+    // view, lit as when the mouse rests on the box — the edge is read where
+    // it is listed, and the reader does not lose their place. The panel
+    // decides whether it lists the box (it owns the rows, and a Timeline
+    // view has to give way to the Overview first); a box it does not list —
+    // the hub itself, a company loaded from elsewhere, a person's panel —
+    // comes back through handlePickMiss and opens its own panel, as a tap
+    // always did.
+    setGraphPick(nodeData)
+    setGraphFocusId(nodeData.id)
+  }, [])
+  const graphPickRef = useRef<NodeData | null>(null)
+  graphPickRef.current = graphPick
+  const handlePickMiss = useCallback((id: string) => {
+    const pick = graphPickRef.current
+    if (!pick || pick.id !== id) return
     setGraphPick(null)
-    setSelectedNode(nodeData)
+    setSelectedNode(pick)
   }, [])
   // Another panel, another list: a pick from the last one means nothing here.
   useEffect(() => { setGraphPick(null) }, [selectedNode?.id])
@@ -1105,6 +1110,7 @@ function AppInner() {
                   graphHoverId={isMobile ? null : graphHoverId}
                     graphFocusId={graphFocusId}
                     graphPickId={graphPick?.id ?? null}
+                    onPickMiss={handlePickMiss}
                 />
               </div>
             </>
@@ -1208,6 +1214,7 @@ function AppInner() {
                     graphHoverId={isMobile ? null : graphHoverId}
                     graphFocusId={graphFocusId}
                     graphPickId={graphPick?.id ?? null}
+                    onPickMiss={handlePickMiss}
                   />
                 </div>
               </>

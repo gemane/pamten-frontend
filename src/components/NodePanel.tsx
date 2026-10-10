@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree } from '../services/api'
@@ -251,6 +251,9 @@ interface NodePanelProps {
    *  the hovered one, and stays lit until the next tap. The panel itself stays
    *  on its node — the tap is a way to find the edge, not to leave. */
   graphPickId?: string | null
+  /** The picked box has no row here (the hub itself, a company loaded from
+   *  elsewhere, a person's panel): the app then opens the box's own panel. */
+  onPickMiss?: (id: string) => void
 }
 
 
@@ -310,13 +313,19 @@ function Section({ title, count, shown, children }: {
  *  three headings. Barclays (118) and Unilever (112) are the cases it exists for. */
 const GROUPING_THRESHOLD = 12
 
-function CollapsibleSection({ title, count, defaultOpen = false, children }: {
+function CollapsibleSection({ title, count, defaultOpen = false, openFor = false, onOpenChange, children }: {
   title: string
   count?: number
   defaultOpen?: boolean
+  /** true opens the section from outside — a row inside it was picked in the graph. */
+  openFor?: boolean
+  /** The rows inside appear and vanish with the section: whoever marks rows needs to know. */
+  onOpenChange?: (open: boolean) => void
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  useEffect(() => { if (openFor) setOpen(true) }, [openFor])
+  useEffect(() => { onOpenChange?.(open) }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="panel-section">
       <button
@@ -1145,6 +1154,10 @@ interface EntityOverviewProps {
    *  either way; without it the button is muted and says to sign in. */
   canReScrape?: boolean
   refreshingId?: string | null
+  /** The box picked in the graph: a collapsed group holding its row opens. */
+  graphPickId?: string | null
+  /** Rows appeared or vanished (a group opened): the row markers re-run. */
+  onRowsChange?: () => void
 }
 
 function credibilityColor(score: number): string {
@@ -1229,7 +1242,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, node, onReScrape, canReScrape = true, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, node, onReScrape, canReScrape = true, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null, graphPickId = null, onRowsChange }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
@@ -1578,7 +1591,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
             return (
               <>
                 {rest.map(row)}
-                <CollapsibleSection title={t('panel.indirectHoldings')} count={indirect.length}>
+                <CollapsibleSection title={t('panel.indirectHoldings')} count={indirect.length}
+                                    openFor={!!graphPickId && indirect.some(s => s.entity.id === graphPickId)}
+                                    onOpenChange={onRowsChange}>
                   {indirect.map(row)}
                 </CollapsibleSection>
               </>
@@ -1664,7 +1679,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null, graphPickId = null }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null, graphPickId = null, onPickMiss }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1673,10 +1688,37 @@ export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onVi
   const [activeView, setActiveView] = useState<string>('overview')
   const prevIdRef = useRef<string | null>(null)
   const focusScopeRef = useRef<HTMLDivElement>(null)
-  useGraphFocus(focusScopeRef, graphFocusMode, onGraphFocus, [node?.id, profile, activeView, loading])
-  useGraphHoverHighlight(focusScopeRef, graphHoverId, [node?.id, profile, activeView, loading])
-  useGraphFocusHighlight(focusScopeRef, graphFocusId, [node?.id, profile, activeView, loading])
-  useGraphPickHighlight(focusScopeRef, graphPickId, [node?.id, profile, activeView, loading])
+  // Bumped when rows appear or vanish inside the overview (a collapsed group
+  // opening for a pick): the markers below re-run over the new rows.
+  const [rowsRev, setRowsRev] = useState(0)
+  const bumpRows = useCallback(() => setRowsRev(r => r + 1), [])
+  useGraphFocus(focusScopeRef, graphFocusMode, onGraphFocus, [node?.id, profile, activeView, loading, rowsRev])
+  useGraphHoverHighlight(focusScopeRef, graphHoverId, [node?.id, profile, activeView, loading, rowsRev])
+  useGraphFocusHighlight(focusScopeRef, graphFocusId, [node?.id, profile, activeView, loading, rowsRev])
+  useGraphPickHighlight(focusScopeRef, graphPickId, [node?.id, profile, activeView, loading, rowsRev])
+  // What the overview can list for this node: owners, subsidiaries (the
+  // indirect ones in their collapsed group included), executives, the tree.
+  // Decided from the data, not the DOM — a row inside a closed group is
+  // listed although it is not on screen yet.
+  const listedIds = useMemo(() => new Set<string>([
+    ...(profile?.owners ?? []).map(o => o.owner?.id).filter((x): x is string => !!x),
+    ...(profile?.subsidiaries ?? []).map(s => s.entity?.id).filter((x): x is string => !!x),
+    ...(profile?.executives ?? []).map(e => e.person?.id).filter((x): x is string => !!x),
+    ...(tree?.nodes ?? []).map(n => n.entity.id),
+  ]), [profile, tree])
+  // A pick finds its row in the Overview, so a Timeline view gives way to it —
+  // the year chosen there stays in force, the rows are as of that year.
+  useEffect(() => {
+    if (graphPickId && activeView !== 'overview') setActiveView('overview')
+  }, [graphPickId]) // eslint-disable-line react-hooks/exhaustive-deps
+  // …and a box the panel does not list is reported back once the rows are
+  // there to be looked at (the Overview rendered, nothing loading).
+  useEffect(() => {
+    if (!graphPickId || !onPickMiss) return
+    if (node?.nodeType === 'person') { onPickMiss(graphPickId); return }   // no rows to pick here
+    if (loading || !profile) return
+    if (!listedIds.has(graphPickId)) onPickMiss(graphPickId)
+  }, [graphPickId, loading, profile, listedIds, node?.nodeType]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!node || node.nodeType !== 'entity') {
@@ -1746,7 +1788,7 @@ export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onVi
       <div className="node-panel__scroll">
       {activeView === 'overview'
         ? <div ref={focusScopeRef}>
-            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} canReScrape={canReScrape} onExportPng={onExportPng} onExportSpreadsheet={onExportSpreadsheet} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
+            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} canReScrape={canReScrape} graphPickId={graphPickId} onRowsChange={bumpRows} onExportPng={onExportPng} onExportSpreadsheet={onExportSpreadsheet} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
           </div>
         : <TimelinePanel entityId={profile.entity.id} asOf={asOf} onYearSelect={onYearSelect} />}
       </div>
