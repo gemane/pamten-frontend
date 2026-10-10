@@ -910,7 +910,7 @@ function belowText(n: number, bound?: boolean): string {
   return n.toLocaleString() + (bound && n > 0 ? '+' : '')
 }
 
-/** "· 12 below": the companies under a subsidiary at any level — what tells a
+/** "12 below": the companies under a subsidiary at any level — what tells a
  *  holding company from a shell in a flat Exhibit 21 list, where no stake is
  *  stated. Nothing below, nothing said; the row's order is not changed by it. */
 function BelowBadge({ n, bound }: { n: number | null | undefined; bound?: boolean }) {

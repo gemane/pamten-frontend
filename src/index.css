@@ -1435,15 +1435,19 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
 
 [data-theme="light"] .rel-item__year { color: #718096; }
 
-/* "· 12 below" — the companies under a subsidiary, at any level. */
+/* "12 below" — the companies under a subsidiary, at any level. A framed
+   chip like the ownership badge beside it, but quiet: grey, not bold. */
 .rel-item__below {
   font-size: 11px;
   color: #8b95a7;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(139,149,167,0.45);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  flex-shrink: 0;
 }
-.rel-item__below::before { content: '· '; }
-[data-theme="light"] .rel-item__below { color: #718096; }
+[data-theme="light"] .rel-item__below { color: #718096; border-color: rgba(113,128,150,0.5); }
 
 /* Said in place of a total the data cannot support — e.g. filings measuring
    different share classes, whose percentages are not addable. */
