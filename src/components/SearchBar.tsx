@@ -57,6 +57,12 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
   const [results, setResults]       = useState<SearchResult[]>([])
   const [open, setOpen]             = useState<boolean>(false)
   const [loading, setLoading]       = useState<boolean>(false)
+  /** The row the keyboard is on: an index into the dropdown's rows (the
+   *  results, then the "search the sources" row), -1 when none. Arrow keys
+   *  move it, Enter takes it, the mouse sets it as it passes. Reset whenever
+   *  the rows change, so a stale highlight never lands on a different company. */
+  const [active, setActive]         = useState<number>(-1)
+  const listRef    = useRef<HTMLUListElement>(null)
   const timer      = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapRef    = useRef<HTMLDivElement>(null)
   const inputRef   = useRef<HTMLInputElement>(null)
@@ -124,6 +130,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
         const { data } = await search(q, country || undefined)
         if (mySeq !== reqSeq.current) return
         setResults(data)
+        setActive(-1)
         setOpen(true)
         // Noted, not reported: it becomes a data point only once it settles.
         pending.current = { query: q, country, hits: data.length }
@@ -137,6 +144,11 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
       if (timer.current) clearTimeout(timer.current)
     }
   }, [query, country])
+
+  useEffect(() => {
+    if (active < 0) return
+    listRef.current?.querySelector<HTMLElement>('.search-item--active')?.scrollIntoView?.({ block: 'nearest' })
+  }, [active])
 
   const settle = (outcome: 'selected' | 'zero' | 'abandoned', rank?: number) => {
     const p = pending.current
@@ -216,18 +228,44 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
    * restricted to it: an empty result has to read as "not in Germany" rather
    * than "not anywhere".
    */
+  /** What the "search the sources" row does when taken — by mouse or by
+   *  Enter on it: the scrape for a verified user, the sign-in for anyone else
+   *  the app can sign in, nothing for the bare hint. */
+  const scrapeAction = (): (() => void) | null => {
+    if (canScrape && onScrapeQuery) {
+      return () => {
+        const q = query.trim()
+        setOpen(false)
+        inputRef.current?.blur()
+        onScrapeQuery(q, country || undefined)
+      }
+    }
+    if (onRequestLogin) {
+      return () => {
+        setOpen(false)
+        inputRef.current?.blur()
+        onRequestLogin()
+      }
+    }
+    return null
+  }
+
   const scrapeRow = (labelKey: 'search.alsoScrape' | 'search.noResultsScrape') => {
     const where = country ? countryName(country, i18n.language) : null
+    const act = scrapeAction()
+    // The row after the results, if it can be taken at all.
+    const rowIndex = results.length
+    const activeCls = act && active === rowIndex ? ' search-item--active' : ''
+    const rowProps = act ? {
+      role: 'option' as const, id: `search-option-${rowIndex}`, 'aria-selected': active === rowIndex,
+      onMouseEnter: () => setActive(rowIndex),
+    } : {}
     if (canScrape && onScrapeQuery) {
       return (
         <li
-          className="search-item search-item--scrape"
-          onMouseDown={() => {
-            const q = query.trim()
-            setOpen(false)
-            inputRef.current?.blur()
-            onScrapeQuery(q, country || undefined)
-          }}
+          className={`search-item search-item--scrape${activeCls}`}
+          {...rowProps}
+          onMouseDown={act ?? undefined}
         >
           <span className="search-item__name">
             {where
@@ -241,12 +279,9 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
     if (onRequestLogin) {
       return (
         <li
-          className="search-item search-item--scrape"
-          onMouseDown={() => {
-            setOpen(false)
-            inputRef.current?.blur()
-            onRequestLogin()
-          }}
+          className={`search-item search-item--scrape${activeCls}`}
+          {...rowProps}
+          onMouseDown={act ?? undefined}
         >
           <span className="search-item__name">{t('search.scrapeSignIn')}</span>
         </li>
@@ -257,6 +292,28 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
         <span className="search-item__name">{t('search.scrapeSignIn')}</span>
       </li>
     )
+  }
+
+  // How many rows the keyboard can reach: the results, plus the sources row
+  // when it can be taken.
+  const rowCount = open ? results.length + (query.trim().length >= 2 && scrapeAction() ? 1 : 0) : 0
+
+  /** Arrow keys walk the dropdown, Enter takes the row the keyboard is on.
+   *  Nothing highlighted, Enter does nothing: picking the first hit unasked
+   *  would open a namesake. Escape is handled document-wide above. */
+  const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (!open && results.length > 0) { setOpen(true) }
+      if (rowCount === 0) return
+      e.preventDefault()                       // the caret stays where it is
+      setActive(a => e.key === 'ArrowDown' ? Math.min(a + 1, rowCount - 1) : Math.max(a - 1, -1))
+      return
+    }
+    if (e.key === 'Enter' && open) {
+      const row = results[active]                 // undefined when nothing is highlighted
+      if (row) { e.preventDefault(); handleSelect(row, active) }
+      else if (active === results.length) { e.preventDefault(); scrapeAction()?.() }
+    }
   }
 
   return (
@@ -271,6 +328,10 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
+          onKeyDown={onInputKeyDown}
+          role="combobox" aria-autocomplete="list" aria-expanded={open && rowCount > 0}
+          aria-controls="search-listbox"
+          aria-activedescendant={open && active >= 0 && active < rowCount ? `search-option-${active}` : undefined}
         />
         {/* The scope, where the search is typed: chosen in the Filters panel,
             removable right here. */}
@@ -292,11 +353,13 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
       </div>
 
       {open && results.length > 0 && (
-        <ul className="search-dropdown">
+        <ul className="search-dropdown" role="listbox" id="search-listbox" ref={listRef}>
           {results.map((r, i) => (
             <li
               key={r.node.id}
-              className="search-item"
+              className={`search-item${active === i ? ' search-item--active' : ''}`}
+              role="option" id={`search-option-${i}`} aria-selected={active === i}
+              onMouseEnter={() => setActive(i)}
               // The index is the clicked position: if people routinely take the
               // fourth result, the ranking is wrong and this is how that shows up.
               onMouseDown={() => handleSelect(r, i)}
@@ -320,7 +383,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(function SearchBar
 
       {/* Nothing in the DB → offer to search the sources for what was typed. */}
       {open && !loading && results.length === 0 && query.trim().length >= 2 && (
-        <ul className="search-dropdown">
+        <ul className="search-dropdown" role="listbox" id="search-listbox" ref={listRef}>
           {scrapeRow('search.noResultsScrape')}
         </ul>
       )}

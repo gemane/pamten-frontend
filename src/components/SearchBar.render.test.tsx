@@ -22,7 +22,7 @@ function resolveSearch(results: SearchResult[]) {
 }
 
 async function type(query: string) {
-  const input = screen.getByRole('textbox')
+  const input = screen.getByRole('combobox')
   await userEvent.type(input, query, { delay: null })
 }
 
@@ -249,5 +249,100 @@ describe('the result badge names what the node IS', () => {
 
     await screen.findByText('Exor N.V.')
     expect(container.querySelector('.node-type-badge--holding')).toBeTruthy()
+  })
+})
+
+describe('the keyboard walks the dropdown', () => {
+  const three = [entityResult('e1', 'Alpha AG'), entityResult('e2', 'Alpha Beta GmbH'), entityResult('e3', 'Alpha Gamma SE')]
+  const highlighted = () => document.querySelector('.search-item--active')?.textContent ?? null
+  const input = () => screen.getByRole('combobox')
+
+  it('ArrowDown highlights the first row, then the next; ArrowUp goes back up', async () => {
+    resolveSearch(three)
+    render(<SearchBar onSelect={vi.fn()} />)
+    await type('alpha')
+    await screen.findByText('Alpha Gamma SE')
+    expect(highlighted()).toBeNull()
+    await userEvent.keyboard('{ArrowDown}')
+    expect(highlighted()).toContain('Alpha AG')
+    expect(input().getAttribute('aria-activedescendant')).toBe('search-option-0')
+    await userEvent.keyboard('{ArrowDown}')
+    expect(highlighted()).toContain('Alpha Beta GmbH')
+    await userEvent.keyboard('{ArrowUp}')
+    expect(highlighted()).toContain('Alpha AG')
+    await userEvent.keyboard('{ArrowUp}')
+    expect(highlighted()).toBeNull()                       // back to the box itself
+  })
+
+  it('Enter takes the highlighted row, with its rank', async () => {
+    resolveSearch(three)
+    const onSelect = vi.fn()
+    render(<SearchBar onSelect={onSelect} />)
+    await type('alpha')
+    await screen.findByText('Alpha Gamma SE')
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}')
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0][0].node.id).toBe('e2')
+    expect(screen.queryByText('Alpha Gamma SE')).toBeNull()   // the dropdown closed
+    expect(input()).toHaveValue('Alpha Beta GmbH')
+  })
+
+  it('Enter with nothing highlighted takes nothing — the first hit may be a namesake', async () => {
+    resolveSearch(three)
+    const onSelect = vi.fn()
+    render(<SearchBar onSelect={onSelect} />)
+    await type('alpha')
+    await screen.findByText('Alpha Gamma SE')
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await userEvent.keyboard('{Enter}')
+    expect(onSelect).not.toHaveBeenCalled()
+    expect(screen.getByText('Alpha Gamma SE')).toBeInTheDocument()
+    expect(errors).not.toHaveBeenCalled()                   // and nothing blew up on the way
+    errors.mockRestore()
+  })
+
+  it('walks on to the "search the sources" row and stops there; Enter runs it', async () => {
+    resolveSearch(three)
+    const onScrapeQuery = vi.fn()
+    render(<SearchBar onSelect={vi.fn()} onScrapeQuery={onScrapeQuery} canScrape />)
+    await type('alpha')
+    await screen.findByText('Alpha Gamma SE')
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}')
+    expect(highlighted()).toMatch(/search sources for/i)
+    await userEvent.keyboard('{Enter}')
+    expect(onScrapeQuery).toHaveBeenCalledWith('alpha', undefined)
+  })
+
+  it('stops at the last result when the sources row cannot be taken', async () => {
+    resolveSearch(three)
+    render(<SearchBar onSelect={vi.fn()} />)          // no scrape, no login: a bare hint
+    await type('alpha')
+    await screen.findByText('Alpha Gamma SE')
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}')
+    expect(highlighted()).toContain('Alpha Gamma SE')
+  })
+
+  it('forgets the highlight when the results change', async () => {
+    resolveSearch(three)
+    render(<SearchBar onSelect={vi.fn()} />)
+    await type('alpha')
+    await screen.findByText('Alpha Gamma SE')
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}')
+    expect(highlighted()).toContain('Alpha Beta GmbH')
+    // two rows again, so a stale index would land on a different company
+    resolveSearch([entityResult('e9', 'Alphabet Inc.'), entityResult('e10', 'Alphabet Holdings LLC')])
+    await userEvent.type(input(), 'bet', { delay: null })
+    await screen.findByText('Alphabet Holdings LLC')
+    expect(highlighted()).toBeNull()
+  })
+
+  it('the mouse moves the highlight too, so there is never a second one', async () => {
+    resolveSearch(three)
+    render(<SearchBar onSelect={vi.fn()} />)
+    await type('alpha')
+    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.hover(await screen.findByText('Alpha Gamma SE'))
+    expect(document.querySelectorAll('.search-item--active')).toHaveLength(1)
+    expect(highlighted()).toContain('Alpha Gamma SE')
   })
 })

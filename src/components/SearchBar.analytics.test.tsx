@@ -28,7 +28,7 @@ const hit = (id: string, name: string): SearchResult =>
 const resolves = (results: SearchResult[]) =>
   mockSearch.mockResolvedValue({ data: results } as Awaited<ReturnType<typeof search>>)
 
-const type = (q: string) => userEvent.type(screen.getByRole('textbox'), q, { delay: null })
+const type = (q: string) => userEvent.type(screen.getByRole('combobox'), q, { delay: null })
 
 const searchEvents = () => mockReport.mock.calls.map(c => c[0]).filter(e => e.kind === 'search')
 
