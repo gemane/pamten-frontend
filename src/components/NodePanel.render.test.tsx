@@ -633,6 +633,25 @@ describe('refreshing a person', () => {
     expect(await screen.findByRole('button', { name: /Refresh from sources/ })).toBeEnabled()
   })
 
+  it('stays visible for a reader who may not refresh, muted, with the reason, and hands the click to the app', async () => {
+    const onReScrape = vi.fn()
+    render(<NodePanel node={personNode} onReScrape={onReScrape} canReScrape={false} />)
+    const btn = await screen.findByRole('button', { name: /Refresh from sources/ })
+    expect(btn).toBeEnabled()                                   // not disabled: the click opens the sign-in
+    expect(btn.getAttribute('aria-disabled')).toBe('true')
+    expect(btn.className).toContain('panel-rescrape__btn--locked')
+    expect(screen.getByText(/Sign in with a verified account to refresh/)).toBeInTheDocument()
+    await userEvent.click(btn)
+    expect(onReScrape).toHaveBeenCalledWith(personNode)
+  })
+
+  it('says nothing about signing in when the reader may refresh', async () => {
+    render(<NodePanel node={personNode} onReScrape={vi.fn()} canReScrape />)
+    const btn = await screen.findByRole('button', { name: /Refresh from sources/ })
+    expect(btn.getAttribute('aria-disabled')).toBeNull()
+    expect(screen.queryByText(/Sign in with a verified account/)).toBeNull()
+  })
+
   it('the person meta offers a QUOTED Google search', async () => {
     const { container } = render(<NodePanel node={personNode} />)
     await screen.findAllByText('Larry Page')

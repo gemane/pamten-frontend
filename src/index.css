@@ -1093,6 +1093,10 @@ body {
 }
 .panel-rescrape__btn:hover:not(:disabled) { border-color: #4A90D9; color: #8fc1ee; }
 .panel-rescrape__btn:disabled { opacity: 0.5; cursor: progress; }
+/* Not signed in: the button stays, muted, and a click opens the sign-in. */
+.panel-rescrape__btn--locked { opacity: 0.55; }
+.panel-rescrape__note { font-size: 11px; color: #8b95a7; margin: 6px 0 0; }
+[data-theme="light"] .panel-rescrape__note { color: #718096; }
 
 .search-item__name {
   flex: 1;

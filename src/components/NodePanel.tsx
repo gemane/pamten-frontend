@@ -213,6 +213,9 @@ interface NodePanelProps {
   onNavigate?: (node: NodeData) => void
   // Force a fresh scrape of this company (verified users only — App passes undefined otherwise).
   onReScrape?: (node: NodeData) => void
+  /** Whether this reader may refresh (signed in, verified). The button is shown
+   *  either way; without it the button is muted and says to sign in. */
+  canReScrape?: boolean
   // The node whose "Refresh from sources" is in flight — its button shows the
   // running state instead of inviting a second click.
   refreshingId?: string | null
@@ -538,28 +541,38 @@ function DetailsSection({ entity, hasOwners }: { entity: Entity; hasOwners: bool
 /** "Refresh from sources", shared by the person and the company panel. While
  *  the refresh runs — minutes, once the SEC enrichments start — the button
  *  says so and refuses a second click; the summary toast announces the end. */
-function ReScrapeButton({ node, onReScrape, refreshing }: {
+function ReScrapeButton({ node, onReScrape, refreshing, allowed }: {
   node: NodeData
   onReScrape: (node: NodeData) => void
   refreshing: boolean
+  /** false: the reader is not signed in with a verified account. The button
+   *  stays, muted, with the reason under it; a click hands over to the app,
+   *  which opens the sign-in. Hiding it left readers unaware the data could
+   *  be refreshed at all. */
+  allowed: boolean
 }) {
   const { t } = useTranslation()
   return (
     <div className="panel-rescrape">
-      <button type="button" className="panel-rescrape__btn"
-              title={t('panel.reScrapeTitle')} disabled={refreshing} aria-busy={refreshing}
+      <button type="button" className={`panel-rescrape__btn${allowed ? '' : ' panel-rescrape__btn--locked'}`}
+              title={allowed ? t('panel.reScrapeTitle') : t('panel.reScrapeLocked')}
+              disabled={refreshing} aria-busy={refreshing} aria-disabled={!allowed || undefined}
               onClick={() => onReScrape(node)}>
         {refreshing ? t('panel.refreshing') : t('panel.reScrape')}
       </button>
+      {!allowed && <p className="panel-rescrape__note">{t('panel.reScrapeLocked')}</p>}
     </div>
   )
 }
 
-function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stakeFilter = ANY_STAKE, asOf = null }: {
+function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true, refreshingId, stakeFilter = ANY_STAKE, asOf = null }: {
   node: NodeData
   onNavigate?: (n: NodeData) => void
   onShare?: () => void
   onReScrape?: (node: NodeData) => void
+  /** Whether this reader may refresh (signed in, verified). The button is shown
+   *  either way; without it the button is muted and says to sign in. */
+  canReScrape?: boolean
   refreshingId?: string | null
   stakeFilter?: StakeFilter
   asOf?: string | null
@@ -741,7 +754,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, refreshingId, stake
           the company panel has, and it was missing here purely because until
           recently there was nothing behind it for a person. */}
       {onReScrape && (
-        <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} />
+        <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} allowed={canReScrape} />
       )}
 
       <SourcesSection sources={sources} />
@@ -1114,6 +1127,9 @@ interface EntityOverviewProps {
   onNavigate?: (node: NodeData) => void
   node: NodeData
   onReScrape?: (node: NodeData) => void
+  /** Whether this reader may refresh (signed in, verified). The button is shown
+   *  either way; without it the button is muted and says to sign in. */
+  canReScrape?: boolean
   refreshingId?: string | null
 }
 
@@ -1199,7 +1215,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, node, onReScrape, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, node, onReScrape, canReScrape = true, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
@@ -1582,7 +1598,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
       )}
 
       {onReScrape && (
-        <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} />
+        <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} allowed={canReScrape} />
       )}
       <SourcesSection sources={sources} />
       <SourceStatements ids={entity.source_statement_ids} />
@@ -1632,7 +1648,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null }: NodePanelProps) {
+export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -1691,7 +1707,7 @@ export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onVi
 
   if (node.nodeType === 'person') {
     return <PersonView refreshingId={refreshingId} node={node} onNavigate={onNavigate} onShare={onShare} asOf={asOf}
-                       onReScrape={onReScrape} stakeFilter={stakeFilter} />
+                       onReScrape={onReScrape} canReScrape={canReScrape} stakeFilter={stakeFilter} />
   }
 
   if (loading) {
@@ -1709,7 +1725,7 @@ export default function NodePanel({ node, onExportPng, onExportSpreadsheet, onVi
       <PanelTabs active={activeView} onChange={setActiveView} />
       {activeView === 'overview'
         ? <div ref={focusScopeRef}>
-            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} onExportPng={onExportPng} onExportSpreadsheet={onExportSpreadsheet} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
+            <EntityOverview refreshingId={refreshingId} profile={profile} sources={sources} node={node} onReScrape={onReScrape} canReScrape={canReScrape} onExportPng={onExportPng} onExportSpreadsheet={onExportSpreadsheet} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
           </div>
         : <TimelinePanel entityId={profile.entity.id} asOf={asOf} onYearSelect={onYearSelect} />}
     </>

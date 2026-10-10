@@ -124,6 +124,7 @@
     "timeline": "Timeline",
     "reScrape": "Refresh from sources",
     "reScrapeTitle": "Fetch this company's latest data from the sources",
+    "reScrapeLocked": "Sign in with a verified account to refresh from the sources",
     "nationality": "Nationality",
     "born": "Born",
     "birthPlace": "Place of birth",
