@@ -378,7 +378,8 @@
     "refreshPartCooldown": "sources on cooldown (updated recently)",
     "refreshNotifyTitle": "Owlgraph — refresh finished",
     "refreshPartInProgress": "another refresh of this company is still running",
-    "treeTruncated": "The tree is large: showing the first {{count}} companies"
+    "treeTruncated": "The tree is large: showing the first {{count}} companies",
+    "treeTruncatedOf": "The tree is large: showing the first {{count}} of {{total}} companies"
   },
   "map": {
     "resetView": "Reset view",

@@ -729,4 +729,6 @@ export interface SubsidiaryTree {
   /** Every holding between the tree's companies — co-holders included. */
   edges: { from_id: string; to_id: string; depth: number; relationship: OwnsRelationship }[]
   truncated: boolean
+  /** The whole tree's size, counted on past the node cap; null if even the count gave up. */
+  total?: number | null
 }

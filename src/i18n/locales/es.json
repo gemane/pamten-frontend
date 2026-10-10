@@ -378,7 +378,8 @@
     "refreshPartCooldown": "fuentes en espera (actualizado recientemente)",
     "refreshNotifyTitle": "Owlgraph — actualización finalizada",
     "refreshPartInProgress": "otra actualización de esta empresa sigue en curso",
-    "treeTruncated": "El árbol es grande: se muestran las primeras {{count}} empresas"
+    "treeTruncated": "El árbol es grande: se muestran las primeras {{count}} empresas",
+    "treeTruncatedOf": "El árbol es grande: se muestran las primeras {{count}} de {{total}} empresas"
   },
   "map": {
     "resetView": "Restablecer vista",
