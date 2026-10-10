@@ -8,10 +8,12 @@ import type { FullProfile, Entity, SearchResult } from './types'
 // search → select → enrich flow without cytoscape, leaflet, or real network.
 vi.mock('./components/Graph', () => ({
   // Exposes the one prop the graph-focus wiring is about.
-  default: ({ focusedId, onNodeHover, onNodeClick }: { focusedId?: string | null
+  default: ({ focusedId, onNodeHover, onNodeClick, selectedNode }: { focusedId?: string | null
                                           onNodeHover?: (id: string | null) => void
-                                          onNodeClick?: (n: unknown) => void }) =>
-    <div data-testid="graph" data-focused={focusedId ?? ''} data-hover-wired={onNodeHover ? 'yes' : 'no'}>
+                                          onNodeClick?: (n: unknown) => void
+                                          selectedNode?: { id: string } | null }) =>
+    <div data-testid="graph" data-focused={focusedId ?? ''} data-hover-wired={onNodeHover ? 'yes' : 'no'}
+         data-action-node={selectedNode?.id ?? ''}>
       {onNodeHover && <button onClick={() => onNodeHover('own1')}>hover-own1</button>}
       {onNodeHover && <button onClick={() => onNodeHover(null)}>hover-none</button>}
       {/* A tap on a box the open panel lists (sub1), and on one it does not (far). */}
@@ -595,6 +597,8 @@ describe('tapping a box in the graph', () => {
     expect(panel.getAttribute('data-node')).toBe('e1')             // not sub1
     expect(panel.getAttribute('data-graph-pick')).toBe('sub1')
     expect(screen.getByTestId('graph').getAttribute('data-focused')).toBe('sub1')
+    // …and the graph's Expand graph / Open as centre act on the tapped box
+    expect(screen.getByTestId('graph').getAttribute('data-action-node')).toBe('sub1')
   })
 
   it('a box the panel does not list opens its own panel, as a tap always did', async () => {
@@ -603,6 +607,7 @@ describe('tapping a box in the graph', () => {
     const panel = screen.getByTestId('node-panel')
     await waitFor(() => expect(panel.getAttribute('data-node')).toBe('far'))
     expect(panel.getAttribute('data-graph-pick')).toBe('')
+    expect(screen.getByTestId('graph').getAttribute('data-action-node')).toBe('far')
   })
 
   it('a pick does not outlive its panel', async () => {
