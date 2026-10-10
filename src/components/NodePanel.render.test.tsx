@@ -2196,6 +2196,9 @@ describe('companies below a subsidiary', () => {
     const badge = screen.getByText('12 below')
     expect(badge.className).toBe('rel-item__below')
     expect(badge.closest('.rel-item')!.textContent).toContain('Holding Sub')
+    // before the ownership badge, so every row still ends on its stake
+    const stake = badge.closest('.rel-item')!.querySelector('.ownership-badge')!
+    expect(badge.compareDocumentPosition(stake) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)
   })
 
@@ -2220,7 +2223,7 @@ describe('companies below a subsidiary', () => {
       root_id: 'e1', truncated: true,
       nodes: [{ entity: ent('a', 'Alpha Holding'), parent_id: 'e1', depth: 1 },
               { entity: ent('b', 'Beta Leaf'), parent_id: 'a', depth: 2 }],
-      edges: [{ from_id: 'e1', to_id: 'a', depth: 1, relationship: { descendants: 1 } },
+      edges: [{ from_id: 'e1', to_id: 'a', depth: 1, relationship: { descendants: 1, stake_percent: 100, ownership_type: 'full' } },
               { from_id: 'a', to_id: 'b', depth: 2, relationship: { descendants: 0 } }],
     } } as never)
     mockProfile.mockResolvedValue({ data: {
@@ -2230,6 +2233,9 @@ describe('companies below a subsidiary', () => {
     render(<NodePanel node={entityNode('e1', 'Parent Co')} refreshKey={0} allLevels />)
     await screen.findByText('Beta Leaf')
     expect(screen.getByText('1+ below').closest('.rel-tree__row')!.textContent).toContain('Alpha Holding')
+    const row = screen.getByText('1+ below').closest('.rel-tree__row')!
+    const below = row.querySelector('.rel-item__below')!, stake = row.querySelector('.ownership-badge')!
+    expect(below.compareDocumentPosition(stake) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)
     vi.mocked(getSubsidiaryTree).mockClear()
   })

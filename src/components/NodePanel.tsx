@@ -1090,8 +1090,8 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
                                     sourceName: sourceName.get(rel?.source_id ?? ''),
                                     descendantsBound: tree.truncated })}>
             <CompanyName e={n.entity} place={places.get(n.entity.id)} />
-            <OwnershipBadge type={rel?.ownership_type} percent={rel?.stake_percent} shares={rel?.shares} />
             <BelowBadge n={rel?.descendants} bound={tree.truncated} />
+            <OwnershipBadge type={rel?.ownership_type} percent={rel?.stake_percent} shares={rel?.shares} />
           </RelRow>
         </div>
       ))}
@@ -1514,6 +1514,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                 <CompanyName e={s.entity} place={places.get(s.entity.id)} />
                 <CorroborationBadge rel={s.relationship} />
                 <ReadingBadge rel={s.relationship} />
+                {/* Before the ownership badge: the row ends on the stake, as every row does. */}
+                <BelowBadge n={s.relationship?.descendants} bound={profile.descendants_truncated} />
                 {/* The marker belongs on this side too. Altria's panel lists AB
                     InBev as something it holds 8.1% of — while voting 51.9% —
                     and without this the disproportion is visible only from AB
@@ -1524,7 +1526,6 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                                 percent={s.relationship?.stake_percent}
                                 shares={s.relationship?.shares}
                                 votingPct={isGroup ? null : s.relationship?.voting_power_pct} />
-                <BelowBadge n={s.relationship?.descendants} bound={profile.descendants_truncated} />
               </RelRow>
             )
 
