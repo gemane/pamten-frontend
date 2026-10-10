@@ -162,6 +162,8 @@ function ownershipElements(
       sharesOutstanding: rel?.shares_outstanding ?? null,
       votingPowerPct: vote ?? null,
       directOrIndirect: rel?.direct_or_indirect ?? '',
+      // What hangs below the company reached: the line's label adds it.
+      descendants:      rel?.descendants ?? null,
       ...tenureData(rel),
     } })
   }

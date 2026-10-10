@@ -2176,3 +2176,61 @@ describe('company names in the viewer\'s order', () => {
     expect(screen.queryByText('네슬레코리아 유한책임회사')).toBeNull()
   })
 })
+
+describe('companies below a subsidiary', () => {
+  const sub = (id: string, name: string, relationship: Record<string, unknown>) =>
+    ({ entity: { id, name, type: 'company' } as Entity, relationship })
+  const show = async (subsidiaries: unknown[], descendants_truncated = false) => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Parent Co', type: 'company', verified: false } as Entity,
+      owners: [], executives: [], subsidiaries, descendants_truncated,
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Parent Co')} refreshKey={0} />)
+    await screen.findByText('Parent Co')
+  }
+
+  it('says how many sit below a holding, and nothing below a leaf', async () => {
+    await show([sub('s1', 'Holding Sub', { stake_percent: 100, descendants: 12 }),
+                sub('s2', 'Leaf Sub', { stake_percent: 100, descendants: 0 }),
+                sub('s3', 'Unknown Sub', { stake_percent: 100 })])
+    const badge = screen.getByText('12 below')
+    expect(badge.className).toBe('rel-item__below')
+    expect(badge.closest('.rel-item')!.textContent).toContain('Holding Sub')
+    expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)
+  })
+
+  it('writes a floor as 12+ when the walk behind it was capped', async () => {
+    await show([sub('s1', 'Holding Sub', { stake_percent: 100, descendants: 12 }),
+                sub('s2', 'Leaf Sub', { stake_percent: 100, descendants: 0 })], true)
+    expect(screen.getByText('12+ below')).toBeInTheDocument()
+    expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)   // a 0 floor is still nothing to say
+  })
+
+  it('does not reorder the list: stake, then name, as before', async () => {
+    await show([sub('s1', 'Zed Sub', { stake_percent: 100, descendants: 0 }),
+                sub('s2', 'Alpha Sub', { stake_percent: 100, descendants: 40 }),
+                sub('s3', 'Minor Sub', { stake_percent: 10, descendants: 400 })])
+    const names = [...document.querySelectorAll('.rel-item__name')].map(n => n.textContent)
+    expect(names).toEqual(['Alpha Sub', 'Zed Sub', 'Minor Sub'])
+  })
+
+  it('shows it on each row of the whole tree, from the placing holding', async () => {
+    const ent = (id: string, name: string) => ({ id, name, type: 'company' })
+    vi.mocked(getSubsidiaryTree).mockResolvedValue({ data: {
+      root_id: 'e1', truncated: true,
+      nodes: [{ entity: ent('a', 'Alpha Holding'), parent_id: 'e1', depth: 1 },
+              { entity: ent('b', 'Beta Leaf'), parent_id: 'a', depth: 2 }],
+      edges: [{ from_id: 'e1', to_id: 'a', depth: 1, relationship: { descendants: 1 } },
+              { from_id: 'a', to_id: 'b', depth: 2, relationship: { descendants: 0 } }],
+    } } as never)
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'e1', name: 'Parent Co', type: 'company', verified: false } as Entity,
+      owners: [], executives: [], subsidiaries: [sub('a', 'Alpha Holding', { descendants: 1 })],
+    } } as never)
+    render(<NodePanel node={entityNode('e1', 'Parent Co')} refreshKey={0} allLevels />)
+    await screen.findByText('Beta Leaf')
+    expect(screen.getByText('1+ below').closest('.rel-tree__row')!.textContent).toContain('Alpha Holding')
+    expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)
+    vi.mocked(getSubsidiaryTree).mockClear()
+  })
+})

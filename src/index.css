@@ -1435,6 +1435,16 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
 
 [data-theme="light"] .rel-item__year { color: #718096; }
 
+/* "· 12 below" — the companies under a subsidiary, at any level. */
+.rel-item__below {
+  font-size: 11px;
+  color: #8b95a7;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rel-item__below::before { content: '· '; }
+[data-theme="light"] .rel-item__below { color: #718096; }
+
 /* Said in place of a total the data cannot support — e.g. filings measuring
    different share classes, whose percentages are not addable. */
 .ownership-note {

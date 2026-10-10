@@ -64,6 +64,7 @@
     "tagline": "Die globale Unternehmensstruktur kartieren",
     "tagline2": "Eigentümerschaft suchen",
     "statCompanies": "Unternehmen",
+    "below": "{{count}} darunter",
     "statPeople": "Personen",
     "statRelationships": "Eigentumsbeziehungen",
     "statSources": "Quellen",
@@ -186,7 +187,9 @@
     "webSearch": "Websuche",
     "refreshing": "Wird aktualisiert…",
     "capped": "{{shown}} von {{total}} angezeigt — die Liste ist begrenzt",
-    "subsidiariesAllLevels": "Tochtergesellschaften — alle Ebenen"
+    "subsidiariesAllLevels": "Tochtergesellschaften — alle Ebenen",
+    "companiesBelow": "{{n}} darunter",
+    "companiesBelowHint": "Gesellschaften darunter, alle Ebenen"
   },
   "report": {
     "button": "Melden",
@@ -619,6 +622,7 @@
     "filed": "Gemeldet",
     "votingExceeds": "{{pct}}% — mehr als die gehaltenen {{stake}}%",
     "shares": "Aktien",
+    "below": "Gesellschaften darunter",
     "sharesOf": "{{shares}} von {{total}}",
     "sharesOfAsOf": "{{shares}} von {{total}} (Gesamtzahl vom {{date}})",
     "votingShares": "Stimmrechtsaktien",
@@ -653,6 +657,7 @@
       "title": "Hilfe — den Graphen lesen",
       "colors": "Knotenfarben zeigen die Art: Unternehmen, Person, Fonds, Holding, Staat, Stiftung, Nonprofit, Marke, Stimmrechtsgruppe",
       "dimmedSample": "gedimmter Eintrag",
+      "below": "Die Gesellschaften unterhalb einer Tochter, alle Ebenen, jede einmal gezählt — auf ihrer Zeile und an ihrer Linie im Graphen. Mit + wenn der Baum zu groß war, um ihn bis zum Ende zu durchlaufen.",
       "corroborated": "Unabhängig bestätigt durch so viele Quellen — die Zahl zeigt, wie viele übereinstimmen",
       "edgeWidth": "Liniendicke folgt dem Anteil: dünn für kleine, dick für große Beteiligungen",
       "votingEdge": "Gepunktete gelbe Linie: Stimmrechte, getrennt gezeichnet, wo sie vom wirtschaftlichen Anteil abweichen",

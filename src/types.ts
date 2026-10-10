@@ -148,6 +148,10 @@ export interface OwnsRelationship {
    *  statement just stops being seen — so age is the only evidence, and it is
    *  weak evidence, which is why this dims the row rather than removing it. */
   stale?: boolean | null
+  /** Companies below the owned company at any level, counted once each —
+   *  stamped at read time from the tree walk, so the flat list and the tree
+   *  agree. A lower bound when the profile's `descendants_truncated` is set. */
+  descendants?: number | null
   /** GLEIF RR: 'direct' = the immediate parent, 'indirect' = the ultimate parent
    *  (a shortcut edge duplicating a path the graph already contains). Absent on
    *  Wikidata and SEC edges, which never state the distinction. */
@@ -238,6 +242,8 @@ export interface ProfileCounts {
 }
 
 export interface FullProfile {
+  /** The walk behind each subsidiary's `descendants` hit its cap: every figure is a lower bound. */
+  descendants_truncated?: boolean
   entity: Entity
   counts?: ProfileCounts
   owners: OwnerEntry[]
@@ -355,6 +361,8 @@ export interface EdgeData {
   sourceDate?: string | null
   /** the staleness mark of the relationship (see utils/asOf.edgePresence) */
   stale?: boolean | null
+  /** companies below the target at any level (OwnsRelationship.descendants), on the line's label */
+  descendants?: number | null
 }
 
 export type GraphElement =

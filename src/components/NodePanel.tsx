@@ -813,6 +813,10 @@ export interface RelTarget {
   /** The staleness mark: a community assertion nothing has confirmed for
    *  months. Dims the row — kept, never hidden. */
   stale?: boolean | null
+  /** Companies below the owned company at any level; `descendantsBound` when
+   *  the walk behind it was capped and the figure is a floor, not a count. */
+  descendants?: number | null
+  descendantsBound?: boolean
   /** Facts belonging to this one filing, shown in its menu rather than on the
    *  row: which security the percentage measures (a 13D/G percent is always a
    *  percent of a class), the stake and any voting bloc, and when it was
@@ -859,11 +863,12 @@ export function sourceNames(sources: { id: string; name: string }[]): Map<string
  *  pasted from. A field added to OwnsRelationship now reaches every row by
  *  being added here, once. */
 function relFromOwns(rel: OwnsRelationship | undefined, ids: {
-  fromId: string; toId: string; label?: string; sourceName?: string | null
+  fromId: string; toId: string; label?: string; sourceName?: string | null; descendantsBound?: boolean
 }): RelTarget {
   return {
     targetKind: 'owns',
     fromId: ids.fromId, toId: ids.toId, label: ids.label,
+    descendants: rel?.descendants, descendantsBound: ids.descendantsBound,
     sourceUrl: rel?.source_url,
     sourceName: ids.sourceName ?? undefined,
     assertedBy: rel?.asserted_by,
@@ -898,6 +903,24 @@ function relFromRole(rel: RoleRelationship | undefined, ids: {
     filedDate: rel?.source_date,
     readFrom: rel?.read_from,
   }
+}
+
+/** "12", or "12+" when the walk behind the figure was capped. */
+function belowText(n: number, bound?: boolean): string {
+  return n.toLocaleString() + (bound && n > 0 ? '+' : '')
+}
+
+/** "· 12 below": the companies under a subsidiary at any level — what tells a
+ *  holding company from a shell in a flat Exhibit 21 list, where no stake is
+ *  stated. Nothing below, nothing said; the row's order is not changed by it. */
+function BelowBadge({ n, bound }: { n: number | null | undefined; bound?: boolean }) {
+  const { t } = useTranslation()
+  if (n == null || n <= 0) return null
+  return (
+    <span className="rel-item__below" title={t('panel.companiesBelowHint')}>
+      {t('panel.companiesBelow', { n: belowText(n, bound) })}
+    </span>
+  )
 }
 
 function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
@@ -951,6 +974,11 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
       value: exceeds ? t('menu.votingExceeds', { pct: rel.votingPct, stake: rel.stake })
                      : `${rel.votingPct}%`,
     })
+  }
+  // What hangs below it, at any level. Zero is said here, where the question
+  // was asked, though the row stays silent about it.
+  if (rel.descendants != null) {
+    details.push({ label: t('menu.below'), value: belowText(rel.descendants, rel.descendantsBound) })
   }
   // The count, and the total it is a fraction of. Shown under the stake so the
   // percentage above can be checked rather than taken on trust.
@@ -1059,9 +1087,11 @@ function SubsidiaryTreeList({ tree, onNavigate, sourceName, asOf = null }: {
           <RelRow node={entityToNode(n.entity)} onNavigate={onNavigate} focusId={n.entity.id}
             unknownFor={asOf && rowPresence(n.entity, rel, asOf) === 'unknown' ? asOfYear(asOf) : null}
             rel={relFromOwns(rel, { fromId: n.parent_id, toId: n.entity.id, label: n.entity.name,
-                                    sourceName: sourceName.get(rel?.source_id ?? '') })}>
+                                    sourceName: sourceName.get(rel?.source_id ?? ''),
+                                    descendantsBound: tree.truncated })}>
             <CompanyName e={n.entity} place={places.get(n.entity.id)} />
             <OwnershipBadge type={rel?.ownership_type} percent={rel?.stake_percent} shares={rel?.shares} />
+            <BelowBadge n={rel?.descendants} bound={tree.truncated} />
           </RelRow>
         </div>
       ))}
@@ -1479,7 +1509,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                 focusId={s.entity.id} unknownFor={unknownRow(s.entity, s.relationship)}
                 rel={relFromOwns(s.relationship, {
                        fromId: entity.id, toId: s.entity.id, label: s.entity.name,
-                       sourceName: sourceName.get(s.relationship?.source_id ?? '') })}>
+                       sourceName: sourceName.get(s.relationship?.source_id ?? ''),
+                       descendantsBound: profile.descendants_truncated })}>
                 <CompanyName e={s.entity} place={places.get(s.entity.id)} />
                 <CorroborationBadge rel={s.relationship} />
                 <ReadingBadge rel={s.relationship} />
@@ -1493,6 +1524,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                                 percent={s.relationship?.stake_percent}
                                 shares={s.relationship?.shares}
                                 votingPct={isGroup ? null : s.relationship?.voting_power_pct} />
+                <BelowBadge n={s.relationship?.descendants} bound={profile.descendants_truncated} />
               </RelRow>
             )
 

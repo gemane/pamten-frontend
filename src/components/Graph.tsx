@@ -1,4 +1,4 @@
-import { forwardRef, Fragment, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, Fragment, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiPlusCircle, FiNavigation } from 'react-icons/fi'
 import cytoscape from 'cytoscape'
@@ -34,7 +34,10 @@ interface TooltipState {
  *  tooltip names a node at any zoom. */
 export const MIN_LABEL_PX = 4
 
-export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetStyle[] {
+/** `below` words the companies under a line's target ("12 below"); the
+ *  default is the language-free glyph for callers without a translator. */
+export function buildStylesheet(theme: 'dark' | 'light',
+                                below: (n: number) => string = n => `↓${n}`): cytoscape.StylesheetStyle[] {
   const edgeLabelBg = theme === 'dark' ? '#1a1a2e' : '#f0f4f8'
   const edgeColor   = theme === 'dark' ? '#8892a4' : '#4a5568'
   const edgeLine    = theme === 'dark' ? '#3a3a5c' : '#9ca3b8'
@@ -133,6 +136,15 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
     {
       selector: 'edge',
       style: {
+        // The stake, and what hangs below the company the line reaches —
+        // "100% · 12 below" — so a holding company can be told from a shell
+        // without opening it. A line with neither says nothing.
+        label: (ele: cytoscape.EdgeSingular) => {
+          const base = String(ele.data('label') ?? '')
+          const n = ele.data('descendants')
+          if (typeof n !== 'number' || n <= 0) return base
+          return base ? `${base} · ${below(n)}` : below(n)
+        },
         width: 2,
         'target-arrow-shape': 'triangle',
         'curve-style': 'bezier',
@@ -806,6 +818,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   ref
 ) {
   const { t, i18n } = useTranslation()
+  const belowLabel = useCallback((n: number) => t('graph.below', { count: n }), [t])
   // Two companies of one name on the canvas carry their country after it
   // ("Agrointegral Andina S.A.S. (Ecuador)") — before the layout measures them.
   const elements = useMemo(() => relabelNamesakes(rawElements, i18n.language), [rawElements, i18n.language])
@@ -843,7 +856,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   useEffect(() => {
     cyRef.current = cytoscape({
       container: containerRef.current,
-      style: buildStylesheet(theme),
+      style: buildStylesheet(theme, belowLabel),
       layout: { name: 'preset' },
       userZoomingEnabled: true,
       userPanningEnabled: true,
@@ -928,8 +941,8 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   useEffect(() => {
     const cy = cyRef.current
     if (!cy) return
-    cy.style(buildStylesheet(theme) as cytoscape.StylesheetStyle[])
-  }, [theme])
+    cy.style(buildStylesheet(theme, belowLabel) as cytoscape.StylesheetStyle[])
+  }, [theme, belowLabel])
 
   useEffect(() => {
     const cy = cyRef.current

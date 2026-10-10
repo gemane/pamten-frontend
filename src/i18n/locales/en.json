@@ -64,6 +64,7 @@
     "tagline": "Map the world's corporate ownership",
     "tagline2": "Search for ownership",
     "statCompanies": "companies",
+    "below": "{{count}} below",
     "statPeople": "people",
     "statRelationships": "ownership relationships",
     "statSources": "sources",
@@ -186,7 +187,9 @@
     "webSearch": "Web search",
     "refreshing": "Refreshing…",
     "capped": "Showing {{shown}} of {{total}} — the list is capped",
-    "subsidiariesAllLevels": "Subsidiaries — all levels"
+    "subsidiariesAllLevels": "Subsidiaries — all levels",
+    "companiesBelow": "{{n}} below",
+    "companiesBelowHint": "Companies below it, at all levels"
   },
   "report": {
     "button": "Report",
@@ -619,6 +622,7 @@
     "filed": "Filed",
     "votingExceeds": "{{pct}}% — more than the {{stake}}% held",
     "shares": "Shares",
+    "below": "Companies below",
     "sharesOf": "{{shares}} of {{total}}",
     "sharesOfAsOf": "{{shares}} of {{total}} (total as of {{date}})",
     "votingShares": "Voted shares",
@@ -653,6 +657,7 @@
       "title": "Help — reading the graph",
       "colors": "Node colours tell the kind: company, person, fund, holding, government, foundation, nonprofit, brand, voting group",
       "dimmedSample": "dimmed entry",
+      "below": "The companies below a subsidiary, at all levels, each counted once — on its row and on its line in the graph. With a + when the tree was too large to walk to the end.",
       "corroborated": "Confirmed independently by that many sources — the count shows how many agree",
       "edgeWidth": "Line width follows the stake: thin for a small holding, thick for a large one",
       "votingEdge": "Dotted amber line: voting power, drawn separately where it differs from the economic stake",
