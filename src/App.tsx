@@ -16,7 +16,7 @@ import ScrapeOverlay from './components/ScrapeOverlay'
 import type { ToastState } from './components/Toast'
 import type { EnsureResult } from './types'
 import { requestNotifyPermission, notifyIfHidden } from './utils/notify'
-import { summarizeRefresh, type RefreshOutcome } from './utils/refreshSummary'
+import { summarizeRefresh, secRunWrote, type RefreshOutcome } from './utils/refreshSummary'
 import ScraperPanel  from './components/ScraperPanel'
 import CoveragePage from './components/CoveragePage'
 import SettingsPanel from './components/SettingsPanel'
@@ -47,6 +47,7 @@ import {
   ensureScrape,
   runSec13f,
   runSecEx21,
+  runSecAcquisitions,
   reportEvent,
   exportSpreadsheet,
 } from './services/api'
@@ -351,7 +352,7 @@ function AppInner() {
     setRefreshing({ id: node.id, slow: false })
     const token = enrichSeqRef.current
     void (async () => {
-      const outcome: RefreshOutcome = { instant: 'skipped', sec13f: null, secEx21: null }
+      const outcome: RefreshOutcome = { instant: 'skipped', sec13f: null, secEx21: null, secAcq: null }
       try {
         const first = await enrichExisting(node.label, node.id, true, country)
         if (first) {
@@ -362,17 +363,20 @@ function AppInner() {
         }
         // The explicit company refresh brings the SEC enrichments along for
         // anyone the endpoints allow (contributor+): 13F holders (who holds this
-        // company) and Exhibit 21 subsidiaries (what it owns). Fired AFTER the
-        // instant sources so a first-ever refresh stamps the CIK they need, and
-        // safe to repeat — the server's gates answer "fresh" and fetch nothing.
-        // Each is best-effort and independently gated; the results feed one
-        // summary at the end rather than a toast each that nobody sees.
+        // company), Exhibit 21 subsidiaries (what it owns) and the acquisitions
+        // its own financial statements tag (what it bought, when, for how
+        // much). Fired AFTER the instant sources so a first-ever refresh stamps
+        // the CIK they need, and safe to repeat — the server's gates answer
+        // "fresh" and fetch nothing. Acquisitions go last so a subsidiary the
+        // list just drew is dated rather than drawn twice. Each is best-effort
+        // and independently gated; the results feed one summary at the end
+        // rather than a toast each that nobody sees.
         if (willRunSlow) {
           setRefreshing({ id: node.id, slow: true })
           try { outcome.sec13f = (await runSec13f(node.label)).data } catch { /* 409 or transient */ }
           try { outcome.secEx21 = (await runSecEx21(node.label)).data } catch { /* 409 or transient */ }
-          const wrote = [outcome.sec13f, outcome.secEx21]
-            .some(r => r?.status === 'ok' && (r.total ?? 0) > 0)
+          try { outcome.secAcq = (await runSecAcquisitions(node.label)).data } catch { /* 409 or transient */ }
+          const wrote = [outcome.sec13f, outcome.secEx21, outcome.secAcq].some(secRunWrote)
           if (wrote) {
             try {
               const { data: fresh } = await ensureScrape(node.label, 1, false, country)

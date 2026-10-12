@@ -91,6 +91,7 @@ vi.mock('./services/api', () => ({
   ensureScrape: vi.fn(),
   runSec13f: vi.fn(),
   runSecEx21: vi.fn(),
+  runSecAcquisitions: vi.fn(),
   getFullProfile: vi.fn(),
   getPersonProfile: vi.fn(),
   getEntitiesByCountry: vi.fn(),
@@ -102,13 +103,14 @@ vi.mock('./services/api', () => ({
 }))
 
 import App from './App'
-import { search, ensureScrape, getFullProfile, getCountries, runSec13f, runSecEx21, exportSpreadsheet, reportEvent } from './services/api'
+import { search, ensureScrape, getFullProfile, getCountries, runSec13f, runSecEx21, runSecAcquisitions, exportSpreadsheet, reportEvent } from './services/api'
 
 const mockSearch = vi.mocked(search)
 const mockEnsure = vi.mocked(ensureScrape)
 const mockProfile = vi.mocked(getFullProfile)
 const mock13f = vi.mocked(runSec13f)
 const mockEx21 = vi.mocked(runSecEx21)
+const mockAcq = vi.mocked(runSecAcquisitions)
 import { requestNotifyPermission, notifyIfHidden } from './utils/notify'
 const mockAsk = vi.mocked(requestNotifyPermission)
 const mockNotify = vi.mocked(notifyIfHidden)
@@ -130,6 +132,8 @@ beforeEach(() => {
   mock13f.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
   mockEx21.mockReset()
   mockEx21.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
+  mockAcq.mockReset()
+  mockAcq.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
   mockAsk.mockClear()
   mockNotify.mockClear()
   auth.role = 'viewer'
@@ -351,6 +355,7 @@ describe('the explicit refresh brings the 13F holders along', () => {
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     expect(mock13f).not.toHaveBeenCalled()
     expect(mockEx21).not.toHaveBeenCalled()
+    expect(mockAcq).not.toHaveBeenCalled()
     await settled()
   })
 
@@ -370,6 +375,18 @@ describe('the explicit refresh brings the 13F holders along', () => {
     mockEx21.mockResolvedValue({ data: { status: 'ok', total: 12 } } as never)
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     await waitFor(() => expect(mockEx21).toHaveBeenCalledWith('Acme GmbH'))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
+    await settled()
+  })
+
+  it('a contributor refresh runs the acquisitions reader after Exhibit 21 and pulls the profile in', async () => {
+    auth.role = 'contributor'
+    // Nothing drawn, but two listed holdings gained a closing date and a price:
+    // the graph changed, so the profile is re-read.
+    mockAcq.mockResolvedValue({ data: { status: 'ok', total: 0, enriched: 2 } } as never)
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    await waitFor(() => expect(mockAcq).toHaveBeenCalledWith('Acme GmbH'))
+    expect(mockEx21.mock.invocationCallOrder[0]).toBeLessThan(mockAcq.mock.invocationCallOrder[0])
     await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
     await settled()
   })
@@ -425,10 +442,11 @@ describe('the refresh announces its progress and its end', () => {
     auth.role = 'contributor'
     mock13f.mockResolvedValue({ data: { status: 'ok', total: 89 } } as never)
     mockEx21.mockResolvedValue({ data: { status: 'ok', total: 12 } } as never)
+    mockAcq.mockResolvedValue({ data: { status: 'ok', total: 3, enriched: 1 } } as never)
     await open(result('e1', 'Acme GmbH', 'DE'))
     await click()
     const toast = await screen.findByText(/Refresh of Acme GmbH finished/)
-    expect(toast.textContent).toContain('13F: 89 holders · Exhibit 21: 12 subsidiaries')
+    expect(toast.textContent).toContain('13F: 89 holders · Exhibit 21: 12 subsidiaries · Acquisitions: 3 companies bought · 1 holding now dated and priced')
     expect(mockNotify).toHaveBeenCalledWith(expect.stringMatching(/refresh finished/), toast.textContent)
   })
 

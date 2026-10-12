@@ -529,6 +529,19 @@ export interface SecEx21Result {
 export const runSecEx21 = (company: string): Promise<AxiosResponse<SecEx21Result>> =>
   client.post('/scraper/sec-ex21/run', null, { params: { company } })
 
+// Business combinations — the acquirer's own 10-K/10-Q XBRL facts (who it
+// bought, the closing date, the price). A few fetches per filing, gated by
+// "newest filing already ingested" server-side; 409 until the CIK is stamped.
+// `total` = acquisitions drawn as new edges, `enriched` = pairs a subsidiary
+// list already held that now carry a closing date and a price.
+export interface SecAcquisitionsResult {
+  status: 'ok' | 'fresh' | 'no_filings' | 'needs_sec_scrape' | 'no_results' | string
+  total?: number
+  enriched?: number
+}
+export const runSecAcquisitions = (company: string): Promise<AxiosResponse<SecAcquisitionsResult>> =>
+  client.post('/scraper/sec-acquisitions/run', null, { params: { company } })
+
 export const ensureScrape = (
   query: string, depth = 1, force = false, country?: string,
 ): Promise<AxiosResponse<EnsureResult>> =>
