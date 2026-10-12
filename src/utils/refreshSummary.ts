@@ -7,7 +7,7 @@
 
 type T = (key: string, opts?: Record<string, unknown>) => string
 
-export interface SecRunOutcome { status: string; total?: number }
+export interface SecRunOutcome { status: string; total?: number; enriched?: number }
 
 export interface RefreshOutcome {
   /** what the instant sources said: `cooldown` = refused as recently updated,
@@ -18,6 +18,14 @@ export interface RefreshOutcome {
   /** null = not run (viewer, person) or failed */
   sec13f: SecRunOutcome | null
   secEx21: SecRunOutcome | null
+  /** the acquirer's XBRL business combinations: `total` drawn new, `enriched`
+   *  already listed and now dated and priced */
+  secAcq: SecRunOutcome | null
+}
+
+/** A SEC run changed the graph: it drew edges, or dated ones that were there. */
+export function secRunWrote(r: SecRunOutcome | null): boolean {
+  return r?.status === 'ok' && ((r.total ?? 0) > 0 || (r.enriched ?? 0) > 0)
 }
 
 /** Catalogue names are identifiers; these are the names on the coverage page. */
@@ -40,6 +48,10 @@ export function summarizeRefresh(t: T, company: string, o: RefreshOutcome): stri
   }
   if (o.secEx21?.status === 'ok' && (o.secEx21.total ?? 0) > 0) {
     parts.push(t('toast.refreshPartEx21', { count: o.secEx21.total }))
+  }
+  if (o.secAcq?.status === 'ok') {
+    if ((o.secAcq.total ?? 0) > 0) parts.push(t('toast.refreshPartAcq', { count: o.secAcq.total }))
+    if ((o.secAcq.enriched ?? 0) > 0) parts.push(t('toast.refreshPartAcqDated', { count: o.secAcq.enriched }))
   }
   if (o.instant === 'cooldown') parts.push(t('toast.refreshPartCooldown'))
   if (o.instant === 'in_progress') parts.push(t('toast.refreshPartInProgress'))
