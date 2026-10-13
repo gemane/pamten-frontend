@@ -17,6 +17,7 @@ import type { ToastState } from './components/Toast'
 import type { EnsureResult } from './types'
 import { requestNotifyPermission, notifyIfHidden } from './utils/notify'
 import { summarizeRefresh, secRunWrote, type RefreshOutcome } from './utils/refreshSummary'
+import { recoverFromRunLog, RUN_LOG_WINDOW } from './utils/refreshRecovery'
 import ScraperPanel  from './components/ScraperPanel'
 import CoveragePage from './components/CoveragePage'
 import SettingsPanel from './components/SettingsPanel'
@@ -48,6 +49,7 @@ import {
   runSec13f,
   runSecEx21,
   runSecAcquisitions,
+  getScraperRuns,
   reportEvent,
   exportSpreadsheet,
 } from './services/api'
@@ -351,10 +353,18 @@ function AppInner() {
     if (willRunSlow) requestNotifyPermission()
     setRefreshing({ id: node.id, slow: false })
     const token = enrichSeqRef.current
+    // When the click happened: a phone that goes to another app suspends the
+    // tab and drops every request in flight, while the server finishes the
+    // work and logs it. A lost answer is then read back from the run log —
+    // the company's runs since this moment — so the summary tells what the
+    // sources really did instead of "nothing new".
+    const clickedAt = Date.now()
+    let lost = false
     void (async () => {
       const outcome: RefreshOutcome = { instant: 'skipped', sec13f: null, secEx21: null, secAcq: null }
       try {
         const first = await enrichExisting(node.label, node.id, true, country)
+        if (!first) lost = true
         if (first) {
           outcome.instant = first.scraped ? 'scraped'
                           : first.reason === 'cooldown' ? 'cooldown'
@@ -373,9 +383,17 @@ function AppInner() {
         // rather than a toast each that nobody sees.
         if (willRunSlow) {
           setRefreshing({ id: node.id, slow: true })
-          try { outcome.sec13f = (await runSec13f(node.label)).data } catch { /* 409 or transient */ }
-          try { outcome.secEx21 = (await runSecEx21(node.label)).data } catch { /* 409 or transient */ }
-          try { outcome.secAcq = (await runSecAcquisitions(node.label)).data } catch { /* 409 or transient */ }
+          // A refusal (403, 409) and a dropped connection both land here; the
+          // run log tells them apart — a refused call has no run since the click.
+          try { outcome.sec13f = (await runSec13f(node.label)).data } catch { lost = true }
+          try { outcome.secEx21 = (await runSecEx21(node.label)).data } catch { lost = true }
+          try { outcome.secAcq = (await runSecAcquisitions(node.label)).data } catch { lost = true }
+        }
+        if (lost) {
+          await recoverFromRunLog(outcome, node.label, clickedAt,
+            async () => (await getScraperRuns(RUN_LOG_WINDOW)).data.runs)
+        }
+        if (willRunSlow) {
           const wrote = [outcome.sec13f, outcome.secEx21, outcome.secAcq].some(secRunWrote)
           if (wrote) {
             try {

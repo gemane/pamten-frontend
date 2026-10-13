@@ -75,3 +75,18 @@ describe('secRunWrote', () => {
     expect(secRunWrote(null)).toBe(false)
   })
 })
+
+describe('a refresh whose answer was read back from the run log', () => {
+  it('says so after the numbers, and when the server had not finished', () => {
+    expect(summarizeRefresh(t, 'Apple Inc.', {
+      instant: 'scraped', sec13f: { status: 'ok', total: 89 }, secEx21: { status: 'running', total: 0 },
+      secAcq: null, recovered: true, stillRunning: true,
+    })).toBe('toast.refreshDone(company=Apple Inc.,summary=toast.refreshPart13f(count=89) · toast.refreshPartStillRunning · toast.refreshPartRecovered)')
+  })
+
+  it('a recovered run that drew nothing still explains itself', () => {
+    expect(summarizeRefresh(t, 'Acme', {
+      instant: 'nothing', sec13f: { status: 'ok', total: 0 }, secEx21: null, secAcq: null, recovered: true,
+    })).toBe('toast.refreshDone(company=Acme,summary=toast.refreshPartRecovered)')
+  })
+})

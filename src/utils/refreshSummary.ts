@@ -21,6 +21,11 @@ export interface RefreshOutcome {
   /** the acquirer's XBRL business combinations: `total` drawn new, `enriched`
    *  already listed and now dated and priced */
   secAcq: SecRunOutcome | null
+  /** a call was lost (the tab was suspended) and its result read back from the
+   *  server's run log — see refreshRecovery */
+  recovered?: boolean
+  /** the server was still running a source when the toast could wait no longer */
+  stillRunning?: boolean
 }
 
 /** A SEC run changed the graph: it drew edges, or dated ones that were there. */
@@ -55,6 +60,10 @@ export function summarizeRefresh(t: T, company: string, o: RefreshOutcome): stri
   }
   if (o.instant === 'cooldown') parts.push(t('toast.refreshPartCooldown'))
   if (o.instant === 'in_progress') parts.push(t('toast.refreshPartInProgress'))
+  // Last, so the numbers come first and their provenance after: what was read
+  // back from the log, and what the server had not finished.
+  if (o.stillRunning) parts.push(t('toast.refreshPartStillRunning'))
+  if (o.recovered) parts.push(t('toast.refreshPartRecovered'))
   if (parts.length === 0) return t('toast.refreshDoneNothing', { company })
   return t('toast.refreshDone', { company, summary: parts.join(' · ') })
 }
