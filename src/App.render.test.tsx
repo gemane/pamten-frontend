@@ -92,6 +92,7 @@ vi.mock('./services/api', () => ({
   runSec13f: vi.fn(),
   runSecEx21: vi.fn(),
   runSecAcquisitions: vi.fn(),
+  getScraperRuns: vi.fn(),
   getFullProfile: vi.fn(),
   getPersonProfile: vi.fn(),
   getEntitiesByCountry: vi.fn(),
@@ -103,7 +104,7 @@ vi.mock('./services/api', () => ({
 }))
 
 import App from './App'
-import { search, ensureScrape, getFullProfile, getCountries, runSec13f, runSecEx21, runSecAcquisitions, exportSpreadsheet, reportEvent } from './services/api'
+import { search, ensureScrape, getFullProfile, getCountries, runSec13f, runSecEx21, runSecAcquisitions, getScraperRuns, exportSpreadsheet, reportEvent } from './services/api'
 
 const mockSearch = vi.mocked(search)
 const mockEnsure = vi.mocked(ensureScrape)
@@ -111,6 +112,7 @@ const mockProfile = vi.mocked(getFullProfile)
 const mock13f = vi.mocked(runSec13f)
 const mockEx21 = vi.mocked(runSecEx21)
 const mockAcq = vi.mocked(runSecAcquisitions)
+const mockRuns = vi.mocked(getScraperRuns)
 import { requestNotifyPermission, notifyIfHidden } from './utils/notify'
 const mockAsk = vi.mocked(requestNotifyPermission)
 const mockNotify = vi.mocked(notifyIfHidden)
@@ -134,6 +136,8 @@ beforeEach(() => {
   mockEx21.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
   mockAcq.mockReset()
   mockAcq.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
+  mockRuns.mockReset()
+  mockRuns.mockResolvedValue({ data: { count: 0, runs: [] } } as never)
   mockAsk.mockClear()
   mockNotify.mockClear()
   auth.role = 'viewer'
@@ -389,6 +393,42 @@ describe('the explicit refresh brings the 13F holders along', () => {
     expect(mockEx21.mock.invocationCallOrder[0]).toBeLessThan(mockAcq.mock.invocationCallOrder[0])
     await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
     await settled()
+  })
+
+  it('a call lost while the tab was suspended is read back from the run log', async () => {
+    auth.role = 'contributor'
+    // The phone went to another app: the 13F request died on the way back
+    // while the server finished and logged 89 holders for this company.
+    mock13f.mockRejectedValue(new Error('Network Error'))
+    mockRuns.mockResolvedValue({ data: { count: 2, runs: [
+      { id: 'r1', source: 'sec-13f', target: 'Acme GmbH', status: 'ok', total: 89,
+        started_at: new Date().toISOString() },
+      { id: 'r0', source: 'sec-13f', target: 'Other AG', status: 'ok', total: 7,
+        started_at: new Date().toISOString() },
+    ] } } as never)
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    const toast = await screen.findByText(/Refresh of Acme GmbH finished/)
+    expect(toast.textContent).toContain('13F: 89 holders')
+    expect(toast.textContent).toContain('read back from the server')
+    expect(mockRuns).toHaveBeenCalledWith(200)
+    // The holders are in the database: the profile is re-read as after a heard answer.
+    expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE')
+  })
+
+  it('a refused call has no run in the log and reads as before', async () => {
+    auth.role = 'contributor'
+    mock13f.mockRejectedValue(Object.assign(new Error('409'), { response: { status: 409 } }))
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    const toast = await screen.findByText(/Refresh of Acme GmbH finished/)
+    expect(toast.textContent).toContain('nothing new from the sources')
+    expect(mockRuns).toHaveBeenCalledTimes(1)
+  })
+
+  it('a refresh every call of which answered never asks the log', async () => {
+    auth.role = 'contributor'
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    await settled()
+    expect(mockRuns).not.toHaveBeenCalled()
   })
 
   it('a fresh quarter answer changes nothing and re-reads nothing', async () => {

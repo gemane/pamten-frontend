@@ -380,6 +380,8 @@
     "refreshPartAcqDated_other": "{{count}} holdings now dated and priced",
     "refreshPartCooldown": "sources on cooldown (updated recently)",
     "refreshNotifyTitle": "Owlgraph — refresh finished",
+    "refreshPartStillRunning": "the server is still running a source; reopen the company in a few minutes",
+    "refreshPartRecovered": "read back from the server’s run log after the connection dropped",
     "refreshPartInProgress": "another refresh of this company is still running",
     "treeTruncated": "The tree is large: showing the first {{count}} companies",
     "treeTruncatedOf": "The tree is large: showing the first {{count}} of {{total}} companies"

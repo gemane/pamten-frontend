@@ -606,7 +606,8 @@ export interface ScrapeRun {
   id: string
   source: string
   target: string
-  status: 'running' | 'ok' | 'failed'
+  /** `skipped` = the run correctly did nothing (already ingested, no filing) */
+  status: 'running' | 'ok' | 'failed' | 'skipped'
   started_at: string
   finished_at?: string | null
   total: number
