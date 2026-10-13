@@ -318,6 +318,24 @@ export const deleteFederationPeer = (id: string): Promise<AxiosResponse<{ messag
 export const pullFederationPeer = (id: string): Promise<AxiosResponse<PeerPullResult>> =>
   client.post(`/federation/peers/${id}/pull`)
 
+// A node's image through our API, never from Wikimedia in the browser: the
+// credit (author, licence, the Commons file page) and the path of the bytes.
+// 404 = no licensed image; the panel shows none.
+export type MediaKind = 'entity' | 'person'
+export interface MediaImage {
+  url: string
+  author: string | null
+  license: string
+  license_url: string | null
+  file_page: string
+  attribution_required: boolean
+  source: string
+}
+export const getMediaImage = (kind: MediaKind, id: string): Promise<AxiosResponse<MediaImage>> =>
+  client.get(`/media/${kind}/${id}`)
+/** The absolute address of a media path, for an <img src>. */
+export const mediaFileUrl = (path: string): string => `${client.defaults.baseURL}${path}`
+
 export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =>
   client.get(`/sources/entity/${id}`)
 

@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch } from 'react-icons/fi'
-import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, type MediaImage } from '../services/api'
+import ImageCredit, { useMediaImage } from './ImageCredit'
 import { countryName } from '../utils/isoCountries'
 import { ageFrom } from '../utils/age'
 import { isSubdivision, subdivisionName } from '../utils/isoSubdivisions'
@@ -143,36 +144,6 @@ export function personDisplayDetails(p: Person, lang: string) {
   }
 }
 
-function usePersonImage(fullName: string | undefined, wikipediaUrl?: string): string | null {
-  const [src, setSrc] = useState<string | null>(null)
-  useEffect(() => {
-    setSrc(null)
-    if (!fullName && !wikipediaUrl) return
-
-    const tryTitle = (title: string) =>
-      fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`)
-        .then(r => { if (!r.ok) throw new Error('not found'); return r.json() })
-        .then((data): string | null => data?.thumbnail?.source ?? null)
-        .catch((): null => null)
-
-    ;(async () => {
-      // 1. If we have a direct Wikipedia URL, use it
-      if (wikipediaUrl) {
-        const m = wikipediaUrl.match(/\/wiki\/([^#?]+)/)
-        if (m) {
-          const img = await tryTitle(m[1])
-          if (img) { setSrc(img); return }
-        }
-      }
-      // 2. Fall back to person's full name as the page title
-      if (fullName) {
-        const img = await tryTitle(fullName.replace(/\s+/g, '_'))
-        if (img) setSrc(img)
-      }
-    })()
-  }, [fullName, wikipediaUrl])
-  return src
-}
 
 /** The ⋮ beside a name: share this view, or report this company or person.
  *
@@ -594,7 +565,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
 }) {
   const raw = node.raw as Person
   const { t, i18n } = useTranslation()
-  const imgSrc = usePersonImage(raw.full_name, raw.wikipedia_url)
+  const image = useMediaImage('person', node.id)
   const { age, born, died, nationalities, aka } = personDisplayDetails(raw, i18n.language)
 
   // A person's positions (HAS_ROLE) and ownerships (OWNS) already exist in the
@@ -666,9 +637,10 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
       {showTimeline && <PanelTabs active={activeView} onChange={setActiveView} />}
       <div className="node-panel__scroll">
       <div className="panel-body">
-      {imgSrc && (
-        <img className="panel-avatar" src={imgSrc} alt={raw.full_name} />
-      )}
+      {image && (<>
+        <img className="panel-avatar" src={image.src} alt={raw.full_name} />
+        <ImageCredit credit={image.credit} kind="person" />
+      </>)}
       <span className="node-type-badge node-type-badge--person">{t('legend.person')}</span>
       <div className="panel-header-row">
         <h2 className="panel-name">{raw.full_name}</h2>
@@ -775,7 +747,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
         <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} allowed={canReScrape} />
       )}
 
-      <SourcesSection sources={sources} />
+      <SourcesSection sources={sources} image={image?.credit ?? null} imageKind="person" />
       </div>
       </div>
     </div>
@@ -1169,12 +1141,29 @@ function credibilityColor(score: number): string {
 }
 
 // Collapsible provenance list — the sources behind a node's facts. Shared by the
-// entity and person panels.
-function SourcesSection({ sources }: { sources: Source[] }) {
+// entity and person panels. The image is provenance too: its row names the
+// file, the licence and the author, so a reader finds the credit where
+// every other source is explained, not only under the picture.
+function SourcesSection({ sources, image = null, imageKind = 'entity' }: {
+  sources: Source[]; image?: MediaImage | null; imageKind?: 'entity' | 'person'
+}) {
   const { t, i18n } = useTranslation()
-  if (!sources.length) return null
+  if (!sources.length && !image) return null
   return (
-    <CollapsibleSection title={t('panel.sources')} count={sources.length}>
+    <CollapsibleSection title={t('panel.sources')} count={sources.length + (image ? 1 : 0)}>
+      {image && (
+        <div className="source-item" data-testid="image-source">
+          <div className="source-item__header">
+            <a className="source-item__name" href={image.file_page} target="_blank" rel="noreferrer">
+              <FiExternalLink size={11} /> {image.source} · {t(imageKind === 'person' ? 'panel.photoCredit' : 'panel.logoCredit')}
+            </a>
+          </div>
+          <div className="source-item__prov">
+            <span>{image.license}</span>
+            {image.author && <span>{image.author}</span>}
+          </div>
+        </div>
+      )}
       {sources.map((s, i) => {
         const reported    = formatDate(s.source_date, i18n.language)
         const lastChecked = formatDate(s.last_scraped_at, i18n.language)
@@ -1273,12 +1262,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
     .filter(s => rowPresence(s.entity, s.relationship, asOf) !== 'absent')
   const unknownRow = (party: Entity | Person | null | undefined, rel: Tenure | null | undefined) =>
     unknownYear && rowPresence(party, rel, asOf) === 'unknown' ? unknownYear : null
-  // The stored direct-thumb URL (upload.wikimedia.org — the host that works
-  // where Special:FilePath's new redirect does not, e.g. mobile), resolved
-  // server-side during the scrape. No client-side lookup: still-dev data, so
-  // an entity without logo_url simply has no logo until its next scrape.
-  // safeHref-gated because logo_url is scraped data going into src.
-  const imgSrc = safeHref(entity.logo_url ?? null)
+  // The logo comes through our API with its licence credit (the stored
+  // logo_url is what the server resolves; the browser never loads it).
+  const image = useMediaImage('entity', entity.id)
 
   // Surface founders in their own section rather than buried among executives.
   const seenFounders = new Set<string>()
@@ -1337,9 +1323,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
 
   return (
     <div className="panel-body">
-      {imgSrc && (
-        <img className="panel-logo" src={imgSrc} alt={entity.name} />
-      )}
+      {image && (<>
+        <img className="panel-logo" src={image.src} alt={entity.name} />
+        <ImageCredit credit={image.credit} kind="entity" />
+      </>)}
       <span className={`node-type-badge node-type-badge--${entity.type || 'company'}`}>
         {t(`legend.${entity.type || 'company'}`, { defaultValue: entity.type || 'company' })}
       </span>
@@ -1631,7 +1618,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
       {onReScrape && (
         <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} allowed={canReScrape} />
       )}
-      <SourcesSection sources={sources} />
+      <SourcesSection sources={sources} image={image?.credit ?? null} imageKind="entity" />
       <SourceStatements ids={entity.source_statement_ids} />
 
       {(onExportPng || onExportSpreadsheet) && (

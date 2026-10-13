@@ -13,11 +13,13 @@ vi.mock('../services/api', () => ({
   getPersonProfile: vi.fn(),
   getPersonSources: vi.fn(),
   getSubsidiaryTree: vi.fn(),
+  getMediaImage: vi.fn(),
+  mediaFileUrl: (path: string) => `https://api.example.test/v1${path}`,
 }))
 vi.mock('./NodeFlags', () => ({ default: () => null }))
 vi.mock('./TimelinePanel', () => ({ default: () => null }))
 
-import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, getMediaImage } from '../services/api'
 import { STAKE_FILTERS } from './GraphStakeFilter'
 
 const mockProfile = vi.mocked(getFullProfile)
@@ -1775,28 +1777,19 @@ describe('section counts and source filing types', () => {
 describe('the company logo', () => {
   const LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/T.svg/250px-T.svg.png'
 
-  it('a stored logo_url renders directly, with no Wikidata lookup', async () => {
+  it('a stored logo_url is never loaded by the browser — the logo comes through our API', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    vi.mocked(getMediaImage).mockRejectedValue(new Error('404'))
     const p = profile('e1', 'Logo Co')
     ;(p.entity as { logo_url?: string }).logo_url = LOGO
     mockProfile.mockResolvedValue({ data: p } as never)
     const { container } = render(<NodePanel node={entityNode('e1', 'Logo Co')} refreshKey={0} />)
     await screen.findByText('Logo Co')
-    const img = container.querySelector('.panel-logo') as HTMLImageElement
-    expect(img?.getAttribute('src')).toBe(LOGO)
+    await waitFor(() => expect(getMediaImage).toHaveBeenCalledWith('entity', 'e1'))
+    expect(container.querySelector('.panel-logo')).toBeNull()
     expect(fetchSpy.mock.calls.map(c => String(c[0]))
-      .filter(u => u.includes('wikidata.org'))).toHaveLength(0)
+      .filter(u => u.includes('wikimedia.org') || u.includes('wikipedia.org'))).toHaveLength(0)
     fetchSpy.mockRestore()
-  })
-
-  it('an unsafe stored value is ignored, not rendered', async () => {
-    const p = profile('e1', 'Junk Co')
-    ;(p.entity as { logo_url?: string }).logo_url = 'javascript:alert(1)'
-    mockProfile.mockResolvedValue({ data: p } as never)
-    const { container } = render(<NodePanel node={entityNode('e1', 'Junk Co')} refreshKey={0} />)
-    await screen.findByText('Junk Co')
-    const img = container.querySelector('.panel-logo')
-    expect(img?.getAttribute('src') ?? '').not.toContain('javascript')
   })
 })
 
@@ -2359,5 +2352,84 @@ describe('companies below a subsidiary', () => {
     expect(stake.compareDocumentPosition(below) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(document.querySelectorAll('.rel-item__below')).toHaveLength(1)
     vi.mocked(getSubsidiaryTree).mockClear()
+  })
+})
+
+/**
+ * The image and its credit.
+ *
+ * The browser no longer fetches a photo from Wikipedia or a logo from
+ * Wikimedia: both come through our API with the licence credit, shown as a
+ * visible caption under the image and as a row in the Sources list. A node
+ * the API has no licensed image for shows none, and never a stored logo_url.
+ */
+describe('the image and its credit', () => {
+  const credit = (over: Record<string, unknown> = {}) => ({
+    url: '/media/entity/e1/file', author: 'Jane Doe', license: 'CC BY-SA 4.0',
+    license_url: 'https://creativecommons.org/licenses/by-sa/4.0',
+    file_page: 'https://commons.wikimedia.org/wiki/File:Acme.svg',
+    attribution_required: true, source: 'Wikimedia Commons', ...over,
+  })
+  const mockMedia = vi.mocked(getMediaImage)
+
+  it('a company logo comes from our API and carries its caption and a sources row', async () => {
+    mockMedia.mockResolvedValue({ data: credit() } as never)
+    mockProfile.mockResolvedValue({ data: { ...profile('e1', 'Acme Corp'),
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false,
+                logo_url: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Acme.svg' } } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    const img = await screen.findByAltText('Acme Corp') as HTMLImageElement
+    expect(img.src).toBe('https://api.example.test/v1/media/entity/e1/file')
+    expect(mockMedia).toHaveBeenCalledWith('entity', 'e1')
+    const caption = screen.getByTestId('image-credit')
+    expect(caption.textContent).toBe('Logo: Jane Doe · CC BY-SA 4.0 · Wikimedia Commons')
+    const links = caption.querySelectorAll('a')
+    expect(links[0].getAttribute('href')).toBe('https://commons.wikimedia.org/wiki/File:Acme.svg')
+    expect(links[1].getAttribute('href')).toBe('https://creativecommons.org/licenses/by-sa/4.0')
+    await userEvent.click(screen.getByRole('button', { name: /Sources/i }))
+    const row = screen.getByTestId('image-source')
+    expect(row.textContent).toContain('Wikimedia Commons · Logo')
+    expect(row.textContent).toContain('CC BY-SA 4.0')
+    expect(row.textContent).toContain('Jane Doe')
+  })
+
+  it('a public-domain file with no author named is credited by licence and source', async () => {
+    mockMedia.mockResolvedValue({ data: credit({ author: null, license: 'Public domain', license_url: null,
+                                                  attribution_required: false }) } as never)
+    mockProfile.mockResolvedValue({ data: profile('e1', 'Acme Corp') } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    const caption = await screen.findByTestId('image-credit')
+    expect(caption.textContent).toBe('Logo: Public domain · Wikimedia Commons')
+    // No licence text to link to: the licence links to the file page instead.
+    expect(caption.querySelectorAll('a')[0].getAttribute('href')).toBe('https://commons.wikimedia.org/wiki/File:Acme.svg')
+  })
+
+  it('a person\'s portrait is captioned as a photo', async () => {
+    mockMedia.mockResolvedValue({ data: credit({ url: '/media/person/p1/file' }) } as never)
+    mockProfile.mockResolvedValue({ data: {} } as never)
+    const person = { id: 'p1', first_name: 'A', last_name: 'B', full_name: 'A B', verified: false,
+                     wikipedia_url: 'https://en.wikipedia.org/wiki/A_B' }
+    vi.mocked(getPersonProfile).mockResolvedValue({ data: { person, positions: [], holdings: [] } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+    render(<NodePanel node={{ id: 'p1', label: 'A B', nodeType: 'person', raw: person as never }} refreshKey={0} />)
+    const img = await screen.findByAltText('A B') as HTMLImageElement
+    expect(img.src).toBe('https://api.example.test/v1/media/person/p1/file')
+    expect(mockMedia).toHaveBeenCalledWith('person', 'p1')
+    expect(screen.getByTestId('image-credit').textContent).toMatch(/^Photo: Jane Doe/)
+    await userEvent.click(screen.getByRole('button', { name: /Sources/i }))
+    expect(screen.getByTestId('image-source').textContent).toContain('Wikimedia Commons · Photo')
+  })
+
+  it('no licensed image: no picture, no caption, and the stored logo_url is never loaded', async () => {
+    mockMedia.mockRejectedValue(Object.assign(new Error('404'), { response: { status: 404 } }))
+    mockProfile.mockResolvedValue({ data: { ...profile('e1', 'Acme Corp'),
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false,
+                logo_url: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Acme.svg' } } } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+    await waitFor(() => expect(mockMedia).toHaveBeenCalled())
+    expect(screen.queryByAltText('Acme Corp')).toBeNull()
+    expect(screen.queryByTestId('image-credit')).toBeNull()
+    expect(document.querySelector('img[src*="upload.wikimedia.org"]')).toBeNull()
   })
 })
