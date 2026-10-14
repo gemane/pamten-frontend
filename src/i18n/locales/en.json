@@ -352,7 +352,17 @@
     "born": "born",
     "died": "died",
     "showAsOf": "Show the graph as of the end of {{year}}",
-    "showPresent": "Back to the present"
+    "showPresent": "Back to the present",
+    "dimmedLabel": "No longer confirmed",
+    "dimmedBadge": "not confirmed",
+    "reasonSource": "the newer list",
+    "reason": {
+      "13f_not_confirmed": "The holder's 13F report for the quarter ending {{date}} no longer lists this position. Silence is not a sale, so the holding is dimmed, not ended.",
+      "ex21_not_listed": "The newer subsidiary list dated {{date}} no longer names it. Filers may leave out small subsidiaries, so it is dimmed, not ended.",
+      "unconfirmed": "No source has confirmed this since {{date}}. A crowd-edited statement that is deleted simply stops being seen, so it is dimmed, not ended.",
+      "lei_lapsed": "The register record behind it lapsed and is no longer maintained by its issuer; last updated {{date}}. Dimmed, not ended.",
+      "unknown": "No newer source confirms this; it is dimmed, not ended."
+    }
   },
   "toast": {
     "personGraphError": "Could not load person graph.",

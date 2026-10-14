@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox } from 'react-icons/fi'
+import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiExternalLink } from 'react-icons/fi'
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import { asOfFromYear, asOfYear } from '../utils/asOf'
@@ -17,6 +17,35 @@ interface TimelineEvent {
   stake_percent?: number | null
   ownership_type?: string | null
   party?: { name?: string; full_name?: string; id?: string } | null
+  /** Dimmed: no newer list or quarter confirms it. With the evidence behind
+   *  the mark — why (`stale_reason`) and since when (`stale_since`) — the
+   *  holding ALSO gets a dated "no longer confirmed" entry under that year. */
+  stale?: boolean | null
+  stale_since?: string | null
+  stale_reason?: string | null
+  stale_source_url?: string | null
+}
+
+/** The reasons the backend writes (edge_schema.STALE_REASONS); anything else
+ *  reads as the generic one. */
+const KNOWN_REASONS = new Set(['13f_not_confirmed', 'ex21_not_listed', 'unconfirmed', 'lei_lapsed'])
+export const reasonKey = (reason: string | null | undefined): string =>
+  `timeline.reason.${reason && KNOWN_REASONS.has(reason) ? reason : 'unknown'}`
+
+/** A dimmed holding with a dated reason becomes a second, dated entry: the
+ *  day it stopped being confirmed, filed under that year beside the start.
+ *  A dimmed holding without a date (marked before the reason was recorded)
+ *  keeps only the badge on its own row. */
+export function withDimmingEvents(events: TimelineEvent[]): TimelineEvent[] {
+  const out: TimelineEvent[] = []
+  for (const ev of events) {
+    out.push(ev)
+    if (ev.stale && ev.stale_since && (ev.kind === 'ownership_in' || ev.kind === 'ownership_out')) {
+      out.push({ ...ev, kind: 'dimmed', since: ev.stale_since, since_basis: null, until: null,
+                 active: false })
+    }
+  }
+  return out
 }
 
 function partyName(party: TimelineEvent['party']): string {
@@ -42,16 +71,52 @@ const KIND_COLOR: Record<string, string> = {
   ownership_in:  '#8E44AD',
   ownership_out: '#4A90D9',
   role:          '#27AE60',
+  dimmed:        '#8892a4',
 }
 const KIND_ICON: Record<string, React.ElementType> = {
   ownership_in:  FiArrowDownRight,
   ownership_out: FiArrowUpLeft,
   role:          FiUser,
+  dimmed:        FiEyeOff,
+}
+
+/** The dated entry for a holding that stopped being confirmed: why, in words,
+ *  with the newer filing linked when there is one. */
+function DimmedRow({ ev }: { ev: TimelineEvent }) {
+  const { t } = useTranslation()
+  const name = partyName(ev.party)
+  const date = ev.since ?? ''
+  return (
+    <div className="tl-event tl-event--dimmed" data-testid="tl-dimmed">
+      <div className="tl-event__dot" style={{ background: KIND_COLOR.dimmed }} />
+      <div className="tl-event__body">
+        <div className="tl-event__row">
+          <span className="tl-event__kind" style={{ color: KIND_COLOR.dimmed }}>
+            <FiEyeOff />
+            {t('timeline.dimmedLabel')}
+          </span>
+        </div>
+        <div className="tl-event__name">{name}</div>
+        <div className="tl-event__meta tl-event__reason">
+          {t(reasonKey(ev.stale_reason), { date })}
+          {ev.stale_source_url && (
+            <>
+              {' '}
+              <a href={ev.stale_source_url} target="_blank" rel="noreferrer">
+                {t('timeline.reasonSource')} <FiExternalLink />
+              </a>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function EventRow({ ev }: { ev: TimelineEvent }) {
   const { t } = useTranslation()
   const kind      = ev.kind ?? ''
+  if (kind === 'dimmed') return <DimmedRow ev={ev} />
   const color     = KIND_COLOR[kind] || KIND_COLOR.role
   const Icon      = KIND_ICON[kind]  || FiUser
   // "Owns" / "Owned by", not "Acquired": most sources say a holding existed at
@@ -91,7 +156,14 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
               {t(listed.newly ? 'timeline.firstListed' : 'timeline.sinceAtLeast', { year: listed.year })}
             </span>
           )}
-          {ev.active
+          {ev.stale
+            // dimmed, not "Active": nothing newer confirms it — the dated
+            // entry below (when the reason is recorded) says why
+            ? <span className="tl-event__badge tl-event__badge--dimmed"
+                    title={t(reasonKey(ev.stale_reason), { date: ev.stale_since ?? '' })}>
+                {t('timeline.dimmedBadge')}
+              </span>
+            : ev.active
             ? <span className="tl-event__badge tl-event__badge--active">{t('timeline.active')}</span>
             : ended && <span className="tl-event__badge tl-event__badge--closed">{t('timeline.until', { year: ended })}</span>}
         </div>
@@ -146,7 +218,7 @@ export default function TimelinePanel({ entityId, asOf = null, onYearSelect }: T
     )
   }
 
-  const groups = groupByYear(events)
+  const groups = groupByYear(withDimmingEvents(events))
 
   return (
     <div className="timeline">

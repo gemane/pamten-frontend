@@ -148,6 +148,16 @@ export interface OwnsRelationship {
    *  statement just stops being seen — so age is the only evidence, and it is
    *  weak evidence, which is why this dims the row rather than removing it. */
   stale?: boolean | null
+  /** Why it is dimmed and since when — the evidence behind `stale`, which the
+   *  timeline turns into a dated "no longer confirmed" entry: `13f_not_confirmed`
+   *  (the holder's 13F for the quarter ending `stale_since` no longer lists it),
+   *  `ex21_not_listed` (the newer subsidiary list dated `stale_since`, linked in
+   *  `stale_source_url`, no longer names it), `unconfirmed` (no source has
+   *  confirmed it since `stale_since`), `lei_lapsed` (the GLEIF record lapsed;
+   *  last updated `stale_since`). Edges marked before these existed carry none. */
+  stale_since?: string | null
+  stale_reason?: string | null
+  stale_source_url?: string | null
   /** Companies below the owned company at any level, counted once each —
    *  stamped at read time from the tree walk, so the flat list and the tree
    *  agree. A lower bound when the profile's `descendants_truncated` is set. */
@@ -361,6 +371,8 @@ export interface EdgeData {
   sourceDate?: string | null
   /** the staleness mark of the relationship (see utils/asOf.edgePresence) */
   stale?: boolean | null
+  /** the day the evidence behind the mark is dated (OwnsRelationship.stale_since) */
+  staleSince?: string | null
   /** companies below the target at any level (OwnsRelationship.descendants), on the line's label */
   descendants?: number | null
 }

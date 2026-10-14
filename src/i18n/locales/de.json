@@ -352,7 +352,17 @@
     "born": "geboren",
     "died": "gestorben",
     "showAsOf": "Graph zum Ende von {{year}} anzeigen",
-    "showPresent": "Zurück zur Gegenwart"
+    "showPresent": "Zurück zur Gegenwart",
+    "dimmedLabel": "Nicht mehr bestätigt",
+    "dimmedBadge": "nicht bestätigt",
+    "reasonSource": "die neuere Liste",
+    "reason": {
+      "13f_not_confirmed": "Der 13F-Bericht des Halters für das Quartal bis {{date}} führt diese Position nicht mehr. Schweigen ist kein Verkauf — die Beteiligung wird abgeblendet, nicht beendet.",
+      "ex21_not_listed": "Die neuere Tochterliste vom {{date}} nennt sie nicht mehr. Einreicher dürfen kleine Töchter weglassen — abgeblendet, nicht beendet.",
+      "unconfirmed": "Seit {{date}} hat keine Quelle dies bestätigt. Eine gelöschte Community-Angabe verschwindet einfach — abgeblendet, nicht beendet.",
+      "lei_lapsed": "Der zugrunde liegende Registereintrag ist erloschen und wird von seiner Stelle nicht mehr gepflegt; zuletzt aktualisiert am {{date}}. Abgeblendet, nicht beendet.",
+      "unknown": "Keine neuere Quelle bestätigt dies — abgeblendet, nicht beendet."
+    }
   },
   "toast": {
     "personGraphError": "Personendiagramm konnte nicht geladen werden.",

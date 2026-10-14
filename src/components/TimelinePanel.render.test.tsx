@@ -11,6 +11,67 @@ const ev = (o: Record<string, unknown>) => ({ active: true, stake_percent: null,
 
 beforeEach(() => mockHistory.mockReset())
 
+describe('why a holding went grey', () => {
+  it('a dimmed holding reads "not confirmed", and gets a dated entry saying why', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2020-03-31', since_basis: 'first_reported', stake_percent: 1.2,
+           party: { id: 'v', name: 'Vanguard Group' }, stale: true, stale_since: '2026-06-30',
+           stale_reason: '13f_not_confirmed', stale_source_url: null }),
+      ev({ kind: 'ownership_out', since: '2019-01-01', party: { id: 'k', name: 'Kept Ltd' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="nc" />)
+    await screen.findByText('Kept Ltd')
+    // the holding's own row: dimmed, not "Active" — with the reason on hover
+    const badge = screen.getByText('not confirmed')
+    expect(badge).toHaveAttribute('title', expect.stringContaining('2026-06-30'))
+    expect(screen.getAllByText('Active')).toHaveLength(1)           // Kept Ltd only
+    // the dated entry under 2026, in words
+    const entry = screen.getByTestId('tl-dimmed')
+    expect(entry).toHaveTextContent('No longer confirmed')
+    expect(entry).toHaveTextContent('Vanguard Group')
+    expect(entry).toHaveTextContent('quarter ending 2026-06-30')
+    expect(screen.getByText('2026')).toBeInTheDocument()
+    expect(entry.querySelector('a')).toBeNull()                      // a 13F has no newer list to link
+  })
+
+  it('links the newer subsidiary list when there is one', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_out', since: '2014-12-31', since_basis: 'first_listed',
+           party: { id: 'd', name: 'Dropped GmbH' }, stale: true, stale_since: '2025-12-31',
+           stale_reason: 'ex21_not_listed',
+           stale_source_url: 'https://www.sec.gov/Archives/edgar/data/1/0002/ex21.htm' }),
+    ] } as never)
+    render(<TimelinePanel entityId="nc" />)
+    const entry = await screen.findByTestId('tl-dimmed')
+    expect(entry).toHaveTextContent('newer subsidiary list dated 2025-12-31')
+    const link = entry.querySelector('a')!
+    expect(link).toHaveAttribute('href', 'https://www.sec.gov/Archives/edgar/data/1/0002/ex21.htm')
+    expect(link).toHaveTextContent('the newer list')
+  })
+
+  it('a holding dimmed before the reason was recorded keeps the badge but gets no dated entry', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2018-01-01', party: { id: 'w', name: 'Old Mark Inc' }, stale: true }),
+    ] } as never)
+    render(<TimelinePanel entityId="nc" />)
+    await screen.findByText('Old Mark Inc')
+    expect(screen.getByText('not confirmed')).toHaveAttribute('title', expect.stringContaining('No newer source'))
+    expect(screen.queryByTestId('tl-dimmed')).toBeNull()
+  })
+
+  it('an unknown reason code reads as the generic reason, and a fresh holding gets nothing', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2018-01-01', party: { id: 'u', name: 'Odd Reason Co' },
+           stale: true, stale_since: '2025-01-01', stale_reason: 'something_new' }),
+      ev({ kind: 'ownership_in', since: '2021-01-01', party: { id: 'f', name: 'Fresh Co' }, stale: false }),
+    ] } as never)
+    render(<TimelinePanel entityId="nc" />)
+    const entry = await screen.findByTestId('tl-dimmed')
+    expect(entry).toHaveTextContent('No newer source confirms this')
+    expect(screen.getAllByTestId('tl-dimmed')).toHaveLength(1)
+  })
+})
+
 describe('TimelinePanel', () => {
   it('says "Owns" / "Owned by", never "Acquired" — a list is not a purchase', async () => {
     mockHistory.mockResolvedValue({ data: [
