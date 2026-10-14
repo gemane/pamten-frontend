@@ -4412,3 +4412,17 @@ select.graph-filters__select {
   .graph-action-btn--clear .graph-action-btn__label { display: none; }
   .graph-action-btn--clear { padding: 0; width: 32px; height: 32px; justify-content: center; }
 }
+
+/* The licence credit under a logo or portrait: visible, small, linked. */
+.panel-image-credit {
+  margin: -8px 0 12px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #6b7688;
+}
+.panel-image-credit a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+.panel-image-credit a:hover { color: #c9d1dc; }

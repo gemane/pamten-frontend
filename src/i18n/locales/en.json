@@ -156,6 +156,8 @@
     "credibility": "Credibility",
     "wikipedia": "Wikipedia",
     "reported": "Reported {{date}}",
+    "photoCredit": "Photo",
+    "logoCredit": "Logo",
     "lastChecked": "Last checked {{date}}",
     "dualListedWith": "Dual-listed with",
     "succeededBy": "Succeeded by",
