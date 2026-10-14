@@ -16,14 +16,13 @@ function cspPlugin(apiUrl: string): Plugin {
     "default-src 'self'",
     "script-src 'self' 'sha256-1o6eNdK+q27XKvFZMKWcidtwJHWnJ/s0krkPzTlmgnM='",
     "style-src 'self' 'unsafe-inline'",
-    // commons/upload = entity logos (Wikidata P154/P18); thumb.wikimedia.org = the
-    // host Wikipedia's summary API now serves person thumbnails from (it moved
-    // off upload.wikimedia.org in 2026 and every person photo went blank until
-    // this line caught up)
-    "img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org https://thumb.wikimedia.org",
+    // logos and portraits come from our own API (GET /media/…/file), which in
+    // production is another origin than the site; no Wikimedia host any more —
+    // the server fetches, licence-checks and caches them
+    `img-src 'self' data:${apiOrigin ? ' ' + apiOrigin : ''}`,
     // tiles.openfreemap.org = the detail map's style, vector tiles, sprites and
     // glyphs, all fetched by MapLibre (nothing loads as an <img>)
-    `connect-src 'self'${apiOrigin ? ' ' + apiOrigin : ''} https://www.wikidata.org https://en.wikipedia.org https://tiles.openfreemap.org`,
+    `connect-src 'self'${apiOrigin ? ' ' + apiOrigin : ''} https://tiles.openfreemap.org`,
     // MapLibre decodes tiles in web workers it builds from a blob URL
     "worker-src 'self' blob:",
     "child-src blob:",
@@ -63,7 +62,7 @@ export default defineConfig(({ mode }) => {
   // Fallback is the canonical host, not the Render default (pamten-backend-yrbh
   // .onrender.com): both serve the same service, but only the owlgraph.org names
   // are the ones the deployed frontend and the docs use, and this value goes
-  // into the page's CSP connect-src.
+  // into the page's CSP connect-src and img-src.
   const apiUrl = env.VITE_API_URL || 'https://api-dev.owlgraph.org'
   const appVersion: string = resolveAppVersion({ ...process.env, ...env })
 
