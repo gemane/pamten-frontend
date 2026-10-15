@@ -4442,3 +4442,33 @@ select.graph-filters__select {
   border-bottom: 1px dotted currentColor;
 }
 .panel-image-credit a:hover { color: #c9d1dc; }
+
+/* The portrait opens big on a click (components/ImageZoom.tsx). */
+.panel-avatar-button {
+  display: block; padding: 0; margin: 0; border: none; background: none;
+  cursor: zoom-in; border-radius: 10px;
+}
+.panel-avatar-button:focus-visible { outline: 2px solid #4a90d9; outline-offset: 2px; }
+.image-zoom {
+  position: fixed; inset: 0; z-index: 9000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 16px 16px; background: rgba(10, 16, 30, 0.88); cursor: zoom-out;
+}
+.image-zoom__figure {
+  margin: 0; max-width: min(960px, 100%); cursor: default;
+  display: flex; flex-direction: column; align-items: center;
+}
+.image-zoom__img {
+  display: block; max-width: 100%; max-height: calc(100vh - 120px);
+  object-fit: contain; border-radius: 10px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+.image-zoom__figure .panel-image-credit { margin: 10px 0 0; font-size: 12px; color: #b8c2d6; text-align: center; }
+.image-zoom__close {
+  position: absolute; top: 10px; right: 14px; width: 36px; height: 36px;
+  border: none; border-radius: 50%; background: rgba(255, 255, 255, 0.12);
+  color: #fff; font-size: 24px; line-height: 1; cursor: pointer;
+}
+.image-zoom__close:hover { background: rgba(255, 255, 255, 0.22); }
+[data-theme="light"] .image-zoom { background: rgba(240, 244, 248, 0.94); }
+[data-theme="light"] .image-zoom__figure .panel-image-credit { color: #4a5568; }
+[data-theme="light"] .image-zoom__close { background: rgba(0, 0, 0, 0.08); color: #1a202c; }

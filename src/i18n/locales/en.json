@@ -157,6 +157,8 @@
     "wikipedia": "Wikipedia",
     "reported": "Reported {{date}}",
     "photoCredit": "Photo",
+    "enlargePhoto": "Show the photo of {{name}} larger",
+    "closePhoto": "Close",
     "logoCredit": "Logo",
     "lastChecked": "Last checked {{date}}",
     "dualListedWith": "Dual-listed with",

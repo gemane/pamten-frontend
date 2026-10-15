@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, type MediaImage } from '../services/api'
 import ImageCredit, { useMediaImage } from './ImageCredit'
+import ImageZoom from './ImageZoom'
 import { countryName } from '../utils/isoCountries'
 import { ageFrom } from '../utils/age'
 import { isSubdivision, subdivisionName } from '../utils/isoSubdivisions'
@@ -651,7 +652,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
       <div className="node-panel__scroll">
       <div className="panel-body">
       {image && (<>
-        <img className="panel-avatar" src={image.src} alt={raw.full_name} />
+        <ImageZoom image={image} alt={raw.full_name} />
         <ImageCredit credit={image.credit} kind="person" />
       </>)}
       <span className="node-type-badge node-type-badge--person">{t('legend.person')}</span>

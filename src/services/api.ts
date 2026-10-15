@@ -324,6 +324,8 @@ export const pullFederationPeer = (id: string): Promise<AxiosResponse<PeerPullRe
 export type MediaKind = 'entity' | 'person'
 export interface MediaImage {
   url: string
+  /** The enlarged rendition (`?size=large`), for the click-to-enlarge view. */
+  large_url?: string
   author: string | null
   license: string
   license_url: string | null
