@@ -2420,6 +2420,37 @@ describe('the image and its credit', () => {
     expect(screen.getByTestId('image-source').textContent).toContain('Wikimedia Commons · Photo')
   })
 
+  it("a person's Wikipedia article is a details row up top, like a company's Website — not a link at the foot", async () => {
+    mockMedia.mockRejectedValue(Object.assign(new Error('404'), { response: { status: 404 } }))
+    mockProfile.mockResolvedValue({ data: {} } as never)
+    const person = { id: 'p2', first_name: 'C', last_name: 'D', full_name: 'C D', verified: false,
+                     wikipedia_url: 'https://en.wikipedia.org/wiki/C_D' }
+    vi.mocked(getPersonProfile).mockResolvedValue({ data: { person, positions: [], holdings: [] } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+    render(<NodePanel node={{ id: 'p2', label: 'C D', nodeType: 'person', raw: person as never }} refreshKey={0} />)
+    const row = (await screen.findByText('Wikipedia')).closest('.meta-row')!
+    const link = row.querySelector('a.meta-value--link')!
+    expect(link).toHaveAttribute('href', 'https://en.wikipedia.org/wiki/C_D')
+    expect(link.textContent).toContain('en.wikipedia.org')
+    expect(document.querySelector('a.panel-link[href*="wikipedia"]')).toBeNull()
+    // the row sits with the facts, above the web search
+    const rows = Array.from(document.querySelectorAll('.meta-row .meta-label')).map(e => e.textContent)
+    expect(rows.indexOf('Wikipedia')).toBeLessThan(rows.indexOf('Web search'))
+  })
+
+  it('an unusable stored Wikipedia value shows no row at all', async () => {
+    mockMedia.mockRejectedValue(Object.assign(new Error('404'), { response: { status: 404 } }))
+    mockProfile.mockResolvedValue({ data: {} } as never)
+    const person = { id: 'p3', first_name: 'E', last_name: 'F', full_name: 'E F', verified: false,
+                     wikipedia_url: 'javascript:alert(1)' }
+    vi.mocked(getPersonProfile).mockResolvedValue({ data: { person, positions: [], holdings: [] } } as never)
+    vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
+    render(<NodePanel node={{ id: 'p3', label: 'E F', nodeType: 'person', raw: person as never }} refreshKey={0} />)
+    await screen.findByText('Web search')
+    expect(screen.queryByText('Wikipedia')).toBeNull()
+    expect(document.querySelector('a[href^="javascript:"]')).toBeNull()
+  })
+
   it('no licensed image: no picture, no caption, and the stored logo_url is never loaded', async () => {
     mockMedia.mockRejectedValue(Object.assign(new Error('404'), { response: { status: 404 } }))
     mockProfile.mockResolvedValue({ data: { ...profile('e1', 'Acme Corp'),
