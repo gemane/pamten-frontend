@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch } from 'react-icons/fi'
+import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, type MediaImage } from '../services/api'
 import ImageCredit, { useMediaImage } from './ImageCredit'
 import { countryName } from '../utils/isoCountries'
@@ -663,6 +663,12 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
           value={nationalities.join(', ') || null}
         />
         <MetaRow icon={FiTag} label={t('panel.alsoKnownAs')} value={aka.length ? aka.join(', ') : null} />
+        {/* The article, up here with the facts like a company's Website row —
+            it used to sit as a bare link at the foot of the panel. Gated like
+            every stored URL: an unusable value shows nothing. */}
+        <MetaRow icon={FiBookOpen} label={t('panel.wikipedia')}
+                 value={safeHref(raw.wikipedia_url ?? null) ? (linkHost(raw.wikipedia_url) ?? 'Wikipedia') : null}
+                 href={safeHref(raw.wikipedia_url ?? null) ?? undefined} />
         <MetaRow icon={FiSearch} label={t('panel.webSearch')}
                  value={googleSearchHref(raw.full_name, { quote: true }) ? 'Google' : null}
                  href={googleSearchHref(raw.full_name, { quote: true }) ?? undefined} />
@@ -732,12 +738,6 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
             </RelRow>
           ))}
         </Section>
-      )}
-
-      {raw.wikipedia_url && (
-        <a className="panel-link" href={raw.wikipedia_url} target="_blank" rel="noreferrer">
-          <FiExternalLink /> {t('panel.wikipedia')}
-        </a>
       )}
 
       {/* People can be scraped now, so they can be refreshed — the same control
