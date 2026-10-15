@@ -99,18 +99,21 @@ describe('what it draws', () => {
     expect(screen.getByText(/until 2011/i)).toBeInTheDocument()
   })
 
-  it('marks an open role as active', () => {
+  it('marks an open role as ongoing', () => {
+    // "ongoing", not "Active": the row sits under the year the role began,
+    // and "active" there read as an event of that year
     render(<PersonTimeline profile={profile([
       position('Alphabet Inc.', 'Board Member', '1998-01-01'),
     ])} />)
-    expect(screen.getByText(/active/i)).toBeInTheDocument()
+    expect(screen.getByText(/ongoing/i)).toBeInTheDocument()
+    expect(screen.queryByText(/active/i)).toBeNull()
   })
 
-  it('does not call an undated role active', () => {
+  it('does not call an undated role ongoing', () => {
     // It is not a current position — it is a position of unknown date, and
-    // saying "Active" would be an assertion the sources never made.
+    // saying "ongoing" would be an assertion the sources never made.
     render(<PersonTimeline profile={profile([position('Google', 'Founder')])} />)
-    expect(screen.queryByText(/active/i)).toBeNull()
+    expect(screen.queryByText(/ongoing/i)).toBeNull()
     expect(screen.getByText(/no date recorded/i)).toBeInTheDocument()
   })
 

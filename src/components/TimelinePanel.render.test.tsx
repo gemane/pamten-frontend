@@ -11,6 +11,54 @@ const ev = (o: Record<string, unknown>) => ({ active: true, stake_percent: null,
 
 beforeEach(() => mockHistory.mockReset())
 
+describe('a real acquisition, and a running holding', () => {
+  it('the acquisition reader\'s closing date reads "Acquired", with the price and the filing', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_out', since: '2026-03-11', party: { id: 'wiz', name: 'WIZ, INC.' },
+           start_kind: 'acquired', value_usd: 2.95e10,
+           since_source_url: 'https://www.sec.gov/Archives/edgar/data/1652044/000165204426000071/goog-20260331_htm.xml' }),
+      ev({ kind: 'ownership_in', since: '2026-03-10', party: { id: 'g', name: 'Alphabet, Inc.' },
+           start_kind: 'acquired', value_usd: 5.9e9 }),
+      ev({ kind: 'ownership_out', since: '2019-01-01', party: { id: 'k', name: 'Listed Ltd' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    await screen.findByText('WIZ, INC.')
+    expect(screen.getByText('Acquired')).toBeInTheDocument()
+    expect(screen.getByText('Acquired by')).toBeInTheDocument()
+    expect(screen.getByText('Owns')).toBeInTheDocument()                 // the list's edge stays "Owns"
+    const deals = screen.getAllByTestId('tl-deal')
+    expect(deals[0]).toHaveTextContent('for $29.5 bn')
+    expect(deals[0].querySelector('a')).toHaveAttribute('href', expect.stringContaining('goog-20260331_htm.xml'))
+    expect(deals[1]).toHaveTextContent('for $5.9 bn')
+    expect(deals[1].querySelector('a')).toBeNull()
+    // a running holding reads "ongoing", not "Active": the row sits under the
+    // year it began, and "active" there read as an event of that year
+    expect(screen.getAllByText('ongoing')).toHaveLength(3)
+    expect(screen.queryByText('Active')).toBeNull()
+  })
+
+  it('a 13F holding carries a market value, which is not a price: no "for …"', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2020-03-31', since_basis: 'first_reported', stake_percent: 1.2,
+           party: { id: 'v', name: 'Vanguard Group' }, value_usd: 1.2e9 }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    await screen.findByText('Vanguard Group')
+    expect(screen.queryByTestId('tl-deal')).toBeNull()
+    expect(screen.getByText('Owned by')).toBeInTheDocument()
+  })
+
+  it('formats a price the way the panel says it', async () => {
+    const { formatUsd } = await import('./TimelinePanel')
+    expect(formatUsd(2.95e10)).toBe('$29.5 bn')
+    expect(formatUsd(5.9e9)).toBe('$5.9 bn')
+    expect(formatUsd(2.7e9)).toBe('$2.7 bn')
+    expect(formatUsd(150e9)).toBe('$150 bn')
+    expect(formatUsd(2.7e6)).toBe('$2.7 m')
+    expect(formatUsd(950000)).toBe('$950,000')
+  })
+})
+
 describe('why a holding went grey', () => {
   it('a dimmed holding reads "not confirmed", and gets a dated entry saying why', async () => {
     mockHistory.mockResolvedValue({ data: [
@@ -24,7 +72,7 @@ describe('why a holding went grey', () => {
     // the holding's own row: dimmed, not "Active" — with the reason on hover
     const badge = screen.getByText('not confirmed')
     expect(badge).toHaveAttribute('title', expect.stringContaining('2026-06-30'))
-    expect(screen.getAllByText('Active')).toHaveLength(1)           // Kept Ltd only
+    expect(screen.getAllByText('ongoing')).toHaveLength(1)          // Kept Ltd only
     // the dated entry under 2026, in words
     const entry = screen.getByTestId('tl-dimmed')
     expect(entry).toHaveTextContent('No longer confirmed')

@@ -24,6 +24,20 @@ interface TimelineEvent {
   stale_since?: string | null
   stale_reason?: string | null
   stale_source_url?: string | null
+  /** "acquired": the one start a source STATES as a purchase — the SEC
+   *  acquisition reader's closing date, with the price paid and the filing.
+   *  Every other start is a date the holding existed by. */
+  start_kind?: string | null
+  value_usd?: number | null
+  since_source_url?: string | null
+}
+
+/** A deal price as the panel says it: "$29.5 bn", "$2.7 m", "$950,000". */
+export function formatUsd(v: number): string {
+  const abs = Math.abs(v)
+  const [n, unit] = abs >= 1e9 ? [v / 1e9, 'bn'] : abs >= 1e6 ? [v / 1e6, 'm'] : [v, '']
+  const s = n.toLocaleString('en-US', { maximumFractionDigits: unit && Math.abs(n) < 100 ? 1 : 0 })
+  return unit ? `$${s} ${unit}` : `$${s}`
 }
 
 /** The reasons the backend writes (edge_schema.STALE_REASONS); anything else
@@ -122,8 +136,11 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   // "Owns" / "Owned by", not "Acquired": most sources say a holding existed at
   // a date, not that it was bought then (an Exhibit 21 is a year-end list), and
   // the year heading above already carries the date.
-  const kindLabel = kind === 'ownership_in'  ? t('timeline.ownedBy')
-                  : kind === 'ownership_out' ? t('timeline.ownsLabel')
+  // …except the one start a source states as a purchase: the SEC acquisition
+  // reader's closing date, which may say "Acquired", with the price paid.
+  const acquired  = ev.start_kind === 'acquired'
+  const kindLabel = kind === 'ownership_in'  ? t(acquired ? 'timeline.acquiredBy' : 'timeline.ownedBy')
+                  : kind === 'ownership_out' ? t(acquired ? 'timeline.acquired' : 'timeline.ownsLabel')
                   : t('timeline.executive')
   // A start date read off the annual subsidiary lists, not stated by a source:
   // "first_listed" — the oldest list naming it, the holding may be older;
@@ -168,6 +185,19 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
             : ended && <span className="tl-event__badge tl-event__badge--closed">{t('timeline.until', { year: ended })}</span>}
         </div>
         <div className="tl-event__name">{name}</div>
+        {acquired && (ev.value_usd != null || ev.since_source_url) && (
+          <div className="tl-event__meta tl-event__deal" data-testid="tl-deal">
+            {ev.value_usd != null && t('timeline.forValue', { value: formatUsd(ev.value_usd) })}
+            {ev.since_source_url && (
+              <>
+                {ev.value_usd != null && ' · '}
+                <a href={ev.since_source_url} target="_blank" rel="noreferrer">
+                  {t('timeline.filing')} <FiExternalLink />
+                </a>
+              </>
+            )}
+          </div>
+        )}
         {ev.stake_percent != null && (
           <div className="tl-event__meta">
             <OwnershipBadge type={ev.ownership_type} percent={ev.stake_percent} />
