@@ -101,8 +101,20 @@ describe('asOf rules', () => {
   it('edge data maps back to the API shape', () => {
     expect(tenureOfEdge({ id: 'e', source: 'a', target: 'b', label: '', edgeType: 'owns',
                           since: '2010-01-01', sinceBasis: 'first_listed', until: null,
-                          sourceDate: '2026-01-01', stale: true } as never))
+                          sourceDate: '2026-01-01', stale: true, staleSince: '2026-06-30' } as never))
       .toEqual({ since: '2010-01-01', since_basis: 'first_listed', until: null, source_date: '2026-01-01',
-                 stale: true })
+                 stale: true, stale_since: '2026-06-30' })
+  })
+
+  it("the mark's own date decides the dimming, not the filing date", () => {
+    // a 13F position: filed 2024-05-15 (source_date), gone from the quarter
+    // ending 2024-06-30 (stale_since) — present through that quarter, dimmed after
+    const stale = { since: '2020-03-31', since_basis: 'first_reported', source_date: '2024-05-15',
+                    stale: true, stale_since: '2024-06-30' }
+    expect(edgePresence(stale, '2024-06-01')).toBe('present')
+    expect(edgePresence(stale, '2024-06-30')).toBe('present')
+    expect(edgePresence(stale, '2024-07-01')).toBe('unknown')
+    // without the mark's date the filing date still rules, as before
+    expect(edgePresence({ ...stale, stale_since: null }, '2024-06-01')).toBe('unknown')
   })
 })

@@ -99,18 +99,17 @@ describe('what it draws', () => {
     expect(screen.getByText(/until 2011/i)).toBeInTheDocument()
   })
 
-  it('marks an open role as active', () => {
+  it('puts no state badge on an open role: a timeline tells transitions', () => {
     render(<PersonTimeline profile={profile([
       position('Alphabet Inc.', 'Board Member', '1998-01-01'),
     ])} />)
-    expect(screen.getByText(/active/i)).toBeInTheDocument()
+    expect(screen.getByText('Board Member')).toBeInTheDocument()
+    expect(screen.queryByText(/ongoing|active/i)).toBeNull()
   })
 
-  it('does not call an undated role active', () => {
-    // It is not a current position — it is a position of unknown date, and
-    // saying "Active" would be an assertion the sources never made.
+  it('does not badge an undated role either', () => {
     render(<PersonTimeline profile={profile([position('Google', 'Founder')])} />)
-    expect(screen.queryByText(/active/i)).toBeNull()
+    expect(screen.queryByText(/ongoing|active/i)).toBeNull()
     expect(screen.getByText(/no date recorded/i)).toBeInTheDocument()
   })
 

@@ -341,7 +341,21 @@
     "sinceRegisterHint": "El registro británico de personas con control significativo empezó el 6 de abril de 2016; el control existente se notificó ese día. Puede ser anterior.",
     "sinceLowerBoundHint": "Las fuentes solo muestran que existía en {{year}}; puede ser anterior.",
     "executive": "Directivo",
-    "active": "Activo",
+    "endedOwnedBy": "Ya no pertenece a",
+    "endedOwns": "Ya no posee",
+    "roleEnded": "Ya no es {{role}}",
+    "endReason": {
+      "gleif_inactive": "GLEIF registra la consolidación como terminada el {{date}}.",
+      "gleif_dropped": "La relación ya no aparece en los registros de GLEIF desde el {{date}}; el fin puede ser anterior.",
+      "ceased": "Companies House registra que esta persona dejó de ser persona con control significativo el {{date}}.",
+      "withdrawn": "La notificación al registro fue retirada el {{date}}; se considera que nunca se aplicó.",
+      "amendment": "Un informe de participación modificado del {{date}} indica que el titular ya no posee una participación declarable.",
+      "unknown": "La fuente registra la participación como terminada el {{date}}."
+    },
+    "acquired": "Adquirida",
+    "acquiredBy": "Adquirida por",
+    "forValue": "por {{value}}",
+    "filing": "informe",
     "until": "hasta {{year}}",
     "noDate": "Sin fecha registrada",
     "loading": "Cargando cronología…",
@@ -352,7 +366,17 @@
     "born": "nacido",
     "died": "fallecido",
     "showAsOf": "Mostrar el grafo a finales de {{year}}",
-    "showPresent": "Volver al presente"
+    "showPresent": "Volver al presente",
+    "dimmedLabel": "Ya no confirmado",
+    "dimmedBadge": "sin confirmar",
+    "reasonSource": "la lista más reciente",
+    "reason": {
+      "13f_not_confirmed": "El informe 13F del titular para el trimestre que termina el {{date}} ya no incluye esta posición. El silencio no es una venta: la participación se atenúa, no se cierra.",
+      "ex21_not_listed": "La lista de filiales más reciente, fechada el {{date}}, ya no la nombra. Los declarantes pueden omitir filiales pequeñas: se atenúa, no se cierra.",
+      "unconfirmed": "Ninguna fuente lo ha confirmado desde el {{date}}. Una declaración colaborativa borrada simplemente deja de verse: se atenúa, no se cierra.",
+      "lei_lapsed": "El registro en que se basa ha caducado y su emisor ya no lo mantiene; última actualización el {{date}}. Atenuado, no cerrado.",
+      "unknown": "Ninguna fuente más reciente lo confirma: se atenúa, no se cierra."
+    }
   },
   "toast": {
     "personGraphError": "No se pudo cargar el grafo de la persona.",

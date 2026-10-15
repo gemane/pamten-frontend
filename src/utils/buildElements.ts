@@ -192,7 +192,7 @@ function ownershipElements(
 function tenureData(rel: Tenure | null | undefined) {
   return { since: rel?.since ?? null, sinceBasis: rel?.since_basis ?? null,
            until: rel?.until ?? null, sourceDate: rel?.source_date ?? null,
-           stale: rel?.stale ?? null }
+           stale: rel?.stale ?? null, staleSince: rel?.stale_since ?? null }
 }
 
 export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {

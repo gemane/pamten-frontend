@@ -341,7 +341,21 @@
     "sinceRegisterHint": "The UK register of people with significant control began on 6 April 2016; control that already existed was notified that day. It may be older.",
     "sinceLowerBoundHint": "The sources only show it existed by {{year}} — it may be older.",
     "executive": "Executive",
-    "active": "Active",
+    "endedOwnedBy": "No longer owned by",
+    "endedOwns": "No longer owns",
+    "roleEnded": "No longer {{role}}",
+    "endReason": {
+      "gleif_inactive": "GLEIF records the consolidation as ended on {{date}}.",
+      "gleif_dropped": "The relationship no longer appears in GLEIF's records from {{date}}; the end may be earlier.",
+      "ceased": "Companies House records that this person ceased to be a person with significant control on {{date}}.",
+      "withdrawn": "The register notification was withdrawn on {{date}}; it is treated as never having applied.",
+      "amendment": "An amended ownership report of {{date}} states the holder no longer holds a reportable stake.",
+      "unknown": "The source records the holding as ended on {{date}}."
+    },
+    "acquired": "Acquired",
+    "acquiredBy": "Acquired by",
+    "forValue": "for {{value}}",
+    "filing": "filing",
     "until": "until {{year}}",
     "noDate": "No date recorded",
     "loading": "Loading timeline…",
@@ -352,7 +366,17 @@
     "born": "born",
     "died": "died",
     "showAsOf": "Show the graph as of the end of {{year}}",
-    "showPresent": "Back to the present"
+    "showPresent": "Back to the present",
+    "dimmedLabel": "No longer confirmed",
+    "dimmedBadge": "not confirmed",
+    "reasonSource": "the newer list",
+    "reason": {
+      "13f_not_confirmed": "The holder's 13F report for the quarter ending {{date}} no longer lists this position. Silence is not a sale, so the holding is dimmed, not ended.",
+      "ex21_not_listed": "The newer subsidiary list dated {{date}} no longer names it. Filers may leave out small subsidiaries, so it is dimmed, not ended.",
+      "unconfirmed": "No source has confirmed this since {{date}}. A crowd-edited statement that is deleted simply stops being seen, so it is dimmed, not ended.",
+      "lei_lapsed": "The register record behind it lapsed and is no longer maintained by its issuer; last updated {{date}}. Dimmed, not ended.",
+      "unknown": "No newer source confirms this; it is dimmed, not ended."
+    }
   },
   "toast": {
     "personGraphError": "Could not load person graph.",
