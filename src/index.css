@@ -1551,6 +1551,9 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
 /* Computed (not sourced) rows/badges — e.g. free-float residual */
 /* The country that tells a company from a namesake in the same list. */
 .rel-item__place { color: #8b95a7; font-weight: 400; }
+/* "† 2018" after a person who has died — the same on every list */
+.rel-item__died { color: #8b95a7; font-weight: 400; white-space: nowrap; }
+[data-theme="light"] .rel-item__died { color: #718096; }
 [data-theme="light"] .rel-item__place { color: #718096; }
 .rel-item__name--muted { color: #8b95a7; font-style: italic; font-weight: 400; }
 [data-theme="light"] .rel-item__name--muted { color: #718096; }

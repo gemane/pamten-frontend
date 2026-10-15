@@ -95,10 +95,15 @@ export function personTimelineRows(profile: PersonProfile): TimelineRow[] {
 /** Whether there is a timeline worth showing.
  *
  *  A birth year on its own is not a career — it would open a tab containing one
- *  grey dot — so the gate asks for a dated *relationship*, not merely a dated row.
+ *  grey dot — so the gate asks for a dated *relationship*. A death is the other
+ *  thing that opens it: it is a transition the timeline exists to tell, and
+ *  with the birth it bounds the years in which the person could have held or
+ *  exercised control. Paul Allen's only role (Founder, undated) left him with
+ *  no timeline at all.
  */
 export function hasDatedRows(profile: PersonProfile | null | undefined): boolean {
   if (!profile) return false
+  if (profile.person?.death_date) return true
   return personTimelineRows(profile).some(r => !!r.since && r.kind !== 'life')
 }
 
@@ -131,7 +136,9 @@ function Row({ row }: { row: TimelineRow }) {
         <div className="tl-event__dot" style={{ background: color }} />
         <div className="tl-event__body">
           <span className="tl-event__kind" style={{ color }}>
-            <Icon />
+            {/* a gift for a birth; a death gets the cross the panel and the
+                graph use (utils/deathMark), never the birthday icon */}
+            {row.label === 'born' ? <Icon /> : <span aria-hidden="true">{'\u2020'}</span>}
             {row.label === 'born' ? t('timeline.born') : t('timeline.died')}
           </span>
         </div>

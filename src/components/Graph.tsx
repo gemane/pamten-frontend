@@ -12,6 +12,7 @@ import { arcSpacing, layoutArc, rowCentres } from '../utils/arcPack'
 import { byStakeDesc } from '../utils/ordering'
 import { displayName } from '../utils/displayName'
 import { relabelNamesakes } from '../utils/namesakes'
+import { personBoxLabel } from '../utils/deathMark'
 import { withLineLabels } from '../utils/lineLabels'
 import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
@@ -69,6 +70,15 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       style: {
         'background-color': ENTITY_COLORS.company.fill, shape: 'roundrectangle',
         'border-width': 2, 'border-color': ENTITY_COLORS.company.border,
+      },
+    },
+    {
+      // A person who has died carries "† 2018" under the name, whichever way
+      // the box came in — one rule here instead of at every builder.
+      selector: 'node[nodeType = "person"]',
+      style: {
+        label: (ele: cytoscape.NodeSingular) =>
+          personBoxLabel(ele.data('label') ?? '', ele.data('raw') as { death_date?: string | null } | undefined),
       },
     },
     ...ENTITY_SUBTYPES.map(subtype => ({
