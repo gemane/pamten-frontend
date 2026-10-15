@@ -1874,6 +1874,8 @@ a.source-item__name:hover { color: #4A90D9; }
 .tl-event--dimmed .tl-event__name { color: #8892a4; }
 .tl-event__reason { font-size: 12px; color: #8892a4; line-height: 1.4; }
 .tl-event__deal { font-size: 12px; color: #a0aec0; }
+.tl-event--ended .tl-event__name { color: #a0aec0; }
+[data-theme="light"] .tl-event--ended .tl-event__name { color: #4a5568; }
 .tl-event__deal a { color: inherit; text-decoration: underline; }
 [data-theme="light"] .tl-event__deal { color: #4a5568; }
 .tl-event__reason a { color: inherit; text-decoration: underline; }

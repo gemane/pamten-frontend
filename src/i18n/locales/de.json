@@ -341,7 +341,17 @@
     "sinceRegisterHint": "Das britische Register der wirtschaftlich Berechtigten begann am 6. April 2016; bestehende Kontrolle wurde an diesem Tag gemeldet. Sie kann älter sein.",
     "sinceLowerBoundHint": "Die Quellen belegen nur, dass sie {{year}} bestand — sie kann älter sein.",
     "executive": "Führungskraft",
-    "active": "laufend",
+    "endedOwnedBy": "Nicht mehr im Besitz von",
+    "endedOwns": "Besitzt nicht mehr",
+    "roleEnded": "Nicht mehr {{role}}",
+    "endReason": {
+      "gleif_inactive": "GLEIF verzeichnet die Konsolidierung als am {{date}} beendet.",
+      "gleif_dropped": "Die Beziehung erscheint ab {{date}} nicht mehr in den GLEIF-Daten; das Ende kann früher liegen.",
+      "ceased": "Companies House verzeichnet, dass diese Person am {{date}} nicht mehr Person mit maßgeblicher Kontrolle war.",
+      "withdrawn": "Die Registermeldung wurde am {{date}} zurückgezogen; sie gilt als nie zutreffend.",
+      "amendment": "Eine geänderte Beteiligungsmeldung vom {{date}} gibt an, dass der Halter keine meldepflichtige Beteiligung mehr hält.",
+      "unknown": "Die Quelle verzeichnet die Beteiligung als am {{date}} beendet."
+    },
     "acquired": "Übernommen",
     "acquiredBy": "Übernommen von",
     "forValue": "für {{value}}",

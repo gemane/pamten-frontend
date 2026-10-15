@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiExternalLink } from 'react-icons/fi'
+import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink } from 'react-icons/fi'
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import { asOfFromYear, asOfYear } from '../utils/asOf'
@@ -30,6 +30,14 @@ interface TimelineEvent {
   start_kind?: string | null
   value_usd?: number | null
   since_source_url?: string | null
+  /** How the source says the holding ended (`gleif_inactive`, `gleif_dropped`,
+   *  `ceased`, `withdrawn`; a 13D/G amendment has none and is read off the
+   *  filing type) and the filing itself — for the end entry. */
+  until_reason?: string | null
+  source_url?: string | null
+  filing_type?: string | null
+  /** On a derived entry ('dimmed', 'ended'): the kind of the row it came from. */
+  origin?: string | null
 }
 
 /** A deal price as the panel says it: "$29.5 bn", "$2.7 m", "$950,000". */
@@ -46,20 +54,35 @@ const KNOWN_REASONS = new Set(['13f_not_confirmed', 'ex21_not_listed', 'unconfir
 export const reasonKey = (reason: string | null | undefined): string =>
   `timeline.reason.${reason && KNOWN_REASONS.has(reason) ? reason : 'unknown'}`
 
-/** A dimmed holding with a dated reason becomes a second, dated entry: the
- *  day it stopped being confirmed, filed under that year beside the start.
- *  A dimmed holding without a date (marked before the reason was recorded)
- *  keeps only the badge on its own row. */
-export function withDimmingEvents(events: TimelineEvent[]): TimelineEvent[] {
+/** The timeline tells transitions, never states. A row from the API is the
+ *  start of a holding or a role; this adds the other transitions it implies,
+ *  each filed under its own year: the day the holding ENDED (every row with an
+ *  `until`), and the day it stopped being CONFIRMED (a dimmed holding with a
+ *  dated reason — one marked before the reason was recorded keeps only the
+ *  badge on its own row). */
+export function withTransitionEvents(events: TimelineEvent[]): TimelineEvent[] {
   const out: TimelineEvent[] = []
   for (const ev of events) {
     out.push(ev)
-    if (ev.stale && ev.stale_since && (ev.kind === 'ownership_in' || ev.kind === 'ownership_out')) {
-      out.push({ ...ev, kind: 'dimmed', since: ev.stale_since, since_basis: null, until: null,
-                 active: false })
+    const ownership = ev.kind === 'ownership_in' || ev.kind === 'ownership_out'
+    if (ev.stale && ev.stale_since && ownership) {
+      out.push({ ...ev, kind: 'dimmed', origin: ev.kind, since: ev.stale_since, since_basis: null,
+                 until: null, active: false })
+    }
+    if (ev.until && (ownership || ev.kind === 'role')) {
+      out.push({ ...ev, kind: 'ended', origin: ev.kind, since: ev.until, since_basis: null,
+                 until: null, active: false })
     }
   }
   return out
+}
+
+/** How the source says a holding ended, as a words key. */
+const END_REASONS = new Set(['gleif_inactive', 'gleif_dropped', 'ceased', 'withdrawn'])
+export function endReasonKey(ev: TimelineEvent): string {
+  if (ev.until_reason && END_REASONS.has(ev.until_reason)) return `timeline.endReason.${ev.until_reason}`
+  if (/^13[DG]/.test(ev.filing_type ?? '')) return 'timeline.endReason.amendment'
+  return 'timeline.endReason.unknown'
 }
 
 function partyName(party: TimelineEvent['party']): string {
@@ -86,12 +109,53 @@ const KIND_COLOR: Record<string, string> = {
   ownership_out: '#4A90D9',
   role:          '#27AE60',
   dimmed:        '#8892a4',
+  ended:         '#718096',
 }
 const KIND_ICON: Record<string, React.ElementType> = {
   ownership_in:  FiArrowDownRight,
   ownership_out: FiArrowUpLeft,
   role:          FiUser,
   dimmed:        FiEyeOff,
+  ended:         FiLogOut,
+}
+
+/** The day a holding or a role ended: what changed, and how the source says
+ *  so. Never "sold" — no source states a sale, only that the holding ended. */
+function EndedRow({ ev }: { ev: TimelineEvent }) {
+  const { t } = useTranslation()
+  const name = partyName(ev.party)
+  const date = ev.since ?? ''
+  const label = ev.origin === 'ownership_in' ? t('timeline.endedOwnedBy')
+              : ev.origin === 'ownership_out' ? t('timeline.endedOwns')
+              : t('timeline.roleEnded', { role: ev.role ?? t('timeline.executive') })
+  const amendment = endReasonKey(ev) === 'timeline.endReason.amendment'
+  return (
+    <div className="tl-event tl-event--ended" data-testid="tl-ended">
+      <div className="tl-event__dot" style={{ background: KIND_COLOR.ended }} />
+      <div className="tl-event__body">
+        <div className="tl-event__row">
+          <span className="tl-event__kind" style={{ color: KIND_COLOR.ended }}>
+            <FiLogOut />
+            {label}
+          </span>
+        </div>
+        <div className="tl-event__name">{name}</div>
+        {ev.origin !== 'role' && (
+          <div className="tl-event__meta tl-event__reason">
+            {t(endReasonKey(ev), { date })}
+            {amendment && ev.source_url && (
+              <>
+                {' '}
+                <a href={ev.source_url} target="_blank" rel="noreferrer">
+                  {t('timeline.filing')} <FiExternalLink />
+                </a>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 /** The dated entry for a holding that stopped being confirmed: why, in words,
@@ -131,6 +195,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   const { t } = useTranslation()
   const kind      = ev.kind ?? ''
   if (kind === 'dimmed') return <DimmedRow ev={ev} />
+  if (kind === 'ended') return <EndedRow ev={ev} />
   const color     = KIND_COLOR[kind] || KIND_COLOR.role
   const Icon      = KIND_ICON[kind]  || FiUser
   // "Owns" / "Owned by", not "Acquired": most sources say a holding existed at
@@ -173,15 +238,15 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
               {t(listed.newly ? 'timeline.firstListed' : 'timeline.sinceAtLeast', { year: listed.year })}
             </span>
           )}
+          {/* No state badge: a timeline tells transitions, and what holds
+              today is the Overview's job. The two badges left point at the
+              other transition of the same holding — its end, or the day it
+              stopped being confirmed — each with its own dated entry. */}
           {ev.stale
-            // dimmed, not "Active": nothing newer confirms it — the dated
-            // entry below (when the reason is recorded) says why
             ? <span className="tl-event__badge tl-event__badge--dimmed"
                     title={t(reasonKey(ev.stale_reason), { date: ev.stale_since ?? '' })}>
                 {t('timeline.dimmedBadge')}
               </span>
-            : ev.active
-            ? <span className="tl-event__badge tl-event__badge--active">{t('timeline.active')}</span>
             : ended && <span className="tl-event__badge tl-event__badge--closed">{t('timeline.until', { year: ended })}</span>}
         </div>
         <div className="tl-event__name">{name}</div>
@@ -248,7 +313,7 @@ export default function TimelinePanel({ entityId, asOf = null, onYearSelect }: T
     )
   }
 
-  const groups = groupByYear(withDimmingEvents(events))
+  const groups = groupByYear(withTransitionEvents(events))
 
   return (
     <div className="timeline">

@@ -341,7 +341,17 @@
     "sinceRegisterHint": "The UK register of people with significant control began on 6 April 2016; control that already existed was notified that day. It may be older.",
     "sinceLowerBoundHint": "The sources only show it existed by {{year}} — it may be older.",
     "executive": "Executive",
-    "active": "ongoing",
+    "endedOwnedBy": "No longer owned by",
+    "endedOwns": "No longer owns",
+    "roleEnded": "No longer {{role}}",
+    "endReason": {
+      "gleif_inactive": "GLEIF records the consolidation as ended on {{date}}.",
+      "gleif_dropped": "The relationship no longer appears in GLEIF's records from {{date}}; the end may be earlier.",
+      "ceased": "Companies House records that this person ceased to be a person with significant control on {{date}}.",
+      "withdrawn": "The register notification was withdrawn on {{date}}; it is treated as never having applied.",
+      "amendment": "An amended ownership report of {{date}} states the holder no longer holds a reportable stake.",
+      "unknown": "The source records the holding as ended on {{date}}."
+    },
     "acquired": "Acquired",
     "acquiredBy": "Acquired by",
     "forValue": "for {{value}}",

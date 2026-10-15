@@ -341,7 +341,17 @@
     "sinceRegisterHint": "El registro británico de personas con control significativo empezó el 6 de abril de 2016; el control existente se notificó ese día. Puede ser anterior.",
     "sinceLowerBoundHint": "Las fuentes solo muestran que existía en {{year}}; puede ser anterior.",
     "executive": "Directivo",
-    "active": "vigente",
+    "endedOwnedBy": "Ya no pertenece a",
+    "endedOwns": "Ya no posee",
+    "roleEnded": "Ya no es {{role}}",
+    "endReason": {
+      "gleif_inactive": "GLEIF registra la consolidación como terminada el {{date}}.",
+      "gleif_dropped": "La relación ya no aparece en los registros de GLEIF desde el {{date}}; el fin puede ser anterior.",
+      "ceased": "Companies House registra que esta persona dejó de ser persona con control significativo el {{date}}.",
+      "withdrawn": "La notificación al registro fue retirada el {{date}}; se considera que nunca se aplicó.",
+      "amendment": "Un informe de participación modificado del {{date}} indica que el titular ya no posee una participación declarable.",
+      "unknown": "La fuente registra la participación como terminada el {{date}}."
+    },
     "acquired": "Adquirida",
     "acquiredBy": "Adquirida por",
     "forValue": "por {{value}}",

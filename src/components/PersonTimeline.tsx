@@ -148,13 +148,12 @@ function Row({ row }: { row: TimelineRow }) {
             <Icon />
             {isOwns ? t('timeline.owns') : row.label}
           </span>
-          {ended
-            ? <span className="tl-event__badge tl-event__badge--closed">
-                {t('timeline.until', { year: ended })}
-              </span>
-            : row.since && <span className="tl-event__badge tl-event__badge--active">
-                {t('timeline.active')}
-              </span>}
+          {/* no state badge — a timeline tells transitions; the end is one */}
+          {ended && (
+            <span className="tl-event__badge tl-event__badge--closed">
+              {t('timeline.until', { year: ended })}
+            </span>
+          )}
         </div>
         <div className="tl-event__name">{row.company}</div>
         {row.stakePercent != null && (

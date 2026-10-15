@@ -31,9 +31,8 @@ describe('a real acquisition, and a running holding', () => {
     expect(deals[0].querySelector('a')).toHaveAttribute('href', expect.stringContaining('goog-20260331_htm.xml'))
     expect(deals[1]).toHaveTextContent('for $5.9 bn')
     expect(deals[1].querySelector('a')).toBeNull()
-    // a running holding reads "ongoing", not "Active": the row sits under the
-    // year it began, and "active" there read as an event of that year
-    expect(screen.getAllByText('ongoing')).toHaveLength(3)
+    // no state badge on a running holding: a timeline tells transitions
+    expect(screen.queryByText('ongoing')).toBeNull()
     expect(screen.queryByText('Active')).toBeNull()
   })
 
@@ -59,6 +58,50 @@ describe('a real acquisition, and a running holding', () => {
   })
 })
 
+describe('an end is a transition too', () => {
+  it('an ended holding gets its own entry under the year it ended, saying how the source states it', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2020-03-31', since_basis: 'first_reported', until: '2024-02-13',
+           active: false, filing_type: '13G/A', until_reason: null, party: { id: 'v', name: 'Vanguard Group' },
+           source_url: 'https://www.sec.gov/Archives/edgar/data/1/0009/amend.xml' }),
+      ev({ kind: 'ownership_out', since: '2016-04-06', since_basis: 'register_start', until: '2021-03-31',
+           active: false, filing_type: 'PSC', until_reason: 'ceased', party: { id: 'c', name: 'Ceased Ltd' } }),
+      ev({ kind: 'ownership_out', since: '2015-01-01', until: '2024-01-10', active: false,
+           filing_type: 'RR', until_reason: 'gleif_dropped', party: { id: 'd', name: 'Dropped GmbH' } }),
+      ev({ kind: 'ownership_out', since: '2019-01-01', party: { id: 'k', name: 'Kept Ltd' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    await screen.findByText('Kept Ltd')
+    const ends = screen.getAllByTestId('tl-ended')
+    expect(ends).toHaveLength(3)                                     // Kept Ltd has no end
+    const by = (name: string) => ends.find(e => e.textContent!.includes(name))!
+    expect(by('Vanguard Group')).toHaveTextContent('No longer owned by')
+    expect(by('Vanguard Group')).toHaveTextContent('amended ownership report of 2024-02-13')
+    expect(by('Vanguard Group').querySelector('a')).toHaveAttribute('href', expect.stringContaining('amend.xml'))
+    expect(by('Ceased Ltd')).toHaveTextContent('No longer owns')
+    expect(by('Ceased Ltd')).toHaveTextContent('ceased to be a person with significant control on 2021-03-31')
+    expect(by('Ceased Ltd').querySelector('a')).toBeNull()
+    expect(by('Dropped GmbH')).toHaveTextContent('no longer appears in GLEIF')
+    // filed under the years they ended, while the start rows keep their "until" badge
+    expect(screen.getByText('2021')).toBeInTheDocument()
+    expect(screen.getAllByText('until 2024')).toHaveLength(2)      // Vanguard and Dropped GmbH
+    expect(screen.queryByText(/sold/i)).toBeNull()
+  })
+
+  it('a role that ended is a transition as well', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'role', role: 'CEO', since: '2000-01-01', until: '2011-08-24', active: false,
+           party: { id: 'sj', full_name: 'Steve Jobs' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const end = await screen.findByTestId('tl-ended')
+    expect(end).toHaveTextContent('No longer CEO')
+    expect(end).toHaveTextContent('Steve Jobs')
+    expect(end.querySelector('.tl-event__reason')).toBeNull()      // no source reason for roles
+    expect(screen.getByText('2011')).toBeInTheDocument()
+  })
+})
+
 describe('why a holding went grey', () => {
   it('a dimmed holding reads "not confirmed", and gets a dated entry saying why', async () => {
     mockHistory.mockResolvedValue({ data: [
@@ -72,7 +115,7 @@ describe('why a holding went grey', () => {
     // the holding's own row: dimmed, not "Active" — with the reason on hover
     const badge = screen.getByText('not confirmed')
     expect(badge).toHaveAttribute('title', expect.stringContaining('2026-06-30'))
-    expect(screen.getAllByText('ongoing')).toHaveLength(1)          // Kept Ltd only
+    expect(screen.queryByText('ongoing')).toBeNull()                // Kept Ltd carries no state badge
     // the dated entry under 2026, in words
     const entry = screen.getByTestId('tl-dimmed')
     expect(entry).toHaveTextContent('No longer confirmed')
