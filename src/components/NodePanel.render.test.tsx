@@ -38,6 +38,36 @@ beforeEach(() => {
   mockSources.mockResolvedValue({ data: [] } as never)
 })
 
+describe('a person who has died is marked on every list', () => {
+  it('founder, officer and owner rows all carry "† year", the living none', async () => {
+    const allen = { id: 'pa', first_name: 'Paul', last_name: 'Allen', full_name: 'Paul Allen', verified: false,
+                    death_date: '2018-10-15' }
+    const gates = { id: 'bg', first_name: 'Bill', last_name: 'Gates', full_name: 'Bill Gates', verified: false,
+                    death_date: null }
+    const ballmer = { id: 'sb', first_name: 'Steve', last_name: 'Late', full_name: 'Steve Late', verified: false,
+                      death_date: '2020-01-02' }
+    mockProfile.mockResolvedValue({ data: {
+      ...profile('ms', 'Microsoft'),
+      executives: [
+        { person: allen, role: { role: 'Founder' } },
+        { person: gates, role: { role: 'Founder' } },
+        { person: ballmer, role: { role: 'CEO', since: '2000-01-13', until: '2014-02-04' } },
+      ],
+      owners: [{ owner: allen, relationship: { stake_percent: 4.2, ownership_type: 'minority' } }],
+    } } as never)
+    render(<NodePanel node={entityNode('ms', 'Microsoft')} refreshKey={0} />)
+    await screen.findAllByText('Paul Allen')
+    const marks = screen.getAllByTestId('died-mark')
+    // Allen as founder and as owner, the former CEO as officer: the same mark on each list
+    expect(marks.map(m => m.textContent!.trim())).toEqual(expect.arrayContaining(['\u2020 2018', '\u2020 2018', '\u2020 2020']))
+    expect(marks).toHaveLength(3)
+    expect(marks[0]).toHaveAttribute('title', expect.stringContaining('Died'))
+    // Bill Gates' row has no mark
+    const gatesRow = screen.getByText('Bill Gates').closest('.rel-item')!
+    expect(gatesRow.querySelector('[data-testid="died-mark"]')).toBeNull()
+  })
+})
+
 describe('NodePanel (render)', () => {
   it('loads and shows the selected entity profile', async () => {
     mockProfile.mockResolvedValue({ data: profile('e1', 'Acme Corp') } as Awaited<ReturnType<typeof getFullProfile>>)

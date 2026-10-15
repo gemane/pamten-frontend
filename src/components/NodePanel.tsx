@@ -19,6 +19,7 @@ import { useLongPress } from '../hooks/useLongPress'
 import { FOCUS_ATTR, useGraphFocusHighlight, useGraphHoverHighlight, useGraphPickHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
 import { formatDate } from '../utils/dates'
+import { deathMark } from '../utils/deathMark'
 import { displayName, entityLabel } from '../utils/displayName'
 import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
@@ -109,6 +110,18 @@ function CompanyName({ e, place }: { e: Entity; place?: string }) {
   )
 }
 const ownerName = (o: Entity | Person) => 'name' in o ? entityLabel(o) : o.full_name
+
+/** "† 2018" after a person's name, on every row that names one (utils/deathMark),
+ *  with the full date on hover. Nothing for the living. */
+function DiedMark({ person }: { person: Person | null | undefined }) {
+  const { t, i18n } = useTranslation()
+  const mark = deathMark(person)
+  if (!mark) return null
+  return (
+    <span className="rel-item__died" data-testid="died-mark"
+          title={`${t('panel.died')}: ${formatDate(person!.death_date, i18n.language)}`}> {mark}</span>
+  )
+}
 
 export function personToNode(p: Person): NodeData {
   return { id: p.id, label: p.full_name, nodeType: 'person', raw: p }
@@ -1392,7 +1405,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                      fromId: f.person.id, toId: entity.id,
                      role: f.role?.role || 'Founder', label: f.person.full_name,
                      sourceName: sourceName.get(f.role?.source_id ?? '') })}>
-              <span className="rel-item__name">{f.person.full_name}</span>
+              <span className="rel-item__name">{f.person.full_name}<DiedMark person={f.person} /></span>
               <CorroborationBadge rel={f.role} />
               <ReadingBadge rel={f.role} />
             </RelRow>
@@ -1411,7 +1424,8 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                             ? personToNode(m.party as Person)
                             : entityToNode(m.party as Entity)}
                     onNavigate={onNavigate}>
-              <span className="rel-item__name">{m.kind === 'person' ? (m.party as Person).full_name : entityLabel(m.party as Entity)}</span>
+              <span className="rel-item__name">{m.kind === 'person' ? (m.party as Person).full_name : entityLabel(m.party as Entity)}
+                {m.kind === 'person' && <DiedMark person={m.party as Person} />}</span>
             </RelRow>
           ))}
         </Section>
@@ -1435,6 +1449,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
               <span className="rel-item__name"
                     title={o.owner && 'name' in o.owner ? displayName(o.owner).secondary ?? undefined : undefined}>
                 {o.owner ? ownerName(o.owner) : '—'}
+                {o.owner && !('name' in o.owner) && <DiedMark person={o.owner} />}
                 {o.owner && ownerPlaces.has(o.owner.id) && (
                   <span className="rel-item__place"> ({ownerPlaces.get(o.owner.id)})</span>
                 )}
@@ -1606,7 +1621,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                      fromId: e.person.id, toId: entity.id,
                      role: e.role?.role ?? '', label: e.person.full_name,
                      sourceName: sourceName.get(e.role?.source_id ?? '') })}>
-              <span className="rel-item__name">{e.person.full_name}</span>
+              <span className="rel-item__name">{e.person.full_name}<DiedMark person={e.person} /></span>
               <CorroborationBadge rel={e.role} />
               <ReadingBadge rel={e.role} />
               <span className="role-badge">{e.role?.role}</span>

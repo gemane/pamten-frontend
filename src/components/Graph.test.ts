@@ -85,6 +85,15 @@ describe('computeArcPositions ordering (matches the panel)', () => {
   })
 })
 
+describe('buildStylesheet — a person who has died', () => {
+  it('every person box draws the death mark from the raw record, whichever builder added it', () => {
+    const rule = ruleFor('node[nodeType = "person"]') as { style: { label: (e: unknown) => string } }
+    const fake = (label: string, raw: object) => ({ data: (k: string) => (k === 'label' ? label : raw) })
+    expect(rule.style.label(fake('Paul Allen', { death_date: '2018-10-15' }))).toBe('Paul Allen\n\u2020 2018')
+    expect(rule.style.label(fake('Bill Gates', { death_date: null }))).toBe('Bill Gates')
+  })
+})
+
 describe('buildStylesheet — centered node sizing', () => {
   it('renders the centered node the largest', () => {
     const center = ruleFor('node.center')?.style as Record<string, unknown>

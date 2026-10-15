@@ -171,6 +171,22 @@ describe('the life markers', () => {
                                 { birth_date: '1973-03-26' }))).toBe(false)
   })
 
+  it('a death is marked with the cross, not the birthday icon', () => {
+    const { container } = render(<PersonTimeline profile={profile([position('Microsoft', 'Founder')], [],
+                                  { birth_date: '1953-01-21', death_date: '2018-10-15' })} />)
+    const died = Array.from(container.querySelectorAll('.tl-event--life')).find(e => /died/i.test(e.textContent!))!
+    expect(died.textContent).toContain('\u2020')
+    expect(died.querySelector('svg')).toBeNull()
+    const born = Array.from(container.querySelectorAll('.tl-event--life')).find(e => /born/i.test(e.textContent!))!
+    expect(born.querySelector('svg')).not.toBeNull()
+  })
+
+  it('a recorded death opens the tab, even when no role is dated', () => {
+    // Paul Allen: Founder of Microsoft, undated — born and died are his timeline
+    expect(hasDatedRows(profile([position('Microsoft', 'Founder')], [],
+                                { birth_date: '1953-01-21', death_date: '2018-10-15' }))).toBe(true)
+  })
+
   it('still counts a dated position as enough', () => {
     expect(hasDatedRows(withDates('1955-02-24'))).toBe(true)
   })
