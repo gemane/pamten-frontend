@@ -157,6 +157,8 @@
     "wikipedia": "Wikipedia",
     "reported": "Registrado {{date}}",
     "photoCredit": "Foto",
+    "enlargePhoto": "Ampliar la foto de {{name}}",
+    "closePhoto": "Cerrar",
     "logoCredit": "Logotipo",
     "lastChecked": "Última comprobación {{date}}",
     "dualListedWith": "Cotización dual con",

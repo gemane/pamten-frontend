@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getMediaImage, mediaFileUrl, type MediaImage, type MediaKind } from '../services/api'
 
-export interface NodeImage { src: string; credit: MediaImage }
+export interface NodeImage { src: string; large?: string; credit: MediaImage }
 
 export function useMediaImage(kind: MediaKind, id: string | undefined): NodeImage | null {
   const [image, setImage] = useState<NodeImage | null>(null)
@@ -27,7 +27,13 @@ export function useMediaImage(kind: MediaKind, id: string | undefined): NodeImag
     let live = true
     Promise.resolve()
       .then(() => getMediaImage(kind, id))
-      .then(r => { if (live && r?.data) setImage({ src: mediaFileUrl(r.data.url), credit: r.data }) })
+      .then(r => {
+        if (live && r?.data) setImage({
+          src: mediaFileUrl(r.data.url),
+          large: r.data.large_url ? mediaFileUrl(r.data.large_url) : undefined,
+          credit: r.data,
+        })
+      })
       .catch(() => { /* no licensed image, or the source is down: no image */ })
     return () => { live = false }
   }, [kind, id])
