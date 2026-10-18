@@ -372,6 +372,9 @@
     "dimmedLabel": "Nicht mehr bestätigt",
     "dimmedBadge": "nicht bestätigt",
     "reasonSource": "die neuere Liste",
+    "renamed": "Umbenannt",
+    "became": "wurde zu",
+    "renamedOn": "Das Register verzeichnet die Namensänderung am {{date}}.",
     "reason": {
       "13f_not_confirmed": "Der 13F-Bericht des Halters für das Quartal bis {{date}} führt diese Position nicht mehr. Schweigen ist kein Verkauf — die Beteiligung wird abgeblendet, nicht beendet.",
       "ex21_not_listed": "Die neuere Tochterliste vom {{date}} nennt sie nicht mehr. Einreicher dürfen kleine Töchter weglassen — abgeblendet, nicht beendet.",

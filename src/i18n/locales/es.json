@@ -372,6 +372,9 @@
     "dimmedLabel": "Ya no confirmado",
     "dimmedBadge": "sin confirmar",
     "reasonSource": "la lista más reciente",
+    "renamed": "Renombrada",
+    "became": "pasó a ser",
+    "renamedOn": "El registro consta el cambio de nombre el {{date}}.",
     "reason": {
       "13f_not_confirmed": "El informe 13F del titular para el trimestre que termina el {{date}} ya no incluye esta posición. El silencio no es una venta: la participación se atenúa, no se cierra.",
       "ex21_not_listed": "La lista de filiales más reciente, fechada el {{date}}, ya no la nombra. Los declarantes pueden omitir filiales pequeñas: se atenúa, no se cierra.",

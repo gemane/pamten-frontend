@@ -47,6 +47,39 @@ describe('a real acquisition, and a running holding', () => {
     expect(screen.getByText('Owned by')).toBeInTheDocument()
   })
 
+  it('a rename reads "Renamed", the old name then the new, under the year the old name ended', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      { kind: 'renamed', party: null, since: '2021-08-20', until: null, active: false,
+        former_name: 'BRIGHTSTAR 20:20 UK LIMITED', new_name: 'LIKEWIZE SERVICES UK LIMITED' },
+      { kind: 'renamed', party: null, since: '2013-11-27', until: null, active: false,
+        former_name: '20:20 MOBILE 1 LIMITED', new_name: 'BRIGHTSTAR 20:20 UK LIMITED' },
+      ev({ kind: 'ownership_in', since: '2018-11-09', party: { id: 'sb', name: 'Softbank Group Corp' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const rows = await screen.findAllByTestId('tl-renamed')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toHaveTextContent('Renamed')
+    expect(rows[0]).toHaveTextContent('BRIGHTSTAR 20:20 UK LIMITED → LIKEWIZE SERVICES UK LIMITED')
+    expect(rows[0]).toHaveTextContent('The register records the change of name on 2021-08-20.')
+    expect(rows[0].querySelector('[aria-label="became"]')).not.toBeNull()
+    // filed under its own year, between the holding's 2018 and the older rename
+    const years = screen.getAllByText(/^20\d\d$/).map(e => e.textContent)
+    expect(years).toEqual(['2021', '2018', '2013'])
+    // a rename is a transition in itself: no derived "ended" or "no longer confirmed" row
+    expect(screen.queryByTestId('tl-ended')).toBeNull()
+    expect(screen.queryByTestId('tl-dimmed')).toBeNull()
+  })
+
+  it('a rename whose successor is unknown shows the old name alone', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      { kind: 'renamed', party: null, since: '2020-01-01', former_name: 'Old Co', new_name: null },
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const row = await screen.findByTestId('tl-renamed')
+    expect(row).toHaveTextContent('Old Co')
+    expect(row.textContent).not.toContain('→')
+  })
+
   it('formats a price the way the panel says it', async () => {
     const { formatUsd } = await import('./TimelinePanel')
     expect(formatUsd(2.95e10)).toBe('$29.5 bn')
