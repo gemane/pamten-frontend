@@ -372,6 +372,9 @@
     "dimmedLabel": "No longer confirmed",
     "dimmedBadge": "not confirmed",
     "reasonSource": "the newer list",
+    "renamed": "Renamed",
+    "became": "became",
+    "renamedOn": "The register records the change of name on {{date}}.",
     "reason": {
       "13f_not_confirmed": "The holder's 13F report for the quarter ending {{date}} no longer lists this position. Silence is not a sale, so the holding is dimmed, not ended.",
       "ex21_not_listed": "The newer subsidiary list dated {{date}} no longer names it. Filers may leave out small subsidiaries, so it is dimmed, not ended.",

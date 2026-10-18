@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink } from 'react-icons/fi'
+import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag } from 'react-icons/fi'
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import { asOfFromYear, asOfYear } from '../utils/asOf'
@@ -38,6 +38,11 @@ interface TimelineEvent {
   filing_type?: string | null
   /** On a derived entry ('dimmed', 'ended'): the kind of the row it came from. */
   origin?: string | null
+  /** 'renamed': the company's own rename — no party; the old name and the
+   *  one that followed it (the current name after the last), `since` = the
+   *  last day the old name applied, as the register records it. */
+  former_name?: string | null
+  new_name?: string | null
 }
 
 /** A deal price as the panel says it: "$29.5 bn", "$2.7 m", "$950,000". */
@@ -110,6 +115,7 @@ const KIND_COLOR: Record<string, string> = {
   role:          '#27AE60',
   dimmed:        '#8892a4',
   ended:         '#718096',
+  renamed:       '#B7791F',
 }
 const KIND_ICON: Record<string, React.ElementType> = {
   ownership_in:  FiArrowDownRight,
@@ -117,6 +123,40 @@ const KIND_ICON: Record<string, React.ElementType> = {
   role:          FiUser,
   dimmed:        FiEyeOff,
   ended:         FiLogOut,
+  renamed:       FiTag,
+}
+
+/** The company's own rename, under the year the old name ended: "Renamed",
+ *  then the old name and the one that followed it. The one entry that is not
+ *  a relationship — it comes off the register's list of previous names
+ *  (Companies House, EDGAR), each with its change-of-name date. */
+function RenamedRow({ ev }: { ev: TimelineEvent }) {
+  const { t } = useTranslation()
+  return (
+    <div className="tl-event tl-event--renamed" data-testid="tl-renamed">
+      <div className="tl-event__dot" style={{ background: KIND_COLOR.renamed }} />
+      <div className="tl-event__body">
+        <div className="tl-event__row">
+          <span className="tl-event__kind" style={{ color: KIND_COLOR.renamed }}>
+            <FiTag />
+            {t('timeline.renamed')}
+          </span>
+        </div>
+        <div className="tl-event__name">
+          {ev.former_name}
+          {ev.new_name && (
+            <>
+              {' '}<span role="img" aria-label={t('timeline.became')}>→</span>{' '}
+              {ev.new_name}
+            </>
+          )}
+        </div>
+        <div className="tl-event__meta tl-event__reason">
+          {t('timeline.renamedOn', { date: ev.since ?? '' })}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /** The day a holding or a role ended: what changed, and how the source says
@@ -196,6 +236,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   const kind      = ev.kind ?? ''
   if (kind === 'dimmed') return <DimmedRow ev={ev} />
   if (kind === 'ended') return <EndedRow ev={ev} />
+  if (kind === 'renamed') return <RenamedRow ev={ev} />
   const color     = KIND_COLOR[kind] || KIND_COLOR.role
   const Icon      = KIND_ICON[kind]  || FiUser
   // "Owns" / "Owned by", not "Acquired": most sources say a holding existed at
