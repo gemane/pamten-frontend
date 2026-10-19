@@ -18,7 +18,7 @@
  * colour-as-fill; leave those in CSS.
  */
 
-export interface NodeColor {
+interface NodeColor {
   fill: string
   border: string
 }

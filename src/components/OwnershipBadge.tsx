@@ -32,7 +32,7 @@ export function isSpecialVoting(percent?: number | null, votingPct?: number | nu
 // share count behind it. User's rule — the shares presentation starts under
 // 0.001%. A tiny percent with NO share count still shows the percent, because
 // a number beats nothing.
-export const PCT_DISPLAY_FLOOR = 0.001
+const PCT_DISPLAY_FLOOR = 0.001
 
 export default function OwnershipBadge({ type, percent, votingPct, shares }: OwnershipBadgeProps) {
   const { t, i18n } = useTranslation()

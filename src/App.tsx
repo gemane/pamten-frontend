@@ -66,8 +66,6 @@ import type {
   FullProfile,
   SearchResult,
   CountryEntityGroup,
-  ContextCountry,
-  Entity,
   Person,
 } from './types'
 import {
@@ -104,7 +102,6 @@ function AppInner() {
   const [showAuth, setShowAuth] = useState<boolean>(false)
   const [authMode, setAuthMode] = useState<'login' | 'reset'>('login')
   const [resetToken, setResetToken] = useState<string | null>(null)
-  const canModerate = user?.role === 'moderator' || user?.role === 'admin'
   const userCanScrape = canScrape(user)
   const isMobile = useMobile()
   // The owner/subsidiary row in focus in the node panel; the graph grows its node.
@@ -121,7 +118,6 @@ function AppInner() {
   // Is this installed app still allowed to run? (native only; see useAppVersionCheck)
   const updateState = useAppVersionCheck()
   const searchBarRef = useRef<SearchBarHandle>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab,       setActiveTab]       = useState<string>('graph')
 
   const [elements,        setElements]        = useState<GraphElement[]>([])
@@ -605,7 +601,6 @@ function AppInner() {
     setSearchLabel(undefined)
     setNavHistory([])
     setToast(null)
-    setSidebarOpen(false)
     loadedIds.current = new Set()
   }, [resetEnrichment])
 

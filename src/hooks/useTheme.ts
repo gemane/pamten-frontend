@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export type Theme = 'dark' | 'light'
+type Theme = 'dark' | 'light'
 export type ThemeMode = 'system' | 'light' | 'dark'
 
 const STORAGE_KEY = 'owlgraph-theme'

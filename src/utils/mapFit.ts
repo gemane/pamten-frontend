@@ -18,7 +18,7 @@ import centroids from './countryCentroids.json'
 import { toAlpha2 } from './isoCountries'
 import type { ContextCountry } from '../types'
 
-export type LatLng = { lat: number; lng: number }
+type LatLng = { lat: number; lng: number }
 
 /** ComposableMap's frame (its defaults) and MapView's projectionConfig: the
  *  projection every fit is computed in. */

@@ -74,7 +74,7 @@ export function scrollingPanel(el: HTMLElement): HTMLElement | null {
 }
 
 /** Class on the row(s) of the graph node under the mouse. */
-export const GRAPH_HOVER_CLASS = 'rel-item--graph-hover'
+const GRAPH_HOVER_CLASS = 'rel-item--graph-hover'
 
 /**
  * Light up the owner/subsidiary row(s) of the graph node under the mouse.
@@ -93,16 +93,16 @@ export function useGraphHoverHighlight(
   useRowClass(scopeRef, hoverId, GRAPH_HOVER_CLASS, deps)
 }
 
-export const GRAPH_FOCUS_CLASS = 'rel-item--graph-focus'
+const GRAPH_FOCUS_CLASS = 'rel-item--graph-focus'
 
-export const GRAPH_PICK_CLASS = 'rel-item--graph-pick'
+const GRAPH_PICK_CLASS = 'rel-item--graph-pick'
 
-export function attrSelector(id: string): string {
+function attrSelector(id: string): string {
   return `[${FOCUS_ATTR}="${id.replace(/["\\]/g, '\\$&')}"]`
 }
 
 /** Bring a row into view, centred — where the DOM can scroll at all (jsdom cannot). */
-export function revealRow(row: HTMLElement): void {
+function revealRow(row: HTMLElement): void {
   if (typeof row.scrollIntoView === 'function') row.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 

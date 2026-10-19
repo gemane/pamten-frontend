@@ -26,7 +26,7 @@ import type { ReadFrom } from '../types'
  */
 
 /** The grades worth a mark, weakest last. */
-export type MarkedGrade = 'layout' | 'prose' | 'narrative'
+type MarkedGrade = 'layout' | 'prose' | 'narrative'
 
 /** Exported so the sources list can apply the same test to its rows without
  *  rendering through this component. */

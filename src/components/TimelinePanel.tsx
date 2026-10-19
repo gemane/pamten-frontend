@@ -56,7 +56,7 @@ export function formatUsd(v: number): string {
 /** The reasons the backend writes (edge_schema.STALE_REASONS); anything else
  *  reads as the generic one. */
 const KNOWN_REASONS = new Set(['13f_not_confirmed', 'ex21_not_listed', 'unconfirmed', 'lei_lapsed'])
-export const reasonKey = (reason: string | null | undefined): string =>
+const reasonKey = (reason: string | null | undefined): string =>
   `timeline.reason.${reason && KNOWN_REASONS.has(reason) ? reason : 'unknown'}`
 
 /** The timeline tells transitions, never states. A row from the API is the
@@ -65,7 +65,7 @@ export const reasonKey = (reason: string | null | undefined): string =>
  *  `until`), and the day it stopped being CONFIRMED (a dimmed holding with a
  *  dated reason — one marked before the reason was recorded keeps only the
  *  badge on its own row). */
-export function withTransitionEvents(events: TimelineEvent[]): TimelineEvent[] {
+function withTransitionEvents(events: TimelineEvent[]): TimelineEvent[] {
   const out: TimelineEvent[] = []
   for (const ev of events) {
     out.push(ev)
@@ -84,7 +84,7 @@ export function withTransitionEvents(events: TimelineEvent[]): TimelineEvent[] {
 
 /** How the source says a holding ended, as a words key. */
 const END_REASONS = new Set(['gleif_inactive', 'gleif_dropped', 'ceased', 'withdrawn'])
-export function endReasonKey(ev: TimelineEvent): string {
+function endReasonKey(ev: TimelineEvent): string {
   if (ev.until_reason && END_REASONS.has(ev.until_reason)) return `timeline.endReason.${ev.until_reason}`
   if (/^13[DG]/.test(ev.filing_type ?? '')) return 'timeline.endReason.amendment'
   return 'timeline.endReason.unknown'

@@ -33,7 +33,6 @@ const legend: LegendItem[] = [
 const text: ExportText = { title: 'MICROSOFT CORPORATION', date: 'October 3, 2026', legend,
   filters: 'Subsidiaries: Direct · Minimum stake: ≥1%', link: 'https://owlgraph.example/#graph/e/x', fontFamily: 'Inter', theme: 'light' }
 const texts = (calls: Call[]) => calls.filter(c => c.op === 'fillText')
-const HEADER_TEXTS = 4   // name, subtitle, company, date — before the graph is drawn
 const fontSize = (c: Call) => Number(/ (\d+)px/.exec(c.font)![1])
 
 describe('exportLayout — a frame, the header in its top band, the graph under it', () => {

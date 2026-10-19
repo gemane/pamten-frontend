@@ -15,7 +15,7 @@ The `*.onrender.com` URLs still serve the same deployments, but the owlgraph.org
 |---|---|
 | Framework | React 18 + TypeScript (strict mode) |
 | Build | Vite 5 |
-| Graph | Cytoscape.js + cytoscape-cola |
+| Graph | Cytoscape.js (the app computes positions itself: `preset` + `concentric`) |
 | Map | react-simple-maps + world-atlas (countries) + us-atlas (states) |
 | HTTP | Axios |
 | Icons | react-icons (Feather set) |
@@ -47,7 +47,7 @@ src/
 ├── types.ts                 # Shared TypeScript types (single source of truth)
 ├── index.css                # All styles (dark theme)
 ├── main.tsx                 # React entry point
-├── vite-env.d.ts            # Module declarations (cytoscape-cola, react-simple-maps)
+├── vite-env.d.ts            # Module declarations (react-simple-maps)
 ├── components/
 │   ├── Graph.tsx            # Cytoscape.js ownership graph + welcome screen
 │   ├── NodePanel.tsx        # Entity / person detail panel (Overview + Timeline tabs)
@@ -80,7 +80,7 @@ src/
 - **Images with their credit.** A company's logo and a person's portrait are loaded through the backend (`GET /media/{kind}/{id}`), never from Wikipedia or Wikimedia in the browser, so no third party sees the reader's address or what they looked at. Under the image a visible caption credits the file as its licence asks ("Photo: Jane Doe · CC BY-SA 4.0 · Wikimedia Commons", author and licence linked), and the same credit is a row in the panel's Sources list. The server serves only public-domain and CC0 / CC BY / CC BY-SA files; a node without one shows no image. A person's photo comes from their Wikipedia page only, never from a search by name.
 - **Refresh from sources** (panel button, always shown — muted with a note for a reader who is not signed in with a verified account, whose click opens the sign-in) runs in two phases: the instant sources behind the "Searching sources…" overlay, then — for contributors — the minutes-long SEC enrichments (13F holders, Exhibit 21, the acquisitions the company's own 10-K/10-Q tag — with the closing date and the price) with the top progress bar running and the button showing *Refreshing…*. It always ends with a summary toast that stays until dismissed ("Refresh of X finished — 13F: 89 holders · Exhibit 21: 12 subsidiaries · Acquisitions: 3 companies bought · 1 holding now dated and priced", or "nothing new from the sources"), the open panel refetches, and if the tab is in the background an OS notification says the same (permission is asked once, on the first refresh click). A phone that goes to another app suspends the tab and drops the requests in flight while the server finishes the work; a lost answer is then read back from the server's run log (`GET /scraper/runs`, the company's runs since the click — waiting while one is still running, up to five minutes), and the summary says so ("… · read back from the server's run log after the connection dropped") instead of reporting "nothing new" over a refresh that drew 89 holders. A run read back carries what it drew, not what it dated; the open panel refetches either way.
 - Clicking the **Owlgraph** logo in the top-left — the mark plus the wordmark — clears the graph and returns to the start screen
-- Ownership graph rendered with Cytoscape.js cola layout (randomised, wide spacing)
+- Ownership graph rendered with Cytoscape.js; positions are computed by the app (crossing-free subsidiary tree, owners on arcs), not by a physics layout
 - Node colours: company `#4A90D9`, brand `#E67E22`, holding `#8E44AD`, government `#B03A2E`, foundation `#16A085`, fund `#B7950B`, nonprofit `#C0398B`, person `#27AE60`
 - Edge colours by ownership type: full/majority `#2ECC71`, minority `#F39C12`, controlling `#E74C3C`
 - Click a node to open the detail panel; double-click to expand its connections directly

@@ -31,9 +31,9 @@ export const TITLE_MIN_FONT = 12
 export const DATE_FONT = 13
 /** The footer: the legend's swatches and labels, the filters, the link — CSS px. */
 export const LEGEND_FONT = 12
-export const LEGEND_SWATCH = 14
-export const LEGEND_LINE = 24
-export const LEGEND_ITEM_GAP = 18
+const LEGEND_SWATCH = 14
+const LEGEND_LINE = 24
+const LEGEND_ITEM_GAP = 18
 export const FOOTER_FONT = 13
 export const FOOTER_MIN_FONT = 10
 /** Where the two rows of the band sit, as fractions of the mark's height. */
@@ -53,7 +53,7 @@ import type { GraphElement } from '../types'
 
 type Rect = { x: number; y: number; w: number; h: number }
 
-export interface ExportLayout {
+interface ExportLayout {
   width: number
   height: number
   /** The logo mark, square. */

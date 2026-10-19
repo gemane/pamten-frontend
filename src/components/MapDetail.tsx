@@ -41,7 +41,7 @@ export function basemapStyle(theme: string | null | undefined): string {
 }
 
 /** The theme the page is drawn in — useTheme writes it on <html>. */
-export function currentTheme(): 'dark' | 'light' {
+function currentTheme(): 'dark' | 'light' {
   return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
 }
 

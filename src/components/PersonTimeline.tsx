@@ -30,7 +30,7 @@ import type { OwnsRelationship, PersonProfile } from '../types'
  * than at 54. The record of processing says so too; the two move together.
  */
 
-export interface TimelineRow {
+interface TimelineRow {
   /** A relationship, or a marker on the person's own life. */
   kind: 'role' | 'owns' | 'life'
   label: string                 // the role, or "owns"

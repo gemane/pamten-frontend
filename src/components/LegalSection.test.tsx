@@ -8,7 +8,7 @@
  * the pages are static files outside the app's own routing.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { existsSync } from 'node:fs'
 import i18n from '../i18n'
 import SettingsPanel from './SettingsPanel'

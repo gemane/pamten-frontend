@@ -56,5 +56,3 @@ export function useAppVersionCheck(): UpdateState {
 
   return state
 }
-
-export default useAppVersionCheck

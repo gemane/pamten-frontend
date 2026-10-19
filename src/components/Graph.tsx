@@ -394,7 +394,7 @@ export function layoutGraph(
 
 /** The size Cytoscape draws a node at — the tree is laid out on the real
  *  boxes, so a column's left edges line up exactly. */
-export const measureWith = (cy: cytoscape.Core): Measure => id => {
+const measureWith = (cy: cytoscape.Core): Measure => id => {
   const n = cy.$id(id)
   return n.nonempty() ? { w: n.outerWidth(), h: n.outerHeight() } : undefined
 }

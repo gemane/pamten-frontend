@@ -134,7 +134,7 @@ export function countryName(country: string, locale?: string): string {
 }
 
 // Reverse map: full country name → alpha-2 (covers BODS full-name storage)
-export const COUNTRY_NAME_TO_ALPHA2: Record<string, string> = Object.fromEntries(
+const COUNTRY_NAME_TO_ALPHA2: Record<string, string> = Object.fromEntries(
   Object.entries(COUNTRY_NAMES).map(([a2, name]) => [name, a2])
 )
 
