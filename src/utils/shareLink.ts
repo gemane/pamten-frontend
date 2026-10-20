@@ -2,9 +2,9 @@
 // (mobile), clipboard otherwise. Returns what happened so the caller can
 // give the right feedback ('dismissed' = user closed the share sheet).
 
-export type ShareOutcome = 'shared' | 'copied' | 'dismissed' | 'failed'
+type ShareOutcome = 'shared' | 'copied' | 'dismissed' | 'failed'
 
-export interface ShareCapabilities {
+interface ShareCapabilities {
   share?: (data: { url: string }) => Promise<void>
   clipboardWrite?: (text: string) => Promise<void>
 }

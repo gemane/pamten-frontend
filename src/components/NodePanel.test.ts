@@ -3,13 +3,6 @@ import { entityToNode, personToNode, ownerToNode, personDisplayDetails, byRoleIm
 import { byStakeDesc } from '../utils/ordering'
 import type { Entity, Person } from '../types'
 
-type Claim = { rank: string; mainsnak: { datavalue?: { value: unknown } } }
-
-const claim = (rank: string, value: string): Claim => ({
-  rank,
-  mainsnak: { datavalue: { value } },
-})
-
 import { formatDate } from '../utils/dates'
 
 describe('formatDate, as the panel used it (English)', () => {

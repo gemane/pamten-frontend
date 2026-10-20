@@ -107,7 +107,7 @@ const MAX_COUNT = 20
  *  state the same flat minimum. The state view scales to its own busiest state. */
 const MAX_STATE_COUNT = 10
 
-export interface PlacedMarker {
+interface PlacedMarker {
   c: ContextCountry
   ox: number   // screen-pixel offset applied to the pin (before ÷ zoom)
   oy: number

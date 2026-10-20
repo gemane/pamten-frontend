@@ -18,7 +18,7 @@
  */
 
 /** The scripts we tell apart. Japanese is its own: kana with or without Han. */
-export type Script =
+type Script =
   | 'Latin' | 'Hangul' | 'Japanese' | 'Han' | 'Thai' | 'Cyrillic' | 'Greek'
   | 'Arabic' | 'Hebrew' | 'Devanagari' | 'Georgian' | 'Armenian' | 'Other'
 
@@ -120,7 +120,7 @@ export function latinName(e: Named): string | null {
   return e.other_names?.find(n => !!n && isLatin(n)) ?? null
 }
 
-export interface DisplayName {
+interface DisplayName {
   /** shown first — the graph's box, the list's row, the panel's title */
   primary: string
   /** the other one, where there is one — under the title, on hover */

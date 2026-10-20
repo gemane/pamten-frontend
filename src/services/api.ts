@@ -134,7 +134,7 @@ export const refreshClient = axios.create({
 })
 
 /** What the API returns when it hands out an access token. */
-export interface SessionPayload extends AuthUser {
+interface SessionPayload extends AuthUser {
   access_token: string
   expires_in?: number
 }
@@ -215,12 +215,6 @@ export const getSubsidiaryTree = (id: string, asOf?: string | null): Promise<Axi
 export const getPersonProfile = (id: string): Promise<AxiosResponse<PersonProfile>> =>
   client.get(`/search/person/${id}/full-profile`)
 
-export const getOwnershipTree = (id: string, depth = 3): Promise<AxiosResponse<unknown>> =>
-  client.get(`/relationships/ownership-tree/${id}`, { params: { depth } })
-
-export const getOwners = (id: string): Promise<AxiosResponse<unknown[]>> =>
-  client.get(`/relationships/owners/${id}`)
-
 export const getHistory = (id: string): Promise<AxiosResponse<HistoryEntry[]>> =>
   client.get(`/relationships/history/${id}`)
 
@@ -228,12 +222,6 @@ export const getHistory = (id: string): Promise<AxiosResponse<HistoryEntry[]>> =
  *  the graph loaded): the file as a blob, its name in Content-Disposition. */
 export const exportSpreadsheet = (id: string, params: ExportParams): Promise<AxiosResponse<Blob>> =>
   client.get(`/export/entity/${id}`, { params, responseType: 'blob' })
-
-export const getEntity = (id: string): Promise<AxiosResponse<unknown>> =>
-  client.get(`/entities/${id}`)
-
-export const getPerson = (id: string): Promise<AxiosResponse<unknown>> =>
-  client.get(`/persons/${id}`)
 
 export const getEntitiesByCountry = (
   basis: MapBasis = 'jurisdiction',
@@ -350,7 +338,7 @@ export const getEntitySources = (id: string): Promise<AxiosResponse<Source[]>> =
 // Fire-and-forget by design: measurement may never delay, block or break the
 // thing it is measuring, so failures are swallowed here rather than handled by
 // every call site.
-export interface AnalyticsEvent {
+interface AnalyticsEvent {
   kind: 'search' | 'usage'
   query?: string
   country?: string
@@ -418,7 +406,7 @@ export const removePin = (id: string): Promise<AxiosResponse<{ id: string; statu
 
 // Registration returns either an access token (the bootstrap/first-user admin)
 // or a "verify your email" acknowledgement (everyone else).
-export type RegisterResult =
+type RegisterResult =
   (AuthUser & { access_token: string })
   | { message: string; verification_required: true; email: string }
 
@@ -426,15 +414,12 @@ export const authRegister = (email: string, password: string): Promise<AxiosResp
   client.post('/auth/register', { email, password })
 
 // Login returns an access token, or an MFA challenge when 2FA is enabled.
-export type LoginResult =
+type LoginResult =
   (AuthUser & { access_token: string })
   | { mfa_required: true; mfa_token: string }
 
 export const authLogin = (email: string, password: string): Promise<AxiosResponse<LoginResult>> =>
   client.post('/auth/login', { email, password })
-
-export const authMe = (): Promise<AxiosResponse<AuthUser>> =>
-  client.get('/auth/me')
 
 /**
  * End the session server-side, revoking the refresh token and clearing the cookie.
@@ -532,7 +517,7 @@ export const runScraperAll = (company: string, depth = 2): Promise<AxiosResponse
 // server-side (a repeat call inside the quarter answers `fresh` and fetches
 // nothing), 409 until the SEC EDGAR scrape stamped the company's CIK. Slow by
 // nature: one EDGAR fetch per holder, minutes for a widely-held issuer.
-export interface Sec13fResult {
+interface Sec13fResult {
   status: 'ok' | 'fresh' | 'no_results' | string
   total?: number
   next_deadline?: string
@@ -542,7 +527,7 @@ export const runSec13f = (company: string): Promise<AxiosResponse<Sec13fResult>>
 
 // Exhibit 21 — the statutory subsidiary list. Cheap next to 13F (one fetch of
 // the exhibit), and gated by "one annual filing = one ingest" server-side.
-export interface SecEx21Result {
+interface SecEx21Result {
   status: 'ok' | 'fresh' | 'no_exhibit' | 'needs_sec_scrape' | 'no_results' | string
   total?: number
 }
@@ -554,7 +539,7 @@ export const runSecEx21 = (company: string): Promise<AxiosResponse<SecEx21Result
 // "newest filing already ingested" server-side; 409 until the CIK is stamped.
 // `total` = acquisitions drawn as new edges, `enriched` = pairs a subsidiary
 // list already held that now carry a closing date and a price.
-export interface SecAcquisitionsResult {
+interface SecAcquisitionsResult {
   status: 'ok' | 'fresh' | 'no_filings' | 'needs_sec_scrape' | 'no_results' | string
   total?: number
   enriched?: number

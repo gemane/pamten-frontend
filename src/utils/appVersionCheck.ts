@@ -14,7 +14,7 @@
  * development build all mean "carry on".
  */
 
-export interface VersionVerdict {
+interface VersionVerdict {
   update_required: boolean
   update_available: boolean
   latest?: string | null

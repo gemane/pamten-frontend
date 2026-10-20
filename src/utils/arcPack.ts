@@ -34,7 +34,7 @@ export interface ArcSpec {
 
 export type Size = { w: number; h: number }
 /** `row`: how far out, in rows — in quarter steps */
-export type ArcPlacement = { t: number; row: number }
+type ArcPlacement = { t: number; row: number }
 
 /** Clear space between neighbouring boxes, when the arc holds a handful. */
 export const ARC_GAP_X = 18

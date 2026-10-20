@@ -11,9 +11,9 @@ export type OwnershipType =
   | 'active'
   | 'unknown'
 
-export type RoleType = string
+type RoleType = string
 
-export type SourceType =
+type SourceType =
   | 'news'
   | 'register'
   | 'wikipedia'
@@ -242,7 +242,7 @@ export interface ExecutiveEntry {
 }
 
 /** True section sizes, independent of the per-section row limit. */
-export interface ProfileCounts {
+interface ProfileCounts {
   owners?: number | null
   subsidiaries?: number | null
   executives?: number | null
@@ -272,7 +272,7 @@ export interface FullProfile {
 }
 
 // Derived (not sourced) ownership breakdown, computed on read from the owners.
-export interface OwnershipSummary {
+interface OwnershipSummary {
   disclosed_pct?: number | null   // sum of disclosed stakes
   free_float_pct?: number | null  // 100 − disclosed, when every owner's stake is known
   unknown_owners?: number         // owners with an unknown %
@@ -286,7 +286,7 @@ export interface OwnershipSummary {
 
 /** Disclosed ownership of ONE security. A 13D/G percentage is always a percent
  *  of a class, so a company with several classes has several denominators. */
-export interface ShareClassTotal {
+interface ShareClassTotal {
   share_class?: string | null     // null = the filing did not name one
   disclosed_pct: number
   owners: number
@@ -303,16 +303,16 @@ export interface GroupParty {
 }
 
 // A succession neighbour (predecessor/successor) plus when it took effect.
-export interface SuccessionEntry extends Entity {
+interface SuccessionEntry extends Entity {
   since?: string   // succession date (Wikidata P585), e.g. "2023-04-00"
 }
 
-export interface PositionEntry {
+interface PositionEntry {
   entity: Entity
   role: RoleRelationship
 }
 
-export interface HoldingEntry {
+interface HoldingEntry {
   entity: Entity
   relationship: OwnsRelationship
 }
@@ -336,7 +336,7 @@ export interface HistoryEntry {
 }
 
 // Graph element types (Cytoscape)
-export type NodeType = 'entity' | 'person'
+type NodeType = 'entity' | 'person'
 
 export interface NodeData {
   id: string
@@ -414,14 +414,6 @@ export function isPersonResult(
   return r.kind === 'person' && !!r.person_id && !!r.profile
 }
 
-export interface AuthContextValue {
-  user: AuthUser | null
-  token: string | null
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
-  loading: boolean
-}
-
 // Scraper types
 export interface ScraperSource {
   name: string
@@ -454,7 +446,7 @@ export interface ScraperStatus {
   autodedup_enabled?: boolean
 }
 
-export interface DuplicateMember {
+interface DuplicateMember {
   id: string
   full_name: string
   wikidata_id?: string | null
@@ -650,15 +642,6 @@ export interface ContextCountry {
   precise?: boolean      // geo precision 'exact' → pin vs approximate circle
 }
 
-// Toast
-export type ToastVariant = 'info' | 'success' | 'error'
-
-export interface Toast {
-  id: number
-  message: string
-  variant: ToastVariant
-}
-
 // ── Verification flags (report a wrong node/edge) ───────────────────────────
 export type FlagTargetKind = 'owns' | 'role' | 'entity' | 'person'
 export type FlagCategory =
@@ -683,7 +666,7 @@ export interface FlagCreatePayload {
 export interface FlagSummary { open: number }
 export interface FlagCreateResult { id: string; status: 'open' | 'duplicate' }
 
-export type FlagStatus = 'open' | 'reviewing' | 'resolved' | 'rejected'
+type FlagStatus = 'open' | 'reviewing' | 'resolved' | 'rejected'
 
 export interface Flag {
   id: string

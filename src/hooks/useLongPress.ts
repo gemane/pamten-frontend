@@ -17,7 +17,7 @@ export const LONG_PRESS_MS = 500
  *  worth of drift, matching the tolerance native long-press uses. */
 export const LONG_PRESS_SLOP = 10
 
-export interface LongPressHandlers {
+interface LongPressHandlers {
   onContextMenu: (e: React.MouseEvent) => void
   onPointerDown: (e: React.PointerEvent) => void
   onPointerMove: (e: React.PointerEvent) => void

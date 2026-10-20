@@ -119,7 +119,7 @@ describe('without WebGL', () => {
   it('says so inside the pop-up and keeps the link to the large map, instead of crashing the map view', () => {
     fakes.flags.throwOnConstruct = true
     try {
-      const { getByRole, getByText } = render(<MapDetail data={data} onClose={() => {}} />)
+      const { getByRole } = render(<MapDetail data={data} onClose={() => {}} />)
       expect(getByRole('note').textContent).toMatch(/needs WebGL/)
       expect(getByRole('link', { name: /larger map/i })).toBeTruthy()
     } finally {

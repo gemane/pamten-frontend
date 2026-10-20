@@ -45,5 +45,3 @@ export function useAndroidBackButton() {
     }
   }, [])
 }
-
-export default useAndroidBackButton

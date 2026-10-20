@@ -17,8 +17,6 @@
     "@capacitor/core": "^8.5.0",
     "axios": "^1.7.7",
     "cytoscape": "^3.30.2",
-    "cytoscape-cola": "^2.5.1",
-    "cytoscape-dagre": "^4.0.0",
     "d3-geo": "^2.0.2",
     "i18next": "^26.3.3",
     "maplibre-gl": "6.13.0",
@@ -42,7 +40,6 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.0",
-    "@playwright/test": "^1.61.0",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.3",

@@ -12,8 +12,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
-import type { Entity, FullProfile } from './types'
-
 vi.mock('./components/Graph', () => ({ default: () => <div data-testid="graph" /> }))
 vi.mock('./components/MapView', () => ({ default: () => null }))
 vi.mock('./components/MapPanel', () => ({ default: () => null }))
@@ -46,9 +44,6 @@ vi.mock('./services/api', () => ({
 
 import App from './App'
 import { search, getCountries, getEntitiesByCountry } from './services/api'
-
-const entity = (id: string, name: string): Entity =>
-  ({ id, name, type: 'company', verified: false } as Entity)
 
 beforeEach(() => {
   vi.mocked(getCountries).mockResolvedValue({ data: [] } as never)

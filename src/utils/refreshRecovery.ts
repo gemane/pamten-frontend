@@ -56,7 +56,7 @@ const stillRunning = (run: ScrapeRun): boolean => run.status === 'running' && !r
 
 const toOutcome = (run: ScrapeRun): SecRunOutcome => ({ status: run.status, total: run.total ?? 0 })
 
-export interface RecoveryOptions {
+interface RecoveryOptions {
   /** between two looks at the log while a run is still going */
   intervalMs?: number
   /** how many looks before giving up and reporting the run as still running */

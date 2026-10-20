@@ -1,6 +1,6 @@
 // The app's supported UI languages, in the order shown in Settings.
-export const SUPPORTED_LANGS = ['en', 'de', 'es'] as const
-export type Lang = (typeof SUPPORTED_LANGS)[number]
+const SUPPORTED_LANGS = ['en', 'de', 'es'] as const
+type Lang = (typeof SUPPORTED_LANGS)[number]
 
 /** Pick a supported UI language from the browser's language preferences (e.g. an
  * `'de-AT'` preference → `'de'`), falling back to English. Pure/injectable for tests. */

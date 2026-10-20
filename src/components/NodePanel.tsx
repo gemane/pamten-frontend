@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiShield, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen } from 'react-icons/fi'
+import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, type MediaImage } from '../services/api'
 import ImageCredit, { useMediaImage } from './ImageCredit'
 import ImageZoom from './ImageZoom'
@@ -332,7 +332,7 @@ function CollapsibleSection({ title, count, defaultOpen = false, openFor = false
 // order, skipping any the entity doesn't have. Pure (no i18n/React) so it's unit
 // tested directly; `labelKey` maps to a `panel.*` translation. Easy to extend with
 // more detail fields later — add an entry here.
-export interface DetailRow {
+interface DetailRow {
   icon: React.ElementType
   labelKey: string
   value: string
@@ -371,13 +371,13 @@ export function entityDetailRows(entity: Entity, lang: string): DetailRow[] {
  * duplicated pair, a multi-reason field, an unsafe reference — are unit tested
  * without rendering anything.
  */
-export interface ParentExceptionReason {
+interface ParentExceptionReason {
   /** GLEIF's wire token, upper-cased: the `parentReason.*` translation key. */
   key: string
   /** The token humanised, for a code GLEIF adds that we have no copy for yet. */
   fallback: string
 }
-export interface ParentExceptionLine {
+interface ParentExceptionLine {
   scope: 'direct' | 'ultimate' | 'both'
   reasons: ParentExceptionReason[]
   /** The filer's pointer at the parent it would not name, exactly as published. */
@@ -799,7 +799,7 @@ function TypeMarker({ node }: { node: NodeData }) {
  *  that asserted it. Identified by the natural key the flag system uses
  *  (from → to [+ role]) rather than any generated id, so a report survives a
  *  re-scrape. */
-export interface RelTarget {
+interface RelTarget {
   targetKind: 'owns' | 'role'
   fromId: string
   toId: string

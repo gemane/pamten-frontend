@@ -1,5 +1,5 @@
 import { entityLabel } from './displayName'
-import type { GraphElement, NodeData, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType, SubsidiaryTree } from '../types'
+import type { GraphElement, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType, SubsidiaryTree } from '../types'
 import { endedBy, evidenceDate, startedAfter, type Tenure } from './asOf'
 
 // Cytoscape element builders. Each takes a `loadedIds`/`seen` set and only
@@ -198,8 +198,7 @@ function tenureData(rel: Tenure | null | undefined) {
 export function buildElements(profile: FullProfile, loadedIds: Set<string>): GraphElement[] {
   const els: GraphElement[] = []
 
-  const { entity, subsidiaries = [], owners = [],
-          group_members = [], voting_groups = [] } = profile
+  const { entity, subsidiaries = [], owners = [] } = profile
 
   if (!loadedIds.has(entity.id)) {
     loadedIds.add(entity.id)
@@ -245,12 +244,12 @@ export function buildElementsDownward(profile: FullProfile, loadedIds: Set<strin
   return els
 }
 
-export interface PersonData {
+interface PersonData {
   person?: Person
   [key: string]: unknown
 }
 
-export interface OwnershipItem {
+interface OwnershipItem {
   entity?: Entity
   owned_entity?: Entity
   // The full relationship, not a two-field redeclaration: a narrowed copy was
