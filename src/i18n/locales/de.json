@@ -73,7 +73,6 @@
     "export": "Exportieren",
     "exportPng": "PNG-Bild",
     "exportOds": "Tabelle (.ods)",
-
     "exportOdsError": "Die Tabelle konnte nicht erstellt werden. Bitte erneut versuchen.",
     "expandGraph": "Graph erweitern",
     "expandHint": "Doppelklick zum Erweitern",
@@ -381,7 +380,13 @@
       "unconfirmed": "Seit {{date}} hat keine Quelle dies bestätigt. Eine gelöschte Community-Angabe verschwindet einfach — abgeblendet, nicht beendet.",
       "lei_lapsed": "Der zugrunde liegende Registereintrag ist erloschen und wird von seiner Stelle nicht mehr gepflegt; zuletzt aktualisiert am {{date}}. Abgeblendet, nicht beendet.",
       "unknown": "Keine neuere Quelle bestätigt dies — abgeblendet, nicht beendet."
-    }
+    },
+    "stakeReachedIn": "Anteilseigner erreicht 5 %",
+    "stakeDroppedIn": "Anteilseigner fällt unter 5 %",
+    "stakeReachedOut": "Beteiligung erreicht 5 %",
+    "stakeDroppedOut": "Beteiligung fällt unter 5 %",
+    "stakeMove": "{{from}} → {{to}}, laut Angabe vom {{date}}",
+    "stakeNotStated": "nicht angegeben"
   },
   "toast": {
     "personGraphError": "Personendiagramm konnte nicht geladen werden.",
@@ -667,7 +672,9 @@
     "sharesOf": "{{shares}} von {{total}}",
     "sharesOfAsOf": "{{shares}} von {{total}} (Gesamtzahl vom {{date}})",
     "votingShares": "Stimmrechtsaktien",
-    "readFrom": "Gelesen aus"
+    "readFrom": "Gelesen aus",
+    "stakeHistory": "Anteilsverlauf",
+    "stakeAsOf": "Anteil laut Angabe vom"
   },
   "health": {
     "title": "Quellen-Status",
@@ -744,5 +751,14 @@
     "clear": "Gegenwart anzeigen",
     "legend": "Gestrichelt und blass: für dieses Jahr nicht belegt — die Quellen bestätigen es erst später.",
     "rowHint": "Für {{year}} nicht belegt — die Quellen bestätigen es erst später"
+  },
+  "stakeHistory": {
+    "title": "Anteilsverlauf",
+    "hint": "Jede Angabe einer Quelle zum Anteil dieser Beteiligung ab 5 %, neueste zuerst.",
+    "loading": "Wird geladen…",
+    "error": "Der Anteilsverlauf konnte nicht geladen werden.",
+    "empty": "Keine Änderung des Anteils erfasst.",
+    "was": "vorher {{pct}}",
+    "notStated": "nicht angegeben"
   }
 }

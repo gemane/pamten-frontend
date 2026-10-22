@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen } from 'react-icons/fi'
-import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, type MediaImage } from '../services/api'
+import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen, FiTrendingUp } from 'react-icons/fi'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, getStakeHistory, type MediaImage } from '../services/api'
 import ImageCredit, { useMediaImage } from './ImageCredit'
 import ImageZoom from './ImageZoom'
 import { countryName } from '../utils/isoCountries'
@@ -24,7 +24,7 @@ import { deathMark } from '../utils/deathMark'
 import { displayName, entityLabel } from '../utils/displayName'
 import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
-import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree, ReadFrom } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree, ReadFrom, StakeHistoryRow } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
 import { asOfYear, edgePresence, endedBy, rowPresence, startedAfter, type Tenure } from '../utils/asOf'
 
@@ -803,6 +803,12 @@ interface RelTarget {
   targetKind: 'owns' | 'role'
   fromId: string
   toId: string
+  /** A source changed its number for this holding at least once (5 % and
+   *  above): the row gets a toggle that opens the series beneath it. */
+  stakeHistory?: boolean
+  /** Time travel: the stake shown is the one stated on this day, from the
+   *  history rather than the edge — said in the menu. */
+  stakeAsOf?: string | null
   role?: string
   label?: string
   sourceUrl?: string | null
@@ -888,7 +894,59 @@ function relFromOwns(rel: OwnsRelationship | undefined, ids: {
     eventDate: rel?.event_date,
     votingShares: rel?.voting_shares,
     readFrom: rel?.read_from,
+    stakeHistory: rel?.stake_history,
+    stakeAsOf: rel?.stake_as_of,
   }
+}
+
+/** The series behind a holding's row: every number a source stated for it,
+ *  5 % and above, newest first — fetched when the row is opened, never with
+ *  the profile. The timeline shows only the 5 % crossings of this. */
+function StakeHistoryList({ fromId, toId }: { fromId: string; toId: string }) {
+  const { t, i18n } = useTranslation()
+  const [rows, setRows] = useState<StakeHistoryRow[] | null>(null)
+  const [error, setError] = useState(false)
+  useEffect(() => {
+    let live = true
+    setRows(null); setError(false)
+    getStakeHistory(fromId, toId)
+      .then(({ data }) => { if (live) setRows(data) })
+      .catch(() => { if (live) setError(true) })
+    return () => { live = false }
+  }, [fromId, toId])
+  const pct = (v: number | null | undefined) => v == null ? t('stakeHistory.notStated') : `${v} %`
+  return (
+    <div className="stake-history" data-testid="stake-history" title={t('stakeHistory.hint')}>
+      <div className="stake-history__title">{t('stakeHistory.title')}</div>
+      {error ? <div className="stake-history__note">{t('stakeHistory.error')}</div>
+        : rows === null ? <div className="stake-history__note">{t('stakeHistory.loading')}</div>
+        : rows.length === 0 ? <div className="stake-history__note">{t('stakeHistory.empty')}</div>
+        : (
+          <ul className="stake-history__rows">
+            {rows.map((r, i) => (
+              <li key={i} className="stake-history__row">
+                <span className="stake-history__date">{formatDate(r.as_of, i18n.language) ?? '—'}</span>
+                <span className="stake-history__stake">{pct(r.stake_percent)}</span>
+                {r.previous_percent != null && (
+                  <span className="stake-history__prev">{t('stakeHistory.was', { pct: pct(r.previous_percent) })}</span>
+                )}
+                <span className="stake-history__source">
+                  {[r.source_name || r.source_id, r.filing_type].filter(Boolean).join(' · ')}
+                  {r.source_url && (
+                    <>
+                      {' '}
+                      <a href={r.source_url} target="_blank" rel="noreferrer" aria-label={t('menu.viewSource')}>
+                        <FiExternalLink size={11} />
+                      </a>
+                    </>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+    </div>
+  )
 }
 
 /** RelTarget from a HAS_ROLE relationship. Role rows previously omitted
@@ -951,6 +1009,8 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
   const { t, i18n } = useTranslation()
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null)
   const [reporting, setReporting] = useState(false)
+  // The stake series beneath the row, opened by its toggle or the menu.
+  const [historyOpen, setHistoryOpen] = useState(false)
   // Unconditional: a hook cannot be called behind an `if`, and a row with
   // nothing to offer simply never opens the menu.
   const press = useLongPress(at => { if (rel) setMenuAt(at) })
@@ -1021,6 +1081,10 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
   const asOf = formatDate(rel.eventDate, i18n.language), filed = formatDate(rel.filedDate, i18n.language)
   if (asOf && asOf !== filed) details.push({ label: t('menu.asOf'), value: asOf })
   if (filed) details.push({ label: t('menu.filed'), value: filed })
+  // Time travel: the percentage on the row is a past statement, not the
+  // edge's current number — say which day it was stated on.
+  const stakeAsOf = formatDate(rel.stakeAsOf, i18n.language)
+  if (stakeAsOf) details.push({ label: t('menu.stakeAsOf'), value: stakeAsOf })
   // How surely it was read. The row badges only the two weak grades; the menu
   // names every one, so a reader can see that a silent row is a structured
   // field and not merely ungraded.
@@ -1037,24 +1101,40 @@ function RelRow({ node, onNavigate, rel, focusId, unknownFor, children }: {
       icon: <FiExternalLink size={12} />,
       onSelect: () => window.open(rel.sourceUrl as string, '_blank', 'noopener,noreferrer'),
     }] : []),
+    // The series behind the stake — only where a source changed its number
+    // (the backend marks those rows), so the item never opens an empty list.
+    ...(rel.stakeHistory ? [{
+      key: 'history', label: t('menu.stakeHistory'), icon: <FiTrendingUp size={12} />,
+      onSelect: () => setHistoryOpen(true),
+    }] : []),
     { key: 'report', label: t('menu.reportRelationship'), icon: <FiFlag size={12} />,
       onSelect: () => setReporting(true) },
   ]
 
   return (
-    <div className="rel-row" {...press}>
-      {row}
-      <ActionMenu items={items} details={details}
-                  header={(rel.assertedBy && rel.assertedBy.length > 1
-                            ? rel.assertedBy.join(' + ')
-                            : rel.sourceName) || undefined}
-                  position={menuAt} onClose={() => setMenuAt(null)} />
-      {reporting && (
-        <ReportModal targetKind={rel.targetKind} targetLabel={rel.label ?? ''}
-                     fromId={rel.fromId} toId={rel.toId} role={rel.role}
-                     onClose={() => setReporting(false)} />
-      )}
-    </div>
+    <>
+      <div className="rel-row" {...press}>
+        {row}
+        {rel.stakeHistory && (
+          <button type="button" className="rel-row__history" aria-expanded={historyOpen}
+                  title={t('menu.stakeHistory')} aria-label={t('menu.stakeHistory')}
+                  onClick={e => { e.stopPropagation(); setHistoryOpen(o => !o) }}>
+            <FiTrendingUp size={13} />
+          </button>
+        )}
+        <ActionMenu items={items} details={details}
+                    header={(rel.assertedBy && rel.assertedBy.length > 1
+                              ? rel.assertedBy.join(' + ')
+                              : rel.sourceName) || undefined}
+                    position={menuAt} onClose={() => setMenuAt(null)} />
+        {reporting && (
+          <ReportModal targetKind={rel.targetKind} targetLabel={rel.label ?? ''}
+                       fromId={rel.fromId} toId={rel.toId} role={rel.role}
+                       onClose={() => setReporting(false)} />
+        )}
+      </div>
+      {historyOpen && <StakeHistoryList fromId={rel.fromId} toId={rel.toId} />}
+    </>
   )
 }
 

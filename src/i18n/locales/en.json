@@ -73,7 +73,6 @@
     "export": "Export",
     "exportPng": "PNG image",
     "exportOds": "Spreadsheet (.ods)",
-
     "exportOdsError": "The spreadsheet could not be built. Please try again.",
     "expandGraph": "Expand graph",
     "expandHint": "Double-click to expand",
@@ -381,7 +380,13 @@
       "unconfirmed": "No source has confirmed this since {{date}}. A crowd-edited statement that is deleted simply stops being seen, so it is dimmed, not ended.",
       "lei_lapsed": "The register record behind it lapsed and is no longer maintained by its issuer; last updated {{date}}. Dimmed, not ended.",
       "unknown": "No newer source confirms this; it is dimmed, not ended."
-    }
+    },
+    "stakeReachedIn": "Holder reached 5 %",
+    "stakeDroppedIn": "Holder fell below 5 %",
+    "stakeReachedOut": "Holding reached 5 %",
+    "stakeDroppedOut": "Holding fell below 5 %",
+    "stakeMove": "{{from}} → {{to}}, as stated on {{date}}",
+    "stakeNotStated": "not stated"
   },
   "toast": {
     "personGraphError": "Could not load person graph.",
@@ -667,7 +672,9 @@
     "sharesOf": "{{shares}} of {{total}}",
     "sharesOfAsOf": "{{shares}} of {{total}} (total as of {{date}})",
     "votingShares": "Voted shares",
-    "readFrom": "Read from"
+    "readFrom": "Read from",
+    "stakeHistory": "Stake history",
+    "stakeAsOf": "Stake as stated on"
   },
   "health": {
     "title": "Source health",
@@ -744,5 +751,14 @@
     "clear": "Show the present",
     "legend": "Dashed and faded: not documented for that year — the sources only confirm it later.",
     "rowHint": "Not documented for {{year}} — the sources only confirm it later"
+  },
+  "stakeHistory": {
+    "title": "Stake history",
+    "hint": "Every number a source stated for this holding, 5 % and above, newest first.",
+    "loading": "Loading…",
+    "error": "Could not load the stake history.",
+    "empty": "No change of stake recorded.",
+    "was": "was {{pct}}",
+    "notStated": "not stated"
   }
 }

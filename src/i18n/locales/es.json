@@ -73,7 +73,6 @@
     "export": "Exportar",
     "exportPng": "Imagen PNG",
     "exportOds": "Hoja de cálculo (.ods)",
-
     "exportOdsError": "No se pudo generar la hoja de cálculo. Inténtalo de nuevo.",
     "expandGraph": "Ampliar grafo",
     "expandHint": "Doble clic para expandir",
@@ -381,7 +380,13 @@
       "unconfirmed": "Ninguna fuente lo ha confirmado desde el {{date}}. Una declaración colaborativa borrada simplemente deja de verse: se atenúa, no se cierra.",
       "lei_lapsed": "El registro en que se basa ha caducado y su emisor ya no lo mantiene; última actualización el {{date}}. Atenuado, no cerrado.",
       "unknown": "Ninguna fuente más reciente lo confirma: se atenúa, no se cierra."
-    }
+    },
+    "stakeReachedIn": "Un accionista alcanza el 5 %",
+    "stakeDroppedIn": "Un accionista baja del 5 %",
+    "stakeReachedOut": "Una participación alcanza el 5 %",
+    "stakeDroppedOut": "Una participación baja del 5 %",
+    "stakeMove": "{{from}} → {{to}}, según declaración del {{date}}",
+    "stakeNotStated": "no declarada"
   },
   "toast": {
     "personGraphError": "No se pudo cargar el grafo de la persona.",
@@ -667,7 +672,9 @@
     "sharesOf": "{{shares}} de {{total}}",
     "sharesOfAsOf": "{{shares}} de {{total}} (total a {{date}})",
     "votingShares": "Acciones votadas",
-    "readFrom": "Leído de"
+    "readFrom": "Leído de",
+    "stakeHistory": "Historial de participación",
+    "stakeAsOf": "Participación declarada el"
   },
   "health": {
     "title": "Estado de las fuentes",
@@ -744,5 +751,14 @@
     "clear": "Mostrar el presente",
     "legend": "Discontinuo y atenuado: sin documentar para ese año — las fuentes solo lo confirman después.",
     "rowHint": "Sin documentar para {{year}} — las fuentes solo lo confirman después"
+  },
+  "stakeHistory": {
+    "title": "Historial de participación",
+    "hint": "Cada cifra que una fuente declaró para esta participación, del 5 % en adelante, la más reciente primero.",
+    "loading": "Cargando…",
+    "error": "No se pudo cargar el historial de participación.",
+    "empty": "No se registró ningún cambio de participación.",
+    "was": "antes {{pct}}",
+    "notStated": "no declarada"
   }
 }

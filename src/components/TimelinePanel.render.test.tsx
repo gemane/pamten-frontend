@@ -292,3 +292,37 @@ describe('time travel from the timeline', () => {
     expect(screen.queryByRole('button')).toBeNull()
   })
 })
+
+describe('a holding crossing the 5 % line', () => {
+  it('reads "Holder reached 5 %" with the move and the filing, under the statement\'s year', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      { kind: 'stake_reached', direction: 'in', party: { id: 'br', name: 'BlackRock' }, since: '2025-02-13',
+        since_basis: null, until: null, active: null, stake_percent: 7.3, previous_percent: 4.8,
+        source_id: 'sec', filing_type: '13G/A', source_url: 'https://www.sec.gov/Archives/13ga.htm' },
+      { kind: 'stake_dropped', direction: 'out', party: { id: 'li', name: 'LinkedIn' }, since: '2026-01-05',
+        since_basis: null, until: null, active: null, stake_percent: 3.0, previous_percent: 9.0, source_id: 'gleif' },
+      ev({ kind: 'ownership_in', since: '2019-01-01', party: { id: 'v', name: 'Vanguard Group' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const rows = await screen.findAllByTestId('tl-crossing')
+    expect(rows).toHaveLength(2)
+    expect(screen.getByText('Holder reached 5 %')).toBeInTheDocument()
+    expect(screen.getByText('Holding fell below 5 %')).toBeInTheDocument()
+    const moves = screen.getAllByTestId('tl-crossing-move')
+    expect(moves[0]).toHaveTextContent('9 % → 3 %')          // newest year first: 2026 (LinkedIn)
+    expect(moves[1]).toHaveTextContent('4.8 % → 7.3 %, as stated on 2025-02-13')
+    expect(moves[1].querySelector('a')).toHaveAttribute('href', 'https://www.sec.gov/Archives/13ga.htm')
+    expect(moves[0].querySelector('a')).toBeNull()
+    // the crossing is a transition, not a holding: no stake badge, no "Owned by"
+    expect(screen.getAllByText('Owned by')).toHaveLength(1)
+  })
+
+  it('a stake withdrawn reads "not stated"', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      { kind: 'stake_dropped', direction: 'in', party: { id: 'br', name: 'BlackRock' }, since: '2025-02-13',
+        stake_percent: null, previous_percent: 7.3, source_id: 'sec' },
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    expect(await screen.findByTestId('tl-crossing-move')).toHaveTextContent('7.3 % → not stated')
+  })
+})

@@ -194,6 +194,29 @@ export interface OwnsRelationship {
   /** How surely the parser read this relationship off its filing (see
    *  ReadFrom): field/table are the normal case, layout/prose get a hint. */
   read_from?: ReadFrom | null
+  /** The pair has stake history: a source changed its number for a holding at
+   *  or above 5 % at least once. The row offers the series
+   *  (`getStakeHistory`); absent means the edge's number is the only one. */
+  stake_history?: boolean
+  /** Time travel only: the stake shown is the one the source stated on this
+   *  day, read off the history, not the edge's current number. */
+  stake_as_of?: string | null
+}
+
+/** One kept stake statement of a holding (`/relationships/stake-history`):
+ *  what a source said the stake was, as of when, and what it said before.
+ *  `previous_percent` null marks the first kept statement. */
+export interface StakeHistoryRow {
+  from_id: string
+  to_id: string
+  source_id?: string | null
+  source_name?: string | null
+  stake_percent: number | null
+  previous_percent: number | null
+  as_of: string | null
+  filing_type?: string | null
+  source_url?: string | null
+  recorded_at?: string | null
 }
 
 export interface RoleRelationship {
