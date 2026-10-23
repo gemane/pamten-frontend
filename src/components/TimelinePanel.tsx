@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag } from 'react-icons/fi'
+import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag, FiTrendingUp, FiTrendingDown } from 'react-icons/fi'
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import { asOfFromYear, asOfYear } from '../utils/asOf'
@@ -43,6 +43,13 @@ interface TimelineEvent {
    *  last day the old name applied, as the register records it. */
   former_name?: string | null
   new_name?: string | null
+  /** 'stake_reached' / 'stake_dropped': a holding crossed the 5 % line — the
+   *  only stake movement the timeline tells (the drift between is in the
+   *  holding's own history). `direction` says whose stake: 'in' = a holder
+   *  of this company, 'out' = this company's holding in the party. */
+  direction?: 'in' | 'out' | null
+  previous_percent?: number | null
+  source_id?: string | null
 }
 
 /** A deal price as the panel says it: "$29.5 bn", "$2.7 m", "$950,000". */
@@ -116,6 +123,8 @@ const KIND_COLOR: Record<string, string> = {
   dimmed:        '#8892a4',
   ended:         '#718096',
   renamed:       '#B7791F',
+  stake_reached: '#2F855A',
+  stake_dropped: '#C05621',
 }
 const KIND_ICON: Record<string, React.ElementType> = {
   ownership_in:  FiArrowDownRight,
@@ -124,6 +133,47 @@ const KIND_ICON: Record<string, React.ElementType> = {
   dimmed:        FiEyeOff,
   ended:         FiLogOut,
   renamed:       FiTag,
+  stake_reached: FiTrendingUp,
+  stake_dropped: FiTrendingDown,
+}
+
+/** A holding crossing the 5 % line, under the year the source stated the new
+ *  number: "Holder reached 5 %" / "Holding fell below 5 %", the party, then
+ *  the move itself with the filing. The timeline tells no other stake
+ *  movement — a company with six quarterly filers would drown in it; the
+ *  full series sits behind the holding's own row. */
+function StakeCrossingRow({ ev }: { ev: TimelineEvent }) {
+  const { t } = useTranslation()
+  const reached = ev.kind === 'stake_reached'
+  const color = reached ? KIND_COLOR.stake_reached : KIND_COLOR.stake_dropped
+  const Icon = reached ? FiTrendingUp : FiTrendingDown
+  const label = t(`timeline.${reached ? 'stakeReached' : 'stakeDropped'}${ev.direction === 'out' ? 'Out' : 'In'}`)
+  const pct = (v: number | null | undefined) => v == null ? t('timeline.stakeNotStated') : `${v} %`
+  return (
+    <div className={`tl-event tl-event--${reached ? 'reached' : 'dropped'}`} data-testid="tl-crossing">
+      <div className="tl-event__dot" style={{ background: color }} />
+      <div className="tl-event__body">
+        <div className="tl-event__row">
+          <span className="tl-event__kind" style={{ color }}>
+            <Icon />
+            {label}
+          </span>
+        </div>
+        <div className="tl-event__name">{partyName(ev.party)}</div>
+        <div className="tl-event__meta tl-event__reason" data-testid="tl-crossing-move">
+          {t('timeline.stakeMove', { from: pct(ev.previous_percent), to: pct(ev.stake_percent), date: ev.since ?? '' })}
+          {ev.source_url && (
+            <>
+              {' '}
+              <a href={ev.source_url} target="_blank" rel="noreferrer">
+                {t('timeline.filing')} <FiExternalLink />
+              </a>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /** The company's own rename, under the year the old name ended: "Renamed",
@@ -237,6 +287,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   if (kind === 'dimmed') return <DimmedRow ev={ev} />
   if (kind === 'ended') return <EndedRow ev={ev} />
   if (kind === 'renamed') return <RenamedRow ev={ev} />
+  if (kind === 'stake_reached' || kind === 'stake_dropped') return <StakeCrossingRow ev={ev} />
   const color     = KIND_COLOR[kind] || KIND_COLOR.role
   const Icon      = KIND_ICON[kind]  || FiUser
   // "Owns" / "Owned by", not "Acquired": most sources say a holding existed at

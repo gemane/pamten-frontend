@@ -7,6 +7,7 @@ import type {
   FullProfile,
   PersonProfile,
   HistoryEntry,
+  StakeHistoryRow,
   ScraperStatus,
   ScrapeResult,
   ScrapeRun,
@@ -217,6 +218,11 @@ export const getPersonProfile = (id: string): Promise<AxiosResponse<PersonProfil
 
 export const getHistory = (id: string): Promise<AxiosResponse<HistoryEntry[]>> =>
   client.get(`/relationships/history/${id}`)
+
+/** Every kept stake statement for one holding (5 % and above), every source,
+ *  newest first — the series behind a row the profile marked `stake_history`. */
+export const getStakeHistory = (fromId: string, toId: string): Promise<AxiosResponse<StakeHistoryRow[]>> =>
+  client.get('/relationships/stake-history', { params: { from_id: fromId, to_id: toId } })
 
 /** A company as an .ods spreadsheet, built server-side (every row, not what
  *  the graph loaded): the file as a blob, its name in Content-Disposition. */

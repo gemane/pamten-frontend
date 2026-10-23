@@ -13,13 +13,14 @@ vi.mock('../services/api', () => ({
   getPersonProfile: vi.fn(),
   getPersonSources: vi.fn(),
   getSubsidiaryTree: vi.fn(),
+  getStakeHistory: vi.fn(),
   getMediaImage: vi.fn(),
   mediaFileUrl: (path: string) => `https://api.example.test/v1${path}`,
 }))
 vi.mock('./NodeFlags', () => ({ default: () => null }))
 vi.mock('./TimelinePanel', () => ({ default: () => null }))
 
-import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, getMediaImage } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, getMediaImage, getStakeHistory } from '../services/api'
 import { STAKE_FILTERS } from './GraphStakeFilter'
 
 const mockProfile = vi.mocked(getFullProfile)
@@ -2492,5 +2493,61 @@ describe('the image and its credit', () => {
     expect(screen.queryByAltText('Acme Corp')).toBeNull()
     expect(screen.queryByTestId('image-credit')).toBeNull()
     expect(document.querySelector('img[src*="upload.wikimedia.org"]')).toBeNull()
+  })
+})
+
+describe('the stake history behind a holding\'s row', () => {
+  const mockStakeHistory = vi.mocked(getStakeHistory)
+  const twoOwners = () => ({ data: {
+    entity: { id: 'ms', name: 'Microsoft', type: 'company', verified: false } as Entity,
+    owners: [
+      { owner: { id: 'br', name: 'BlackRock', type: 'company' } as Entity,
+        relationship: { stake_percent: 6.1, source_id: 'sec', stake_history: true } },
+      { owner: { id: 'vg', name: 'Vanguard', type: 'company' } as Entity,
+        relationship: { stake_percent: 8.0, source_id: 'sec' } },
+    ],
+    subsidiaries: [], executives: [],
+  } })
+
+  it('only a row the backend marked gets the toggle, and it opens the series newest first', async () => {
+    mockProfile.mockResolvedValue(twoOwners() as never)
+    mockStakeHistory.mockResolvedValue({ data: [
+      { from_id: 'br', to_id: 'ms', source_id: 'sec', source_name: 'SEC EDGAR', stake_percent: 6.1, previous_percent: 7.3,
+        as_of: '2025-08-14', filing_type: '13G/A', source_url: 'https://www.sec.gov/13ga' },
+      { from_id: 'br', to_id: 'ms', source_id: 'sec', source_name: 'SEC EDGAR', stake_percent: 4.8, previous_percent: null,
+        as_of: '2024-02-13', filing_type: '13G' },
+    ] } as never)
+    render(<NodePanel node={entityNode('ms', 'Microsoft')} refreshKey={0} />)
+    await screen.findByText('BlackRock')
+    const toggles = screen.getAllByRole('button', { name: 'Stake history' })
+    expect(toggles).toHaveLength(1)                                   // Vanguard's row has none
+    expect(screen.queryByTestId('stake-history')).toBeNull()         // nothing fetched until opened
+    expect(mockStakeHistory).not.toHaveBeenCalled()
+    await userEvent.click(toggles[0])
+    const list = await screen.findByTestId('stake-history')
+    expect(mockStakeHistory).toHaveBeenCalledWith('br', 'ms')
+    const rows = await within(list).findAllByRole('listitem')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toHaveTextContent('6.1 %')
+    expect(rows[0]).toHaveTextContent('was 7.3 %')
+    expect(rows[0]).toHaveTextContent('SEC EDGAR · 13G/A')
+    expect(rows[0].querySelector('a')).toHaveAttribute('href', 'https://www.sec.gov/13ga')
+    expect(rows[1]).toHaveTextContent('4.8 %')
+    expect(rows[1]).not.toHaveTextContent('was')                     // the first kept statement
+    await userEvent.click(toggles[0])
+    expect(screen.queryByTestId('stake-history')).toBeNull()
+  })
+
+  it('an empty series and a failed fetch each say so', async () => {
+    mockProfile.mockResolvedValue(twoOwners() as never)
+    mockStakeHistory.mockResolvedValueOnce({ data: [] } as never)
+    render(<NodePanel node={entityNode('ms', 'Microsoft')} refreshKey={0} />)
+    await screen.findByText('BlackRock')
+    await userEvent.click(screen.getByRole('button', { name: 'Stake history' }))
+    expect(await screen.findByText('No change of stake recorded.')).toBeInTheDocument()
+    mockStakeHistory.mockRejectedValueOnce(new Error('down'))
+    await userEvent.click(screen.getByRole('button', { name: 'Stake history' }))   // close
+    await userEvent.click(screen.getByRole('button', { name: 'Stake history' }))   // reopen → refetch
+    expect(await screen.findByText('Could not load the stake history.')).toBeInTheDocument()
   })
 })
