@@ -85,8 +85,10 @@ describe('asOf rules', () => {
   it('a company founded after the day did not exist', () => {
     expect(nodeExists({ founded: 2020 }, Y19)).toBe(false)
     expect(nodeExists({ founded: 2019 }, Y19)).toBe(true)
-    expect(nodeExists({ founded_date: '2020-01-01' }, Y19)).toBe(false)
-    expect(nodeExists({ founded_date: '2019-12-31' }, Y19)).toBe(true)
+    expect(nodeExists({ incorporated_on: '2020-01-01' }, Y19)).toBe(false)
+    expect(nodeExists({ incorporated_on: '2019-12-31' }, Y19)).toBe(true)
+    // the register's date decides over the headline year when both are known
+    expect(nodeExists({ founded: 1690, incorporated_on: '1896-07-20' }, '1800-12-31')).toBe(false)
     expect(nodeExists({}, Y19)).toBe(true)
     expect(nodeExists(null, Y19)).toBe(true)
   })

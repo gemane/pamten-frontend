@@ -93,13 +93,15 @@ export function edgePresence(rel: Tenure | null | undefined, asOf: string | null
   return evidence && evidence <= asOf ? 'present' : 'unknown'
 }
 
-/** A company founded after the day did not exist; nothing else is certain. */
+/** A company that began after the day did not exist; nothing else is certain.
+ *  The register's incorporation date decides when it is known (the legal
+ *  entity's start), else the year the business began. */
 export function nodeExists(
-  entity: { founded?: number | null; founded_date?: string | null } | null | undefined,
+  entity: { founded?: number | null; incorporated_on?: string | null } | null | undefined,
   asOf: string | null,
 ): boolean {
   if (!asOf || !entity) return true
-  if (entity.founded_date) return entity.founded_date <= asOf
+  if (entity.incorporated_on) return entity.incorporated_on <= asOf
   if (entity.founded != null) return String(entity.founded) <= asOf
   return true
 }
@@ -110,7 +112,7 @@ export function rowPresence(
   rel: Tenure | null | undefined,
   asOf: string | null,
 ): Presence {
-  if (!nodeExists(party as { founded?: number | null; founded_date?: string | null } | null, asOf)) return 'absent'
+  if (!nodeExists(party as { founded?: number | null; incorporated_on?: string | null } | null, asOf)) return 'absent'
   return edgePresence(rel, asOf)
 }
 

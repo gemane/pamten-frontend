@@ -348,7 +348,7 @@ export function entityDetailRows(entity: Entity, lang: string): DetailRow[] {
                       href?: string }[] = [
     { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
     { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
-    { icon: FiCalendar,  labelKey: 'panel.founded',      value: formatDate(entity.founded_date, lang) },
+    { icon: FiCalendar,  labelKey: 'panel.incorporated', value: formatDate(entity.incorporated_on, lang) },
     { icon: FiMapPin,    labelKey: 'panel.regAddress',   value: entity.address },
   ]
   return candidates.filter((r): r is DetailRow => !!r.value)
