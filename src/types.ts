@@ -26,7 +26,7 @@ export interface Entity {
   name: string
   type: EntityType
   country?: string
-  founded?: number
+  founded?: number          // the year the business began — Wikidata's; a register never writes it
   revenue?: number
   employees?: number
   employees_as_of?: number
@@ -56,7 +56,7 @@ export interface Entity {
   reg_lng?: number          // company's agent's door, which is not where it is run
   reg_geo_precision?: string
   jurisdiction_code?: string  // ISO 3166-2 registration, e.g. 'US-DE' — sparse; absent means "not stated"
-  founded_date?: string     // full YYYY-MM-DD incorporation/creation date (headline `founded` stays the year)
+  incorporated_on?: string  // the legal entity's registration date (YYYY-MM-DD) as the register states it; `founded` is the year the business began (Wikidata) — two facts, two fields
   /** The register's other names — alternative-language legal names, a Latin
    *  transliteration of a non-Latin one (GLEIF: 네슬레코리아 유한책임회사 → "Nestle
    *  Korea"), previous names. utils/displayName picks what to show first. */

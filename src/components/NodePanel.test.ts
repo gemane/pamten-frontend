@@ -180,13 +180,13 @@ describe('entityDetailRows', () => {
       legal_form: 'Private Limited Company',
       registration_authority: 'Companies Register',
       registration_number: '07428111',
-      founded_date: '2010-11-09',
+      incorporated_on: '2010-11-09',
       address: '1 Example Street, London, EC1A 1BB, GB',
     }, 'en')
     expect(rows.map(r => [r.labelKey, r.value])).toEqual([
       ['panel.legalForm', 'Private Limited Company'],
       ['panel.registeredAt', 'Companies Register · 07428111'],
-      ['panel.founded', 'Nov 9, 2010'],
+      ['panel.incorporated', 'Nov 9, 2010'],
       ['panel.regAddress', '1 Example Street, London, EC1A 1BB, GB'],
     ])
   })

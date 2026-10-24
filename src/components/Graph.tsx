@@ -309,7 +309,7 @@ export function classifyElements(
   const exists = new Map<string, boolean>()
   for (const el of elements) {
     const d = el.data
-    if (!('source' in d)) exists.set(d.id, nodeExists(d.raw as { founded?: number | null; founded_date?: string | null }, asOf))
+    if (!('source' in d)) exists.set(d.id, nodeExists(d.raw as { founded?: number | null; incorporated_on?: string | null }, asOf))
   }
   const presence = new Map<string, Presence>()
   const edgeVisible = (d: EdgeData): boolean => {
