@@ -12,10 +12,10 @@
     "android:sync": "npm run build && npx cap sync android"
   },
   "dependencies": {
-    "@capacitor/android": "^8.5.0",
+    "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.0",
-    "axios": "^1.7.7",
+    "axios": "^1.20.0",
     "cytoscape": "^3.30.2",
     "d3-geo": "^2.0.2",
     "i18next": "^26.3.3",
