@@ -189,6 +189,8 @@
     "votesIn": "Votes in",
     "website": "Website",
     "webSearch": "Web search",
+    "sector": "Industry",
+    "sectorNoTree": "No NACE class for this activity; what the register filed is listed below.",
     "refreshing": "Refreshing…",
     "capped": "Showing {{shown}} of {{total}} — the list is capped",
     "subsidiariesAllLevels": "Subsidiaries — all levels",

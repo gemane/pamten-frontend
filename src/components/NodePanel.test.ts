@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { entityToNode, personToNode, ownerToNode, personDisplayDetails, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRows, googleSearchHref } from './NodePanel'
+import { entityToNode, personToNode, ownerToNode, personDisplayDetails, byRoleImportance, roleRank, showSourceStatements, entityDetailRows, tenure, byTenureDesc, parentExceptionLines, linkHost, sourceNames, webLinkRows, googleSearchHref, sectorLines, sectorStatements } from './NodePanel'
+import type { IndustryLevel } from '../types'
 import { byStakeDesc } from '../utils/ordering'
 import type { Entity, Person } from '../types'
 
@@ -530,5 +531,152 @@ describe('googleSearchHref', () => {
   it('blank or missing names yield no link', () => {
     expect(googleSearchHref('   ')).toBeNull()
     expect(googleSearchHref(null)).toBeNull()
+  })
+})
+
+describe('sectorLines — the NACE tree the panel draws', () => {
+  const C: IndustryLevel[] = [
+    { level: 1, code: 'C',     label: { en: 'Manufacturing', de: 'Verarbeitendes Gewerbe' } },
+    { level: 2, code: '23',    label: { en: 'Manufacture of other non-metallic mineral products', de: 'Herstellung von Glas…' } },
+    { level: 3, code: '23.3',  label: { en: 'Manufacture of clay building materials', de: 'Herstellung von keramischen Baumaterialien' } },
+    { level: 4, code: '23.32', label: { en: 'Manufacture of bricks, tiles and construction products, in baked clay', de: 'Herstellung von Ziegeln und sonstiger Baukeramik' } },
+  ]
+  const G = [
+    { level: 1, code: 'G',     label: { en: 'Wholesale and retail trade; repair of motor vehicles and motorcycles' } },
+    { level: 2, code: '46',    label: { en: 'Wholesale trade, except of motor vehicles and motorcycles' } },
+    { level: 3, code: '46.7',  label: { en: 'Other specialised wholesale' } },
+    { level: 4, code: '46.73', label: { en: 'Wholesale of wood, construction materials and sanitary equipment' } },
+  ]
+  const J = { level: 1, code: 'J', label: { en: 'Information and communication' } }
+  const uk = (code: string, label: string, nace: string | null, tree: IndustryLevel[]) =>
+    ({ scheme: 'uk-sic', scheme_name: 'UK SIC 2007', code, label, nace_code: nace, tree, source_name: 'Companies House' })
+  const sec = (code: string, label: string, nace: string | null, tree: IndustryLevel[]) =>
+    ({ scheme: 'us-sic', scheme_name: 'US SIC (SEC EDGAR)', code, label, nace_code: nace, tree, source_name: 'SEC EDGAR' })
+  const industry = { nace_code: '23.32', tree: C, statements: [] }
+
+  it('one line per level, section first, indented a step each', () => {
+    const lines = sectorLines(industry, 'en')
+    expect(lines.map(l => l.code)).toEqual(['C', '23', '23.3', '23.32'])
+    expect(lines.map(l => l.depth)).toEqual([0, 1, 2, 3])
+    expect(lines[0].label).toBe('Manufacturing')
+  })
+
+  it("labels in the viewer's language where the bundle has it", () => {
+    expect(sectorLines(industry, 'de-AT')[3].label).toBe('Herstellung von Ziegeln und sonstiger Baukeramik')
+  })
+
+  it('falls back to English for a language the bundle lacks', () => {
+    expect(sectorLines(industry, 'es')[0].label).toBe('Manufacturing')
+  })
+
+  it('nothing when no source placed the company', () => {
+    expect(sectorLines(null, 'en')).toEqual([])
+    expect(sectorLines({ nace_code: null, tree: [], statements: [] }, 'en')).toEqual([])
+  })
+
+  describe('branches: every statement\'s path, shared rows once', () => {
+    it('two codes in different sections are two branches from the root, the principal first', () => {
+      const lines = sectorLines({ nace_code: '23.32', tree: C, statements: [
+        uk('23320', 'Manufacture of bricks, tiles and construction products, in baked clay', '23.32', C),
+        uk('46730', 'Wholesale of wood, construction materials and sanitary equipment', '46.73', G),
+      ] }, 'en')
+      expect(lines.map(l => `${l.depth}:${l.code}`)).toEqual([
+        '0:C', '1:23', '2:23.3', '3:23.32', '0:G', '1:46', '2:46.7', '3:46.73'])
+    })
+
+    it('a second class under the same group shares the rows above it', () => {
+      const sibling = [...C.slice(0, 3), { level: 4, code: '23.31', label: { en: 'Manufacture of ceramic tiles and flags' } }]
+      const lines = sectorLines({ nace_code: '23.32', tree: C, statements: [
+        uk('23320', 'Bricks', '23.32', C), uk('23310', 'Tiles', '23.31', sibling),
+      ] }, 'en')
+      expect(lines.map(l => `${l.depth}:${l.code}`)).toEqual(['0:C', '1:23', '2:23.3', '3:23.32', '3:23.31'])
+    })
+
+    it("a path that stops higher adds no row, only its leaf — after the branch below it", () => {
+      const lines = sectorLines({ nace_code: '23.32', tree: C, statements: [
+        uk('23320', 'Bricks', '23.32', C), sec('3250', 'Structural Clay Products', '23', C.slice(0, 2)),
+      ] }, 'en')
+      expect(lines.map(l => `${l.depth}:${l.leaf ? l.label : l.code}`)).toEqual([
+        '0:C', '1:23', '2:23.3', '3:23.32', '2:Structural Clay Products'])
+      expect(lines[4]).toMatchObject({ code: 'US SIC', title: '3250', leaf: true })
+    })
+
+    it('a profile from before per-statement paths draws the principal alone', () => {
+      const lines = sectorLines({ nace_code: '23.32', tree: C, statements: [
+        { scheme: 'uk-sic', code: '23320', label: 'Bricks', nace_code: '23.32' },
+        { scheme: 'uk-sic', code: '46730', label: 'Wholesale', nace_code: '46.73' },
+      ] }, 'en')
+      expect(lines.map(l => l.code)).toEqual(['C', '23', '23.3', '23.32'])
+    })
+  })
+
+  describe('the leaf: what the source itself filed, by name', () => {
+    it("the SEC's title hangs under the section the crosswalk reached", () => {
+      const lines = sectorLines({ nace_code: 'J', tree: [J], statements: [sec('7370', 'Services-Computer Programming, Data Processing, Etc.', 'J', [J])] }, 'en')
+      expect(lines).toEqual([
+        { code: 'J', label: 'Information and communication', depth: 0 },
+        { code: 'US SIC', label: 'Services-Computer Programming, Data Processing, Etc.', depth: 1, title: '7370', leaf: true },
+      ])
+    })
+
+    it('a UK code ending in 0 is the class itself: no leaf; one with a fifth digit hangs under it', () => {
+      expect(sectorLines({ ...industry, statements: [uk('23320', 'Manufacture of bricks, tiles and construction products, in baked clay', '23.32', C)] }, 'en'))
+        .toHaveLength(4)
+      const sw = [{ level: 4, code: '62.01', label: { en: 'Computer programming activities' } }]
+      const lines = sectorLines({ nace_code: '62.01', tree: sw, statements: [uk('62012', 'Business and domestic software development', '62.01', sw)] }, 'en')
+      expect(lines[1]).toEqual({ code: 'UK SIC 2007', label: 'Business and domestic software development', depth: 1, title: '62012', leaf: true })
+    })
+
+    it('a statement the tree cannot place draws nothing; the next one does', () => {
+      const dormant = uk('99999', 'Dormant Company', null, [])
+      const motor = [{ level: 4, code: '29.10', label: { en: 'Manufacture of motor vehicles' } }]
+      const lines = sectorLines({ nace_code: '29.10', tree: motor, statements: [dormant, sec('3711', 'Motor Vehicles & Passenger Car Bodies', '29.10', motor)] }, 'en')
+      expect(lines.map(l => l.label)).toEqual(['Manufacture of motor vehicles', 'Motor Vehicles & Passenger Car Bodies'])
+    })
+
+    it('no name filed, no leaf', () => {
+      expect(sectorLines({ nace_code: 'J', tree: [J], statements: [sec('7370', '', 'J', [J])] }, 'en')).toHaveLength(1)
+    })
+  })
+})
+
+describe('sectorStatements — what each source filed, codes only where the tree names them', () => {
+  const page = 'https://find-and-update.company-information.service.gov.uk/company/05299520'
+  const placed = [{ level: 1, code: 'C', label: { en: 'Manufacturing' } }]
+
+  it('one source, several codes: one line, the codes in the register\'s order, the names on hover, the link once', () => {
+    const rows = sectorStatements({ nace_code: '23.32', tree: placed, statements: [
+      { scheme: 'uk-sic', scheme_name: 'UK SIC 2007', code: '23320', label: 'Manufacture of bricks',
+        nace_code: '23.32', tree: placed, source_name: 'Companies House', source_url: page },
+      { scheme: 'uk-sic', scheme_name: 'UK SIC 2007', code: '46730', label: 'Wholesale of wood',
+        nace_code: '46.73', tree: placed, source_name: 'Companies House', source_url: page },
+      { scheme: 'us-sic', scheme_name: 'US SIC (SEC EDGAR)', code: '3250', label: 'Structural Clay Products',
+        nace_code: '23', tree: placed, source_name: 'SEC EDGAR', source_url: 'https://www.sec.gov/cgi-bin/browse-edgar?CIK=1' },
+    ] })
+    expect(rows).toEqual([
+      { name: 'Companies House · UK SIC 2007', codes: '23320, 46730',
+        title: '23320 · Manufacture of bricks\n46730 · Wholesale of wood', href: page },
+      { name: 'SEC EDGAR · US SIC', codes: '3250', title: '3250 · Structural Clay Products',
+        href: 'https://www.sec.gov/cgi-bin/browse-edgar?CIK=1' },
+    ])
+  })
+
+  it('a code the tree cannot place is spelled out', () => {
+    const rows = sectorStatements({ nace_code: null, tree: [], statements: [
+      { scheme: 'uk-sic', scheme_name: 'UK SIC 2007', code: '99999', label: 'Dormant Company', nace_code: null, tree: [],
+        source_name: 'Companies House', source_url: page },
+    ] })
+    expect(rows[0]).toMatchObject({ name: 'Companies House · UK SIC 2007', codes: '99999 · Dormant Company' })
+  })
+
+  it('an unusable URL links nothing, and a nameless scheme shows its key', () => {
+    const rows = sectorStatements({ nace_code: null, tree: [], statements: [
+      { scheme: 'us-sic', code: '7370', label: null, source_name: 'SEC EDGAR', source_url: 'javascript:alert(1)' },
+    ] })
+    expect(rows[0]).toEqual({ name: 'SEC EDGAR · us-sic', codes: '7370', title: null, href: null })
+  })
+
+  it('empty without statements', () => {
+    expect(sectorStatements(undefined)).toEqual([])
   })
 })

@@ -189,6 +189,8 @@
     "votesIn": "Stimmt ab in",
     "website": "Webseite",
     "webSearch": "Websuche",
+    "sector": "Branche",
+    "sectorNoTree": "Keine NACE-Klasse für diese Tätigkeit; unten steht, was das Register angibt.",
     "refreshing": "Wird aktualisiert…",
     "capped": "{{shown}} von {{total}} angezeigt — die Liste ist begrenzt",
     "subsidiariesAllLevels": "Tochtergesellschaften — alle Ebenen",

@@ -24,7 +24,7 @@ import { deathMark } from '../utils/deathMark'
 import { displayName, entityLabel } from '../utils/displayName'
 import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
-import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree, ReadFrom, StakeHistoryRow } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree, ReadFrom, StakeHistoryRow, Industry, IndustryLevel, IndustryStatement } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
 import { asOfYear, edgePresence, endedBy, rowPresence, startedAfter, type Tenure } from '../utils/asOf'
 
@@ -443,6 +443,97 @@ export function webLinkRows(entity: Entity): DetailRow[] {
 
 const trimmed = (v?: string | null): string | null => v?.trim() || null
 
+type SectorRow = { code: string; label: string; depth: number; title?: string; leaf?: boolean }
+type SectorNode = { code: string; label: string; children: SectorNode[]; leaves: { code: string; label: string; title: string }[] }
+
+/** The sector tree the panel draws: every statement's NACE path — the section
+ *  first, labelled in the viewer's language where the bundle has it (EN and
+ *  DE) and in English otherwise — merged into one tree, a shared ancestor drawn
+ *  once, the principal branch first; under the deepest node a path reaches,
+ *  what the source itself filed when that says more (see `sectorLeaf`).
+ *  Wienerberger's bricks and wholesale are two branches from the root; a
+ *  second class under the same group shares the three rows above it. Empty
+ *  when no source placed the company. */
+export function sectorLines(industry: Industry | null | undefined, lang: string): SectorRow[] {
+  if (!industry) return []
+  const lg = (lang || 'en').slice(0, 2).toLowerCase()
+  const roots: SectorNode[] = []
+  const byCode = new Map<string, SectorNode>()
+  const place = (path: IndustryLevel[]): SectorNode | null => {
+    let siblings = roots, node: SectorNode | null = null
+    for (const t of path) {
+      let next = byCode.get(t.code)
+      if (!next) {
+        next = { code: t.code, label: t.label?.[lg] ?? t.label?.en ?? t.code, children: [], leaves: [] }
+        siblings.push(next)
+        byCode.set(t.code, next)
+      }
+      node = next
+      siblings = next.children
+    }
+    return node
+  }
+  for (const s of industry.statements ?? []) {
+    const end = place(sectorPath(industry, s))
+    const leaf = end && sectorLeaf(s)
+    if (leaf) end.leaves.push(leaf)
+  }
+  if (!roots.length && industry.tree?.length) place(industry.tree)   // the stamped code alone, statements unreadable
+  const rows: SectorRow[] = []
+  const walk = (n: SectorNode, depth: number) => {
+    rows.push({ code: n.code, label: n.label, depth })
+    n.children.forEach(c => walk(c, depth + 1))
+    n.leaves.forEach(l => rows.push({ ...l, depth: depth + 1, leaf: true }))
+  }
+  roots.forEach(r => walk(r, 0))
+  return rows
+}
+
+/** A statement's own path down the NACE tree — served per statement; a
+ *  profile from before that carries the principal's alone. */
+function sectorPath(industry: Industry, s: IndustryStatement): IndustryLevel[] {
+  if (s.tree) return s.tree
+  return s.nace_code && s.nace_code === industry.nace_code ? industry.tree ?? [] : []
+}
+
+/** The source's own entry under its branch, by its name, when it says more
+ *  than the deepest NACE row. The SEC's "Services-Computer Programming, Data
+ *  Processing, Etc." under section J does; a UK code ending in 0 IS the NACE
+ *  class and adds nothing. The scheme stands where a code would, the code
+ *  itself in the row's title. */
+function sectorLeaf(s: IndustryStatement): { code: string; label: string; title: string } | null {
+  if (!s.label) return null
+  if (s.scheme === 'uk-sic' && s.code.endsWith('0')) return null
+  return { code: (s.scheme_name ?? s.scheme).replace(/\s*\(.*\)$/, ''), label: s.label, title: s.code }
+}
+
+/** What each source filed, one line per source, in the shape of the Sources
+ *  rows: the source and the scheme as the (linked) name — "Companies House
+ *  Register · UK SIC 2007" — and the codes in the register's order on the
+ *  right, "23320, 46730". The names are in the tree, so the line carries them
+ *  on hover only; a code the tree cannot place (a dormant company's 99999) is
+ *  spelled out. A UK company files up to four codes on one register page, so
+ *  one line per code read as four sources saying four different things. */
+export function sectorStatements(industry: Industry | null | undefined): { name: string; codes: string; title: string | null; href: string | null }[] {
+  type Group = { name: string; codes: string[]; names: string[]; href: string | null }
+  const groups = new Map<string, Group>()
+  for (const s of industry?.statements ?? []) {
+    const scheme = s.scheme_name ?? s.scheme
+    const key = `${s.source_name ?? ''}|${scheme}`
+    const placed = industry ? sectorPath(industry, s).length > 0 : false
+    const code = s.label && !placed ? `${s.code} · ${s.label}` : s.code
+    const g = groups.get(key)
+    if (g) { g.codes.push(code); if (s.label) g.names.push(`${s.code} · ${s.label}`) }
+    else groups.set(key, { name: [s.source_name, scheme.replace(/\s*\(.*\)$/, '')].filter(Boolean).join(' · '), codes: [code],
+                           names: s.label ? [`${s.code} · ${s.label}`] : [], href: safeHref(s.source_url ?? null) })
+  }
+  return [...groups.values()].map(g => ({
+    name: g.name, codes: g.codes.join(', '),
+    title: g.names.length ? g.names.join('\n') : null,
+    href: g.href,
+  }))
+}
+
 export function parentExceptionLines(entity: Entity): ParentExceptionLine[] {
   const line = (scope: 'direct' | 'ultimate' | 'both',
                 reasons: ParentExceptionReason[], reference: string | null): ParentExceptionLine =>
@@ -512,9 +603,59 @@ function ParentExceptionSection({ entity, hasOwners }: { entity: Entity; hasOwne
   )
 }
 
-// Collapsible "Details" — a small container for factual fields (legal form, where the
-// entity is registered, its registered address) that aren't part of the primary meta
-// or the relationship sections. Hidden entirely when the entity has none of them.
+// The sector, as a tree like a classification site shows it: the NACE Rev. 2
+// section down to the class, indented a step per level, each line with its code.
+// Folded by default to its sections — "Manufacturing", and "Wholesale and
+// retail trade" beside it when the company is in two — so the panel keeps one
+// row per kind of company this is; opened, the whole tree
+// and under it what each source filed in its own scheme (the SEC's SIC code, the
+// UK register's), so the reader sees where the tree came from. Nothing when no
+// source placed the company.
+function SectorSection({ industry }: { industry?: Industry | null }) {
+  const { t, i18n } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const lines = sectorLines(industry, i18n.language)
+  const stated = sectorStatements(industry)
+  if (!lines.length && !stated.length) return null
+  const shownLines = open ? lines : lines.filter(l => l.depth === 0)   // folded: every section the company is in
+  // Without a tree the one folded line is what the register filed.
+  const shownStated = open ? stated : (lines.length ? [] : stated.slice(0, 1))
+  return (
+    <div className="panel-section">
+      <button type="button" className="panel-section__toggle" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+        {open ? <FiChevronDown size={12} /> : <FiChevronRight size={12} />}
+        <span className="panel-section__title panel-section__title--inline">{t('panel.sector')}</span>
+      </button>
+      {shownLines.length > 0 && (
+        <ol className="sector-tree">
+          {shownLines.map(l => (
+            <li key={`${l.code}|${l.title ?? ''}`} className={`sector-tree__row ${l.depth ? 'sector-tree__row--child' : 'sector-tree__row--root'}${l.leaf ? ' sector-tree__row--leaf' : ''}`}
+                style={{ '--depth': l.depth } as React.CSSProperties} title={l.title}>
+              <span className="sector-tree__label">{l.label}</span>
+              <span className="sector-tree__code">{l.code}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      {open && !lines.length && <p className="panel-desc">{t('panel.sectorNoTree')}</p>}
+      {shownStated.length > 0 && (
+        <div className="sector-stated">
+          {shownStated.map((s, i) => (
+            <div key={i} className="source-item__header">
+              {s.href
+                ? <a className="source-item__name" href={s.href} target="_blank" rel="noreferrer">
+                    <FiExternalLink size={11} /> {s.name}
+                  </a>
+                : <span className="source-item__name">{s.name}</span>}
+              <span className="sector-stated__codes" title={s.title ?? undefined}>{s.codes}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DetailsSection({ entity, hasOwners }: { entity: Entity; hasOwners: boolean }) {
   const { t, i18n } = useTranslation()
   const rows = entityDetailRows(entity, i18n.language)
@@ -1329,7 +1470,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
 
 function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, node, onReScrape, canReScrape = true, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null, graphPickId = null, onRowsChange }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
-  const { entity, counts, owners = [], subsidiaries = [], executives = [], dual_listed = [],
+  const { entity, counts, industry = null, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
           group_members: groupParties = [] } = profile
   // Which source asserted each relationship, for the row menu's header — the
@@ -1475,9 +1616,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         ))}
       </div>
 
-      {/* Right under the facts at the top: the rest of them (collapsed), then who
-          founded it — both are about the company itself, before who holds what. */}
+      {/* Right under the facts at the top: the rest of the facts (collapsed),
+          what the company does (folded to its section), then who founded it —
+          all about the company itself, before who holds what. */}
       <DetailsSection entity={entity} hasOwners={owners.length > 0} />
+      <SectorSection industry={industry} />
       {founders.length > 0 && (
         <Section title={t('panel.foundedBy')} count={founders.length}>
           {[...founders].sort(byName(f => f.person?.full_name ?? '')).map((f, i) => (
