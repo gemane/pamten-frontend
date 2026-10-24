@@ -14,8 +14,7 @@ import { basisCoords, basisCountry } from './mapBasis'
 import type { Entity } from '../types'
 
 const cayman = {
-  id: 'e1', name: 'BARCLAYS CAPITAL (CAYMAN) LIMITED', type: 'company', verified: false,
-  country: 'KY', hq_country: 'GB',
+  id: 'e1', name: 'BARCLAYS CAPITAL (CAYMAN) LIMITED', type: 'company', country: 'KY', hq_country: 'GB',
   reg_lat: 19.29, reg_lng: -81.38, reg_geo_precision: 'approx',
   hq_lat: 51.5074, hq_lng: -0.0757, hq_geo_precision: 'exact',
 } as Entity

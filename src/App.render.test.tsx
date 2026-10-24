@@ -118,7 +118,7 @@ const mockAsk = vi.mocked(requestNotifyPermission)
 const mockNotify = vi.mocked(notifyIfHidden)
 
 const entity = (id: string, name: string, country?: string): Entity =>
-  ({ id, name, type: 'company', verified: false, ...(country ? { country } : {}) } as Entity)
+  ({ id, name, type: 'company', ...(country ? { country } : {}) } as Entity)
 const fullProfile = (id: string, name: string): FullProfile => ({
   entity: entity(id, name), owners: [], subsidiaries: [], executives: [],
 })

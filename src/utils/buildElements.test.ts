@@ -6,11 +6,11 @@ import type { Entity, Person, FullProfile, PersonProfile, OwnerEntry, Subsidiary
 // ── fixtures ────────────────────────────────────────────────────────────────
 
 function entity(id: string, name = id): Entity {
-  return { id, name, type: 'company', verified: false }
+  return { id, name, type: 'company' }
 }
 
 function person(id: string, full = id): Person {
-  return { id, first_name: full, last_name: 'X', full_name: full, verified: false }
+  return { id, first_name: full, last_name: 'X', full_name: full }
 }
 
 function makeProfile(
@@ -274,7 +274,7 @@ describe('isDrawableOwnership', () => {
 
 describe('buildElements and ownership shortcuts', () => {
   const profile = (): FullProfile => ({
-    entity: { id: 'p', name: 'Parent', type: 'company', verified: false } as Entity,
+    entity: { id: 'p', name: 'Parent', type: 'company' } as Entity,
     owners: [], executives: [],
     subsidiaries: [
       { entity: { id: 'd', name: 'Direct Co', type: 'company' } as Entity,

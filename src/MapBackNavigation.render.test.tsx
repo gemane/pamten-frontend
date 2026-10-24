@@ -67,7 +67,7 @@ import { search, getFullProfile, getCountries, getEntitiesByCountry,
 // Coordinates on BOTH bases: the map defaults to Registered, so an entity with
 // only hq_lat/hq_lng has correctly nothing to fly to.
 const ent = (id: string, name: string, at?: [number, number]): Entity =>
-  ({ id, name, type: 'company', verified: false, country: 'US', hq_country: 'US',
+  ({ id, name, type: 'company', country: 'US', hq_country: 'US',
      hq_lat: at?.[0], hq_lng: at?.[1], reg_lat: at?.[0], reg_lng: at?.[1] } as Entity)
 
 const microsoft: FullProfile = {
