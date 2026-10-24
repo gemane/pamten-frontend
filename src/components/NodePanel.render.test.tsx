@@ -29,7 +29,7 @@ const mockSources = vi.mocked(getEntitySources)
 const entityNode = (id: string, label: string): NodeData => ({ id, label, nodeType: 'entity', raw: {} as Entity })
 
 const profile = (id: string, name: string): FullProfile => ({
-  entity: { id, name, type: 'company', verified: false } as Entity,
+  entity: { id, name, type: 'company' } as Entity,
   owners: [], subsidiaries: [], executives: [],
 })
 
@@ -41,12 +41,9 @@ beforeEach(() => {
 
 describe('a person who has died is marked on every list', () => {
   it('founder, officer and owner rows all carry "† year", the living none', async () => {
-    const allen = { id: 'pa', first_name: 'Paul', last_name: 'Allen', full_name: 'Paul Allen', verified: false,
-                    death_date: '2018-10-15' }
-    const gates = { id: 'bg', first_name: 'Bill', last_name: 'Gates', full_name: 'Bill Gates', verified: false,
-                    death_date: null }
-    const ballmer = { id: 'sb', first_name: 'Steve', last_name: 'Late', full_name: 'Steve Late', verified: false,
-                      death_date: '2020-01-02' }
+    const allen = { id: 'pa', first_name: 'Paul', last_name: 'Allen', full_name: 'Paul Allen', death_date: '2018-10-15' }
+    const gates = { id: 'bg', first_name: 'Bill', last_name: 'Gates', full_name: 'Bill Gates', death_date: null }
+    const ballmer = { id: 'sb', first_name: 'Steve', last_name: 'Late', full_name: 'Steve Late', death_date: '2020-01-02' }
     mockProfile.mockResolvedValue({ data: {
       ...profile('ms', 'Microsoft'),
       executives: [
@@ -82,7 +79,7 @@ describe('NodePanel (render)', () => {
   it('hides a tiny null-stake holder but keeps a truly undisclosed one', async () => {
     const gte1 = STAKE_FILTERS.find(f => f.id === 'gte1')!
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Big Co', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Big Co', type: 'company' } as Entity,
       owners: [
         { owner: { id: 'o1', name: 'Tiny 13F Holder', type: 'company' } as Entity,
           relationship: { stake_percent: null, shares: 5000, shares_outstanding: 12_000_000_000 } },
@@ -100,7 +97,7 @@ describe('NodePanel (render)', () => {
   it('applies the stake filter to the subsidiary list', async () => {
     const gte1 = STAKE_FILTERS.find(f => f.id === 'gte1')!
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Parent Co', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Parent Co', type: 'company' } as Entity,
       owners: [], executives: [],
       subsidiaries: [
         { entity: { id: 's1', name: 'Big Sub', type: 'company' } as Entity,
@@ -121,7 +118,7 @@ describe('NodePanel (render)', () => {
   it('shows the country only beside subsidiaries that share a name', async () => {
     // Lavoro lists "Agrointegral Andina S.A.S." in Colombia and in Ecuador
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Lavoro Ltd', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Lavoro Ltd', type: 'company' } as Entity,
       owners: [], executives: [],
       subsidiaries: [
         { entity: { id: 's1', name: 'Agrointegral Andina S.A.S.', type: 'company', country: 'CO' } as Entity,
@@ -141,7 +138,7 @@ describe('NodePanel (render)', () => {
 
   it('shows the country beside owners that share a name', async () => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Target Co', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Target Co', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [
         { owner: { id: 'o1', name: 'Alpha Holdings Ltd.', type: 'company', country: 'BM' } as Entity,
@@ -201,7 +198,7 @@ describe('NodePanel (render)', () => {
 
 describe('NodePanel HQ from the entity itself', () => {
   const withHq = (over: Partial<Entity>): FullProfile => ({
-    entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false, ...over } as Entity,
+    entity: { id: 'e1', name: 'Acme Corp', type: 'company', ...over } as Entity,
     owners: [], subsidiaries: [], executives: [],
   })
 
@@ -238,7 +235,7 @@ describe('NodePanel HQ from the entity itself', () => {
 
 describe('NodePanel type markers', () => {
   const withOwners = (owners: unknown[]): FullProfile => ({
-    entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+    entity: { id: 'e1', name: 'Acme Corp', type: 'company' } as Entity,
     owners: owners as never, subsidiaries: [], executives: [],
   })
 
@@ -302,7 +299,7 @@ describe('NodePanel subsidiary grouping', () => {
 
   const show = async (subsidiaries: unknown[], counts?: Record<string, number>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company' } as Entity,
       owners: [], executives: [], subsidiaries, ...(counts ? { counts } : {}),
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
@@ -385,7 +382,7 @@ describe('NodePanel subsidiary grouping', () => {
 describe('where a company is registered', () => {
   const withEntity = async (extra: Partial<Entity>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false, ...extra } as Entity,
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', ...extra } as Entity,
       owners: [], subsidiaries: [], executives: [],
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
@@ -415,7 +412,7 @@ describe('where a company is registered', () => {
 
 describe('a person: age while living, dates once dead', () => {
   const person = (extra: Record<string, unknown>) => ({
-    id: 'p1', first_name: 'A', last_name: 'B', full_name: 'A B', verified: false, ...extra,
+    id: 'p1', first_name: 'A', last_name: 'B', full_name: 'A B', ...extra,
   })
 
   const show = async (extra: Record<string, unknown>) => {
@@ -464,7 +461,7 @@ describe('a person: age while living, dates once dead', () => {
 describe('the \u22ee beside the name', () => {
   const openEntity = async (over: Record<string, unknown> = {}) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company' } as Entity,
       owners: [], subsidiaries: [], executives: [],
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} {...over} />)
@@ -507,10 +504,10 @@ describe('a relationship row', () => {
   const withSubsidiary = async (sourceUrl?: string | null,
                                 source?: { id: string; name: string } | null) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company' } as Entity,
       owners: [], executives: [],
       subsidiaries: [{
-        entity: { id: 'e2', name: 'Beta Ltd', type: 'company', verified: false } as Entity,
+        entity: { id: 'e2', name: 'Beta Ltd', type: 'company' } as Entity,
         relationship: { ownership_type: 'full', stake_percent: 100, source_url: sourceUrl,
                         source_id: source?.id } as never,
       }],
@@ -591,7 +588,7 @@ describe('a relationship row', () => {
       // the menu works, not that the wiring is there — the owners row is the one
       // the bug was reported against.
       mockProfile.mockResolvedValue({ data: {
-        entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company', verified: false } as Entity,
+        entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company' } as Entity,
         subsidiaries: [], executives: [],
         owners: [{
           owner: { id: 'p1', full_name: 'Larry Page' },
@@ -942,7 +939,7 @@ describe('why a company reports no parent', () => {
    *  `CollapsibleSection` unmounts its children rather than hiding them. */
   const withEntity = async (extra: Partial<Entity>, owners: unknown[] = []) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false, ...extra } as Entity,
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', ...extra } as Entity,
       owners, subsidiaries: [], executives: [],
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
@@ -992,8 +989,7 @@ describe('why a company reports no parent', () => {
     // The cost of the move, asserted rather than assumed: CollapsibleSection
     // unmounts its children, so nothing about the parent is in the DOM until asked.
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false,
-                no_direct_parent_reason: 'NATURAL_PERSONS' } as Entity,
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', no_direct_parent_reason: 'NATURAL_PERSONS' } as Entity,
       owners: [], subsidiaries: [], executives: [],
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
@@ -1090,7 +1086,7 @@ describe('the trust cue on an executive row', () => {
   // Wikidata both asserting Musk's directorship showed nothing.
   const withExecutive = async (role: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'SpaceX', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'SpaceX', type: 'company' } as Entity,
       subsidiaries: [], owners: [],
       executives: [{ person: { id: 'p1', full_name: 'Elon Musk' },
                      role: { role: 'Director', ...role } }],
@@ -1119,7 +1115,7 @@ describe('the trust cue on an executive row', () => {
 describe('the trust cue on an owner row', () => {
   const withOwner = async (relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'p1', full_name: 'Sergey Brin' },
                  relationship: { stake_percent: 6.16, ownership_type: 'minority',
@@ -1171,7 +1167,7 @@ describe('how surely a row was read', () => {
   // reading gets a chip; the menu names every grade.
   const withOwner = async (relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Alphabet Inc.', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'p1', full_name: 'Sergey Brin' },
                  relationship: { stake_percent: 6.16, ownership_type: 'minority',
@@ -1183,7 +1179,7 @@ describe('how surely a row was read', () => {
 
   const withExecutive = async (role: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'SpaceX', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'SpaceX', type: 'company' } as Entity,
       subsidiaries: [], owners: [],
       executives: [{ person: { id: 'p1', full_name: 'Elon Musk' },
                      role: { role: 'Director', ...role } }],
@@ -1282,7 +1278,7 @@ describe('how surely a row was read', () => {
 describe('a stale community assertion', () => {
   const withOwnerRel = async (relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Held Co', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Held Co', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'o1', name: 'Community Holdings', type: 'company' },
                  relationship }],
@@ -1302,7 +1298,7 @@ describe('a stale community assertion', () => {
     // relationship ended, so nothing may act as though it did.
     const onNavigate = vi.fn()
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Held Co', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Held Co', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'o1', name: 'Community Holdings', type: 'company' },
                  relationship: { stale: true } }],
@@ -1329,7 +1325,7 @@ describe('a stale community assertion', () => {
 describe('a company whose filings measure different securities', () => {
   const withSummary = async (ownership: Record<string, unknown>, rel = {}) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Grupo Televisa', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Grupo Televisa', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'o1', name: 'Fintech Latam', type: 'company' },
                  relationship: { stake_percent: 9.7, ...rel } }],
@@ -1370,7 +1366,7 @@ describe('a company whose filings measure different securities', () => {
 describe("a relationship's own facts, in its menu", () => {
   const openMenuFor = async (relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Grupo Televisa', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Grupo Televisa', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'o1', name: 'Fintech Latam', type: 'company' },
                  relationship }],
@@ -1440,7 +1436,7 @@ describe("a relationship's own facts, in its menu", () => {
 describe('a voting group', () => {
   const render_ = async (type: string, extra: Record<string, unknown> = {}) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'g1', name: 'Voting group · 9 parties', type, verified: false } as Entity,
+      entity: { id: 'g1', name: 'Voting group · 9 parties', type } as Entity,
       owners: [], executives: [],
       subsidiaries: [{ entity: { id: 'abi', name: 'Anheuser-Busch InBev', type: 'company' },
                        relationship: { voting_power_pct: 52.3 } }],
@@ -1478,8 +1474,7 @@ describe('a voting group', () => {
   it('does not flag a voting group for voting', async () => {
     // "This voting group votes more than it owns" is what a voting group is.
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company',
-                verified: false } as Entity,
+      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'g1', name: 'Voting group · 9 parties', type: 'voting_group' },
                  relationship: { voting_power_pct: 52.3 } }],
@@ -1492,8 +1487,7 @@ describe('a voting group', () => {
   it('still flags an ordinary holder whose votes outrun its shares', async () => {
     // Altria: 8.1% owned, 51.9% voted. The marker earns its place there.
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company',
-                verified: false } as Entity,
+      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'a1', name: 'Altria', type: 'company' },
                  relationship: { stake_percent: 8.1, voting_power_pct: 51.9 } }],
@@ -1507,7 +1501,7 @@ describe('a voting group', () => {
 describe('the voting marker on what an owner holds', () => {
   const withSubsidiary = async (entityType: string, relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Altria', type: entityType, verified: false } as Entity,
+      entity: { id: 'e1', name: 'Altria', type: entityType } as Entity,
       owners: [], executives: [],
       subsidiaries: [{ entity: { id: 'abi', name: 'Anheuser-Busch InBev', type: 'company' },
                        relationship }],
@@ -1537,8 +1531,7 @@ describe('the voting marker on what an owner holds', () => {
 describe('the counts behind a percentage', () => {
   const openMenu = async (relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company',
-                verified: false } as Entity,
+      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'a1', name: 'Altria', type: 'company' }, relationship }],
     } } as never)
@@ -1598,8 +1591,7 @@ describe('the counts behind a percentage', () => {
 describe('the count behind a voting bloc', () => {
   const openMenu = async (relationship: Record<string, unknown>) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company',
-                verified: false } as Entity,
+      entity: { id: 'e1', name: 'Anheuser-Busch InBev', type: 'company' } as Entity,
       subsidiaries: [], executives: [],
       owners: [{ owner: { id: 'a1', name: 'Altria', type: 'company' }, relationship }],
     } } as never)
@@ -1691,7 +1683,7 @@ describe('one relationship reads the same from every section', () => {
                                 raw: { id: 'p1', full_name: 'Somebody' } as never }} />)
     } else {
       mockProfile.mockResolvedValue({ data: {
-        entity: { id: 'e1', name: 'Centre', type: 'company', verified: false } as Entity,
+        entity: { id: 'e1', name: 'Centre', type: 'company' } as Entity,
         owners: kind === 'owners'
           ? [{ owner: { id: 'x', name: 'Target Co', type: 'company' }, relationship: REL }] : [],
         subsidiaries: kind === 'subsidiaries'
@@ -1730,7 +1722,7 @@ describe('a role row carries its sources too', () => {
     // RoleRelationship carries both — so a corroborated role could never show
     // its sources. The shared mapper fixed it; this keeps it fixed.
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Centre', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Centre', type: 'company' } as Entity,
       owners: [], subsidiaries: [],
       executives: [{ person: { id: 'p1', full_name: 'A Boss' },
                      role: { role: 'CEO', source_id: 'src-1',
@@ -1853,7 +1845,7 @@ describe('the web link renders at the panel top, not in the details', () => {
 // ── Graph focus: which owner/subsidiary row the graph should grow ────────────
 describe('NodePanel graph focus', () => {
   const focusProfile = (): FullProfile => ({
-    entity: { id: 'e1', name: 'Hub Co', type: 'company', verified: false } as Entity,
+    entity: { id: 'e1', name: 'Hub Co', type: 'company' } as Entity,
     owners: [
       { owner: { id: 'own1', name: 'Owner One', type: 'company' } as Entity,
         relationship: { stake_percent: 60 } },
@@ -1916,7 +1908,7 @@ describe('NodePanel graph focus', () => {
     const sub = (id: string, name: string, relationship: Record<string, unknown>) =>
       ({ entity: { id, name, type: 'company' } as Entity, relationship })
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Hub Co', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Hub Co', type: 'company' } as Entity,
       owners: [], executives: [],
       subsidiaries: [sub('d0', 'Direct 0', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d1', 'Direct 1', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d2', 'Direct 2', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d3', 'Direct 3', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d4', 'Direct 4', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d5', 'Direct 5', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d6', 'Direct 6', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d7', 'Direct 7', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d8', 'Direct 8', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d9', 'Direct 9', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d10', 'Direct 10', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d11', 'Direct 11', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('d12', 'Direct 12', { stake_percent: 100, direct_or_indirect: 'direct' }), sub('far', 'Faraday Capital', { direct_or_indirect: 'indirect' })],
     } } as never)
@@ -2096,7 +2088,7 @@ describe('the subsidiary list in "all levels" mode', () => {
   const show = async (allLevels: boolean, t: unknown = tree) => {
     vi.mocked(getSubsidiaryTree).mockResolvedValue({ data: t } as never)
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Naspers', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Naspers', type: 'company' } as Entity,
       owners: [], executives: [],
       subsidiaries: [{ entity: ent('prosus', 'Prosus N.V.'), relationship: { stake_percent: 60 } }],
       counts: { subsidiaries: 1 },
@@ -2154,7 +2146,7 @@ describe('the as-of view in the panel', () => {
 
   const showAsOf = async (asOf: string | null, owners: unknown[]) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company' } as Entity,
       owners, subsidiaries: [], executives: [],
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} asOf={asOf} />)
@@ -2199,7 +2191,7 @@ describe('"all levels" and the as-of day together', () => {
       truncated: false,
     } } as never)
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company' } as Entity,
       owners: [], subsidiaries: [], executives: [],
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} allLevels asOf="2019-12-31" />)
@@ -2268,7 +2260,7 @@ describe('the spreadsheet export button', () => {
 })
 
 describe('company names in the viewer\'s order', () => {
-  const korea = { id: 'kr', name: '네슬레코리아 유한책임회사', other_names: ['Nestle Korea'], type: 'company', verified: false } as Entity
+  const korea = { id: 'kr', name: '네슬레코리아 유한책임회사', other_names: ['Nestle Korea'], type: 'company' } as Entity
   afterEach(() => { setViewerLanguages(null); cleanup() })
 
   it('the header: the Latin name as title, the legal name under it, marked as such', async () => {
@@ -2307,7 +2299,7 @@ describe('company names in the viewer\'s order', () => {
   it('rows: subsidiary and owner in the first name, the other on hover', async () => {
     setViewerLanguages(['en'])
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'n', name: 'Nestle S.A.', type: 'company', verified: false } as Entity,
+      entity: { id: 'n', name: 'Nestle S.A.', type: 'company' } as Entity,
       owners: [{ owner: { ...korea, id: 'o' }, relationship: { stake_percent: 1 } }],
       subsidiaries: [{ entity: korea, relationship: { stake_percent: 100 } }],
       executives: [],
@@ -2325,7 +2317,7 @@ describe('companies below a subsidiary', () => {
     ({ entity: { id, name, type: 'company' } as Entity, relationship })
   const show = async (subsidiaries: unknown[], descendants_truncated = false) => {
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Parent Co', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Parent Co', type: 'company' } as Entity,
       owners: [], executives: [], subsidiaries, descendants_truncated,
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Parent Co')} refreshKey={0} />)
@@ -2371,7 +2363,7 @@ describe('companies below a subsidiary', () => {
               { from_id: 'a', to_id: 'b', depth: 2, relationship: { descendants: 0 } }],
     } } as never)
     mockProfile.mockResolvedValue({ data: {
-      entity: { id: 'e1', name: 'Parent Co', type: 'company', verified: false } as Entity,
+      entity: { id: 'e1', name: 'Parent Co', type: 'company' } as Entity,
       owners: [], executives: [], subsidiaries: [sub('a', 'Alpha Holding', { descendants: 1 })],
     } } as never)
     render(<NodePanel node={entityNode('e1', 'Parent Co')} refreshKey={0} allLevels />)
@@ -2406,8 +2398,7 @@ describe('the image and its credit', () => {
   it('a company logo comes from our API and carries its caption and a sources row', async () => {
     mockMedia.mockResolvedValue({ data: credit() } as never)
     mockProfile.mockResolvedValue({ data: { ...profile('e1', 'Acme Corp'),
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false,
-                logo_url: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Acme.svg' } } } as never)
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', logo_url: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Acme.svg' } } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
     const img = await screen.findByAltText('Acme Corp') as HTMLImageElement
     expect(img.src).toBe('https://api.example.test/v1/media/entity/e1/file')
@@ -2438,8 +2429,7 @@ describe('the image and its credit', () => {
   it('a person\'s portrait is captioned as a photo', async () => {
     mockMedia.mockResolvedValue({ data: credit({ url: '/media/person/p1/file' }) } as never)
     mockProfile.mockResolvedValue({ data: {} } as never)
-    const person = { id: 'p1', first_name: 'A', last_name: 'B', full_name: 'A B', verified: false,
-                     wikipedia_url: 'https://en.wikipedia.org/wiki/A_B' }
+    const person = { id: 'p1', first_name: 'A', last_name: 'B', full_name: 'A B', wikipedia_url: 'https://en.wikipedia.org/wiki/A_B' }
     vi.mocked(getPersonProfile).mockResolvedValue({ data: { person, positions: [], holdings: [] } } as never)
     vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
     render(<NodePanel node={{ id: 'p1', label: 'A B', nodeType: 'person', raw: person as never }} refreshKey={0} />)
@@ -2454,8 +2444,7 @@ describe('the image and its credit', () => {
   it("a person's Wikipedia article is a details row up top, like a company's Website — not a link at the foot", async () => {
     mockMedia.mockRejectedValue(Object.assign(new Error('404'), { response: { status: 404 } }))
     mockProfile.mockResolvedValue({ data: {} } as never)
-    const person = { id: 'p2', first_name: 'C', last_name: 'D', full_name: 'C D', verified: false,
-                     wikipedia_url: 'https://en.wikipedia.org/wiki/C_D' }
+    const person = { id: 'p2', first_name: 'C', last_name: 'D', full_name: 'C D', wikipedia_url: 'https://en.wikipedia.org/wiki/C_D' }
     vi.mocked(getPersonProfile).mockResolvedValue({ data: { person, positions: [], holdings: [] } } as never)
     vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
     render(<NodePanel node={{ id: 'p2', label: 'C D', nodeType: 'person', raw: person as never }} refreshKey={0} />)
@@ -2472,8 +2461,7 @@ describe('the image and its credit', () => {
   it('an unusable stored Wikipedia value shows no row at all', async () => {
     mockMedia.mockRejectedValue(Object.assign(new Error('404'), { response: { status: 404 } }))
     mockProfile.mockResolvedValue({ data: {} } as never)
-    const person = { id: 'p3', first_name: 'E', last_name: 'F', full_name: 'E F', verified: false,
-                     wikipedia_url: 'javascript:alert(1)' }
+    const person = { id: 'p3', first_name: 'E', last_name: 'F', full_name: 'E F', wikipedia_url: 'javascript:alert(1)' }
     vi.mocked(getPersonProfile).mockResolvedValue({ data: { person, positions: [], holdings: [] } } as never)
     vi.mocked(getPersonSources).mockResolvedValue({ data: [] } as never)
     render(<NodePanel node={{ id: 'p3', label: 'E F', nodeType: 'person', raw: person as never }} refreshKey={0} />)
@@ -2485,8 +2473,7 @@ describe('the image and its credit', () => {
   it('no licensed image: no picture, no caption, and the stored logo_url is never loaded', async () => {
     mockMedia.mockRejectedValue(Object.assign(new Error('404'), { response: { status: 404 } }))
     mockProfile.mockResolvedValue({ data: { ...profile('e1', 'Acme Corp'),
-      entity: { id: 'e1', name: 'Acme Corp', type: 'company', verified: false,
-                logo_url: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Acme.svg' } } } as never)
+      entity: { id: 'e1', name: 'Acme Corp', type: 'company', logo_url: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Acme.svg' } } } as never)
     render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
     await screen.findByText('Acme Corp')
     await waitFor(() => expect(mockMedia).toHaveBeenCalled())
@@ -2499,7 +2486,7 @@ describe('the image and its credit', () => {
 describe('the stake history behind a holding\'s row', () => {
   const mockStakeHistory = vi.mocked(getStakeHistory)
   const twoOwners = () => ({ data: {
-    entity: { id: 'ms', name: 'Microsoft', type: 'company', verified: false } as Entity,
+    entity: { id: 'ms', name: 'Microsoft', type: 'company' } as Entity,
     owners: [
       { owner: { id: 'br', name: 'BlackRock', type: 'company' } as Entity,
         relationship: { stake_percent: 6.1, source_id: 'sec', stake_history: true } },

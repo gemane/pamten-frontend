@@ -152,8 +152,8 @@ describe('a selected subdivision', () => {
     panel({
       selectedCountry: 'US-DE',
       subdivisionData: [{ country: 'US-DE', count: 2, entities: [
-        { id: 'a', name: 'Acme Holdings', type: 'company', verified: false },
-        { id: 'b', name: 'Beta Corp', type: 'company', verified: false },
+        { id: 'a', name: 'Acme Holdings', type: 'company' },
+        { id: 'b', name: 'Beta Corp', type: 'company' },
       ] }],
     })
     expect(Array.from(document.querySelectorAll('.map-entity-name')).map(n => n.textContent))

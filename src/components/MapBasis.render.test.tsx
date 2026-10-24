@@ -189,8 +189,7 @@ describe('persistence', () => {
 
 describe('the address under the company name', () => {
   const cayman = {
-    id: 'e1', name: 'BARCLAYS CAPITAL (CAYMAN) LIMITED', type: 'company', verified: false,
-    country: 'KY', hq_country: 'GB',
+    id: 'e1', name: 'BARCLAYS CAPITAL (CAYMAN) LIMITED', type: 'company', country: 'KY', hq_country: 'GB',
     address: 'c/o Maples, Ugland House, Grand Cayman, KY1-1104, KY',
     hq_address: '1 Churchill Place, London, E14 5HP, GB',
   } as Entity

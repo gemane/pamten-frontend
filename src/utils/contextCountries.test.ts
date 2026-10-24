@@ -13,7 +13,7 @@ import { buildContextCountries, type CountryCacheEntry } from './contextCountrie
 import type { Entity, GraphElement, NodeData } from '../types'
 
 const entity = (id: string, name: string, extra: Partial<Entity> = {}): Entity =>
-  ({ id, name, type: 'company', verified: false, ...extra } as Entity)
+  ({ id, name, type: 'company', ...extra } as Entity)
 
 // Registered on Grand Cayman, run from London — the case the switch exists for.
 const cayman = entity('e1', 'BARCLAYS CAPITAL (CAYMAN) LIMITED', {

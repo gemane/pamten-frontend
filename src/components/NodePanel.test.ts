@@ -57,8 +57,7 @@ describe('rel-row node mappers', () => {
 describe('personDisplayDetails', () => {
   const base: Person = {
     id: 'p1', first_name: 'Elon', last_name: 'Musk', full_name: 'Elon Musk',
-    verified: false,
-  }
+    }
 
   it('formats birth and death dates', () => {
     const d = personDisplayDetails({ ...base, birth_date: '1971-06-28', death_date: '2099-01-02' }, 'en')
@@ -169,7 +168,7 @@ describe('roleRank / byRoleImportance', () => {
 })
 
 describe('entityDetailRows', () => {
-  const base = { id: 'lei:1', name: 'Co', type: 'company', verified: false } as Entity
+  const base = { id: 'lei:1', name: 'Co', type: 'company' } as Entity
 
   it('returns no rows when the entity has no detail fields', () => {
     expect(entityDetailRows(base, 'en')).toEqual([])
@@ -478,7 +477,7 @@ describe('byStakeDesc with the shares tier', () => {
 })
 
 describe('the web rows at the panel top', () => {
-  const base = { id: 'e1', name: 'Apple Inc.', type: 'company', verified: false } as Record<string, unknown>
+  const base = { id: 'e1', name: 'Apple Inc.', type: 'company' } as Record<string, unknown>
   const keys = (rows: { labelKey: string }[]) => rows.map(r => r.labelKey)
 
   it('a stated website shows the bare host and links the full url — and the search stays beside it', () => {
@@ -506,7 +505,7 @@ describe('the web rows at the panel top', () => {
   })
 
   it('no website AND no name yields no row at all', () => {
-    expect(webLinkRows({ id: 'e1', verified: false } as never)).toEqual([])
+    expect(webLinkRows({ id: 'e1' } as never)).toEqual([])
   })
 
   it('the website never appears in the details rows anymore', () => {
