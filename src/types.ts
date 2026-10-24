@@ -79,8 +79,7 @@ export interface Person {
   last_name: string
   full_name: string
   alias?: string[]
-  nationality?: string
-  nationalities?: string[]
+  nationalities?: string[]   // ISO-2 codes; the one field (the scalar twin went on 2026-10-25)
   birth_date?: string
   death_date?: string
   birth_place?: string

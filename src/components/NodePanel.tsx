@@ -135,8 +135,7 @@ export function ownerToNode(owner: Entity | Person): NodeData {
 // nationality list resolved to localized names, and aliases). Kept pure and
 // exported so it can be unit-tested without rendering.
 export function personDisplayDetails(p: Person, lang: string) {
-  const nationalities = (p.nationalities?.length ? p.nationalities
-                        : (p.nationality ? [p.nationality] : []))
+  const nationalities = (p.nationalities ?? [])
     .map(c => countryName(c, lang))
     .filter(Boolean)
   return {

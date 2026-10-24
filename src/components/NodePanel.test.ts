@@ -88,9 +88,9 @@ describe('personDisplayDetails', () => {
     expect(d.nationalities[0].length).toBeGreaterThan(2)
   })
 
-  it('falls back to the single nationality field when the list is empty', () => {
-    const d = personDisplayDetails({ ...base, nationality: 'GB' }, 'en')
-    expect(d.nationalities).toHaveLength(1)
+  it('shows nothing when the list is empty — there is no scalar to fall back to', () => {
+    const d = personDisplayDetails({ ...base, nationalities: [] }, 'en')
+    expect(d.nationalities).toHaveLength(0)
   })
 })
 
