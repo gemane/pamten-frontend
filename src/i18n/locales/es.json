@@ -189,6 +189,8 @@
     "votesIn": "Vota en",
     "website": "Sitio web",
     "webSearch": "Búsqueda web",
+    "sector": "Sector",
+    "sectorNoTree": "Sin clase NACE para esta actividad; abajo figura lo que declaró el registro.",
     "refreshing": "Actualizando…",
     "capped": "Se muestran {{shown}} de {{total}} — la lista está limitada",
     "subsidiariesAllLevels": "Filiales — todos los niveles",

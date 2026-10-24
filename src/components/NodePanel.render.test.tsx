@@ -2551,3 +2551,90 @@ describe('the stake history behind a holding\'s row', () => {
     expect(await screen.findByText('Could not load the stake history.')).toBeInTheDocument()
   })
 })
+
+describe('the sector, folded to its first line', () => {
+  const CH = 'https://find-and-update.company-information.service.gov.uk/company/05299520'
+  const C = [
+    { level: 1, code: 'C', label: { en: 'Manufacturing', de: 'Verarbeitendes Gewerbe' } },
+    { level: 2, code: '23', label: { en: 'Manufacture of other non-metallic mineral products' } },
+    { level: 3, code: '23.3', label: { en: 'Manufacture of clay building materials' } },
+    { level: 4, code: '23.32', label: { en: 'Manufacture of bricks, tiles and construction products, in baked clay' } },
+  ]
+  const G = [
+    { level: 1, code: 'G', label: { en: 'Wholesale and retail trade' } },
+    { level: 2, code: '46', label: { en: 'Wholesale trade' } },
+    { level: 3, code: '46.7', label: { en: 'Other specialised wholesale' } },
+    { level: 4, code: '46.73', label: { en: 'Wholesale of wood, construction materials and sanitary equipment' } },
+  ]
+  const wienerberger = (): FullProfile => ({
+    ...profile('wb', 'Wienerberger Ltd'),
+    industry: { nace_code: '23.32', tree: C, statements: [
+      { scheme: 'uk-sic', scheme_name: 'UK SIC 2007', code: '23320', label: 'Manufacture of bricks',
+        nace_code: '23.32', tree: C, source_name: 'Companies House', source_url: CH },
+      { scheme: 'uk-sic', scheme_name: 'UK SIC 2007', code: '46730', label: 'Wholesale of wood',
+        nace_code: '46.73', tree: G, source_name: 'Companies House', source_url: CH },
+    ] },
+  } as FullProfile)
+
+  it('shows both sections until opened, then both branches and the register link', async () => {
+    mockProfile.mockResolvedValue({ data: wienerberger() } as never)
+    render(<NodePanel node={entityNode('wb', 'Wienerberger Ltd')} refreshKey={0} />)
+    expect(await screen.findByText('Manufacturing')).toBeInTheDocument()
+    expect(screen.getByText('Wholesale and retail trade')).toBeInTheDocument()     // the second section, folded too
+    expect(screen.getByText('Manufacturing').closest('li')).toHaveClass('sector-tree__row--root')   // bulleted, like a list
+    expect(screen.queryByText('23')).not.toBeInTheDocument()                        // nothing below a section
+    expect(screen.queryByText('23.32')).not.toBeInTheDocument()
+    expect(screen.queryByText('Companies House')).not.toBeInTheDocument()
+    const toggle = screen.getByRole('button', { name: 'Industry' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(toggle)
+    expect(screen.getByText('23.32')).toBeInTheDocument()
+    expect(screen.getByText('Manufacture of clay building materials')).toBeInTheDocument()
+    expect(screen.getByText('Wholesale of wood, construction materials and sanitary equipment')).toBeInTheDocument()  // the second branch
+    const codes = screen.getByText('23320, 46730')                                    // codes only: the names are in the tree
+    expect(codes).toHaveAttribute('title', '23320 · Manufacture of bricks\n46730 · Wholesale of wood')
+    expect(screen.getAllByRole('link', { name: 'Companies House · UK SIC 2007' })).toHaveLength(1)   // two codes, one page
+    expect(screen.getByRole('link', { name: 'Companies House · UK SIC 2007' })).toHaveAttribute('href', CH)
+    await userEvent.click(screen.getByRole('button', { name: 'Industry' }))     // fold again
+    expect(screen.queryByText('23.32')).not.toBeInTheDocument()
+    expect(screen.getByText('Manufacturing')).toBeInTheDocument()
+    expect(screen.getByText('Wholesale and retail trade')).toBeInTheDocument()
+  })
+
+  it("the SEC's own title is the leaf of Alphabet's one-row tree, its code on hover", async () => {
+    const J = [{ level: 1, code: 'J', label: { en: 'Information and communication' } }]
+    mockProfile.mockResolvedValue({ data: {
+      ...profile('a', 'Alphabet Inc.'),
+      industry: { nace_code: 'J', tree: J, statements: [
+        { scheme: 'us-sic', scheme_name: 'US SIC (SEC EDGAR)', code: '7370', nace_code: 'J', tree: J,
+          label: 'Services-Computer Programming, Data Processing, Etc.', source_name: 'SEC EDGAR',
+          source_url: 'https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001652044' },
+      ] },
+    } } as never)
+    render(<NodePanel node={entityNode('a', 'Alphabet Inc.')} refreshKey={0} />)
+    expect(await screen.findByText('Information and communication')).toBeInTheDocument()
+    expect(screen.queryByText('Services-Computer Programming, Data Processing, Etc.')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Industry' }))
+    const leaf = screen.getByText('Services-Computer Programming, Data Processing, Etc.').closest('li')!
+    expect(leaf).toHaveAttribute('title', '7370')
+    expect(within(leaf).getByText('US SIC')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'SEC EDGAR · US SIC' })).toBeInTheDocument()
+    expect(screen.getByText('7370')).toBeInTheDocument()
+  })
+
+  it('without a tree the folded line is what the register filed, spelled out', async () => {
+    mockProfile.mockResolvedValue({ data: {
+      ...profile('d', 'Dormant Holdings Ltd'),
+      industry: { nace_code: null, tree: [], statements: [
+        { scheme: 'uk-sic', scheme_name: 'UK SIC 2007', code: '99999', label: 'Dormant Company', nace_code: null, tree: [],
+          source_name: 'Companies House', source_url: null },
+      ] },
+    } } as never)
+    render(<NodePanel node={entityNode('d', 'Dormant Holdings Ltd')} refreshKey={0} />)
+    expect(await screen.findByText('99999 · Dormant Company')).toBeInTheDocument()
+    expect(screen.getByText('Companies House · UK SIC 2007')).toBeInTheDocument()
+    expect(screen.queryByText(/No NACE class/)).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Industry' }))
+    expect(screen.getByText(/No NACE class/)).toBeInTheDocument()
+  })
+})

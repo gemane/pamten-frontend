@@ -45,6 +45,7 @@ export interface Entity {
   // GLEIF LEI-CDF detail fields (surfaced in the node Details section)
   legal_form?: string       // resolved ISO 20275 ELF name, e.g. "Private Limited Company"
   website?: string
+  nace_code?: string          // NACE Rev. 2 node of the principal industry statement (the sector tree)
   logo_url?: string                 // official site — Wikidata P856 / SEC submissions
   registration_authority?: string  // register name, e.g. "Companies Register"
   registration_number?: string     // the entity's id at that authority
@@ -206,6 +207,36 @@ export interface OwnsRelationship {
 /** One kept stake statement of a holding (`/relationships/stake-history`):
  *  what a source said the stake was, as of when, and what it said before.
  *  `previous_percent` null marks the first kept statement. */
+/** One level of the NACE Rev. 2 sector tree, section first; labels per language
+ *  where the bundle has them (EN and DE — Eurostat publishes those). */
+export interface IndustryLevel {
+  level: number
+  code: string
+  label: Record<string, string>
+}
+
+/** What one source said about a company's activity, in the source's own scheme. */
+export interface IndustryStatement {
+  scheme: string                   // 'us-sic' | 'uk-sic'
+  scheme_name?: string | null      // "US SIC (SEC EDGAR)", "UK SIC 2007"
+  code: string
+  label?: string | null            // the source's own title for the code
+  position?: number | null         // a UK company files up to four; 1 is the principal activity
+  nace_code?: string | null
+  tree?: IndustryLevel[]           // its own path down the NACE tree (the panel merges every statement's)
+  source_id?: string | null
+  source_name?: string | null
+  source_url?: string | null
+  source_date?: string | null
+}
+
+/** The company's sector: the NACE tree the panel draws and the statements behind it. */
+export interface Industry {
+  nace_code: string | null
+  tree: IndustryLevel[]
+  statements: IndustryStatement[]
+}
+
 export interface StakeHistoryRow {
   from_id: string
   to_id: string
@@ -278,6 +309,8 @@ export interface FullProfile {
   /** The walk behind each subsidiary's `descendants` hit its cap: every figure is a lower bound. */
   descendants_truncated?: boolean
   entity: Entity
+  /** The sector tree and the statements behind it; null when no source said. */
+  industry?: Industry | null
   counts?: ProfileCounts
   owners: OwnerEntry[]
   subsidiaries: SubsidiaryEntry[]
