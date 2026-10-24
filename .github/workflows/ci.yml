@@ -30,3 +30,26 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    # Known vulnerabilities in package-lock.json (GitHub advisory database).
+    # The gate is what ships: production dependencies at high or critical — the
+    # web bundle and the Android app. The dev tree (vite, vitest, the Capacitor
+    # CLI) is audited too but only warns: those advisories are frequent and
+    # reach no user, and must not block unrelated PRs. Not a required check on
+    # the rulesets, for the same reason.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit the dev tree (warns only)
+        continue-on-error: true
+        run: npm audit --audit-level=high
