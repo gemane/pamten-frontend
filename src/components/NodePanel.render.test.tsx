@@ -452,7 +452,7 @@ describe('a person: age while living, dates once dead', () => {
   })
 
   it('shows neither row when there is no birth date', async () => {
-    await show({ nationality: 'AT' })
+    await show({ nationalities: ['AT'] })
     expect(text()).not.toMatch(/Age/)
     expect(text()).not.toMatch(/Born/)
   })
