@@ -31,7 +31,6 @@ export interface Entity {
   employees?: number
   employees_as_of?: number
   description?: string
-  verified: boolean
   wikidata_id?: string
   sec_cik?: string
   hq_country?: string
@@ -87,7 +86,6 @@ export interface Person {
   birth_place?: string
   description?: string
   wikipedia_url?: string
-  verified: boolean
 }
 
 /** How surely a value was READ — not who said it (that is the source's
