@@ -99,6 +99,15 @@ describe('what it draws', () => {
     expect(screen.getByText(/until 2011/i)).toBeInTheDocument()
   })
 
+  it('a seat the death ended says so, not "until"', () => {
+    const seat = { entity: { id: 'Samsung', name: 'Samsung' },
+                   role: { role: 'Board Member', since: '1990-01-01', until: '2022-05-17', until_reason: 'death' } }
+    expect(personTimelineRows(profile([seat]))[0].untilReason).toBe('death')
+    render(<PersonTimeline profile={profile([seat])} />)
+    expect(screen.getByText(/died 2022/i)).toBeInTheDocument()
+    expect(screen.queryByText(/until 2022/i)).toBeNull()
+  })
+
   it('puts no state badge on an open role: a timeline tells transitions', () => {
     render(<PersonTimeline profile={profile([
       position('Alphabet Inc.', 'Board Member', '1998-01-01'),

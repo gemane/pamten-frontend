@@ -261,6 +261,12 @@ export interface RoleRelationship {
   source_id?: string
   credibility_score?: number
   source_url?: string | null   // deep link to the record that asserted it
+  /** Why the seat ended when no source said so: `death` — the holder died, and
+   *  the graph closes a seat no later than its holder's death (2026-10-25). */
+  until_reason?: string | null
+  /** The record that stated the end, when it is not the one that drew the seat
+   *  (an 8-K after a Form 4), or the person's Wikidata item for a death. */
+  until_source_url?: string | null
   /** How many distinct sources assert this relationship (from the claims table),
    *  and their names. 0 + [] means "no claim rows" — edges older than claims —
    *  which is different from unknown, so the backend always sends both. */

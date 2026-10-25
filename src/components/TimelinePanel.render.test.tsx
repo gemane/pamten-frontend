@@ -133,6 +133,19 @@ describe('an end is a transition too', () => {
     expect(end.querySelector('.tl-event__reason')).toBeNull()      // no source reason for roles
     expect(screen.getByText('2011')).toBeInTheDocument()
   })
+
+  it('a seat the holder\'s death ended reads as the death, not as leaving', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'role', role: 'Board Member', since: '1990-01-01', until: '2022-05-17', active: false,
+           until_reason: 'death', party: { id: 'bp', full_name: 'Byung-Gook Park' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const end = await screen.findByTestId('tl-ended')
+    expect(end).toHaveTextContent('Died while Board Member')
+    expect(end).not.toHaveTextContent('No longer')
+    expect(screen.getByText('died 2022')).toBeInTheDocument()       // the start row's badge
+    expect(screen.queryByText('until 2022')).toBeNull()
+  })
 })
 
 describe('why a holding went grey', () => {

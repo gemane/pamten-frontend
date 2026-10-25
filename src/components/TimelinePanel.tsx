@@ -215,9 +215,12 @@ function EndedRow({ ev }: { ev: TimelineEvent }) {
   const { t } = useTranslation()
   const name = partyName(ev.party)
   const date = ev.since ?? ''
+  // A seat the holder's death ended is worded as the death, not as leaving.
+  const role = ev.role ?? t('timeline.executive')
   const label = ev.origin === 'ownership_in' ? t('timeline.endedOwnedBy')
               : ev.origin === 'ownership_out' ? t('timeline.endedOwns')
-              : t('timeline.roleEnded', { role: ev.role ?? t('timeline.executive') })
+              : ev.until_reason === 'death' ? t('timeline.roleEndedDeath', { role })
+              : t('timeline.roleEnded', { role })
   const amendment = endReasonKey(ev) === 'timeline.endReason.amendment'
   return (
     <div className="tl-event tl-event--ended" data-testid="tl-ended">
@@ -339,7 +342,9 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
                     title={t(reasonKey(ev.stale_reason), { date: ev.stale_since ?? '' })}>
                 {t('timeline.dimmedBadge')}
               </span>
-            : ended && <span className="tl-event__badge tl-event__badge--closed">{t('timeline.until', { year: ended })}</span>}
+            : ended && <span className="tl-event__badge tl-event__badge--closed">
+                {t(ev.until_reason === 'death' ? 'timeline.diedYear' : 'timeline.until', { year: ended })}
+              </span>}
         </div>
         <div className="tl-event__name">{name}</div>
         {acquired && (ev.value_usd != null || ev.since_source_url) && (
