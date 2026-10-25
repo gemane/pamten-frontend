@@ -133,6 +133,8 @@
     "countries": "Países",
     "founded": "Fundada",
     "incorporated": "Constituida",
+    "dissolved": "Disuelta",
+    "companyStatus": "Estado",
     "revenue": "Ingresos",
     "employees": "Empleados",
     "hq": "Sede",
@@ -349,11 +351,13 @@
     "endedOwns": "Ya no posee",
     "roleEnded": "Ya no es {{role}}",
     "roleEndedDeath": "Falleció siendo {{role}}",
+    "roleEndedDissolution": "{{role}} hasta la disolución de la empresa",
     "endReason": {
       "gleif_inactive": "GLEIF registra la consolidación como terminada el {{date}}.",
       "gleif_dropped": "La relación ya no aparece en los registros de GLEIF desde el {{date}}; el fin puede ser anterior.",
       "ceased": "Companies House registra que esta persona dejó de ser persona con control significativo el {{date}}.",
       "withdrawn": "La notificación al registro fue retirada el {{date}}; se considera que nunca se aplicó.",
+      "dissolution": "Finalizada por la disolución de la empresa el {{date}}; ninguna fuente indica una venta.",
       "amendment": "Un informe de participación modificado del {{date}} indica que el titular ya no posee una participación declarable.",
       "unknown": "La fuente registra la participación como terminada el {{date}}."
     },
@@ -379,6 +383,8 @@
     "renamed": "Renombrada",
     "became": "pasó a ser",
     "renamedOn": "El registro consta el cambio de nombre el {{date}}.",
+    "dissolvedOn": "La fuente consta la disolución de la empresa el {{date}}.",
+    "dissolved": "Disuelta",
     "reason": {
       "13f_not_confirmed": "El informe 13F del titular para el trimestre que termina el {{date}} ya no incluye esta posición. El silencio no es una venta: la participación se atenúa, no se cierra.",
       "ex21_not_listed": "La lista de filiales más reciente, fechada el {{date}}, ya no la nombra. Los declarantes pueden omitir filiales pequeñas: se atenúa, no se cierra.",

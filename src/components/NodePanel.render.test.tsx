@@ -963,6 +963,22 @@ describe('why a company reports no parent', () => {
     expect(screen.getByText(/controlled by natural persons/)).toBeInTheDocument()
   })
 
+  it('a dissolved company shows its end: the Details rows and the mark after the name', async () => {
+    await withEntity({ dissolved_on: '2023-03-15', company_status: 'Liquidation', incorporated_on: '1999-04-01' })
+    expect(within(detailsSection()).getByText('Dissolved')).toBeInTheDocument()
+    expect(within(detailsSection()).getByText('Status')).toBeInTheDocument()
+    expect(within(detailsSection()).getByText('Liquidation')).toBeInTheDocument()
+    const mark = screen.getByTestId('dissolved-mark')
+    expect(mark).toHaveTextContent('\u2020 2023')
+    expect(mark.closest('h2')).not.toBeNull()
+  })
+
+  it('a company still in existence shows neither', async () => {
+    await withEntity({ incorporated_on: '1999-04-01' })
+    expect(within(detailsSection()).queryByText('Dissolved')).toBeNull()
+    expect(screen.queryByTestId('dissolved-mark')).toBeNull()
+  })
+
   it('never says the company has no owners', async () => {
     await withEntity({ no_direct_parent_reason: 'NATURAL_PERSONS' }, [owner('Vanguard Group', 8.3)])
     expect(screen.queryByText(/no owners/i)).toBeNull()

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag, FiTrendingUp, FiTrendingDown } from 'react-icons/fi'
+import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag, FiTrendingUp, FiTrendingDown, FiXCircle } from 'react-icons/fi'
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import { asOfFromYear, asOfYear } from '../utils/asOf'
@@ -32,7 +32,8 @@ interface TimelineEvent {
   since_source_url?: string | null
   /** How the source says the holding ended (`gleif_inactive`, `gleif_dropped`,
    *  `ceased`, `withdrawn`; a 13D/G amendment has none and is read off the
-   *  filing type) and the filing itself — for the end entry. */
+   *  filing type; `dissolution` when no source said so and a company's
+   *  `dissolved_on` ended it) and the filing itself — for the end entry. */
   until_reason?: string | null
   source_url?: string | null
   filing_type?: string | null
@@ -90,7 +91,7 @@ function withTransitionEvents(events: TimelineEvent[]): TimelineEvent[] {
 }
 
 /** How the source says a holding ended, as a words key. */
-const END_REASONS = new Set(['gleif_inactive', 'gleif_dropped', 'ceased', 'withdrawn'])
+const END_REASONS = new Set(['gleif_inactive', 'gleif_dropped', 'ceased', 'withdrawn', 'dissolution'])
 function endReasonKey(ev: TimelineEvent): string {
   if (ev.until_reason && END_REASONS.has(ev.until_reason)) return `timeline.endReason.${ev.until_reason}`
   if (/^13[DG]/.test(ev.filing_type ?? '')) return 'timeline.endReason.amendment'
@@ -125,6 +126,7 @@ const KIND_COLOR: Record<string, string> = {
   renamed:       '#B7791F',
   stake_reached: '#2F855A',
   stake_dropped: '#C05621',
+  dissolved:     '#718096',
 }
 const KIND_ICON: Record<string, React.ElementType> = {
   ownership_in:  FiArrowDownRight,
@@ -135,6 +137,7 @@ const KIND_ICON: Record<string, React.ElementType> = {
   renamed:       FiTag,
   stake_reached: FiTrendingUp,
   stake_dropped: FiTrendingDown,
+  dissolved:     FiXCircle,
 }
 
 /** A holding crossing the 5 % line, under the year the source stated the new
@@ -209,17 +212,41 @@ function RenamedRow({ ev }: { ev: TimelineEvent }) {
   )
 }
 
+/** The company's own end — no party; the last entry of its timeline, dated
+ *  as the source states it (a year alone when that is all it says). */
+function DissolvedRow({ ev }: { ev: TimelineEvent }) {
+  const { t } = useTranslation()
+  return (
+    <div className="tl-event tl-event--dissolved" data-testid="tl-dissolved">
+      <div className="tl-event__dot" style={{ background: KIND_COLOR.dissolved }} />
+      <div className="tl-event__body">
+        <div className="tl-event__row">
+          <span className="tl-event__kind" style={{ color: KIND_COLOR.dissolved }}>
+            <FiXCircle />
+            {t('timeline.dissolved')}
+          </span>
+        </div>
+        <div className="tl-event__meta tl-event__reason">
+          {t('timeline.dissolvedOn', { date: ev.since ?? '' })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /** The day a holding or a role ended: what changed, and how the source says
  *  so. Never "sold" — no source states a sale, only that the holding ended. */
 function EndedRow({ ev }: { ev: TimelineEvent }) {
   const { t } = useTranslation()
   const name = partyName(ev.party)
   const date = ev.since ?? ''
-  // A seat the holder's death ended is worded as the death, not as leaving.
+  // A seat the holder's death ended is worded as the death, not as leaving;
+  // one the company's dissolution ended, as the dissolution.
   const role = ev.role ?? t('timeline.executive')
   const label = ev.origin === 'ownership_in' ? t('timeline.endedOwnedBy')
               : ev.origin === 'ownership_out' ? t('timeline.endedOwns')
               : ev.until_reason === 'death' ? t('timeline.roleEndedDeath', { role })
+              : ev.until_reason === 'dissolution' ? t('timeline.roleEndedDissolution', { role })
               : t('timeline.roleEnded', { role })
   const amendment = endReasonKey(ev) === 'timeline.endReason.amendment'
   return (
@@ -290,6 +317,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   if (kind === 'dimmed') return <DimmedRow ev={ev} />
   if (kind === 'ended') return <EndedRow ev={ev} />
   if (kind === 'renamed') return <RenamedRow ev={ev} />
+  if (kind === 'dissolved') return <DissolvedRow ev={ev} />
   if (kind === 'stake_reached' || kind === 'stake_dropped') return <StakeCrossingRow ev={ev} />
   const color     = KIND_COLOR[kind] || KIND_COLOR.role
   const Icon      = KIND_ICON[kind]  || FiUser

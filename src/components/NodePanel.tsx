@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen, FiTrendingUp } from 'react-icons/fi'
+import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen, FiTrendingUp, FiActivity } from 'react-icons/fi'
 import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, getStakeHistory, type MediaImage } from '../services/api'
 import ImageCredit, { useMediaImage } from './ImageCredit'
 import ImageZoom from './ImageZoom'
@@ -20,7 +20,7 @@ import { useLongPress } from '../hooks/useLongPress'
 import { FOCUS_ATTR, useGraphFocusHighlight, useGraphHoverHighlight, useGraphPickHighlight } from '../utils/graphFocus'
 import { byStakeDesc } from '../utils/ordering'
 import { formatDate } from '../utils/dates'
-import { deathMark } from '../utils/deathMark'
+import { deathMark, dissolutionMark } from '../utils/deathMark'
 import { displayName, entityLabel } from '../utils/displayName'
 import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
@@ -121,6 +121,18 @@ function DiedMark({ person }: { person: Person | null | undefined }) {
   return (
     <span className="rel-item__died" data-testid="died-mark"
           title={`${t('panel.died')}: ${formatDate(person!.death_date, i18n.language)}`}> {mark}</span>
+  )
+}
+
+/** "† 2023" after a dissolved company's name, the same way (utils/deathMark),
+ *  with the full date on hover. Nothing for a company still in existence. */
+function DissolvedMark({ entity }: { entity: Entity | null | undefined }) {
+  const { t, i18n } = useTranslation()
+  const mark = dissolutionMark(entity)
+  if (!mark) return null
+  return (
+    <span className="rel-item__died" data-testid="dissolved-mark"
+          title={`${t('panel.dissolved')}: ${formatDate(entity!.dissolved_on, i18n.language)}`}> {mark}</span>
   )
 }
 
@@ -348,6 +360,8 @@ export function entityDetailRows(entity: Entity, lang: string): DetailRow[] {
     { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
     { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
     { icon: FiCalendar,  labelKey: 'panel.incorporated', value: formatDate(entity.incorporated_on, lang) },
+    { icon: FiCalendar,  labelKey: 'panel.dissolved',    value: formatDate(entity.dissolved_on, lang) },
+    { icon: FiActivity,  labelKey: 'panel.companyStatus', value: entity.company_status },
     { icon: FiMapPin,    labelKey: 'panel.regAddress',   value: entity.address },
   ]
   return candidates.filter((r): r is DetailRow => !!r.value)
@@ -1568,7 +1582,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
       )}
       <div className="panel-header-row">
-        <h2 className="panel-name">{names.primary}</h2>
+        <h2 className="panel-name">{names.primary}<DissolvedMark entity={entity} /></h2>
         <NodeActions label={names.primary} nodeId={entity.id} targetKind="entity" onShare={onShare} />
       </div>
       {names.secondary && (
@@ -1673,6 +1687,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
                     title={o.owner && 'name' in o.owner ? displayName(o.owner).secondary ?? undefined : undefined}>
                 {o.owner ? ownerName(o.owner) : '—'}
                 {o.owner && !('name' in o.owner) && <DiedMark person={o.owner} />}
+                {o.owner && 'name' in o.owner && <DissolvedMark entity={o.owner} />}
                 {o.owner && ownerPlaces.has(o.owner.id) && (
                   <span className="rel-item__place"> ({ownerPlaces.get(o.owner.id)})</span>
                 )}

@@ -93,6 +93,15 @@ describe('asOf rules', () => {
     expect(nodeExists(null, Y19)).toBe(true)
   })
 
+  it('a company that had ceased by the day no longer existed', () => {
+    expect(nodeExists({ dissolved_on: '2019-06-30' }, Y19)).toBe(false)
+    expect(nodeExists({ dissolved_on: '2019-12-31' }, Y19)).toBe(true)      // gone at the end of that day, not before
+    expect(nodeExists({ dissolved_on: '2020-01-01' }, Y19)).toBe(true)
+    expect(nodeExists({ dissolved_on: '2019-00-00' }, Y19)).toBe(false)     // a year alone: gone as of that year's end
+    expect(nodeExists({ incorporated_on: '2010-01-01', dissolved_on: '2015-01-01' }, Y19)).toBe(false)
+    expect(nodeExists({ dissolved_on: '2015-01-01' }, null)).toBe(true)     // no time travel: the present shows it
+  })
+
   it('a row needs both the party and the relationship', () => {
     const rel = { since: '2010-01-01' }
     expect(rowPresence({ id: 'x', name: 'X', founded: 2020 } as never, rel, Y19)).toBe('absent')

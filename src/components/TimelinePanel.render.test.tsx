@@ -47,6 +47,23 @@ describe('a real acquisition, and a running holding', () => {
     expect(screen.getByText('Owned by')).toBeInTheDocument()
   })
 
+  it('the company\'s own end reads "Dissolved" with the date, and a seat it ended says so', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      { kind: 'dissolved', party: null, since: '2023-03-15', until: null, active: false },
+      ev({ kind: 'role', role: 'CEO', since: '2015-01-01', until: '2023-03-15', until_reason: 'dissolution',
+           party: { id: 'a', full_name: 'Ann Chief' } }),
+      ev({ kind: 'ownership_in', since: '2010-01-01', until: '2023-03-15', until_reason: 'dissolution',
+           party: { id: 'p', name: 'Parent plc' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const end = await screen.findByTestId('tl-dissolved')
+    expect(end).toHaveTextContent('Dissolved')
+    expect(end).toHaveTextContent('The source records the company as dissolved on 2023-03-15.')
+    const ended = screen.getAllByTestId('tl-ended')
+    expect(ended.some(r => r.textContent?.includes('CEO until the company was dissolved'))).toBe(true)
+    expect(ended.some(r => r.textContent?.includes("Ended by the company's dissolution on 2023-03-15"))).toBe(true)
+  })
+
   it('a rename reads "Renamed", the old name then the new, under the year the old name ended', async () => {
     mockHistory.mockResolvedValue({ data: [
       { kind: 'renamed', party: null, since: '2021-08-20', until: null, active: false,
