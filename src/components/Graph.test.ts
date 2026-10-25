@@ -92,6 +92,13 @@ describe('buildStylesheet — a person who has died', () => {
     expect(rule.style.label(fake('Paul Allen', { death_date: '2018-10-15' }))).toBe('Paul Allen\n\u2020 2018')
     expect(rule.style.label(fake('Bill Gates', { death_date: null }))).toBe('Bill Gates')
   })
+
+  it('every company box draws the dissolution mark the same way', () => {
+    const rule = ruleFor('node[nodeType = "entity"]') as { style: { label: (e: unknown) => string } }
+    const fake = (label: string, raw: object) => ({ data: (k: string) => (k === 'label' ? label : raw) })
+    expect(rule.style.label(fake('Compaq', { dissolved_on: '2002-00-00' }))).toBe('Compaq\n\u2020 2002')
+    expect(rule.style.label(fake('Apple Inc.', {}))).toBe('Apple Inc.')
+  })
 })
 
 describe('buildStylesheet — centered node sizing', () => {

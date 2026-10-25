@@ -93,14 +93,16 @@ export function edgePresence(rel: Tenure | null | undefined, asOf: string | null
   return evidence && evidence <= asOf ? 'present' : 'unknown'
 }
 
-/** A company that began after the day did not exist; nothing else is certain.
- *  The register's incorporation date decides when it is known (the legal
- *  entity's start), else the year the business began. */
-export function nodeExists(
-  entity: { founded?: number | null; incorporated_on?: string | null } | null | undefined,
-  asOf: string | null,
-): boolean {
+export type Lifespan = { founded?: number | null; incorporated_on?: string | null; dissolved_on?: string | null }
+
+/** A company that began after the day did not exist, and one that had ceased
+ *  by it no longer did; nothing else is certain. The register's incorporation
+ *  date decides when it is known (the legal entity's start), else the year the
+ *  business began; `dissolved_on` is the day it ceased (a partial date, the
+ *  year alone, sorts before that year's end, so it is gone as of that year). */
+export function nodeExists(entity: Lifespan | null | undefined, asOf: string | null): boolean {
   if (!asOf || !entity) return true
+  if (entity.dissolved_on && entity.dissolved_on < asOf) return false
   if (entity.incorporated_on) return entity.incorporated_on <= asOf
   if (entity.founded != null) return String(entity.founded) <= asOf
   return true
@@ -112,7 +114,7 @@ export function rowPresence(
   rel: Tenure | null | undefined,
   asOf: string | null,
 ): Presence {
-  if (!nodeExists(party as { founded?: number | null; incorporated_on?: string | null } | null, asOf)) return 'absent'
+  if (!nodeExists(party as Lifespan | null, asOf)) return 'absent'
   return edgePresence(rel, asOf)
 }
 

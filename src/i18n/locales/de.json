@@ -133,6 +133,8 @@
     "countries": "Länder",
     "founded": "Gegründet",
     "incorporated": "Eingetragen",
+    "dissolved": "Aufgelöst",
+    "companyStatus": "Status",
     "revenue": "Umsatz",
     "employees": "Mitarbeiter",
     "hq": "Hauptsitz",
@@ -349,11 +351,13 @@
     "endedOwns": "Besitzt nicht mehr",
     "roleEnded": "Nicht mehr {{role}}",
     "roleEndedDeath": "Als {{role}} verstorben",
+    "roleEndedDissolution": "{{role}} bis zur Auflösung des Unternehmens",
     "endReason": {
       "gleif_inactive": "GLEIF verzeichnet die Konsolidierung als am {{date}} beendet.",
       "gleif_dropped": "Die Beziehung erscheint ab {{date}} nicht mehr in den GLEIF-Daten; das Ende kann früher liegen.",
       "ceased": "Companies House verzeichnet, dass diese Person am {{date}} nicht mehr Person mit maßgeblicher Kontrolle war.",
       "withdrawn": "Die Registermeldung wurde am {{date}} zurückgezogen; sie gilt als nie zutreffend.",
+      "dissolution": "Beendet durch die Auflösung des Unternehmens am {{date}}; keine Quelle nennt einen Verkauf.",
       "amendment": "Eine geänderte Beteiligungsmeldung vom {{date}} gibt an, dass der Halter keine meldepflichtige Beteiligung mehr hält.",
       "unknown": "Die Quelle verzeichnet die Beteiligung als am {{date}} beendet."
     },
@@ -379,6 +383,8 @@
     "renamed": "Umbenannt",
     "became": "wurde zu",
     "renamedOn": "Das Register verzeichnet die Namensänderung am {{date}}.",
+    "dissolvedOn": "Die Quelle verzeichnet die Auflösung des Unternehmens am {{date}}.",
+    "dissolved": "Aufgelöst",
     "reason": {
       "13f_not_confirmed": "Der 13F-Bericht des Halters für das Quartal bis {{date}} führt diese Position nicht mehr. Schweigen ist kein Verkauf — die Beteiligung wird abgeblendet, nicht beendet.",
       "ex21_not_listed": "Die neuere Tochterliste vom {{date}} nennt sie nicht mehr. Einreicher dürfen kleine Töchter weglassen — abgeblendet, nicht beendet.",

@@ -12,9 +12,9 @@ import { arcSpacing, layoutArc, rowCentres } from '../utils/arcPack'
 import { byStakeDesc } from '../utils/ordering'
 import { displayName } from '../utils/displayName'
 import { relabelNamesakes } from '../utils/namesakes'
-import { personBoxLabel } from '../utils/deathMark'
+import { entityBoxLabel, personBoxLabel } from '../utils/deathMark'
 import { withLineLabels } from '../utils/lineLabels'
-import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence } from '../utils/asOf'
+import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence, type Lifespan } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
 
 export interface GraphHandle {
@@ -70,6 +70,9 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       style: {
         'background-color': ENTITY_COLORS.company.fill, shape: 'roundrectangle',
         'border-width': 2, 'border-color': ENTITY_COLORS.company.border,
+        // A dissolved company carries "† 2023" under the name, as a dead person does
+        label: (ele: cytoscape.NodeSingular) =>
+          entityBoxLabel(ele.data('label') ?? '', ele.data('raw') as { dissolved_on?: string | null } | undefined),
       },
     },
     {
@@ -309,7 +312,7 @@ export function classifyElements(
   const exists = new Map<string, boolean>()
   for (const el of elements) {
     const d = el.data
-    if (!('source' in d)) exists.set(d.id, nodeExists(d.raw as { founded?: number | null; incorporated_on?: string | null }, asOf))
+    if (!('source' in d)) exists.set(d.id, nodeExists(d.raw as Lifespan, asOf))
   }
   const presence = new Map<string, Presence>()
   const edgeVisible = (d: EdgeData): boolean => {

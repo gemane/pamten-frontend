@@ -133,6 +133,8 @@
     "countries": "Countries",
     "founded": "Founded",
     "incorporated": "Incorporated",
+    "dissolved": "Dissolved",
+    "companyStatus": "Status",
     "revenue": "Revenue",
     "employees": "Employees",
     "hq": "HQ",
@@ -349,11 +351,13 @@
     "endedOwns": "No longer owns",
     "roleEnded": "No longer {{role}}",
     "roleEndedDeath": "Died while {{role}}",
+    "roleEndedDissolution": "{{role}} until the company was dissolved",
     "endReason": {
       "gleif_inactive": "GLEIF records the consolidation as ended on {{date}}.",
       "gleif_dropped": "The relationship no longer appears in GLEIF's records from {{date}}; the end may be earlier.",
       "ceased": "Companies House records that this person ceased to be a person with significant control on {{date}}.",
       "withdrawn": "The register notification was withdrawn on {{date}}; it is treated as never having applied.",
+      "dissolution": "Ended by the company's dissolution on {{date}}; no source states a sale.",
       "amendment": "An amended ownership report of {{date}} states the holder no longer holds a reportable stake.",
       "unknown": "The source records the holding as ended on {{date}}."
     },
@@ -379,6 +383,8 @@
     "renamed": "Renamed",
     "became": "became",
     "renamedOn": "The register records the change of name on {{date}}.",
+    "dissolvedOn": "The source records the company as dissolved on {{date}}.",
+    "dissolved": "Dissolved",
     "reason": {
       "13f_not_confirmed": "The holder's 13F report for the quarter ending {{date}} no longer lists this position. Silence is not a sale, so the holding is dimmed, not ended.",
       "ex21_not_listed": "The newer subsidiary list dated {{date}} no longer names it. Filers may leave out small subsidiaries, so it is dimmed, not ended.",
