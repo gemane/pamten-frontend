@@ -348,6 +348,7 @@
     "endedOwnedBy": "Ya no pertenece a",
     "endedOwns": "Ya no posee",
     "roleEnded": "Ya no es {{role}}",
+    "roleEndedDeath": "Falleció siendo {{role}}",
     "endReason": {
       "gleif_inactive": "GLEIF registra la consolidación como terminada el {{date}}.",
       "gleif_dropped": "La relación ya no aparece en los registros de GLEIF desde el {{date}}; el fin puede ser anterior.",
@@ -361,6 +362,7 @@
     "forValue": "por {{value}}",
     "filing": "informe",
     "until": "hasta {{year}}",
+    "diedYear": "falleció en {{year}}",
     "noDate": "Sin fecha registrada",
     "loading": "Cargando cronología…",
     "error": "No se pudo cargar la cronología.",

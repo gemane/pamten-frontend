@@ -348,6 +348,7 @@
     "endedOwnedBy": "No longer owned by",
     "endedOwns": "No longer owns",
     "roleEnded": "No longer {{role}}",
+    "roleEndedDeath": "Died while {{role}}",
     "endReason": {
       "gleif_inactive": "GLEIF records the consolidation as ended on {{date}}.",
       "gleif_dropped": "The relationship no longer appears in GLEIF's records from {{date}}; the end may be earlier.",
@@ -361,6 +362,7 @@
     "forValue": "for {{value}}",
     "filing": "filing",
     "until": "until {{year}}",
+    "diedYear": "died {{year}}",
     "noDate": "No date recorded",
     "loading": "Loading timeline…",
     "error": "Could not load timeline.",

@@ -348,6 +348,7 @@
     "endedOwnedBy": "Nicht mehr im Besitz von",
     "endedOwns": "Besitzt nicht mehr",
     "roleEnded": "Nicht mehr {{role}}",
+    "roleEndedDeath": "Als {{role}} verstorben",
     "endReason": {
       "gleif_inactive": "GLEIF verzeichnet die Konsolidierung als am {{date}} beendet.",
       "gleif_dropped": "Die Beziehung erscheint ab {{date}} nicht mehr in den GLEIF-Daten; das Ende kann früher liegen.",
@@ -361,6 +362,7 @@
     "forValue": "für {{value}}",
     "filing": "Meldung",
     "until": "bis {{year}}",
+    "diedYear": "gestorben {{year}}",
     "noDate": "Kein Datum erfasst",
     "loading": "Zeitverlauf wird geladen…",
     "error": "Zeitverlauf konnte nicht geladen werden.",

@@ -38,6 +38,8 @@ interface TimelineRow {
   companyId?: string
   since: string | null
   until: string | null
+  /** `death` when the seat ended because the holder died (see RoleRelationship). */
+  untilReason?: string | null
   stakePercent?: number | null
   ownershipType?: OwnsRelationship['ownership_type']
 }
@@ -65,6 +67,7 @@ export function personTimelineRows(profile: PersonProfile): TimelineRow[] {
       companyId: position.entity?.id,
       since: rel?.since ?? null,
       until: rel?.until ?? null,
+      untilReason: rel?.until_reason ?? null,
     })
   }
 
@@ -158,7 +161,7 @@ function Row({ row }: { row: TimelineRow }) {
           {/* no state badge — a timeline tells transitions; the end is one */}
           {ended && (
             <span className="tl-event__badge tl-event__badge--closed">
-              {t('timeline.until', { year: ended })}
+              {t(row.untilReason === 'death' ? 'timeline.diedYear' : 'timeline.until', { year: ended })}
             </span>
           )}
         </div>
