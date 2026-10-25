@@ -171,6 +171,19 @@ describe('why a holding went grey', () => {
     expect(entry.querySelector('a')).toBeNull()                      // a 13F has no newer list to link
   })
 
+  it('words a 13D/G statement older than its restatement window', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2014-02-14', since_basis: 'first_reported', stake_percent: 7.11,
+           party: { id: 'm', name: 'Macquarie Bank' }, stale: true, stale_since: '2014-02-14',
+           stale_reason: 'not_restated', stale_source_url: null }),
+    ] } as never)
+    render(<TimelinePanel entityId="nc" />)
+    const entry = await screen.findByTestId('tl-dimmed')
+    expect(entry).toHaveTextContent('No longer confirmed')
+    expect(entry).toHaveTextContent('last Schedule 13D/G, filed 2014-02-14')
+    expect(entry).not.toHaveTextContent('No newer source confirms this')
+  })
+
   it('links the newer subsidiary list when there is one', async () => {
     mockHistory.mockResolvedValue({ data: [
       ev({ kind: 'ownership_out', since: '2014-12-31', since_basis: 'first_listed',
