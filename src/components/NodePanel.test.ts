@@ -72,7 +72,7 @@ describe('personDisplayDetails', () => {
   })
 
   it('surfaces aliases (nicknames), filtering blanks', () => {
-    const d = personDisplayDetails({ ...base, alias: ['Elon', '', 'Technoking'] }, 'en')
+    const d = personDisplayDetails({ ...base, aliases: ['Elon', '', 'Technoking'] }, 'en')
     expect(d.aka).toEqual(['Elon', 'Technoking'])
   })
 

@@ -153,7 +153,7 @@ export function personDisplayDetails(p: Person, lang: string) {
     born: p.death_date ? formatDate(p.birth_date, lang) : null,
     died: formatDate(p.death_date, lang),
     nationalities,
-    aka: (p.alias ?? []).filter(Boolean),
+    aka: (p.aliases ?? []).filter(Boolean),
   }
 }
 
