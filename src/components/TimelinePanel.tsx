@@ -62,7 +62,7 @@ export function formatUsd(v: number): string {
 
 /** The reasons the backend writes (edge_schema.STALE_REASONS); anything else
  *  reads as the generic one. */
-const KNOWN_REASONS = new Set(['13f_not_confirmed', 'ex21_not_listed', 'unconfirmed', 'lei_lapsed'])
+const KNOWN_REASONS = new Set(['13f_not_confirmed', 'ex21_not_listed', 'unconfirmed', 'lei_lapsed', 'not_restated'])
 const reasonKey = (reason: string | null | undefined): string =>
   `timeline.reason.${reason && KNOWN_REASONS.has(reason) ? reason : 'unknown'}`
 

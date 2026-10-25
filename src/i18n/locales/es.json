@@ -384,6 +384,7 @@
       "ex21_not_listed": "La lista de filiales más reciente, fechada el {{date}}, ya no la nombra. Los declarantes pueden omitir filiales pequeñas: se atenúa, no se cierra.",
       "unconfirmed": "Ninguna fuente lo ha confirmado desde el {{date}}. Una declaración colaborativa borrada simplemente deja de verse: se atenúa, no se cierra.",
       "lei_lapsed": "El registro en que se basa ha caducado y su emisor ya no lo mantiene; última actualización el {{date}}. Atenuado, no cerrado.",
+      "not_restated": "La última declaración Schedule 13D/G del titular, presentada el {{date}}, es más antigua que el plazo en que se renueva tal declaración. El silencio no es una venta: la participación se atenúa, no se cierra.",
       "unknown": "Ninguna fuente más reciente lo confirma: se atenúa, no se cierra."
     },
     "stakeReachedIn": "Un accionista alcanza el 5 %",

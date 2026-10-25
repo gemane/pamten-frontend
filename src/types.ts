@@ -152,7 +152,9 @@ export interface OwnsRelationship {
    *  `ex21_not_listed` (the newer subsidiary list dated `stale_since`, linked in
    *  `stale_source_url`, no longer names it), `unconfirmed` (no source has
    *  confirmed it since `stale_since`), `lei_lapsed` (the GLEIF record lapsed;
-   *  last updated `stale_since`). Edges marked before these existed carry none. */
+   *  last updated `stale_since`), `not_restated` (the holder's last Schedule
+   *  13D/G, filed `stale_since`, is older than the form's restatement window).
+   *  Edges marked before these existed carry none. */
   stale_since?: string | null
   stale_reason?: string | null
   stale_source_url?: string | null
