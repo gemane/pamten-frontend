@@ -49,7 +49,7 @@ export interface Entity {
   registration_authority?: string  // register name, e.g. "Companies Register"
   registration_number?: string     // the entity's id at that authority
   address?: string          // human-readable registered (legal) address
-  registered_address?: string  // normalized registered office (PSC/company-data)
+  address_normalized?: string  // the matching key of `address` (lowercased, punctuation stripped) — the same-name dedup corroborator, never shown
   hq_address?: string       // full HQ address (map pin is geocoded from this)
   hq_geo_precision?: string  // 'exact' | 'approx' — how precisely hq_lat/hq_lng was geocoded
   reg_lat?: number          // the REGISTERED office, geocoded from `address` — an offshore
@@ -78,7 +78,7 @@ export interface Person {
   first_name: string
   last_name: string
   full_name: string
-  alias?: string[]
+  aliases?: string[]
   nationalities?: string[]   // ISO-2 codes; the one field (the scalar twin went on 2026-10-25)
   birth_date?: string
   death_date?: string
