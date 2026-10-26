@@ -1,5 +1,5 @@
 import { entityLabel } from './displayName'
-import type { GraphElement, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType, SubsidiaryTree } from '../types'
+import type { GraphElement, FullProfile, PersonProfile, Entity, Person, GroupParty, OwnsRelationship, EntityType, SubsidiaryTree, VotingGroupEntry } from '../types'
 import { endedBy, evidenceDate, startedAfter, type Tenure } from './asOf'
 
 // Cytoscape element builders. Each takes a `loadedIds`/`seen` set and only
@@ -50,7 +50,7 @@ export function isDrawableOwnership(
  */
 function membershipElements(
   profile: { entity?: { id: string }; person?: { id: string }
-             group_members?: GroupParty[]; voting_groups?: { group: Entity }[] },
+             group_members?: GroupParty[]; voting_groups?: VotingGroupEntry[] },
   loadedIds: Set<string>,
 ): GraphElement[] {
   const selfId = profile.entity?.id ?? profile.person?.id
@@ -85,6 +85,12 @@ function membershipElements(
       } })
     }
     edge(selfId, g.group.id)
+    // …and on from the group to the company its bloc controls: without it
+    // the group was a dead end below its member (Berkshire → DaVita group,
+    // 2026-10-26). The one ownership emitter, relative to the group.
+    for (const h of g.holds ?? []) {
+      els.push(...ownershipElements(g.group.id, h.entity, h.relationship, 'out', loadedIds))
+    }
   }
   return els
 }

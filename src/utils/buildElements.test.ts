@@ -388,6 +388,24 @@ describe('filing-group membership on the canvas', () => {
     expect((node!.data as { entitySubtype?: string }).entitySubtype).toBe('voting_group')
   })
 
+  it('draws the line on from the group to the company its bloc controls', () => {
+    // Berkshire's DaVita group was a dead end below Berkshire (2026-10-26):
+    // the group's own edge — voting power, no stake — now comes with it.
+    const profile = {
+      ...makeProfile(entity('brk', 'Berkshire Hathaway')),
+      voting_groups: [{ group: { ...entity('g1', 'Voting group · 9 parties'), type: 'voting_group' as const },
+                        holds: [{ entity: entity('dva', 'DaVita Inc.'),
+                                  relationship: { voting_power_pct: 45, stake_percent: null } as never }] }],
+    }
+    const els = buildElements(profile, new Set())
+    const toDva = els.filter(e => (e.data as EdgeData).source === 'g1' && (e.data as EdgeData).target === 'dva')
+    expect(toDva.map(e => (e.data as EdgeData).edgeType).sort()).toEqual(['owns', 'votes'])
+    const owns = toDva.find(e => (e.data as EdgeData).edgeType === 'owns')!.data as EdgeData
+    expect(owns.stakePct).toBeNull()                                     // no stake: the members hold the shares
+    expect(toDva.find(e => (e.data as EdgeData).edgeType === 'votes')!.data.label).toBe('45%')
+    expect(els.some(e => e.data.id === 'dva')).toBe(true)
+  })
+
   it('carries no stake, so no filter or sum can treat it as ownership', () => {
     const profile = {
       ...makeProfile(entity('g1', 'Voting group · 3 parties')),

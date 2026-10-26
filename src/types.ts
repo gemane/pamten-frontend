@@ -332,7 +332,7 @@ export interface FullProfile {
   group_members?: GroupParty[]
   /** The filing groups this entity is a party to — the mirror of the above,
    *  present on a member's profile so the graph can draw the bloc it votes in. */
-  voting_groups?: { group: Entity }[]
+  voting_groups?: VotingGroupEntry[]
 }
 
 // Derived (not sourced) ownership breakdown, computed on read from the owners.
@@ -387,7 +387,16 @@ export interface PersonProfile {
   holdings: HoldingEntry[]     // OWNS → entity
   /** Filing groups this person is a party to. A bloc's members are as often
    *  people as companies — AB InBev's includes Lemann, Sicupira and Telles. */
-  voting_groups?: { group: Entity }[]
+  voting_groups?: VotingGroupEntry[]
+}
+
+/** A filing group a node is a party to, and what the group's bloc controls:
+ *  the company with the group's edge (voting power, no stake — the members
+ *  hold the shares). `holds` lets the graph draw the line on from the group,
+ *  which the member's own profile could not before 2026-10-26. */
+export interface VotingGroupEntry {
+  group: Entity
+  holds?: { entity: Entity; relationship: OwnsRelationship }[]
 }
 
 export interface HistoryEntry {

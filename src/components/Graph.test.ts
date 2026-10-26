@@ -32,6 +32,21 @@ describe('computeArcPositions ordering (matches the panel)', () => {
     expect(namesByXDesc(pos, ['a', 'b', 'c'])).toEqual(['b', 'c', 'a'])
   })
 
+  it('a voting group the centre is a party to sits after the holdings, not among them', () => {
+    // Berkshire's DaVita group sorted by name among its subsidiaries read as
+    // a holding (2026-10-26): below the centre, but after every holding.
+    const els = [
+      node('C', 'Center'),
+      node('a', 'Alpha'), node('z', 'Zeta'),
+      { data: { id: 'g', label: 'Voting group · 9 parties', nodeType: 'entity', entitySubtype: 'voting_group' } } as GraphElement,
+      ownsEdge('C', 'a', null), ownsEdge('C', 'z', null),
+      { data: { id: 'C__member__g', source: 'C', target: 'g', edgeType: 'member', stakePct: null } } as GraphElement,
+    ]
+    const pos = computeArcPositions(els, 'C')
+    expect(namesByXDesc(pos, ['a', 'z', 'g'])).toEqual(['a', 'z', 'g'])
+    expect(pos.get('g')!.y).toBeGreaterThan(0)                          // still below the centre
+  })
+
   it('falls back to alphabetical when stakes are absent', () => {
     const els = [
       node('C', 'Center'),
