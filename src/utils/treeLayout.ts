@@ -260,6 +260,14 @@ export function computeTreeLayout(
   const children = new Map<string, string[]>()
   const owned = new Set<string>()                    // placed by a holding, not only by a role
   const groups = new Set<string>()                   // placed by membership: the last column
+  // what each such group's bloc controls (the group's own holdings)
+  const controls = new Map<string, string[]>()
+  for (const el of elements) {
+    const d = el.data
+    if (!('source' in d) || d.edgeType !== 'owns') continue
+    if (!controls.has(d.source)) controls.set(d.source, [])
+    controls.get(d.source)!.push(d.target)
+  }
   const rank = new Map<string, { stake: number | null; shares: number | null }>()   // of that holding
   const name = new Map<string, string>()
   for (const el of elements) if (!('source' in el.data)) name.set(el.data.id, String(el.data.label ?? ''))
@@ -316,6 +324,18 @@ export function computeTreeLayout(
     const kids = (children.get(id) ?? []).map(k => ({ id: k, box: box(k), branch: children.has(k) }))
       .map(k => ({ k, roleOnly: groups.has(k.id) ? 2 : owned.has(k.id) ? 0 : 1, wide: k.branch ? k.box.width : 0 }))
       .sort((a, b) => a.roleOnly - b.roleOnly || a.wide - b.wide || likeTheList(a.k.id, b.k.id)).map(x => x.k)
+    // A group whose bloc controls a sibling sits right ABOVE that company, in
+    // its column: the line is a short step down (member → group → company)
+    // instead of a diagonal across the whole tree from the last column
+    // (Berkshire's DaVita group, 2026-10-26). A group controlling nothing
+    // here keeps the last place.
+    for (const g of kids.filter(k => groups.has(k.id))) {
+      const held = new Set(controls.get(g.id) ?? [])
+      const at = kids.findIndex(k => k !== g && held.has(k.id))
+      if (at < 0) continue
+      kids.splice(kids.indexOf(g), 1)
+      kids.splice(kids.findIndex(k => held.has(k.id)), 0, g)
+    }
     const { w: w0, h: h0 } = size(id)
     const cellW = TREE_GUTTER + w0
     if (kids.length === 0) {

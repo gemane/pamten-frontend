@@ -508,6 +508,21 @@ describe('a voting group the centre is a party to (2026-10-26)', () => {
     expect(x('run')).toBeLessThan(x('g'))
   })
 
+  it('sits right above the company its bloc controls when the centre holds that company too', () => {
+    // the diagonal across the whole tree, from the last column to DaVita in the first
+    const els = [n('brk'), n('big'), n('dva'), n('small'), n('g', { entitySubtype: 'voting_group' }),
+                 e('brk', 'big', 'owns', 90), e('brk', 'dva', 'owns', 45), e('brk', 'small', 'owns', 10),
+                 e('brk', 'g', 'member'), e('g', 'dva', 'owns', null)]
+    const { positions } = computeTreeLayout(els, 'brk')
+    const at = (id: string) => positions.get(id)!
+    // a small tree lays its children in one row: the group is DaVita's
+    // neighbour on the left (in a big tree's columns, the box above it)
+    expect(at('g').y).toBe(at('dva').y)
+    expect(at('big').x).toBeLessThan(at('g').x)
+    expect(at('g').x).toBeLessThan(at('dva').x)
+    expect(at('dva').x).toBeLessThan(at('small').x)
+  })
+
   it("never takes a company from a real holder, but places one only the group holds", () => {
     const els = [n('brk'), n('dva'), n('solo'), n('g', { entitySubtype: 'voting_group' }),
                  e('brk', 'dva', 'owns', 45), e('brk', 'g', 'member'),
