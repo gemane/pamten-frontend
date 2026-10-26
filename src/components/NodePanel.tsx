@@ -149,15 +149,20 @@ function VotesInSection({ groups, onNavigate }: {
     <Section title={t('panel.votesIn')}>
       {groups.map((g, i) => (
         <RelRow key={i} node={entityToNode(g.group)} onNavigate={onNavigate}>
-          <CompanyName e={g.group} />
-          {(g.holds ?? []).map((h, j) => (
-            <span key={j} className="rel-item__place" data-testid="votes-in-controls">
-              {' '}{t('panel.votesInControls', {
-                company: entityLabel(h.entity),
-                pct: h.relationship?.voting_power_pct ?? '?',
-              })}
-            </span>
-          ))}
+          {/* one name cell: the group, and on its own line below what its
+              bloc controls — beside the name, the row squeezed it to a word
+              per line */}
+          <span className="rel-item__name" title={displayName(g.group).secondary ?? undefined}>
+            {displayName(g.group).primary}
+            {(g.holds ?? []).map((h, j) => (
+              <span key={j} className="rel-item__place rel-item__controls" data-testid="votes-in-controls">
+                {t('panel.votesInControls', {
+                  company: entityLabel(h.entity),
+                  pct: h.relationship?.voting_power_pct ?? '?',
+                })}
+              </span>
+            ))}
+          </span>
         </RelRow>
       ))}
     </Section>

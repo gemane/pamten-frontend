@@ -481,3 +481,39 @@ describe('the tree is in the panel\'s order', () => {
     expect(readingOrder(els, 'c', 'c').filter(id => id.startsWith('leaf'))).toEqual(['leaf1', 'leaf2'])
   })
 })
+
+
+describe('a voting group the centre is a party to (2026-10-26)', () => {
+  const n = (id: string, extra: object = {}) => ({ data: { id, label: id, nodeType: 'entity', ...extra } }) as GraphElement
+  const e = (source: string, target: string, edgeType: string, stakePct: number | null = null) =>
+    ({ data: { id: `${source}__${edgeType}__${target}`, source, target, edgeType, stakePct } }) as GraphElement
+
+  it('is placed by the tree as the centre\'s last column, after every holding', () => {
+    const els = [n('brk'), n('a'), n('z'), n('g', { entitySubtype: 'voting_group' }),
+                 e('brk', 'a', 'owns', 10), e('brk', 'z', 'owns', 90), e('brk', 'g', 'member')]
+    const parent = treeParents(els, 'brk')
+    expect(parent.get('g')).toBe('brk')
+    const { positions } = computeTreeLayout(els, 'brk')
+    expect(positions.get('g')!.x).toBeGreaterThan(Math.max(positions.get('a')!.x, positions.get('z')!.x))
+  })
+
+  it('comes after the companies a person only runs, too', () => {
+    // a person owns one company, runs another and votes in a bloc: holding,
+    // then role, then group
+    const els = [n('p', { nodeType: 'person' }), n('own'), n('run'), n('g', { entitySubtype: 'voting_group' }),
+                 e('p', 'g', 'member'), e('p', 'run', 'role'), e('p', 'own', 'owns', 20)]
+    const { positions } = computeTreeLayout(els, 'p')
+    const x = (id: string) => positions.get(id)!.x
+    expect(x('own')).toBeLessThan(x('run'))
+    expect(x('run')).toBeLessThan(x('g'))
+  })
+
+  it("never takes a company from a real holder, but places one only the group holds", () => {
+    const els = [n('brk'), n('dva'), n('solo'), n('g', { entitySubtype: 'voting_group' }),
+                 e('brk', 'dva', 'owns', 45), e('brk', 'g', 'member'),
+                 e('g', 'dva', 'owns', null), e('g', 'solo', 'owns', null)]
+    const parent = treeParents(els, 'brk')
+    expect(parent.get('dva')).toBe('brk')                     // Berkshire's 45 % keeps it
+    expect(parent.get('solo')).toBe('g')                      // member → group → company
+  })
+})

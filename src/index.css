@@ -1609,6 +1609,8 @@ button.rel-item--clickable.rel-item--graph-focus:hover {
 /* Computed (not sourced) rows/badges — e.g. free-float residual */
 /* The country that tells a company from a namesake in the same list. */
 .rel-item__place { color: #8b95a7; font-weight: 400; }
+/* what a voting group's bloc controls, on its own line under the group's name */
+.rel-item__controls { display: block; font-size: 12px; margin-top: 2px; }
 /* "† 2018" after a person who has died — the same on every list */
 .rel-item__died { color: #8b95a7; font-weight: 400; white-space: nowrap; }
 [data-theme="light"] .rel-item__died { color: #718096; }

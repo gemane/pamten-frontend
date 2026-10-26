@@ -190,7 +190,7 @@
     "groupMembers": "Parteien der Vereinbarung",
     "groupControls": "Kontrolliert",
     "votesIn": "Stimmt ab in",
-    "votesInControls": "· kontrolliert {{company}}, {{pct}} % der Stimmen",
+    "votesInControls": "kontrolliert {{company}}, {{pct}} % der Stimmen",
     "website": "Webseite",
     "webSearch": "Websuche",
     "sector": "Branche",
