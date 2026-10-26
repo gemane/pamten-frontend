@@ -8,11 +8,13 @@ import type { FullProfile, Entity, SearchResult } from './types'
 // search → select → enrich flow without cytoscape, leaflet, or real network.
 vi.mock('./components/Graph', () => ({
   // Exposes the one prop the graph-focus wiring is about.
-  default: ({ focusedId, onNodeHover, onNodeClick, selectedNode }: { focusedId?: string | null
+  default: ({ focusedId, onNodeHover, onNodeClick, selectedNode, elements }: { focusedId?: string | null
+                                          elements?: { data: { id: string } }[]
                                           onNodeHover?: (id: string | null) => void
                                           onNodeClick?: (n: unknown) => void
                                           selectedNode?: { id: string } | null }) =>
     <div data-testid="graph" data-focused={focusedId ?? ''} data-hover-wired={onNodeHover ? 'yes' : 'no'}
+         data-ids={(elements ?? []).map(e => e.data.id).join(',')}
          data-action-node={selectedNode?.id ?? ''}>
       {onNodeHover && <button onClick={() => onNodeHover('own1')}>hover-own1</button>}
       {onNodeHover && <button onClick={() => onNodeHover(null)}>hover-none</button>}
@@ -167,6 +169,47 @@ describe('App on-demand enrich flow', () => {
     // …and the prominent "Searching sources for X…" overlay must NOT appear (regression #103).
     await new Promise(r => setTimeout(r, 350))   // past the 250ms overlay delay
     expect(screen.queryByText(/Searching sources for/i)).not.toBeInTheDocument()
+  })
+
+  it('a voting group picked from search starts no enrichment (its name finds another company)', async () => {
+    mockSearch.mockResolvedValue({ data: [{ type: 'Entity', score: 1,
+      node: { id: 'g1', name: 'Voting group · 8 parties', type: 'voting_group' } }] } as never)
+    mockProfile.mockResolvedValue({ data: { entity: { id: 'g1', name: 'Voting group · 8 parties', type: 'voting_group' },
+                                            owners: [], subsidiaries: [], executives: [] } } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'voting', { delay: null })
+    await userEvent.click(await screen.findByText('Voting group · 8 parties'))
+    await waitFor(() => expect(mockProfile).toHaveBeenCalledWith('g1', null))
+    await new Promise(r => setTimeout(r, 50))
+    expect(mockEnsure).not.toHaveBeenCalled()
+  })
+
+  it('an enrichment that resolved to another company is not appended to the graph on screen', async () => {
+    // Berkshire → search a group → the name "resolved" to Alibaba, whose whole
+    // graph joined the group's (2026-10-26)
+    mockSearch.mockResolvedValue({ data: [result('e1', 'Microsoft Corporation')] } as never)
+    mockEnsure.mockResolvedValue({ data: { scraped: true, reason: 'stale', entity_id: 'ali', depth_reached: 1, sources_run: [],
+      profile: { entity: entity('ali', 'Alibaba Group Holding Limited'), owners: [],
+                 subsidiaries: [{ entity: entity('ding', 'DingTalk'), relationship: { stake_percent: 100 } }], executives: [] } } } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'microsoft', { delay: null })
+    await userEvent.click(await screen.findByText('Microsoft Corporation'))
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+    await new Promise(r => setTimeout(r, 50))
+    const ids = screen.getByTestId('graph').getAttribute('data-ids') ?? ''
+    expect(ids).not.toContain('ali')
+    expect(ids).not.toContain('ding')
+  })
+
+  it('an enrichment about the company on screen is still appended', async () => {
+    mockSearch.mockResolvedValue({ data: [result('e1', 'Microsoft Corporation')] } as never)
+    mockEnsure.mockResolvedValue({ data: { scraped: true, reason: 'stale', entity_id: 'e1', depth_reached: 1, sources_run: [],
+      profile: { entity: entity('e1', 'Microsoft Corporation'), owners: [],
+                 subsidiaries: [{ entity: entity('gh', 'GitHub'), relationship: { stake_percent: 100 } }], executives: [] } } } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'microsoft', { delay: null })
+    await userEvent.click(await screen.findByText('Microsoft Corporation'))
+    await waitFor(() => expect(screen.getByTestId('graph').getAttribute('data-ids') ?? '').toContain('gh'))
   })
 
   it('the "search sources for X" action DOES show the prominent overlay', async () => {
