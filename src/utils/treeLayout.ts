@@ -64,17 +64,28 @@ const UNSTATED_STAKE = 50
 /** …and a ROLE counts for less than any holding: the centred person's seat on
  *  a board places a company only where no ownership does. */
 const ROLE_STAKE = -1
+/** Below a role: a voting group the centre is a party to is placed by the
+ *  tree (the centre's last column) but never takes a company from a holder. */
+const MEMBER_STAKE = -2
+/** A voting group's own holding: above membership, below any real holder. */
+const GROUP_HOLDS_STAKE = -0.5
 
 type EdgeLike = { source: string; target: string; edgeType?: string; stakePct?: number | null }
 /** The lines a tree is built from: every holding — and, from a centred PERSON,
  *  their roles too, so the companies they run sit in the same columns as the
  *  ones they own (they were left on the old arc, in a second style, under the
  *  tree). Only from the centre: a role is not ownership, and the tree never
- *  continues through one. */
+ *  continues through one. And the 13D groups the centre is a party to: the
+ *  tree places them as its last column — below the member, as the votes flow
+ *  member → group → company — instead of leaving them to a one-box arc that
+ *  landed in the middle of the columns (Berkshire's DaVita group,
+ *  2026-10-26). The tree continues through a group's own holdings, so a
+ *  company only the group holds hangs under it. */
 const placesFrom = (d: EdgeLike, centerId: string) =>
-  d.edgeType === 'owns' || (d.edgeType === 'role' && d.source === centerId)
+  d.edgeType === 'owns' || ((d.edgeType === 'role' || d.edgeType === 'member') && d.source === centerId)
 const stakeOfEdge = (d: EdgeLike) =>
-  d.edgeType === 'role' ? ROLE_STAKE : typeof d.stakePct === 'number' ? d.stakePct : UNSTATED_STAKE
+  d.edgeType === 'member' ? MEMBER_STAKE
+    : d.edgeType === 'role' ? ROLE_STAKE : typeof d.stakePct === 'number' ? d.stakePct : UNSTATED_STAKE
 const MAX_COLUMNS = 30
 /** The shape the picture approaches when the canvas's own is not given: a
  *  wide screen's (width over height). */
@@ -160,10 +171,19 @@ export function labelSize(text: string): { w: number; h: number } {
 export function treeParents(elements: GraphElement[], centerId: string): Map<string, string> {
   const holdings: [string, string, number][] = []
   const outgoers = new Map<string, string[]>()
+  // The groups the centre is a party to. A group's own holding states voting
+  // power and no stake (the members hold the shares), so counted as an
+  // unstated stake (50) it took DaVita from Berkshire's 45 %: it ranks below
+  // every holder instead, and places only a company nobody else holds.
+  const groups = new Set<string>()
+  for (const el of elements) {
+    const d = el.data
+    if ('source' in d && d.edgeType === 'member' && d.source === centerId) groups.add(d.target)
+  }
   for (const el of elements) {
     const d = el.data
     if (!('source' in d) || !placesFrom(d, centerId)) continue
-    holdings.push([d.source, d.target, stakeOfEdge(d)])
+    holdings.push([d.source, d.target, groups.has(d.source) ? GROUP_HOLDS_STAKE : stakeOfEdge(d)])
     if (!outgoers.has(d.source)) outgoers.set(d.source, [])
     outgoers.get(d.source)!.push(d.target)
   }
@@ -171,7 +191,7 @@ export function treeParents(elements: GraphElement[], centerId: string): Map<str
   const stake = new Map<string, number>()            // of the holding that places each company
   // a person may own AND run a company: two lines, the holding's stake counts
   const stakeOf = new Map<string, number>()
-  for (const [s, t, pct] of holdings) stakeOf.set(`${s}\u0000${t}`, Math.max(pct, stakeOf.get(`${s}\u0000${t}`) ?? ROLE_STAKE))
+  for (const [s, t, pct] of holdings) stakeOf.set(`${s}\u0000${t}`, Math.max(pct, stakeOf.get(`${s}\u0000${t}`) ?? MEMBER_STAKE))
   const depth = new Map<string, number>([[centerId, 0]])
   const queue = [centerId]
   for (let qi = 0; qi < queue.length; qi++) {
@@ -239,6 +259,15 @@ export function computeTreeLayout(
   // Children in element order (the profile's: largest stake first).
   const children = new Map<string, string[]>()
   const owned = new Set<string>()                    // placed by a holding, not only by a role
+  const groups = new Set<string>()                   // placed by membership: the last column
+  // what each such group's bloc controls (the group's own holdings)
+  const controls = new Map<string, string[]>()
+  for (const el of elements) {
+    const d = el.data
+    if (!('source' in d) || d.edgeType !== 'owns') continue
+    if (!controls.has(d.source)) controls.set(d.source, [])
+    controls.get(d.source)!.push(d.target)
+  }
   const rank = new Map<string, { stake: number | null; shares: number | null }>()   // of that holding
   const name = new Map<string, string>()
   for (const el of elements) if (!('source' in el.data)) name.set(el.data.id, String(el.data.label ?? ''))
@@ -263,6 +292,7 @@ export function computeTreeLayout(
     if (!('source' in d) || !placesFrom(d, centerId) || parent.get(d.target) !== d.source) continue
     if (!children.has(d.source)) children.set(d.source, [])
     if (!children.get(d.source)!.includes(d.target)) children.get(d.source)!.push(d.target)
+    if (d.edgeType === 'member') groups.add(d.target)
     if (d.edgeType === 'owns') {
       owned.add(d.target)
       rank.set(d.target, { stake: d.stakePct ?? null, shares: (d as { shares?: number | null }).shares ?? null })
@@ -292,8 +322,20 @@ export function computeTreeLayout(
     // placed first pushes its small siblings a whole branch-width away from
     // their parent (Huatai sat 7,000 px from Chubb INA Holdings).
     const kids = (children.get(id) ?? []).map(k => ({ id: k, box: box(k), branch: children.has(k) }))
-      .map(k => ({ k, roleOnly: owned.has(k.id) ? 0 : 1, wide: k.branch ? k.box.width : 0 }))
+      .map(k => ({ k, roleOnly: groups.has(k.id) ? 2 : owned.has(k.id) ? 0 : 1, wide: k.branch ? k.box.width : 0 }))
       .sort((a, b) => a.roleOnly - b.roleOnly || a.wide - b.wide || likeTheList(a.k.id, b.k.id)).map(x => x.k)
+    // A group whose bloc controls a sibling sits right ABOVE that company, in
+    // its column: the line is a short step down (member → group → company)
+    // instead of a diagonal across the whole tree from the last column
+    // (Berkshire's DaVita group, 2026-10-26). A group controlling nothing
+    // here keeps the last place.
+    for (const g of kids.filter(k => groups.has(k.id))) {
+      const held = new Set(controls.get(g.id) ?? [])
+      const at = kids.findIndex(k => k !== g && held.has(k.id))
+      if (at < 0) continue
+      kids.splice(kids.indexOf(g), 1)
+      kids.splice(kids.findIndex(k => held.has(k.id)), 0, g)
+    }
     const { w: w0, h: h0 } = size(id)
     const cellW = TREE_GUTTER + w0
     if (kids.length === 0) {

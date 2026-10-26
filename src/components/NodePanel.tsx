@@ -24,7 +24,7 @@ import { deathMark, dissolutionMark } from '../utils/deathMark'
 import { displayName, entityLabel } from '../utils/displayName'
 import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
-import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree, ReadFrom, StakeHistoryRow, Industry, IndustryLevel, IndustryStatement } from '../types'
+import type { NodeData, FullProfile, PersonProfile, Person, Entity, Source, SubsidiaryEntry, OwnsRelationship, RoleRelationship, SubsidiaryTree, ReadFrom, StakeHistoryRow, Industry, IndustryLevel, IndustryStatement, VotingGroupEntry } from '../types'
 import { keepsEdge, effectiveStakePct, ANY_STAKE, type StakeFilter } from './GraphStakeFilter'
 import { asOfYear, edgePresence, endedBy, rowPresence, startedAfter, type Tenure } from '../utils/asOf'
 
@@ -133,6 +133,39 @@ function DissolvedMark({ entity }: { entity: Entity | null | undefined }) {
   return (
     <span className="rel-item__died" data-testid="dissolved-mark"
           title={`${t('panel.dissolved')}: ${formatDate(entity!.dissolved_on, i18n.language)}`}> {mark}</span>
+  )
+}
+
+/** "Votes in": the filing groups a person or a company is a party to, each
+ *  with what its bloc controls ("DaVita Inc. · 45 % of the votes"). The
+ *  company panel had no such section until 2026-10-26, so a company in a bloc
+ *  (Berkshire in DaVita's 13D group) showed it in the graph and nowhere here. */
+function VotesInSection({ groups, onNavigate }: {
+  groups: VotingGroupEntry[]; onNavigate?: (node: NodeData) => void
+}) {
+  const { t } = useTranslation()
+  if (!groups.length) return null
+  return (
+    <Section title={t('panel.votesIn')}>
+      {groups.map((g, i) => (
+        <RelRow key={i} node={entityToNode(g.group)} onNavigate={onNavigate}>
+          {/* one name cell: the group, and on its own line below what its
+              bloc controls — beside the name, the row squeezed it to a word
+              per line */}
+          <span className="rel-item__name" title={displayName(g.group).secondary ?? undefined}>
+            {displayName(g.group).primary}
+            {(g.holds ?? []).map((h, j) => (
+              <span key={j} className="rel-item__place rel-item__controls" data-testid="votes-in-controls">
+                {t('panel.votesInControls', {
+                  company: entityLabel(h.entity),
+                  pct: h.relationship?.voting_power_pct ?? '?',
+                })}
+              </span>
+            ))}
+          </span>
+        </RelRow>
+      ))}
+    </Section>
   )
 }
 
@@ -842,15 +875,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
                  href={googleSearchHref(raw.full_name, { quote: true }) ?? undefined} />
       </div>
 
-      {votingGroups.length > 0 && (
-        <Section title={t('panel.votesIn')}>
-          {votingGroups.map((g, i) => (
-            <RelRow key={i} node={entityToNode(g.group)} onNavigate={onNavigate}>
-              <CompanyName e={g.group} />
-            </RelRow>
-          ))}
-        </Section>
-      )}
+      <VotesInSection groups={votingGroups} onNavigate={onNavigate} />
 
       {positions.length > 0 && (
         <Section title={t('panel.positions')}>
@@ -1485,7 +1510,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
   const { t, i18n } = useTranslation()
   const { entity, counts, industry = null, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [],
-          group_members: groupParties = [] } = profile
+          group_members: groupParties = [], voting_groups: votingGroups = [] } = profile
   // Which source asserted each relationship, for the row menu's header — the
   // edge's own source_id, not the node's source list.
   const sourceName = sourceNames(sources)
@@ -1731,6 +1756,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
           )}
         </Section>
       )}
+
+      {/* the blocs this company votes in, after who owns it (2026-10-26) */}
+      <VotesInSection groups={votingGroups} onNavigate={onNavigate} />
 
       {cross_holdings.length > 0 && (
         <Section title={t('panel.crossHoldings')}>

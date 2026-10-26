@@ -518,6 +518,7 @@ export function computeArcPositions(
   const outgoersOf  = new Map<string, string[]>()
   const nodeImportance = new Map<string, number>()
   const nodeLabel   = new Map<string, string>()
+  const groupIds    = new Set<string>()          // 13D voting groups (entitySubtype voting_group)
   // key: edgeKey(src, tgt) → the holding's stake and share count, as the
   // panel's rows have them: from the owns line; a voting line only stands in
   // when there is no owns line.
@@ -550,6 +551,7 @@ export function computeArcPositions(
     } else if (d.id) {
       if (d.importance != null) nodeImportance.set(d.id, d.importance)
       nodeLabel.set(d.id, d.label ?? '')
+      if (d.entitySubtype === 'voting_group') groupIds.add(d.id)
     }
   }
 
@@ -570,6 +572,11 @@ export function computeArcPositions(
   // Left-to-right order along each arc follows the panel's stake ordering.
   topIds.sort(cmpByStake(id => edgeKey(id, centerId)))       // owners → center
   bottomIds.sort(cmpByStake(id => edgeKey(centerId, id)))    // center → subsidiaries
+  // A voting group the centre is a party to belongs below it — the member's
+  // votes flow through the group into the company it controls — but it is no
+  // holding: it sits after the subsidiaries, not sorted in among them as if
+  // the centre owned it (Berkshire's DaVita group, 2026-10-26).
+  bottomIds.sort((a, b) => Number(groupIds.has(a)) - Number(groupIds.has(b)))
 
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)

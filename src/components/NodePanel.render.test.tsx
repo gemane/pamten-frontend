@@ -934,6 +934,32 @@ describe('current positions versus the whole career', () => {
  * so every positive assertion here has to open that first — `CollapsibleSection`
  * unmounts its children rather than hiding them.
  */
+describe('a company in a voting group', () => {
+  it('lists the group under "Votes in" with what its bloc controls', async () => {
+    // Berkshire is one of nine parties to DaVita's 13D group; the company
+    // panel showed it nowhere until 2026-10-26.
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'brk', name: 'Berkshire Hathaway Inc.', type: 'company' } as Entity,
+      owners: [], subsidiaries: [], executives: [],
+      voting_groups: [{ group: { id: 'g1', name: 'Voting group · 9 parties', type: 'voting_group' } as Entity,
+                        holds: [{ entity: { id: 'dva', name: 'DaVita Inc.', type: 'company' } as Entity,
+                                  relationship: { voting_power_pct: 45 } as never }] }],
+    } } as never)
+    render(<NodePanel node={entityNode('brk', 'Berkshire Hathaway Inc.')} refreshKey={0} />)
+    await screen.findByText('Berkshire Hathaway Inc.')
+    const section = screen.getByText('Votes in').closest('.panel-section') as HTMLElement
+    expect(within(section).getByText('Voting group · 9 parties')).toBeInTheDocument()
+    expect(within(section).getByTestId('votes-in-controls')).toHaveTextContent('controls DaVita Inc., 45 % of the votes')
+  })
+
+  it('a company in no group has no such section', async () => {
+    mockProfile.mockResolvedValue({ data: profile('e1', 'Acme Corp') } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} />)
+    await screen.findByText('Acme Corp')
+    expect(screen.queryByText('Votes in')).toBeNull()
+  })
+})
+
 describe('why a company reports no parent', () => {
   /** Render, then open Details — the statement lives inside it and
    *  `CollapsibleSection` unmounts its children rather than hiding them. */

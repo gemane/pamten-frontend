@@ -190,6 +190,7 @@
     "groupMembers": "Partes del acuerdo",
     "groupControls": "Controla",
     "votesIn": "Vota en",
+    "votesInControls": "controla {{company}}, {{pct}} % de los votos",
     "website": "Sitio web",
     "webSearch": "Búsqueda web",
     "sector": "Sector",
