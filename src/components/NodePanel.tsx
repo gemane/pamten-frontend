@@ -1896,7 +1896,10 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         </Section>
       )}
 
-      {onReScrape && (
+      {/* not for a voting group: the sources are asked by name, and a group's
+          name finds some other company (it comes from the filings about the
+          company it holds, which that company's refresh reads) */}
+      {onReScrape && !isGroup && (
         <ReScrapeButton node={node} onReScrape={onReScrape} refreshing={refreshingId === node.id} allowed={canReScrape} />
       )}
       <SourcesSection sources={sources} image={image?.credit ?? null} imageKind="entity" />

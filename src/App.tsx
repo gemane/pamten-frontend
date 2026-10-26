@@ -317,7 +317,11 @@ function AppInner() {
       const { data } = await ensureScrape(query, 1, force, country)
       if (token !== enrichSeqRef.current) return undefined
       result = data
-      if (data.scraped && data.profile && !isPersonResult(data)) {
+      // Only what the scrape found about the company ON SCREEN joins its
+      // graph. The scrape is asked by name, and a name the backend resolves to
+      // another company — a voting group's "Voting group · 8 parties" resolved
+      // to Alibaba (2026-10-26) — appended that company's whole graph.
+      if (data.scraped && data.profile && !isPersonResult(data) && isAbout(data, entityId)) {
         appendProfile(data.profile as FullProfile)
       }
       // A forced refresh denied within the 24h cooldown is reported by the
@@ -339,6 +343,7 @@ function AppInner() {
     // The button is always there; a reader who is not signed in with a
     // verified account is shown the sign-in instead of a refresh.
     if (!canScrape(user)) { setShowAuth(true); return }
+    if (node.entitySubtype === 'voting_group') return     // see handleSearchSelect: nothing to ask by name
     // The company's own country, so a refresh cannot walk off to a same-named
     // company somewhere else — the sources would happily hand one over.
     const country = (node.raw as { country?: string | null } | undefined)?.country || undefined
@@ -396,7 +401,7 @@ function AppInner() {
               const { data: fresh } = await ensureScrape(node.label, 1, false, country)
               // Only into the graph this refresh started from: minutes have
               // passed, and the reader may have built a different one since.
-              if (token === enrichSeqRef.current && fresh.profile && !isPersonResult(fresh)) {
+              if (token === enrichSeqRef.current && fresh.profile && !isPersonResult(fresh) && isAbout(fresh, node.id)) {
                 appendProfile(fresh.profile as FullProfile)
               }
             } catch { /* the holders are in the database; the next open shows them */ }
@@ -516,7 +521,9 @@ function AppInner() {
       setNavHistory([newNode])
       // Enrich in the background if the company is stale / never on-demand-scraped —
       // the node is already on screen; this fills it, then deepens on idle.
-      void enrichExisting(newNode.label, result.node.id)
+      // Not a voting group: it is derived from the filings about the company it
+      // holds, and asking the sources by its name finds some other company.
+      if (newNode.entitySubtype !== 'voting_group') void enrichExisting(newNode.label, result.node.id)
     } catch {
       showToast(t('toast.entityLoadError'), 'error')
     } finally {
@@ -1365,6 +1372,14 @@ function AppInner() {
       )}
     </div>
   )
+}
+
+/** Is an ensure answer about the company with this id? By the id it reports,
+ *  or its profile's — a merge may hand back the survivor, which then reports
+ *  the id it forwards from in neither, and is left out rather than guessed. */
+function isAbout(data: EnsureResult, entityId: string): boolean {
+  const profileId = (data.profile as FullProfile | null)?.entity?.id
+  return data.entity_id === entityId || profileId === entityId
 }
 
 export default function App() {

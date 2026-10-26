@@ -934,6 +934,25 @@ describe('current positions versus the whole career', () => {
  * so every positive assertion here has to open that first — `CollapsibleSection`
  * unmounts its children rather than hiding them.
  */
+describe('a voting group panel', () => {
+  it('offers no refresh: the sources are asked by name, and a group name finds another company', async () => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'g1', name: 'Voting group · 8 parties', type: 'voting_group' } as Entity,
+      owners: [], subsidiaries: [], executives: [],
+    } } as never)
+    render(<NodePanel node={entityNode('g1', 'Voting group · 8 parties')} refreshKey={0} onReScrape={() => {}} />)
+    await screen.findByText('Voting group · 8 parties', { selector: 'h2' })
+    expect(screen.queryByText('Refresh from sources')).toBeNull()
+  })
+
+  it('a company still offers it', async () => {
+    mockProfile.mockResolvedValue({ data: profile('e1', 'Acme Corp') } as never)
+    render(<NodePanel node={entityNode('e1', 'Acme Corp')} refreshKey={0} onReScrape={() => {}} />)
+    await screen.findByText('Acme Corp')
+    expect(screen.getByText('Refresh from sources')).toBeInTheDocument()
+  })
+})
+
 describe('a company in a voting group', () => {
   it('lists the group under "Votes in" with what its bloc controls', async () => {
     // Berkshire is one of nine parties to DaVita's 13D group; the company
