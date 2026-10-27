@@ -1,0 +1,34 @@
+/* Loaded only with the DevBanner chunk, i.e. only on the dev site. The strip
+   sits in the normal flow above .app, so everything that is sized to the
+   viewport or pinned to its top gives up the strip's height here. */
+:root { --dev-banner-h: 22px; }
+
+.dev-banner {
+  height: var(--dev-banner-h);
+  line-height: var(--dev-banner-h);
+  padding: 0 12px;
+  background: #f5b324;
+  color: #1a1a2e;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 10001;
+}
+
+.dev-banner__short { display: none; }
+
+.app { height: calc(100vh - var(--dev-banner-h)); }
+
+@media (min-width: 641px) {
+  .app { height: calc(100dvh - var(--dev-banner-h)); }
+}
+
+@media (max-width: 640px) {
+  .left-panel { top: var(--dev-banner-h); }
+  .dev-banner__long { display: none; }
+  .dev-banner__short { display: inline; }
+}

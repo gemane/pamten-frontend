@@ -76,6 +76,13 @@ jobs:
           grep -qF "<meta name=\"app-version\" content=\"$VERSION\">" dist/index.html \
             || { echo "::error::index.html does not carry app-version $VERSION"; grep -o '<meta name="app-version"[^>]*>' dist/index.html; exit 1; }
 
+      # The dev-site marking (VITE_DEPLOY_ENV=development) must never ship.
+      - name: Build carries no dev-site marking
+        run: |
+          if grep -rlE 'DEV · |noindex|dev-banner|Development site' dist; then
+            echo "::error::the production build carries the dev-site marking (is VITE_DEPLOY_ENV set?)"; exit 1
+          fi
+
       - name: Package
         run: |
           tar -czf "owlgraph-web-$VERSION.tar.gz" -C dist .

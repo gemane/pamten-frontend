@@ -1,4 +1,4 @@
-import { Component, useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { Component, Suspense, useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { DEFAULT_STAKE, type StakeFilter } from './components/GraphStakeFilter'
 import type { ReactNode, ErrorInfo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -28,6 +28,7 @@ import Toast         from './components/Toast'
 import { useTheme } from './hooks/useTheme'
 import { useAndroidBackButton } from './hooks/useAndroidBackButton'
 import { useAppVersionCheck } from './hooks/useAppVersionCheck'
+import { DevBanner } from './devSite'
 import UpdateGate from './components/UpdateGate'
 import { useMobile } from './hooks/useMobile'
 import { useEmailActionLinks } from './hooks/useEmailActionLinks'
@@ -1385,6 +1386,7 @@ function isAbout(data: EnsureResult, entityId: string): boolean {
 export default function App() {
   return (
     <ErrorBoundary>
+      {DevBanner && <Suspense fallback={null}><DevBanner /></Suspense>}
       <AuthProvider>
         <AppInner />
       </AuthProvider>
