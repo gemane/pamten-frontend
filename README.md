@@ -227,12 +227,15 @@ Inside the Scraper tab, and shown only to admins — sync ownership data with **
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_API_URL` | *(required in a production build)* | Backend **origin**, e.g. `https://api-dev.owlgraph.org`. The `/v1` prefix is appended in `services/api.ts`, so don't include it here or requests go to `/v1/v1`. A production build with this unset **throws at startup** rather than falling back — a silent fallback once meant a build could read and write the wrong environment. `npm run dev` falls back to the dev API. |
+| `VITE_DEPLOY_ENV` | *(unset)* | Set to `development` **only on the Render dev static site**. It marks the dev site: an amber strip on every page ("Development site: test data, may be reset or deleted at any time", shorter on a phone, not dismissable), `DEV · ` in front of the tab title, and `<meta name="robots" content="noindex, nofollow">`. Any other value, or none, builds without any of it. Vite writes the value into the code at build time, so in the production release (`release.yml`, which never sets it) the banner's code, text and CSS are dropped from the bundle — nothing of the dev marking ships. See `src/devSite.ts` and `devSiteHtmlPlugin` in `vite.config.ts`. |
 
 ---
 
 ## Deployment
 
 The app is deployed on Render as a static site built from this repo. Render runs `npm run build` and serves `dist/`. Any push to **`develop`** triggers a redeploy.
+
+The dev static site's environment on Render carries `VITE_DEPLOY_ENV=development` (with `VITE_API_URL`), which shows the development banner. Being a build-time variable, a change to it takes effect with the next build.
 
 ### Installed app: minimum version check
 

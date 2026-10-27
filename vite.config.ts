@@ -57,6 +57,24 @@ export function versionMetaPlugin(version: string): Plugin {
   }
 }
 
+/**
+ * On the dev site only (`VITE_DEPLOY_ENV=development`): "DEV · " in front of the
+ * tab title, so a dev tab can be told from a production one, and a robots
+ * noindex, so search engines leave dev.owlgraph.org out. Any other value, or
+ * none, leaves index.html untouched — the production release is built without it.
+ */
+export function devSiteHtmlPlugin(deployEnv: string | undefined): Plugin {
+  return {
+    name: 'owlgraph-dev-site',
+    transformIndexHtml(html) {
+      if (deployEnv !== 'development') return html
+      return html
+        .replace('<title>', '<title>DEV · ')
+        .replace('</title>', '</title>\n    <meta name="robots" content="noindex, nofollow">')
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   // Fallback is the canonical host, not the Render default (pamten-backend-yrbh
@@ -80,7 +98,7 @@ export default defineConfig(({ mode }) => {
       env: { VITE_FEEDBACK_EMAIL: 'feedback@example.com' },
       include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts'],
     },
-    plugins: [react(), cspPlugin(apiUrl), versionMetaPlugin(appVersion)],
+    plugins: [react(), cspPlugin(apiUrl), versionMetaPlugin(appVersion), devSiteHtmlPlugin(env.VITE_DEPLOY_ENV)],
     // The product version, from the release tag (scripts/app-version.mjs).
     define: { __APP_VERSION__: JSON.stringify(appVersion) },
     build: {
