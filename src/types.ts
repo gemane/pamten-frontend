@@ -513,8 +513,6 @@ export interface ScraperStatus {
   wikidata_enabled?: boolean
   sec_edgar_enabled: boolean
   open_corporates_enabled: boolean
-  bods_gleif_enabled?: boolean
-  bods_uk_psc_enabled?: boolean
   geocoding_enabled?: boolean
   autodedup_enabled?: boolean
 }
