@@ -14,6 +14,9 @@ import { DEFAULT_STAKE, STAKE_FILTERS, filterLabel, type StakeFilter } from './G
  * and a country row under the search bar — and on a phone they covered the
  * graph and each other. Now the canvas keeps Clear, this button and the ⓘ.
  *
+ * The panel reads top-down from the graph's shape to its detail: the
+ * subsidiaries' levels, the minimum stake, the year, the search's country.
+ *
  * The button says how many of them are off their default, and names the year
  * when the graph shows the past: a filtered graph must never look like the
  * whole one, least of all a past one like the present.
@@ -152,6 +155,24 @@ export default function GraphFilters(props: GraphFiltersProps) {
         <div className={`graph-filters__panel ${sheet ? 'graph-filters__panel--sheet' : ''}`}
              role="dialog" aria-label={t('graph.filters')}
              style={sheet ? { top: sheet.top, maxHeight: `calc(100dvh - ${sheet.top + BOTTOM_NAV}px)` } : undefined}>
+          {hasGraph && onAllLevelsChange && (
+            <section className="graph-filters__row" role="radiogroup" aria-label={t('graph.levelsLabel')}>
+              <h4 className="graph-filters__label">{t('graph.levelsLabel')}</h4>
+              <div className="graph-filters__segments">
+                {([[false, 'graph.levelsDirect', 'graph.levelsDirectHint'],
+                   [true, 'graph.levelsAll', 'graph.levelsAllHint']] as const).map(([value, label, hint]) => (
+                  <button
+                    key={label} type="button" role="radio" aria-checked={allLevels === value} title={t(hint)}
+                    className={`graph-filters__segment ${allLevels === value ? 'graph-filters__segment--active' : ''}`}
+                    onClick={() => { if (allLevels !== value) onAllLevelsChange(value); setOpen(false) }}
+                  >
+                    {t(label)}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
           {hasGraph && (
             <section className="graph-filters__row" role="radiogroup" aria-label={t('graph.filterTitle')}>
               <h4 className="graph-filters__label">{t('graph.filterTitle')}</h4>
@@ -169,24 +190,6 @@ export default function GraphFilters(props: GraphFiltersProps) {
               <p className="graph-filters__note">
                 {t('graph.filterCoverage', { stated, total })} {t('graph.filterCoverageRest')}
               </p>
-            </section>
-          )}
-
-          {hasGraph && onAllLevelsChange && (
-            <section className="graph-filters__row" role="radiogroup" aria-label={t('graph.levelsLabel')}>
-              <h4 className="graph-filters__label">{t('graph.levelsLabel')}</h4>
-              <div className="graph-filters__segments">
-                {([[false, 'graph.levelsDirect', 'graph.levelsDirectHint'],
-                   [true, 'graph.levelsAll', 'graph.levelsAllHint']] as const).map(([value, label, hint]) => (
-                  <button
-                    key={label} type="button" role="radio" aria-checked={allLevels === value} title={t(hint)}
-                    className={`graph-filters__segment ${allLevels === value ? 'graph-filters__segment--active' : ''}`}
-                    onClick={() => { if (allLevels !== value) onAllLevelsChange(value); setOpen(false) }}
-                  >
-                    {t(label)}
-                  </button>
-                ))}
-              </div>
             </section>
           )}
 

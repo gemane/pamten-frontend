@@ -61,6 +61,12 @@ describe('the button', () => {
 })
 
 describe('the panel', () => {
+  it('puts the subsidiaries first, then the minimum stake', async () => {
+    show({ onAllLevelsChange: () => {} })
+    const groups = within(await open()).getAllByRole('radiogroup').map(g => g.getAttribute('aria-label'))
+    expect(groups).toEqual(['Subsidiaries', 'Minimum stake'])
+  })
+
   it('offers the six stake bands in order and reports the chosen one', async () => {
     const p = show()
     const panel = await open()
