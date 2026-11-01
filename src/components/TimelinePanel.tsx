@@ -91,7 +91,7 @@ function withTransitionEvents(events: TimelineEvent[]): TimelineEvent[] {
 }
 
 /** How the source says a holding ended, as a words key. */
-const END_REASONS = new Set(['gleif_inactive', 'gleif_dropped', 'ceased', 'withdrawn', 'dissolution'])
+const END_REASONS = new Set(['gleif_inactive', 'gleif_dropped', 'ceased', 'withdrawn', 'dissolution', 'reported_by_parent'])
 function endReasonKey(ev: TimelineEvent): string {
   if (ev.until_reason && END_REASONS.has(ev.until_reason)) return `timeline.endReason.${ev.until_reason}`
   if (/^13[DG]/.test(ev.filing_type ?? '')) return 'timeline.endReason.amendment'

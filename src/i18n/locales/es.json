@@ -359,6 +359,7 @@
       "ceased": "Companies House registra que esta persona dejó de ser persona con control significativo el {{date}}.",
       "withdrawn": "La notificación al registro fue retirada el {{date}}; se considera que nunca se aplicó.",
       "dissolution": "Finalizada por la disolución de la empresa el {{date}}; ninguna fuente indica una venta.",
+      "reported_by_parent": "Desde el {{date}} la sociedad matriz del declarante informa la participación en su propio informe de participación, más reciente.",
       "amendment": "Un informe de participación modificado del {{date}} indica que el titular ya no posee una participación declarable.",
       "unknown": "La fuente registra la participación como terminada el {{date}}."
     },

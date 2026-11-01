@@ -359,6 +359,7 @@
       "ceased": "Companies House records that this person ceased to be a person with significant control on {{date}}.",
       "withdrawn": "The register notification was withdrawn on {{date}}; it is treated as never having applied.",
       "dissolution": "Ended by the company's dissolution on {{date}}; no source states a sale.",
+      "reported_by_parent": "From {{date}} the holding is reported by the filer's parent company in its own, newer ownership report.",
       "amendment": "An amended ownership report of {{date}} states the holder no longer holds a reportable stake.",
       "unknown": "The source records the holding as ended on {{date}}."
     },
