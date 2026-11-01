@@ -393,6 +393,7 @@
       "unconfirmed": "Seit {{date}} hat keine Quelle dies bestätigt. Eine gelöschte Community-Angabe verschwindet einfach — abgeblendet, nicht beendet.",
       "lei_lapsed": "Der zugrunde liegende Registereintrag ist erloschen und wird von seiner Stelle nicht mehr gepflegt; zuletzt aktualisiert am {{date}}. Abgeblendet, nicht beendet.",
       "not_restated": "Die letzte Schedule-13D/G-Meldung des Halters vom {{date}} ist älter als der Zeitraum, in dem eine solche Meldung erneuert wird. Schweigen ist kein Verkauf — die Beteiligung wird abgeblendet, nicht beendet.",
+      "final_report": "Die Beteiligungsmeldung des Halters zum {{date}} weist 5 % oder weniger aus und ist seine letzte: Er meldet nicht mehr. Ein Verkauf wird nicht genannt, daher ist die Beteiligung abgeblendet, nicht beendet.",
       "unknown": "Keine neuere Quelle bestätigt dies — abgeblendet, nicht beendet."
     },
     "stakeReachedIn": "Anteilseigner erreicht 5 %",
