@@ -214,6 +214,21 @@ describe('why a holding went grey', () => {
     expect(entry).not.toHaveTextContent('No newer source confirms this')
   })
 
+  it("words a 13D/G that is the holder's last report and links it", async () => {
+    // findings item 35: BlackRock, Inc.'s 13G/A on Tesla ticks Item 5 — 4.96 % as of 2026-09-30
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2020-01-01', stake_percent: 4.96, filing_type: '13G/A',
+           party: { id: 'blk', name: 'BlackRock, Inc.' }, stale: true, stale_since: '2026-09-30',
+           stale_reason: 'final_report',
+           stale_source_url: 'https://www.sec.gov/Archives/edgar/data/1318605/000201238326003852/index.htm' }),
+    ] } as never)
+    render(<TimelinePanel entityId="tsla" />)
+    const entry = await screen.findByTestId('tl-dimmed')
+    expect(entry).toHaveTextContent('as of 2026-09-30 puts it at 5 % or less')
+    expect(entry).not.toHaveTextContent('No newer source confirms this')
+    expect(entry.querySelector('a')).toHaveAttribute('href', expect.stringContaining('000201238326003852'))
+  })
+
   it('links the newer subsidiary list when there is one', async () => {
     mockHistory.mockResolvedValue({ data: [
       ev({ kind: 'ownership_out', since: '2014-12-31', since_basis: 'first_listed',
