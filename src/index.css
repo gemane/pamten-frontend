@@ -2473,6 +2473,10 @@ a.source-item__name:hover { color: #4A90D9; }
   position: relative;
   overflow: hidden;
   min-height: 0;
+  /* A stacking context of its own: the ⓘ (999) and the Filters button (1000)
+     rank inside the graph, not against the top bar (30, 201 on a phone) — they
+     painted over the search pop-up that drops out of it. */
+  isolation: isolate;
 }
 
 .graph-canvas {
@@ -3505,6 +3509,7 @@ a.source-item__name:hover { color: #4A90D9; }
     min-height: 0;
     position: relative;
     overflow: hidden;
+    isolation: isolate;      /* as .graph-area: the canvas icons stay below the search pop-up */
   }
 
   /* Detail panel below canvas: fills remaining height, scrolls internally */

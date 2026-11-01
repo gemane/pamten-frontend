@@ -281,3 +281,27 @@ describe('the pop-up map has a height of its own', () => {
     expect(rules.some(r => /height:\s*100%/.test(r))).toBe(false)
   })
 })
+
+
+describe('the search pop-up opens over the graph icons', () => {
+  // The ⓘ (.graph-legend, 999) and the Filters button (.graph-filters, 1000)
+  // sat in the page's root stacking context beside the top bar (30, on a
+  // phone 201), so they painted over the pop-up that drops out of it.
+  const zIndex = (selector: string) => Number(/z-index:\s*(\d+)/.exec(ruleFor(selector))?.[1])
+
+  it('the graph area and the phone canvas each keep their icons to themselves', () => {
+    expect(ruleFor('.graph-area')).toMatch(/isolation:\s*isolate/)
+    expect(ruleFor('.mobile-canvas')).toMatch(/isolation:\s*isolate/)
+  })
+
+  it('the icons still rank above the canvas inside it', () => {
+    expect(zIndex('.graph-legend')).toBeGreaterThan(0)
+    expect(zIndex('.graph-filters')).toBeGreaterThan(0)
+  })
+
+  it('the top bar is a positioned layer the pop-up rises with', () => {
+    const bar = ruleFor('.graph-topbar')
+    expect(bar).toMatch(/position:\s*relative/)
+    expect(zIndex('.graph-topbar')).toBeGreaterThan(0)
+  })
+})
