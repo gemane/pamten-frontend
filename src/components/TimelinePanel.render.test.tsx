@@ -138,6 +138,19 @@ describe('an end is a transition too', () => {
     expect(screen.queryByText(/sold/i)).toBeNull()
   })
 
+  it("a holding its parent's newer report took over says so, not that the holder sold", async () => {
+    // findings item 34: BlackRock Finance's 13G/A of 2024 under BlackRock, Inc.'s of 2025
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2023-12-31', until: '2025-03-31', active: false, filing_type: '13G/A',
+           until_reason: 'reported_by_parent', party: { id: 'bf', name: 'BlackRock Finance, Inc.' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const end = await screen.findByTestId('tl-ended')
+    expect(end).toHaveTextContent("reported by the filer's parent company")
+    expect(end).toHaveTextContent('2025-03-31')
+    expect(end).not.toHaveTextContent('no longer holds a reportable stake')
+  })
+
   it('a role that ended is a transition as well', async () => {
     mockHistory.mockResolvedValue({ data: [
       ev({ kind: 'role', role: 'CEO', since: '2000-01-01', until: '2011-08-24', active: false,
