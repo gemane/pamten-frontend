@@ -16,6 +16,7 @@ import { entityBoxLabel, personBoxLabel } from '../utils/deathMark'
 import { withLineLabels } from '../utils/lineLabels'
 import { asOfYear, edgePresence, nodeExists, tenureOfEdge, type Presence, type Lifespan } from '../utils/asOf'
 import { EXPORT_SCALE, LOGO_SRC, drawExport, exportLayout, legendItems, loadImage } from '../utils/exportPng'
+import { START_EXAMPLES, type StartExample } from '../utils/startExamples'
 
 export interface GraphHandle {
   exportPng: () => Promise<void>
@@ -645,42 +646,7 @@ export function computeArcPositions(
   return pos
 }
 
-// Full parent names, not shorthand: a bare group name resolves to whatever
-// ranks best, and for these three that was the wrong company outright —
-// "Heineken" landed on HEINEKEN Mexico, "Bertelsmann" on the US subsidiary.
-// Kept in step with scripts/scrape-companies.sh, which scrapes the same list.
-const ALL_EXAMPLE_QUERIES = [
-  'Anheuser-Busch InBev',
-  'Heineken International',
-  'Carlsberg',
-  'Nestlé',
-  'Unilever',
-  'Bertelsmann SE',
-  'Axel Springer',
-  'Alphabet',
-  'Microsoft',
-  'Apple',
-  'News Corp',
-  'Grupo Televisa',
-  'Embraer',
-  'MercadoLibre',
-  'Grupo Bimbo',
-  'SoftBank',
-  'Samsung Electronics',
-  'Tata Group',
-  'Alibaba Group',
-  'CITIC Group',
-  'Saudi Aramco',
-  'Mubadala Investment Company',
-  'Al Jazeera Media Network',
-  'Naspers',
-  'Dangote Group',
-  'MTN Group',
-  'Wesfarmers',
-  'Nine Entertainment',
-]
-
-function pickRandom(arr: string[], n: number): string[] {
+function pickRandom<T>(arr: T[], n: number): T[] {
   const shuffled = [...arr].sort(() => Math.random() - 0.5)
   return shuffled.slice(0, n)
 }
@@ -820,7 +786,7 @@ interface GraphProps {
   centerId?: string | null
   selectedNode?: NodeData | null
   onNodeClick: (data: NodeData) => void
-  onExampleClick?: (query: string) => void
+  onExampleClick?: (example: StartExample) => void
   onClear?: (() => void) | null
   onNavigateTo?: (nodeData: NodeData) => void
   onExpand?: (id: string) => void
@@ -884,12 +850,12 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const onNodeHoverRef  = useRef(onNodeHover)
   onNodeHoverRef.current = onNodeHover
   const [tooltip, setTooltip]     = useState<TooltipState | null>(null)
-  const [examples, setExamples]   = useState(() => pickRandom(ALL_EXAMPLE_QUERIES, 3))
+  const [examples, setExamples]   = useState(() => pickRandom(START_EXAMPLES, 3))
   const [taglineIdx, setTaglineIdx] = useState(0)
   const [stats, setStats]         = useState<StatsResponse | null>(null)
 
   useEffect(() => {
-    const id = setInterval(() => setExamples(pickRandom(ALL_EXAMPLE_QUERIES, 3)), 60_000)
+    const id = setInterval(() => setExamples(pickRandom(START_EXAMPLES, 3)), 60_000)
     return () => clearInterval(id)
   }, [])
 
@@ -1212,15 +1178,15 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
             </div>
           )}
           <div className="graph-welcome__chips">
-            {examples.map((name, i) => (
-              <Fragment key={name}>
+            {examples.map((example, i) => (
+              <Fragment key={example.id}>
                 {/* Two, then the third on its own row — same break as the stats. */}
                 {i === 2 && <div className="graph-welcome__break" />}
                 <button
                   className="graph-welcome__chip"
-                  onClick={() => onExampleClick?.(name)}
+                  onClick={() => onExampleClick?.(example)}
                 >
-                  {name}
+                  {example.label}
                 </button>
               </Fragment>
             ))}

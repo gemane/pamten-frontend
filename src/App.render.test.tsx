@@ -8,7 +8,8 @@ import type { FullProfile, Entity, SearchResult } from './types'
 // search → select → enrich flow without cytoscape, leaflet, or real network.
 vi.mock('./components/Graph', () => ({
   // Exposes the one prop the graph-focus wiring is about.
-  default: ({ focusedId, onNodeHover, onNodeClick, selectedNode, elements }: { focusedId?: string | null
+  default: ({ focusedId, onNodeHover, onNodeClick, onExampleClick, selectedNode, elements }: { focusedId?: string | null
+                                          onExampleClick?: (e: { label: string; id: string }) => void
                                           elements?: { data: { id: string } }[]
                                           onNodeHover?: (id: string | null) => void
                                           onNodeClick?: (n: unknown) => void
@@ -21,6 +22,7 @@ vi.mock('./components/Graph', () => ({
       {/* A tap on a box the open panel lists (sub1), and on one it does not (far). */}
       {onNodeClick && <button onClick={() => onNodeClick({ id: 'sub1', label: 'Sub One', nodeType: 'entity', raw: {} })}>tap-sub1</button>}
       {onNodeClick && <button onClick={() => onNodeClick({ id: 'far', label: 'Far Co', nodeType: 'entity', raw: {} })}>tap-far</button>}
+      {onExampleClick && <button onClick={() => onExampleClick({ label: 'SoftBank Group', id: 'lei:SBG' })}>chip-softbank</button>}
     </div>,
 }))
 vi.mock('./components/MapView', () => ({ default: () => null }))
@@ -720,5 +722,28 @@ describe('tapping a box in the graph', () => {
     await userEvent.click(screen.getByRole('button', { name: 'navigate-far' }))
     await waitFor(() => expect(screen.getByTestId('node-panel').getAttribute('data-node')).toBe('far'))
     expect(screen.getByTestId('node-panel').getAttribute('data-graph-pick')).toBe('')
+  })
+})
+
+
+describe('a start-page suggestion', () => {
+  it('opens the group parent by its id, not the first search hit', async () => {
+    // "SoftBank" searched opened SoftBank Corp., a subsidiary (2026-11-07)
+    mockProfile.mockResolvedValue({ data: fullProfile('lei:SBG', 'SOFTBANK GROUP CORP.') } as never)
+    render(<App />)
+    await userEvent.click(screen.getAllByText('chip-softbank')[0])
+    await waitFor(() => expect(screen.getAllByTestId('graph')[0].dataset.ids).toContain('lei:SBG'))
+    expect(mockProfile.mock.calls.map(c => c[0])).toContain('lei:SBG')
+    expect(mockSearch).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the name when the id no longer resolves', async () => {
+    mockProfile.mockRejectedValueOnce(new Error('404'))
+    mockProfile.mockResolvedValue({ data: fullProfile('e9', 'SOFTBANK GROUP CORP.') } as never)
+    mockSearch.mockResolvedValue({ data: [result('e9', 'SOFTBANK GROUP CORP.')] } as never)
+    render(<App />)
+    await userEvent.click(screen.getAllByText('chip-softbank')[0])
+    await waitFor(() => expect(mockSearch).toHaveBeenCalledWith('SoftBank Group'))
+    await waitFor(() => expect(screen.getAllByTestId('graph')[0].dataset.ids).toContain('e9'))
   })
 })

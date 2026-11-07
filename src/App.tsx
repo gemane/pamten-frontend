@@ -76,6 +76,7 @@ import {
   buildPersonProfileElements, buildTreeElements } from './utils/buildElements'
 import { buildHash, parseHash, type ViewState } from './utils/viewHash'
 import { shareLink } from './utils/shareLink'
+import type { StartExample } from './utils/startExamples'
 
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -671,10 +672,26 @@ function AppInner() {
     handleNavigateTo(nodeData)
   }, [handleNavigateTo])
 
-  const handleExampleClick = useCallback(async (query: string) => {
+  // A start-page chip opens the group's parent by its id (utils/startExamples);
+  // the name search is only the fallback for an id that no longer resolves.
+  const handleExampleClick = useCallback(async (example: StartExample) => {
     setToast(null)
     setLoading(true)
     loadedIds.current = new Set()
+    try {
+      const els = await loadEntity(example.id)
+      const center = els.find(el => !('source' in el.data) && el.data.id === example.id)
+      if (center) {
+        setCenterId(example.id)
+        setElements(els)
+        setSelectedNode(center.data as NodeData)
+        setSearchLabel((center.data as NodeData).label)
+        setNavHistory([center.data as NodeData])
+        return
+      }
+    } catch { /* fall back to the name */ }
+    loadedIds.current = new Set()
+    const query = example.label
     try {
       const { data: results } = await search(query)
       const entity = results.find((r: SearchResult) => r.type === 'Entity')
