@@ -124,6 +124,14 @@ function DiedMark({ person }: { person: Person | null | undefined }) {
   )
 }
 
+/** The word for a company's end: "Dissolved", or "Merged" / "Split up" when
+ *  the source said how it ended (`end_kind`, findings item 85c). */
+export function endLabelKey(entity: { end_kind?: string | null } | null | undefined): string {
+  return entity?.end_kind === 'merged' ? 'panel.merged'
+       : entity?.end_kind === 'split' ? 'panel.split'
+       : 'panel.dissolved'
+}
+
 /** "† 2023" after a dissolved company's name, the same way (utils/deathMark),
  *  with the full date on hover. Nothing for a company still in existence. */
 function DissolvedMark({ entity }: { entity: Entity | null | undefined }) {
@@ -132,7 +140,7 @@ function DissolvedMark({ entity }: { entity: Entity | null | undefined }) {
   if (!mark) return null
   return (
     <span className="rel-item__died" data-testid="dissolved-mark"
-          title={`${t('panel.dissolved')}: ${formatDate(entity!.dissolved_on, i18n.language)}`}> {mark}</span>
+          title={`${t(endLabelKey(entity))}: ${formatDate(entity!.dissolved_on, i18n.language)}`}> {mark}</span>
   )
 }
 
@@ -393,7 +401,7 @@ export function entityDetailRows(entity: Entity, lang: string): DetailRow[] {
     { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
     { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
     { icon: FiCalendar,  labelKey: 'panel.incorporated', value: formatDate(entity.incorporated_on, lang) },
-    { icon: FiCalendar,  labelKey: 'panel.dissolved',    value: formatDate(entity.dissolved_on, lang) },
+    { icon: FiCalendar,  labelKey: endLabelKey(entity),  value: formatDate(entity.dissolved_on, lang) },
     { icon: FiActivity,  labelKey: 'panel.companyStatus', value: entity.company_status },
     { icon: FiMapPin,    labelKey: 'panel.regAddress',   value: entity.address },
   ]
