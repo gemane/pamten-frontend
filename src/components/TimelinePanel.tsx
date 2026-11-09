@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag, FiTrendingUp, FiTrendingDown, FiXCircle } from 'react-icons/fi'
+import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag, FiTrendingUp, FiTrendingDown, FiGitBranch, FiGitMerge, FiXCircle } from 'react-icons/fi'
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import { asOfFromYear, asOfYear } from '../utils/asOf'
@@ -17,6 +17,9 @@ interface TimelineEvent {
   stake_percent?: number | null
   ownership_type?: string | null
   party?: { name?: string; full_name?: string; id?: string } | null
+  /** 'merged' / 'split': the companies GLEIF links as the successors
+   *  (SUCCEEDED_BY) of a company that merged or was broken up (item 85c). */
+  successors?: { id?: string; name?: string; type?: string }[] | null
   /** Dimmed: no newer list or quarter confirms it. With the evidence behind
    *  the mark — why (`stale_reason`) and since when (`stale_since`) — the
    *  holding ALSO gets a dated "no longer confirmed" entry under that year. */
@@ -91,7 +94,8 @@ function withTransitionEvents(events: TimelineEvent[]): TimelineEvent[] {
 }
 
 /** How the source says a holding ended, as a words key. */
-const END_REASONS = new Set(['gleif_inactive', 'gleif_dropped', 'ceased', 'withdrawn', 'dissolution', 'reported_by_parent'])
+const END_REASONS = new Set(['gleif_inactive', 'gleif_dropped', 'ceased', 'withdrawn', 'dissolution', 'merged', 'split',
+                             'reported_by_parent'])
 function endReasonKey(ev: TimelineEvent): string {
   if (ev.until_reason && END_REASONS.has(ev.until_reason)) return `timeline.endReason.${ev.until_reason}`
   if (/^13[DG]/.test(ev.filing_type ?? '')) return 'timeline.endReason.amendment'
@@ -127,6 +131,8 @@ const KIND_COLOR: Record<string, string> = {
   stake_reached: '#2F855A',
   stake_dropped: '#C05621',
   dissolved:     '#718096',
+  merged:        '#718096',
+  split:         '#718096',
 }
 const KIND_ICON: Record<string, React.ElementType> = {
   ownership_in:  FiArrowDownRight,
@@ -138,6 +144,8 @@ const KIND_ICON: Record<string, React.ElementType> = {
   stake_reached: FiTrendingUp,
   stake_dropped: FiTrendingDown,
   dissolved:     FiXCircle,
+  merged:        FiGitMerge,
+  split:         FiGitBranch,
 }
 
 /** A holding crossing the 5 % line, under the year the source stated the new
@@ -213,22 +221,31 @@ function RenamedRow({ ev }: { ev: TimelineEvent }) {
 }
 
 /** The company's own end — no party; the last entry of its timeline, dated
- *  as the source states it (a year alone when that is all it says). */
-function DissolvedRow({ ev }: { ev: TimelineEvent }) {
+ *  as the source states it (a year alone when that is all it says). How it
+ *  ended is the event's kind (item 85c): "Dissolved", or "Merged" / "Split up"
+ *  naming the successors the source links — a company that merged into its
+ *  successor is not one that was wound up. */
+function EndRow({ ev }: { ev: TimelineEvent }) {
   const { t } = useTranslation()
+  const kind = ev.kind === 'merged' || ev.kind === 'split' ? ev.kind : 'dissolved'
+  const Icon = KIND_ICON[kind]
+  const names = (ev.successors ?? []).map(s => s.name || s.id).filter(Boolean).join(', ')
+  const date = ev.since ?? ''
+  const meta = kind === 'dissolved' ? t('timeline.dissolvedOn', { date })
+             : names ? t(`timeline.${kind}Into`, { successors: names, date })
+             : t(`timeline.${kind}On`, { date })
   return (
-    <div className="tl-event tl-event--dissolved" data-testid="tl-dissolved">
-      <div className="tl-event__dot" style={{ background: KIND_COLOR.dissolved }} />
+    <div className={`tl-event tl-event--dissolved tl-event--${kind}`} data-testid={kind === 'dissolved' ? 'tl-dissolved' : 'tl-merged'}>
+      <div className="tl-event__dot" style={{ background: KIND_COLOR[kind] }} />
       <div className="tl-event__body">
         <div className="tl-event__row">
-          <span className="tl-event__kind" style={{ color: KIND_COLOR.dissolved }}>
-            <FiXCircle />
-            {t('timeline.dissolved')}
+          <span className="tl-event__kind" style={{ color: KIND_COLOR[kind] }}>
+            <Icon />
+            {t(`timeline.${kind}`)}
           </span>
         </div>
-        <div className="tl-event__meta tl-event__reason">
-          {t('timeline.dissolvedOn', { date: ev.since ?? '' })}
-        </div>
+        {names && <div className="tl-event__name">{names}</div>}
+        <div className="tl-event__meta tl-event__reason">{meta}</div>
       </div>
     </div>
   )
@@ -247,6 +264,8 @@ function EndedRow({ ev }: { ev: TimelineEvent }) {
               : ev.origin === 'ownership_out' ? t('timeline.endedOwns')
               : ev.until_reason === 'death' ? t('timeline.roleEndedDeath', { role })
               : ev.until_reason === 'dissolution' ? t('timeline.roleEndedDissolution', { role })
+              : ev.until_reason === 'merged' ? t('timeline.roleEndedMerged', { role })
+              : ev.until_reason === 'split' ? t('timeline.roleEndedSplit', { role })
               : t('timeline.roleEnded', { role })
   const amendment = endReasonKey(ev) === 'timeline.endReason.amendment'
   return (
@@ -317,7 +336,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   if (kind === 'dimmed') return <DimmedRow ev={ev} />
   if (kind === 'ended') return <EndedRow ev={ev} />
   if (kind === 'renamed') return <RenamedRow ev={ev} />
-  if (kind === 'dissolved') return <DissolvedRow ev={ev} />
+  if (kind === 'dissolved' || kind === 'merged' || kind === 'split') return <EndRow ev={ev} />
   if (kind === 'stake_reached' || kind === 'stake_dropped') return <StakeCrossingRow ev={ev} />
   const color     = KIND_COLOR[kind] || KIND_COLOR.role
   const Icon      = KIND_ICON[kind]  || FiUser

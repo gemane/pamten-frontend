@@ -47,6 +47,38 @@ describe('a real acquisition, and a running holding', () => {
     expect(screen.getByText('Owned by')).toBeInTheDocument()
   })
 
+  it('a company that merged reads "Merged" with its successor, and what ended with it says so (item 85c)', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      { kind: 'merged', party: null, since: '2014-10-12', until: null, active: false,
+        successors: [{ id: 'prh', name: 'Penguin Random House LLC', type: 'company' }] },
+      ev({ kind: 'role', role: 'CEO', since: '2010-01-01', until: '2014-10-12', until_reason: 'merged',
+           party: { id: 'a', full_name: 'Ann Chief' } }),
+      ev({ kind: 'ownership_out', since: '2005-01-01', until: '2014-10-12', until_reason: 'merged',
+           party: { id: 's', name: 'Random House of Canada' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="rh" />)
+    const end = await screen.findByTestId('tl-merged')
+    expect(end).toHaveTextContent('Merged')
+    expect(end).toHaveTextContent('Penguin Random House LLC')
+    expect(end).toHaveTextContent('The source records the merger into Penguin Random House LLC on 2014-10-12.')
+    expect(screen.queryByTestId('tl-dissolved')).toBeNull()
+    const ended = screen.getAllByTestId('tl-ended')
+    expect(ended.some(r => r.textContent?.includes('CEO until the company merged into its successor'))).toBe(true)
+    expect(ended.some(r => r.textContent?.includes('Ended when the company merged into its successor on 2014-10-12'))).toBe(true)
+  })
+
+  it('a merger whose successor the source does not name, and a break-up, are worded as such', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      { kind: 'merged', party: null, since: '2015-09-01', until: null, active: false, successors: [] },
+      { kind: 'split', party: null, since: '2016-01-01', until: null, active: false,
+        successors: [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta' }] },
+    ] } as never)
+    render(<TimelinePanel entityId="m" />)
+    const rows = await screen.findAllByTestId('tl-merged')
+    expect(rows.some(r => r.textContent?.includes('The source records the merger on 2015-09-01; it does not name the successor.'))).toBe(true)
+    expect(rows.some(r => r.textContent?.includes('Split up') && r.textContent?.includes('Alpha, Beta'))).toBe(true)
+  })
+
   it('the company\'s own end reads "Dissolved" with the date, and a seat it ended says so', async () => {
     mockHistory.mockResolvedValue({ data: [
       { kind: 'dissolved', party: null, since: '2023-03-15', until: null, active: false },

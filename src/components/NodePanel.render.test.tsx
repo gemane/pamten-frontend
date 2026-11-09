@@ -1018,6 +1018,15 @@ describe('why a company reports no parent', () => {
     expect(mark.closest('h2')).not.toBeNull()
   })
 
+  it('a company that merged says "Merged", not "Dissolved", and keeps the mark (item 85c)', async () => {
+    await withEntity({ dissolved_on: '2015-09-01', end_kind: 'merged', incorporated_on: '1999-04-01' })
+    expect(within(detailsSection()).getByText('Merged')).toBeInTheDocument()
+    expect(within(detailsSection()).queryByText('Dissolved')).toBeNull()
+    const mark = screen.getByTestId('dissolved-mark')
+    expect(mark).toHaveTextContent('\u2020 2015')
+    expect(mark.getAttribute('title')).toMatch(/^Merged: /)
+  })
+
   it('a company still in existence shows neither', async () => {
     await withEntity({ incorporated_on: '1999-04-01' })
     expect(within(detailsSection()).queryByText('Dissolved')).toBeNull()
