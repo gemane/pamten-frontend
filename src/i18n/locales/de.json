@@ -137,6 +137,12 @@
     "merged": "Fusioniert",
     "split": "Aufgespalten",
     "companyStatus": "Status",
+    "state": {
+      "liquidation": "In Liquidation seit {{date}}",
+      "bankruptcy": "Im Konkurs seit {{date}}",
+      "insolvency": "Im Insolvenzverfahren seit {{date}}",
+      "voluntary_arrangement": "Unter einer Gläubigervereinbarung seit {{date}}"
+    },
     "revenue": "Umsatz",
     "employees": "Mitarbeiter",
     "hq": "Hauptsitz",
@@ -399,6 +405,18 @@
     "mergedOn": "Die Quelle verzeichnet die Fusion am {{date}}; der Nachfolger ist nicht genannt.",
     "splitInto": "Die Quelle verzeichnet die Aufspaltung in {{successors}} am {{date}}.",
     "splitOn": "Die Quelle verzeichnet die Aufspaltung am {{date}}; die Nachfolger sind nicht genannt.",
+    "legalEvent": {
+      "liquidation": "Liquidation",
+      "bankruptcy": "Konkurs",
+      "insolvency": "Insolvenz",
+      "voluntary_arrangement": "Gläubigervereinbarung"
+    },
+    "legalEventStatus": {
+      "in_progress": "Läuft seit {{date}}.",
+      "completed": "Abgeschlossen am {{date}}.",
+      "withdrawn_cancelled": "Zurückgezogen am {{date}}."
+    },
+    "legalEventRecorded": "Das Register nennt kein Datum des Ereignisses selbst; {{date}} ist der Tag seiner Eintragung.",
     "reason": {
       "13f_not_confirmed": "Der 13F-Bericht des Halters für das Quartal bis {{date}} führt diese Position nicht mehr. Schweigen ist kein Verkauf — die Beteiligung wird abgeblendet, nicht beendet.",
       "ex21_not_listed": "Die neuere Tochterliste vom {{date}} nennt sie nicht mehr. Einreicher dürfen kleine Töchter weglassen — abgeblendet, nicht beendet.",

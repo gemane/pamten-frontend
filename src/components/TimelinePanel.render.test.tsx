@@ -47,6 +47,25 @@ describe('a real acquisition, and a running holding', () => {
     expect(screen.getByText('Owned by')).toBeInTheDocument()
   })
 
+  it('a proceeding the register recorded reads as a dated state, by the recording when the event is undated (item 85d)', async () => {
+    mockHistory.mockResolvedValue({ data: [
+      { kind: 'legal_event', event: 'liquidation', status: 'in_progress', since: '2025-04-28', dated_by: 'effective',
+        until: null, active: true, party: null },
+      { kind: 'legal_event', event: 'insolvency', status: 'in_progress', since: '2026-10-12', dated_by: 'recorded',
+        until: null, active: true, party: null },
+      { kind: 'legal_event', event: 'voluntary_arrangement', status: 'completed', since: '2024-06-20', dated_by: 'effective',
+        until: null, active: false, party: null },
+    ] } as never)
+    render(<TimelinePanel entityId="dt" />)
+    const rows = await screen.findAllByTestId('tl-legal-event')
+    expect(rows).toHaveLength(3)
+    expect(rows.some(r => r.textContent?.includes('Liquidation') && r.textContent?.includes('In progress since 2025-04-28.'))).toBe(true)
+    expect(rows.some(r => r.textContent?.includes('Insolvency')
+      && r.textContent?.includes('The register states no date for the event itself; 2026-10-12 is the day it recorded it.'))).toBe(true)
+    expect(rows.some(r => r.textContent?.includes('Voluntary arrangement') && r.textContent?.includes('Completed on 2024-06-20.'))).toBe(true)
+    expect(screen.queryByTestId('tl-dissolved')).toBeNull()
+  })
+
   it('a company that merged reads "Merged" with its successor, and what ended with it says so (item 85c)', async () => {
     mockHistory.mockResolvedValue({ data: [
       { kind: 'merged', party: null, since: '2014-10-12', until: null, active: false,

@@ -59,6 +59,7 @@ export interface Entity {
   incorporated_on?: string  // the legal entity's registration date (YYYY-MM-DD) as the register states it; `founded` is the year the business began (Wikidata) — two facts, two fields
   dissolved_on?: string     // the day the legal entity ceased, as a source states it (Wikidata P576 at its precision, GLEIF, Companies House); the "† YEAR" mark, the Details row, what time travel hides a node after
   end_kind?: 'dissolved' | 'merged' | 'split'   // how it ended when the source says (GLEIF's end event type, item 85c): the Details label and the timeline's end row word a merger apart from a winding-up
+  gleif_events?: string[]   // GLEIF's proceedings of a living company, "TYPE|STATUS|effective|recorded" (utils/legalEvents, item 85d): the Status row when Companies House has none; the timeline rows come from the backend
   company_status?: string   // Companies House's status as the register words it ("Liquidation", "Active - Proposal to Strike off")
   active?: boolean          // three-valued: false once a register says the company ceased, true when one lists it as live, absent when none has said
   /** The register's other names — alternative-language legal names, a Latin

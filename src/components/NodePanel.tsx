@@ -21,6 +21,7 @@ import { FOCUS_ATTR, useGraphFocusHighlight, useGraphHoverHighlight, useGraphPic
 import { byStakeDesc } from '../utils/ordering'
 import { formatDate } from '../utils/dates'
 import { deathMark, dissolutionMark } from '../utils/deathMark'
+import { currentState } from '../utils/legalEvents'
 import { displayName, entityLabel } from '../utils/displayName'
 import { namesakeCountries } from '../utils/namesakes'
 import { useGraphFocus, type GraphFocusMode } from '../hooks/useGraphFocus'
@@ -388,6 +389,10 @@ interface DetailRow {
   icon: React.ElementType
   labelKey: string
   value: string
+  /** When present, the value is worded by the renderer from this key and these
+   *  params (the row stays i18n-free here); `value` is then the bare fact. */
+  valueKey?: string
+  valueParams?: Record<string, string>
   /** When present, the value renders as an external link. Always pass a
    *  safeHref()-gated URL — the property is scraped data and gets no scheme
    *  trust, however plausible it looks. */
@@ -396,13 +401,18 @@ interface DetailRow {
 export function entityDetailRows(entity: Entity, lang: string): DetailRow[] {
   const registeredAt = [entity.registration_authority, entity.registration_number]
     .filter(Boolean).join(' · ')
+  // The register's own status wording (Companies House) wins; else a proceeding
+  // GLEIF records as in progress — "In liquidation since …" (utils/legalEvents, item 85d)
+  const state = entity.company_status ? null : currentState(entity.gleif_events)
   const candidates: { icon: React.ElementType; labelKey: string; value?: string | null;
-                      href?: string }[] = [
+                      href?: string; valueKey?: string; valueParams?: Record<string, string> }[] = [
     { icon: FiBriefcase, labelKey: 'panel.legalForm',    value: entity.legal_form },
     { icon: FiHash,      labelKey: 'panel.registeredAt', value: registeredAt || null },
     { icon: FiCalendar,  labelKey: 'panel.incorporated', value: formatDate(entity.incorporated_on, lang) },
     { icon: FiCalendar,  labelKey: endLabelKey(entity),  value: formatDate(entity.dissolved_on, lang) },
-    { icon: FiActivity,  labelKey: 'panel.companyStatus', value: entity.company_status },
+    { icon: FiActivity,  labelKey: 'panel.companyStatus', value: entity.company_status
+                                                          ?? (state ? (formatDate(state.since, lang) || state.event) : null),
+      ...(state ? { valueKey: `panel.state.${state.event}`, valueParams: { date: formatDate(state.since, lang) || '?' } } : {}) },
     { icon: FiMapPin,    labelKey: 'panel.regAddress',   value: entity.address },
   ]
   return candidates.filter((r): r is DetailRow => !!r.value)
@@ -723,7 +733,8 @@ function DetailsSection({ entity, hasOwners }: { entity: Entity; hasOwners: bool
     <CollapsibleSection title={t('panel.details')}>
       {rows.length > 0 && (
         <div className="panel-meta">
-          {rows.map((r, i) => <MetaRow key={i} icon={r.icon} label={t(r.labelKey)} value={r.value} href={r.href} />)}
+          {rows.map((r, i) => <MetaRow key={i} icon={r.icon} label={t(r.labelKey)}
+                                        value={r.valueKey ? t(r.valueKey, r.valueParams) : r.value} href={r.href} />)}
         </div>
       )}
       {/* A sibling of `.panel-meta`, not a row inside it: that is what gives it the

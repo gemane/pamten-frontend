@@ -137,6 +137,12 @@
     "merged": "Fusionada",
     "split": "Escindida",
     "companyStatus": "Estado",
+    "state": {
+      "liquidation": "En liquidación desde el {{date}}",
+      "bankruptcy": "En quiebra desde el {{date}}",
+      "insolvency": "En procedimiento de insolvencia desde el {{date}}",
+      "voluntary_arrangement": "Bajo convenio voluntario desde el {{date}}"
+    },
     "revenue": "Ingresos",
     "employees": "Empleados",
     "hq": "Sede",
@@ -399,6 +405,18 @@
     "mergedOn": "La fuente consta la fusión el {{date}}; no nombra a la sucesora.",
     "splitInto": "La fuente consta la escisión en {{successors}} el {{date}}.",
     "splitOn": "La fuente consta la escisión el {{date}}; no nombra a las sucesoras.",
+    "legalEvent": {
+      "liquidation": "Liquidación",
+      "bankruptcy": "Quiebra",
+      "insolvency": "Insolvencia",
+      "voluntary_arrangement": "Convenio voluntario"
+    },
+    "legalEventStatus": {
+      "in_progress": "En curso desde el {{date}}.",
+      "completed": "Completado el {{date}}.",
+      "withdrawn_cancelled": "Retirado el {{date}}."
+    },
+    "legalEventRecorded": "El registro no indica la fecha del propio evento; {{date}} es el día en que lo anotó.",
     "reason": {
       "13f_not_confirmed": "El informe 13F del titular para el trimestre que termina el {{date}} ya no incluye esta posición. El silencio no es una venta: la participación se atenúa, no se cierra.",
       "ex21_not_listed": "La lista de filiales más reciente, fechada el {{date}}, ya no la nombra. Los declarantes pueden omitir filiales pequeñas: se atenúa, no se cierra.",
