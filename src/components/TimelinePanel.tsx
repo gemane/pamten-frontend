@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag, FiTrendingUp, FiTrendingDown, FiGitBranch, FiGitMerge, FiXCircle } from 'react-icons/fi'
+import { FiArrowDownRight, FiArrowUpLeft, FiUser, FiClock, FiInbox, FiEyeOff, FiLogOut, FiExternalLink, FiTag, FiTrendingUp, FiTrendingDown, FiGitBranch, FiGitMerge, FiActivity, FiXCircle } from 'react-icons/fi'
 import { getHistory } from '../services/api'
 import OwnershipBadge from './OwnershipBadge'
 import { asOfFromYear, asOfYear } from '../utils/asOf'
@@ -20,6 +20,13 @@ interface TimelineEvent {
   /** 'merged' / 'split': the companies GLEIF links as the successors
    *  (SUCCEEDED_BY) of a company that merged or was broken up (item 85c). */
   successors?: { id?: string; name?: string; type?: string }[] | null
+  /** 'legal_event': a proceeding the register recorded of a company that
+   *  exists — liquidation, bankruptcy, insolvency, voluntary arrangement —
+   *  with its status; `dated_by` says whether `since` is the event's own day
+   *  or the day the register recorded it (item 85d). */
+  event?: string | null
+  status?: string | null
+  dated_by?: string | null
   /** Dimmed: no newer list or quarter confirms it. With the evidence behind
    *  the mark — why (`stale_reason`) and since when (`stale_since`) — the
    *  holding ALSO gets a dated "no longer confirmed" entry under that year. */
@@ -133,6 +140,7 @@ const KIND_COLOR: Record<string, string> = {
   dissolved:     '#718096',
   merged:        '#718096',
   split:         '#718096',
+  legal_event:   '#B7791F',
 }
 const KIND_ICON: Record<string, React.ElementType> = {
   ownership_in:  FiArrowDownRight,
@@ -146,6 +154,7 @@ const KIND_ICON: Record<string, React.ElementType> = {
   dissolved:     FiXCircle,
   merged:        FiGitMerge,
   split:         FiGitBranch,
+  legal_event:   FiActivity,
 }
 
 /** A holding crossing the 5 % line, under the year the source stated the new
@@ -225,6 +234,31 @@ function RenamedRow({ ev }: { ev: TimelineEvent }) {
  *  ended is the event's kind (item 85c): "Dissolved", or "Merged" / "Split up"
  *  naming the successors the source links — a company that merged into its
  *  successor is not one that was wound up. */
+/** A proceeding the register recorded while the company exists — "Liquidation
+ *  — in progress since 2025-04-28" — no party. When the event itself is
+ *  undated the row is dated by the register's recording and says so. */
+function LegalEventRow({ ev }: { ev: TimelineEvent }) {
+  const { t } = useTranslation()
+  const date = ev.since ?? ''
+  return (
+    <div className="tl-event tl-event--legal-event" data-testid="tl-legal-event">
+      <div className="tl-event__dot" style={{ background: KIND_COLOR.legal_event }} />
+      <div className="tl-event__body">
+        <div className="tl-event__row">
+          <span className="tl-event__kind" style={{ color: KIND_COLOR.legal_event }}>
+            <FiActivity />
+            {t(`timeline.legalEvent.${ev.event ?? 'liquidation'}`)}
+          </span>
+        </div>
+        <div className="tl-event__meta tl-event__reason">
+          {t(`timeline.legalEventStatus.${ev.status ?? 'in_progress'}`, { date })}
+          {ev.dated_by === 'recorded' && <> {t('timeline.legalEventRecorded', { date })}</>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function EndRow({ ev }: { ev: TimelineEvent }) {
   const { t } = useTranslation()
   const kind = ev.kind === 'merged' || ev.kind === 'split' ? ev.kind : 'dissolved'
@@ -337,6 +371,7 @@ function EventRow({ ev }: { ev: TimelineEvent }) {
   if (kind === 'ended') return <EndedRow ev={ev} />
   if (kind === 'renamed') return <RenamedRow ev={ev} />
   if (kind === 'dissolved' || kind === 'merged' || kind === 'split') return <EndRow ev={ev} />
+  if (kind === 'legal_event') return <LegalEventRow ev={ev} />
   if (kind === 'stake_reached' || kind === 'stake_dropped') return <StakeCrossingRow ev={ev} />
   const color     = KIND_COLOR[kind] || KIND_COLOR.role
   const Icon      = KIND_ICON[kind]  || FiUser

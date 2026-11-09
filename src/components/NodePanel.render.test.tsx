@@ -1018,6 +1018,19 @@ describe('why a company reports no parent', () => {
     expect(mark.closest('h2')).not.toBeNull()
   })
 
+  it('a company in liquidation shows it as its Status, unless the register words the status itself (item 85d)', async () => {
+    await withEntity({ incorporated_on: '1999-04-01', gleif_events: ['LIQUIDATION|IN_PROGRESS|2025-04-28|2025-04-28'] })
+    expect(within(detailsSection()).getByText('Status')).toBeInTheDocument()
+    expect(within(detailsSection()).getByText(/^In liquidation since /)).toBeInTheDocument()
+    expect(screen.queryByTestId('dissolved-mark')).toBeNull()                 // a state, not an end
+  })
+
+  it('Companies House\'s own status wording wins over the GLEIF proceeding', async () => {
+    await withEntity({ company_status: 'Liquidation', gleif_events: ['LIQUIDATION|IN_PROGRESS|2025-04-28|2025-04-28'] })
+    expect(within(detailsSection()).getByText('Liquidation')).toBeInTheDocument()
+    expect(within(detailsSection()).queryByText(/^In liquidation since /)).toBeNull()
+  })
+
   it('a company that merged says "Merged", not "Dissolved", and keeps the mark (item 85c)', async () => {
     await withEntity({ dissolved_on: '2015-09-01', end_kind: 'merged', incorporated_on: '1999-04-01' })
     expect(within(detailsSection()).getByText('Merged')).toBeInTheDocument()

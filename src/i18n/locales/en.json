@@ -137,6 +137,12 @@
     "merged": "Merged",
     "split": "Split up",
     "companyStatus": "Status",
+    "state": {
+      "liquidation": "In liquidation since {{date}}",
+      "bankruptcy": "In bankruptcy since {{date}}",
+      "insolvency": "In insolvency proceedings since {{date}}",
+      "voluntary_arrangement": "Under a voluntary arrangement since {{date}}"
+    },
     "revenue": "Revenue",
     "employees": "Employees",
     "hq": "HQ",
@@ -399,6 +405,18 @@
     "mergedOn": "The source records the merger on {{date}}; it does not name the successor.",
     "splitInto": "The source records the break-up into {{successors}} on {{date}}.",
     "splitOn": "The source records the break-up on {{date}}; it does not name the successors.",
+    "legalEvent": {
+      "liquidation": "Liquidation",
+      "bankruptcy": "Bankruptcy",
+      "insolvency": "Insolvency",
+      "voluntary_arrangement": "Voluntary arrangement"
+    },
+    "legalEventStatus": {
+      "in_progress": "In progress since {{date}}.",
+      "completed": "Completed on {{date}}.",
+      "withdrawn_cancelled": "Withdrawn on {{date}}."
+    },
+    "legalEventRecorded": "The register states no date for the event itself; {{date}} is the day it recorded it.",
     "reason": {
       "13f_not_confirmed": "The holder's 13F report for the quarter ending {{date}} no longer lists this position. Silence is not a sale, so the holding is dimmed, not ended.",
       "ex21_not_listed": "The newer subsidiary list dated {{date}} no longer names it. Filers may leave out small subsidiaries, so it is dimmed, not ended.",
