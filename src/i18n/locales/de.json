@@ -372,6 +372,7 @@
       "merged": "Beendet durch die Fusion des Unternehmens in seinen Nachfolger am {{date}}; keine Quelle nennt einen Verkauf.",
       "split": "Beendet durch die Aufspaltung des Unternehmens am {{date}}; keine Quelle nennt einen Verkauf.",
       "reported_by_parent": "Ab {{date}} meldet die Muttergesellschaft des Melders die Beteiligung in ihrer eigenen, neueren Beteiligungsmeldung.",
+      "class_ended": "Am {{date}} hörten die Aktien, auf die sich diese Beteiligungsmeldung bezieht, auf zu bestehen — übernommen bei einer Fusion oder Übernahme, von der Börse genommen oder abgemeldet; die gemeldete Beteiligung endet damit.",
       "amendment": "Eine geänderte Beteiligungsmeldung vom {{date}} gibt an, dass der Halter keine meldepflichtige Beteiligung mehr hält.",
       "unknown": "Die Quelle verzeichnet die Beteiligung als am {{date}} beendet."
     },
