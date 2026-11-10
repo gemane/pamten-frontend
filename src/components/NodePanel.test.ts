@@ -71,6 +71,22 @@ describe('personDisplayDetails', () => {
     expect(d.died).toBeNull()
   })
 
+  it('names the birthplace with its country in the reader\'s language', () => {
+    expect(personDisplayDetails({ ...base, birth_place: 'Pretoria', birth_country: 'ZA' }, 'en').birthPlace)
+      .toBe('Pretoria, South Africa')
+    expect(personDisplayDetails({ ...base, birth_place: 'Pretoria', birth_country: 'ZA' }, 'de').birthPlace)
+      .toBe('Pretoria, Südafrika')
+  })
+
+  it('shows the place alone when no country is stored', () => {
+    expect(personDisplayDetails({ ...base, birth_place: 'Pretoria' }, 'en').birthPlace).toBe('Pretoria')
+  })
+
+  it('never shows a country without a place', () => {
+    expect(personDisplayDetails({ ...base, birth_country: 'ZA' }, 'en').birthPlace).toBeNull()
+    expect(personDisplayDetails(base, 'en').birthPlace).toBeNull()
+  })
+
   it('surfaces aliases (nicknames), filtering blanks', () => {
     const d = personDisplayDetails({ ...base, aliases: ['Elon', '', 'Technoking'] }, 'en')
     expect(d.aka).toEqual(['Elon', 'Technoking'])

@@ -88,6 +88,8 @@ export interface Person {
   birth_date?: string
   death_date?: string
   birth_place?: string
+  // The birthplace's country, ISO-2 (Wikidata's P17 of the place); only beside a place
+  birth_country?: string
   description?: string
   wikipedia_url?: string
 }

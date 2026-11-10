@@ -207,6 +207,13 @@ export function personDisplayDetails(p: Person, lang: string) {
     born: p.death_date ? formatDate(p.birth_date, lang) : null,
     died: formatDate(p.death_date, lang),
     nationalities,
+    // "Rio de Janeiro, Brazil": the place as stored, its country named in the
+    // reader's language (the MapDetail pattern). The country only ever stands
+    // beside a place — the backend writes it with one (birth_country).
+    birthPlace: p.birth_place
+      ? [p.birth_place, p.birth_country ? countryName(p.birth_country, lang) : null]
+          .filter(Boolean).join(', ')
+      : null,
     aka: (p.aliases ?? []).filter(Boolean),
   }
 }
@@ -786,7 +793,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
   const raw = node.raw as Person
   const { t, i18n } = useTranslation()
   const image = useMediaImage('person', node.id)
-  const { age, born, died, nationalities, aka } = personDisplayDetails(raw, i18n.language)
+  const { age, born, died, nationalities, birthPlace, aka } = personDisplayDetails(raw, i18n.language)
 
   // A person's positions (HAS_ROLE) and ownerships (OWNS) already exist in the
   // graph — fetch them so the panel shows what they hold, not just their bio.
@@ -875,7 +882,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
         <MetaRow icon={FiCalendar} label={t('panel.age')}
                  value={age !== null ? t('panel.years', { count: age }) : null} />
         <MetaRow icon={FiCalendar} label={t('panel.born')} value={born} />
-        <MetaRow icon={FiMapPin} label={t('panel.birthPlace')} value={raw.birth_place} />
+        <MetaRow icon={FiMapPin} label={t('panel.birthPlace')} value={birthPlace} />
         <MetaRow icon={FiCalendar} label={t('panel.died')} value={died} />
         <MetaRow
           icon={FiFlag}
