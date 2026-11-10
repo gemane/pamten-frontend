@@ -1,7 +1,7 @@
 name: Release
 
 # A release is a git tag on main: `v1.2.3` — the same tag, with the same number,
-# as the matching pamten-backend release (see README "Releases & versions").
+# as the matching pamten-backend release (see docs/releases.md).
 # The tag is the only place the version lives; this workflow builds the web app
 # for production with that number baked in and attaches it to a GitHub release.
 # The Android build runs from the same tag in android.yml.
