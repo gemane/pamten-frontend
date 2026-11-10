@@ -2040,7 +2040,7 @@ function SameAddressSection({ section, focusId, onNavigate, onShowAddress }: {
     <CollapsibleSection title={t('panel.sameAddress')} count={total}>
       <p className="panel-desc">{t('panel.sameAddressHint')}</p>
       {onShowAddress && (
-        <button type="button" className="panel-export__btn"
+        <button type="button" className="panel-export__btn panel-export__btn--spaced"
                 onClick={() => onShowAddress(focusId, { ...section, entities: rows })}>
           <FiMapPin /> {t('panel.sameAddressShowInGraph')}
         </button>
@@ -2066,6 +2066,7 @@ function AddressView({ node, onNavigate }: { node: NodeData; onNavigate?: (node:
   return (
     <div className="node-panel">
       <div className="node-panel__scroll">
+       <div className="panel-body">
         <div className="panel-section">
           <div className="panel-section__title">{t('panel.addressTitle')}</div>
           <MetaRow icon={FiMapPin} label={t('panel.regAddress')} value={address ?? node.label} />
@@ -2085,6 +2086,7 @@ function AddressView({ node, onNavigate }: { node: NodeData; onNavigate?: (node:
             </button>
           )}
         </div>
+       </div>
       </div>
     </div>
   )

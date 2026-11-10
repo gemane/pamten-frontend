@@ -80,3 +80,18 @@ describe('the stake filter and a shared address', () => {
     expect(stakeCoverageOf(els)).toEqual({ stated: 1, total: 1 })
   })
 })
+
+describe('a crowded registered office', () => {
+  it('stacks the companies there in rows of eight, not one row', () => {
+    const many = Array.from({ length: 20 }, (_, i) => co(`N${i}`, `Nominee ${String(i).padStart(2, '0')}`))
+    const els: GraphElement[] = [
+      { data: { id: 'A', label: 'Alpha', nodeType: 'entity', raw: co('A', 'Alpha') } },
+      ...buildAddressElements('A', section(many), new Set(['A'])),
+    ]
+    const pos = computeArcPositions(els, 'A')
+    const ys = new Set(many.map(e => pos.get(e.id)!.y))
+    expect(ys.size).toBe(3)                                   // 8 + 8 + 4
+    const hub = pos.get(addressNodeId(KEY))!
+    for (const e of many) expect(pos.get(e.id)!.y).toBeGreaterThan(hub.y)
+  })
+})

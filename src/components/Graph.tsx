@@ -297,6 +297,8 @@ const OWNER_B_MIN  = 120            // vertical distance for most-important owne
 const OWNER_B_MAX  = 300            // vertical distance for least-important owner
 const ARC_DEPTH    = 0.3            // a crowded arc's height, as a share of its half-width
 const LEVEL_GAP    = 220            // vertical px between hop levels beyond the 1st
+const ADDRESS_ROW  = 8              // companies per row under a registered office
+const ADDRESS_ROW_GAP = 110         // vertical px between those rows
 
 // Pure function — works on the React elements array, no Cytoscape required.
 // Returns a map of nodeId → {x, y} to use when calling cy.add().
@@ -685,12 +687,20 @@ export function computeArcPositions(
 
     const newSubs = (outgoersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
     newSubs.sort(cmpByStake(nid => edgeKey(id, nid)))
-    const subX = rowCentres(newSubs.map(nid => size(nid).w), parentPos.x)
-    newSubs.forEach((nid, i) => {
-      pos.set(nid, { x: subX[i], y: parentPos.y + LEVEL_GAP })
-      positioned.add(nid)
-      queue.push(nid)
-    })
+    // A registered office can hold fifty companies: in one row they ran
+    // across the screen and the graph zoomed out to a smear. Under an
+    // address, rows of ADDRESS_ROW, each a box height and a gap below the last.
+    const perRow = addressIds.has(id) ? ADDRESS_ROW : newSubs.length
+    for (let start = 0; start < newSubs.length; start += perRow) {
+      const row = newSubs.slice(start, start + perRow)
+      const subX = rowCentres(row.map(nid => size(nid).w), parentPos.x)
+      const dy = LEVEL_GAP + (start / perRow) * ADDRESS_ROW_GAP
+      row.forEach((nid, i) => {
+        pos.set(nid, { x: subX[i], y: parentPos.y + dy })
+        positioned.add(nid)
+        queue.push(nid)
+      })
+    }
   }
 
   return pos
