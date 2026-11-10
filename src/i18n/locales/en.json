@@ -372,6 +372,7 @@
       "merged": "Ended when the company merged into its successor on {{date}}; no source states a sale.",
       "split": "Ended when the company was split up on {{date}}; no source states a sale.",
       "reported_by_parent": "From {{date}} the holding is reported by the filer's parent company in its own, newer ownership report.",
+      "class_ended": "On {{date}} the shares this ownership report is about ceased to exist — taken over in a merger or acquisition, removed from the exchange or deregistered; the holding as reported ends then.",
       "amendment": "An amended ownership report of {{date}} states the holder no longer holds a reportable stake.",
       "unknown": "The source records the holding as ended on {{date}}."
     },

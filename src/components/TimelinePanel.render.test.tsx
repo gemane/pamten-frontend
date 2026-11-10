@@ -202,6 +202,19 @@ describe('an end is a transition too', () => {
     expect(end).not.toHaveTextContent('no longer holds a reportable stake')
   })
 
+  it('a holding whose shares ceased to exist says so, not that the holder sold', async () => {
+    // findings item 99: SoftBank's 13D/A on Sprint, ended by the NYSE's 25-NSE of 2020-04-01
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2013-07-10', until: '2020-04-01', active: false, filing_type: '13D/A',
+           until_reason: 'class_ended', party: { id: 'sb', name: 'SoftBank Group Corp' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const end = await screen.findByTestId('tl-ended')
+    expect(end).toHaveTextContent('the shares this ownership report is about ceased to exist')
+    expect(end).toHaveTextContent('2020-04-01')
+    expect(end).not.toHaveTextContent('no longer holds a reportable stake')
+  })
+
   it('a role that ended is a transition as well', async () => {
     mockHistory.mockResolvedValue({ data: [
       ev({ kind: 'role', role: 'CEO', since: '2000-01-01', until: '2011-08-24', active: false,
