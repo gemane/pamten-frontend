@@ -215,6 +215,19 @@ describe('an end is a transition too', () => {
     expect(end).not.toHaveTextContent('no longer holds a reportable stake')
   })
 
+  it("a holding the issuer's own table no longer lists says so, and that the end may be earlier", async () => {
+    // findings item 99: Apollo's 16.16 % of Sirius XM (13D/A 2003), absent from the 2026 proxy
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2003-03-12', until: '2026-04-10', active: false, filing_type: '13D/A',
+           until_reason: 'not_in_issuer_table', party: { id: 'ap', name: 'Apollo Investment Fund IV' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const end = await screen.findByTestId('tl-ended')
+    expect(end).toHaveTextContent("no longer lists this holder among its shareholders of more than 5 %")
+    expect(end).toHaveTextContent('may have fallen below 5 % earlier')
+    expect(end).not.toHaveTextContent('no longer holds a reportable stake')
+  })
+
   it('a role that ended is a transition as well', async () => {
     mockHistory.mockResolvedValue({ data: [
       ev({ kind: 'role', role: 'CEO', since: '2000-01-01', until: '2011-08-24', active: false,
