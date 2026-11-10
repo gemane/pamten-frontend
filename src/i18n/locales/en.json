@@ -573,7 +573,10 @@
     "subdivisionsOf": "Show where in {{country}}",
     "subdivisionNotStated": "Not stated",
     "backToWorld": "Back to world",
-    "hintStates": "Click a state to see its companies"
+    "hintStates": "Click a state to see its companies",
+    "sameDoor_one": "{{count}} other company registered at this address",
+    "sameDoor_other": "{{count}} other companies registered at this address",
+    "sameDoorMore": "and {{count}} more"
   },
   "settings": {
     "title": "Settings",
