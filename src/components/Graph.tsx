@@ -119,6 +119,24 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       },
     },
     {
+      // A registered office joining the companies registered at it (the
+      // letterbox view, utils/addressElements): a place, not a party.
+      selector: 'node[nodeType = "address"]',
+      style: {
+        'background-color': ENTITY_COLORS.address.fill, shape: 'tag',
+        'border-width': 2, 'border-color': ENTITY_COLORS.address.border, 'border-style': 'dashed',
+      },
+    },
+    {
+      // Registered at the same door: no holding, so no arrow and no stake —
+      // thin and dotted in the address's slate.
+      selector: 'edge[edgeType = "registered_at"]',
+      style: {
+        'line-color': ENTITY_COLORS.address.fill, 'line-style': 'dotted', width: 1.5,
+        'target-arrow-shape': 'none', opacity: 0.8,
+      },
+    },
+    {
       // Scale padding (= visual size) for owner nodes by their importance
       selector: 'node[importance > 0]',
       style: { padding: 'mapData(importance, 0, 60, 14, 34)' },
@@ -285,6 +303,17 @@ const LEVEL_GAP    = 220            // vertical px between hop levels beyond the
 /** The elements that survive a stake filter: ownership edges below the band
  *  go, nodes left with no visible edge go (the centre always stays), role
  *  edges are never filtered. Pure, so the re-layout it feeds is testable. */
+/** What the stake filter can judge: the links that are holdings and state a
+ *  percentage, out of the holdings there are. A seat and a shared registered
+ *  office are no holding — counted, a graph showing a letterbox's 50
+ *  neighbours would read "12 of 62 links state a stake". */
+export function stakeCoverageOf(elements: GraphElement[]): { stated: number; total: number } {
+  const owns = elements
+    .map(el => el.data)
+    .filter((d): d is EdgeData => 'edgeType' in d && d.edgeType !== 'role' && d.edgeType !== 'registered_at')
+  return { stated: owns.filter(d => d.stakePct != null).length, total: owns.length }
+}
+
 export function filterVisibleElements(
   elements: GraphElement[],
   filter: StakeFilter,
@@ -318,7 +347,8 @@ export function classifyElements(
   const presence = new Map<string, Presence>()
   const edgeVisible = (d: EdgeData): boolean => {
     if (exists.get(d.source) === false || exists.get(d.target) === false) return false
-    if (d.edgeType !== 'role') {
+    // a seat and a shared registered office state no stake to filter on
+    if (d.edgeType !== 'role' && d.edgeType !== 'registered_at') {
       const eff = effectiveStakePct(d.stakePct ?? null, d.shares, d.sharesOutstanding)
       if (!keepsEdge(eff, filter)) return false
     }
@@ -536,6 +566,7 @@ export function computeArcPositions(
   const nodeImportance = new Map<string, number>()
   const nodeLabel   = new Map<string, string>()
   const groupIds    = new Set<string>()          // 13D voting groups (entitySubtype voting_group)
+  const addressIds  = new Set<string>()          // registered offices (utils/addressElements)
   // key: edgeKey(src, tgt) → the holding's stake and share count, as the
   // panel's rows have them: from the owns line; a voting line only stands in
   // when there is no owns line.
@@ -569,6 +600,7 @@ export function computeArcPositions(
       if (d.importance != null) nodeImportance.set(d.id, d.importance)
       nodeLabel.set(d.id, d.label ?? '')
       if (d.entitySubtype === 'voting_group') groupIds.add(d.id)
+      if (d.nodeType === 'address') addressIds.add(d.id)
     }
   }
 
@@ -594,6 +626,8 @@ export function computeArcPositions(
   // holding: it sits after the subsidiaries, not sorted in among them as if
   // the centre owned it (Berkshire's DaVita group, 2026-10-26).
   bottomIds.sort((a, b) => Number(groupIds.has(a)) - Number(groupIds.has(b)))
+  // A registered office the centre shares is no holding either: last of all.
+  bottomIds.sort((a, b) => Number(addressIds.has(a)) - Number(addressIds.has(b)))
 
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)
@@ -916,6 +950,8 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const nodeData = evt.target.data() as NodeData
       if (nodeData.nodeType === 'entity') {
         onExpand?.(nodeData.id)
+      } else if (nodeData.nodeType === 'address') {
+        // no profile to centre on: the panel lists the companies there
       } else {
         onNavigateTo?.(nodeData)
       }
@@ -1162,16 +1198,12 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
   // What the filter can actually judge on this graph: ownership links that state
   // a percentage, out of the ownership links there are.
-  const stakeCoverage = useMemo(() => {
-    const owns = elements
-      .map(el => el.data)
-      .filter((d): d is EdgeData => 'edgeType' in d && d.edgeType !== 'role')
-    return { stated: owns.filter(d => d.stakePct != null).length, total: owns.length }
-  }, [elements])
+  const stakeCoverage = useMemo(() => stakeCoverageOf(elements), [elements])
 
   const showNodeActions = elements.length > 0
     && !!selectedNode
     && selectedNode.id !== centerId
+    && selectedNode.nodeType !== 'address'   // nothing to expand: its list is the panel
 
   return (
     <div className="graph-wrapper">

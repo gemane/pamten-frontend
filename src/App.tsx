@@ -68,7 +68,9 @@ import type {
   SearchResult,
   CountryEntityGroup,
   Person,
+  RegisteredAddress,
 } from './types'
+import { buildAddressElements } from './utils/addressElements'
 import {
   buildElements,
   buildElementsUpward,
@@ -603,6 +605,21 @@ function AppInner() {
     }
   }, [loadEntity, loadPerson, showToast, resetEnrichment, beginGraph, isCurrentGraph])
 
+  // The letterbox view: the company's registered office as a hub joining the
+  // companies registered at it (utils/addressElements), added to the graph
+  // like an expansion — only what is not drawn yet.
+  const handleShowAddress = useCallback((focusId: string, section: RegisteredAddress) => {
+    reportEvent({ kind: 'usage', event: 'graph.address' })
+    const draftIds = new Set(loadedIds.current)
+    const newEls = buildAddressElements(focusId, section, draftIds)
+    if (newEls.length > 0) {
+      loadedIds.current = draftIds
+      setElements(prev => [...prev, ...newEls])
+    } else {
+      showToast(t('toast.noNewConnections'), 'info')
+    }
+  }, [showToast, t])
+
   const handleExpand = useCallback(async (nodeId: string) => {
     reportEvent({ kind: 'usage', event: 'graph.expand' })
     setExpandingId(nodeId)
@@ -978,7 +995,8 @@ function AppInner() {
   const centerType = useMemo((): 'entity' | 'person' | undefined => {
     if (!centerId) return undefined
     const center = elements.find(el => !('source' in el.data) && el.data.id === centerId)
-    return center ? (center.data as NodeData).nodeType : undefined
+    const type = center ? (center.data as NodeData).nodeType : undefined
+    return type === 'address' ? undefined : type   // an address is never centred on (no profile)
   }, [elements, centerId])
 
   const centerIdRef = useRef<string | null>(null)
@@ -1199,6 +1217,7 @@ function AppInner() {
               <div className="left-panel__detail left-panel__detail--panel">
                 <NodePanel
                   node={selectedNode}
+                  onShowAddress={handleShowAddress}
                   refreshKey={enrichNonce}
                   refreshingId={refreshing?.id ?? null}
                   onExportPng={elements.length > 0 ? handleExportPng : undefined}
@@ -1303,6 +1322,7 @@ function AppInner() {
                   <Breadcrumb history={navHistory} onNavigate={handleBreadcrumbNav} />
                   <NodePanel
                     node={selectedNode}
+                    onShowAddress={handleShowAddress}
                     refreshKey={enrichNonce}
                   refreshingId={refreshing?.id ?? null}
                     onExportPng={elements.length > 0 ? handleExportPng : undefined}

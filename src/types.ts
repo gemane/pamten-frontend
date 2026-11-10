@@ -341,6 +341,20 @@ export interface FullProfile {
   /** The filing groups this entity is a party to — the mirror of the above,
    *  present on a member's profile so the graph can draw the bloc it votes in. */
   voting_groups?: VotingGroupEntry[]
+  /** The company's registered office and the OTHER companies registered at
+   *  it — the letterbox view; null when it states no registered office. */
+  registered_address?: RegisteredAddress | null
+}
+
+/** Companies behind one registered-office door, read from the matching key
+ *  every register importer stores (backend app/registered_address.py).
+ *  `count` is the true number; `entities` a page of them by name. */
+export interface RegisteredAddress {
+  key: string
+  address?: string | null
+  count: number
+  entities: Entity[]
+  offset?: number
 }
 
 // Derived (not sourced) ownership breakdown, computed on read from the owners.
@@ -453,7 +467,9 @@ export interface HistoryEntry {
 }
 
 // Graph element types (Cytoscape)
-type NodeType = 'entity' | 'person'
+/** `address`: a registered office drawn as the hub joining the companies
+ *  registered at it (utils/addressElements) — no profile of its own. */
+type NodeType = 'entity' | 'person' | 'address'
 
 export interface NodeData {
   id: string
@@ -462,6 +478,8 @@ export interface NodeData {
   entitySubtype?: EntityType | null
   raw: Entity | Person
   importance?: number   // voting_power_pct or stake_percent — drives node size and arc radius
+  /** An address node's key, for listing the companies registered there. */
+  addressKey?: string
 }
 
 export interface EdgeData {
@@ -469,7 +487,7 @@ export interface EdgeData {
   source: string
   target: string
   label: string
-  edgeType: 'owns' | 'role' | 'votes' | 'member'
+  edgeType: 'owns' | 'role' | 'votes' | 'member' | 'registered_at'
   edgeDir?: 'in' | 'out'
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null

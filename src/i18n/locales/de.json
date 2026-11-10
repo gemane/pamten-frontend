@@ -115,6 +115,8 @@
     "highPct": "Hoher %",
     "ultimateParent": "Oberste Muttergesellschaft (keine direkte Kette)",
     "voting_group": "Stimmrechtsgruppe",
+    "address": "Eingetragener Sitz",
+    "registeredAt": "An derselben Adresse eingetragen",
     "joint_filing": "Gemeinsame Meldung"
   },
   "panel": {
@@ -213,7 +215,15 @@
     "subsidiariesAllLevels": "Tochtergesellschaften — alle Ebenen",
     "companiesBelow_one": "{{n}} Tochtergesellschaft",
     "companiesBelow_other": "{{n}} Tochtergesellschaften",
-    "companiesBelowHint": "Ihre eigenen Tochtergesellschaften, alle Ebenen, jede einmal gezählt"
+    "companiesBelowHint": "Ihre eigenen Tochtergesellschaften, alle Ebenen, jede einmal gezählt",
+    "sameAddress": "An derselben Adresse eingetragen",
+    "sameAddressHint": "Firmen mit demselben eingetragenen Sitz – oft die Adresse eines Treuhänders oder einer Kanzlei, nicht der Ort, von dem aus eine Firma geführt wird.",
+    "sameAddressShowInGraph": "Im Graphen zeigen",
+    "sameAddressMore": "Mehr zeigen ({{shown}} von {{count}})",
+    "addressTitle": "Eingetragener Sitz",
+    "addressCount_one": "{{count}} Firma hier eingetragen",
+    "addressCount_other": "{{count}} Firmen hier eingetragen",
+    "addressSpelling": "Dasselbe Gebäude in anderer Schreibweise erscheint als eigene Adresse."
   },
   "identity": {
     "title": "Wie dieser Eintrag entstanden ist",
