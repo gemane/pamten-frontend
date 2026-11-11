@@ -977,6 +977,38 @@ describe('a company in a voting group', () => {
     await screen.findByText('Acme Corp')
     expect(screen.queryByText('Votes in')).toBeNull()
   })
+
+  it('a joint filing is listed apart, not as a voting group (findings item 103)', async () => {
+    // Berkshire, Buffett and its insurers file DaVita's 13D together: one
+    // holder with its affiliates, no agreement over anyone else's votes
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'brk', name: 'Berkshire Hathaway Inc.', type: 'company' } as Entity,
+      owners: [], subsidiaries: [], executives: [],
+      voting_groups: [{ group: { id: 'g1', name: 'Joint filing · Berkshire Hathaway Inc. and 7 affiliates',
+                                 type: 'voting_group', kind: 'joint_filing' } as Entity,
+                        holds: [{ entity: { id: 'dva', name: 'DaVita Inc.', type: 'company' } as Entity,
+                                  relationship: { voting_power_pct: 45 } as never }] }],
+    } } as never)
+    render(<NodePanel node={entityNode('brk', 'Berkshire Hathaway Inc.')} refreshKey={0} />)
+    await screen.findByText('Berkshire Hathaway Inc.')
+    expect(screen.queryByText('Votes in')).toBeNull()
+    const section = screen.getByText('Files jointly in').closest('.panel-section') as HTMLElement
+    expect(within(section).getByTestId('votes-in-controls')).toHaveTextContent('reports 45 % of DaVita Inc. together')
+  })
+
+  it("a joint filing's own panel says what it is", async () => {
+    mockProfile.mockResolvedValue({ data: {
+      entity: { id: 'g1', name: 'Joint filing · Berkshire Hathaway Inc. and 7 affiliates', type: 'voting_group',
+                kind: 'joint_filing' } as Entity,
+      owners: [], subsidiaries: [], executives: [],
+      group_members: [{ party: { id: 'ni', name: 'National Indemnity Company', type: 'company' }, kind: 'entity' }],
+    } } as never)
+    render(<NodePanel node={entityNode('g1', 'Joint filing · Berkshire Hathaway Inc. and 7 affiliates')} refreshKey={0} />)
+    await screen.findByText('Joint filing · Berkshire Hathaway Inc. and 7 affiliates', { selector: 'h2' })
+    expect(screen.getByText('Joint filing')).toBeInTheDocument()
+    expect(screen.getByText('Filed together by')).toBeInTheDocument()
+    expect(screen.queryByText('Parties to the agreement')).toBeNull()
+  })
 })
 
 describe('why a company reports no parent', () => {

@@ -68,3 +68,13 @@ describe('typeLabelKey', () => {
     expect(typeLabelKey('person', 'holding')).toBe('legend.person')
   })
 })
+
+
+describe('a 13D group by its kind (findings item 103)', () => {
+  it('a joint filing is labelled as one, a pact and an old group as a voting group', async () => {
+    const { typeLabelKey } = await import('./entityColors')
+    expect(typeLabelKey('entity', 'voting_group', 'joint_filing')).toBe('legend.joint_filing')
+    expect(typeLabelKey('entity', 'voting_group', 'voting_pact')).toBe('legend.voting_group')
+    expect(typeLabelKey('entity', 'voting_group')).toBe('legend.voting_group')
+  })
+})
