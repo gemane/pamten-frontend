@@ -25,6 +25,10 @@ export interface Entity {
   id: string
   name: string
   type: EntityType
+  /** A 13D group node only: a voting pact (the statement names an agreement over
+   *  the votes) or a joint filing of one holder with its affiliates (findings
+   *  item 103). Absent on a group written before 2026-11-11: read as a pact. */
+  kind?: 'voting_pact' | 'joint_filing'
   country?: string
   founded?: number          // the year the business began — Wikidata's; a register never writes it
   revenue?: number

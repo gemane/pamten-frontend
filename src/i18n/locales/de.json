@@ -114,7 +114,8 @@
     "lowPct": "Niedriger %",
     "highPct": "Hoher %",
     "ultimateParent": "Oberste Muttergesellschaft (keine direkte Kette)",
-    "voting_group": "Stimmrechtsgruppe"
+    "voting_group": "Stimmrechtsgruppe",
+    "joint_filing": "Gemeinsame Meldung"
   },
   "panel": {
     "empty": "Klicken Sie auf einen Knoten im Graph,\num die Details hier zu sehen",
@@ -199,6 +200,9 @@
     "groupControls": "Kontrolliert",
     "votesIn": "Stimmt ab in",
     "votesInControls": "kontrolliert {{company}}, {{pct}} % der Stimmen",
+    "filesJointlyIn": "Meldet gemeinsam in",
+    "filesJointlyInReports": "meldet gemeinsam {{pct}} % von {{company}}",
+    "jointFilers": "Gemeinsam gemeldet von",
     "website": "Webseite",
     "webSearch": "Websuche",
     "sector": "Branche",

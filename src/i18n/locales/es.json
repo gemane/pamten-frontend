@@ -114,7 +114,8 @@
     "lowPct": "% bajo",
     "highPct": "% alto",
     "ultimateParent": "Matriz última (sin cadena directa)",
-    "voting_group": "Grupo de voto"
+    "voting_group": "Grupo de voto",
+    "joint_filing": "Declaración conjunta"
   },
   "panel": {
     "empty": "Haz clic en cualquier nodo del grafo\npara ver sus detalles aquí",
@@ -199,6 +200,9 @@
     "groupControls": "Controla",
     "votesIn": "Vota en",
     "votesInControls": "controla {{company}}, {{pct}} % de los votos",
+    "filesJointlyIn": "Declara conjuntamente en",
+    "filesJointlyInReports": "declara conjuntamente el {{pct}} % de {{company}}",
+    "jointFilers": "Declarado conjuntamente por",
     "website": "Sitio web",
     "webSearch": "Búsqueda web",
     "sector": "Sector",

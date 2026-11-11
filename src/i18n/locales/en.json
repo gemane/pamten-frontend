@@ -114,7 +114,8 @@
     "lowPct": "Low %",
     "highPct": "High %",
     "ultimateParent": "Ultimate parent (no direct chain)",
-    "voting_group": "Voting group"
+    "voting_group": "Voting group",
+    "joint_filing": "Joint filing"
   },
   "panel": {
     "empty": "Click any node in the graph\nto see its details here",
@@ -199,6 +200,9 @@
     "groupControls": "Controls",
     "votesIn": "Votes in",
     "votesInControls": "controls {{company}}, {{pct}} % of the votes",
+    "filesJointlyIn": "Files jointly in",
+    "filesJointlyInReports": "reports {{pct}} % of {{company}} together",
+    "jointFilers": "Filed together by",
     "website": "Website",
     "webSearch": "Web search",
     "sector": "Industry",

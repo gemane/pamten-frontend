@@ -152,10 +152,26 @@ function DissolvedMark({ entity }: { entity: Entity | null | undefined }) {
 function VotesInSection({ groups, onNavigate }: {
   groups: VotingGroupEntry[]; onNavigate?: (node: NodeData) => void
 }) {
+  // a voting pact is where the votes are; a joint filing is one holding the
+  // company reports together with its affiliates (findings item 103)
+  const pacts = groups.filter(g => g.group.kind !== 'joint_filing')
+  const joint = groups.filter(g => g.group.kind === 'joint_filing')
+  return (
+    <>
+      <GroupSection groups={pacts} title="panel.votesIn" line="panel.votesInControls" onNavigate={onNavigate} />
+      <GroupSection groups={joint} title="panel.filesJointlyIn" line="panel.filesJointlyInReports"
+                    onNavigate={onNavigate} />
+    </>
+  )
+}
+
+function GroupSection({ groups, title, line, onNavigate }: {
+  groups: VotingGroupEntry[]; title: string; line: string; onNavigate?: (node: NodeData) => void
+}) {
   const { t } = useTranslation()
   if (!groups.length) return null
   return (
-    <Section title={t('panel.votesIn')}>
+    <Section title={t(title)}>
       {groups.map((g, i) => (
         <RelRow key={i} node={entityToNode(g.group)} onNavigate={onNavigate}>
           {/* one name cell: the group, and on its own line below what its
@@ -165,7 +181,7 @@ function VotesInSection({ groups, onNavigate }: {
             {displayName(g.group).primary}
             {(g.holds ?? []).map((h, j) => (
               <span key={j} className="rel-item__place rel-item__controls" data-testid="votes-in-controls">
-                {t('panel.votesInControls', {
+                {t(line, {
                   company: entityLabel(h.entity),
                   pct: h.relationship?.voting_power_pct ?? '?',
                 })}
@@ -988,7 +1004,7 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
 function TypeMarker({ node }: { node: NodeData }) {
   const { t } = useTranslation()
   const { fill, border } = colorFor(node.nodeType, node.entitySubtype)
-  const label = t(typeLabelKey(node.nodeType, node.entitySubtype))
+  const label = t(typeLabelKey(node.nodeType, node.entitySubtype, (node.raw as Entity | undefined)?.kind))
   return (
     <span
       className={`rel-item__marker${node.nodeType === 'person' ? ' rel-item__marker--person' : ''}`}
@@ -1627,7 +1643,9 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
         <ImageCredit credit={image.credit} kind="entity" />
       </>)}
       <span className={`node-type-badge node-type-badge--${entity.type || 'company'}`}>
-        {t(`legend.${entity.type || 'company'}`, { defaultValue: entity.type || 'company' })}
+        {entity.kind === 'joint_filing'
+          ? t('legend.joint_filing')
+          : t(`legend.${entity.type || 'company'}`, { defaultValue: entity.type || 'company' })}
       </span>
       {entity.is_nominee && (
         <span className="nominee-badge" title={t('panel.nomineeHint')}>{t('panel.nominee')}</span>
@@ -1705,7 +1723,7 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
           ownership — they arrive over RELATED_TO, and the owners query cannot
           see them, which is how this section first shipped empty. */}
       {isGroup && (groupParties?.length ?? 0) > 0 && (
-        <Section title={t('panel.groupMembers')}>
+        <Section title={t(entity.kind === 'joint_filing' ? 'panel.jointFilers' : 'panel.groupMembers')}>
           {groupParties!.map((m, i) => (
             <RelRow key={i}
                     node={m.kind === 'person'

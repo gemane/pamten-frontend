@@ -71,8 +71,11 @@ export function colorFor(nodeType?: string | null, entitySubtype?: string | null
  * Shares the `legend.*` namespace with GraphLegend, so the marker and the
  * legend always call a fund the same thing.
  */
-export function typeLabelKey(nodeType?: string | null, entitySubtype?: string | null): string {
+export function typeLabelKey(nodeType?: string | null, entitySubtype?: string | null,
+                             kind?: string | null): string {
   if (nodeType === 'person') return 'legend.person'
+  // a 13D group of one holder with its affiliates is no voting group (item 103)
+  if (entitySubtype === 'voting_group' && kind === 'joint_filing') return 'legend.joint_filing'
   if (entitySubtype && ENTITY_COLORS[entitySubtype]) return `legend.${entitySubtype}`
   return 'legend.company'
 }
