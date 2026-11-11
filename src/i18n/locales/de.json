@@ -373,6 +373,7 @@
       "split": "Beendet durch die Aufspaltung des Unternehmens am {{date}}; keine Quelle nennt einen Verkauf.",
       "reported_by_parent": "Ab {{date}} meldet die Muttergesellschaft des Melders die Beteiligung in ihrer eigenen, neueren Beteiligungsmeldung.",
       "class_ended": "Am {{date}} hörten die Aktien, auf die sich diese Beteiligungsmeldung bezieht, auf zu bestehen — übernommen bei einer Fusion oder Übernahme, von der Börse genommen oder abgemeldet; die gemeldete Beteiligung endet damit.",
+      "holder_is_subsidiary": "Spätestens am {{date}} war dieser Aktionär eine Tochtergesellschaft des Unternehmens selbst — dessen eigene Liste der Tochtergesellschaften nennt ihn; die Beteiligung als außenstehender Aktionär endete spätestens damit.",
       "not_in_issuer_table": "Am {{date}} führt die Hauptversammlungsunterlage des Unternehmens diesen Aktionär nicht mehr unter den Aktionären mit mehr als 5 %; der Anteil kann schon früher unter 5 % gefallen sein.",
       "amendment": "Eine geänderte Beteiligungsmeldung vom {{date}} gibt an, dass der Halter keine meldepflichtige Beteiligung mehr hält.",
       "unknown": "Die Quelle verzeichnet die Beteiligung als am {{date}} beendet."
