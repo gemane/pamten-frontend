@@ -373,6 +373,7 @@
       "split": "Ended when the company was split up on {{date}}; no source states a sale.",
       "reported_by_parent": "From {{date}} the holding is reported by the filer's parent company in its own, newer ownership report.",
       "class_ended": "On {{date}} the shares this ownership report is about ceased to exist — taken over in a merger or acquisition, removed from the exchange or deregistered; the holding as reported ends then.",
+      "holder_is_subsidiary": "By {{date}} this holder had become a subsidiary of the company itself — its own list of subsidiaries names it; the holding as an outside shareholder ended by then.",
       "not_in_issuer_table": "On {{date}} the company's own proxy statement no longer lists this holder among its shareholders of more than 5 %; the stake may have fallen below 5 % earlier.",
       "amendment": "An amended ownership report of {{date}} states the holder no longer holds a reportable stake.",
       "unknown": "The source records the holding as ended on {{date}}."

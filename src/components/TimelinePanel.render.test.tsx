@@ -228,6 +228,18 @@ describe('an end is a transition too', () => {
     expect(end).not.toHaveTextContent('no longer holds a reportable stake')
   })
 
+  it('a holding whose holder became the company\'s subsidiary says so', async () => {
+    // findings item 99 part 3: Texaco's 13D of 2000 on Chevron; Chevron's Exhibit 21 names Texaco
+    mockHistory.mockResolvedValue({ data: [
+      ev({ kind: 'ownership_in', since: '2000-10-15', until: '2026-02-24', active: false, filing_type: '13D',
+           until_reason: 'holder_is_subsidiary', party: { id: 'tx', name: 'Texaco Inc' } }),
+    ] } as never)
+    render(<TimelinePanel entityId="x" />)
+    const end = await screen.findByTestId('tl-ended')
+    expect(end).toHaveTextContent('had become a subsidiary of the company itself')
+    expect(end).not.toHaveTextContent('no longer holds a reportable stake')
+  })
+
   it('a role that ended is a transition as well', async () => {
     mockHistory.mockResolvedValue({ data: [
       ev({ kind: 'role', role: 'CEO', since: '2000-01-01', until: '2011-08-24', active: false,
