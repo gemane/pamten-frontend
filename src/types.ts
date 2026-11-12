@@ -349,6 +349,10 @@ interface OwnershipSummary {
   free_float_pct?: number | null  // 100 − disclosed, when every owner's stake is known
   unknown_owners?: number         // owners with an unknown %
   exceeds_100?: boolean           // disclosed stakes sum past 100% (overlapping sources/dates)
+  /** The sum that passed 100 % — the total, or with several securities one
+   *  security's (findings item 110) — and that security (null for the total). */
+  exceeds_pct?: number | null
+  exceeds_class?: string | null
   /** The filings name more than one security, so their percentages measure
    *  different wholes and no single total is meaningful. `disclosed_pct` is
    *  null when this is set; `by_class` carries the per-security totals. */

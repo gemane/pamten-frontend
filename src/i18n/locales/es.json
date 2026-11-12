@@ -177,6 +177,7 @@
     "replaces": "Anteriormente",
     "freeFloat": "Free float / no divulgado",
     "ownershipExceeds": "La propiedad declarada suma {{pct}} % — fuentes o fechas solapadas",
+    "ownershipExceedsClass": "Las participaciones declaradas en {{security}} suman {{pct}} % — fuentes o fechas solapadas",
     "nominee": "Fiduciario",
     "nomineeHint": "Nominee / custodio — titular registral, no propietario beneficiario",
     "legalName": "nombre legal",

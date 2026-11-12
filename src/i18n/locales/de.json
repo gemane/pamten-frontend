@@ -177,6 +177,7 @@
     "replaces": "Vormals",
     "freeFloat": "Streubesitz / unbekannt",
     "ownershipExceeds": "Angegebene Anteile summieren sich auf {{pct}} % — überlappende Quellen oder Daten",
+    "ownershipExceedsClass": "Angegebene Anteile an {{security}} summieren sich auf {{pct}} % — überlappende Quellen oder Daten",
     "nominee": "Treuhänder",
     "nomineeHint": "Nominee / Depotverwalter — nur eingetragener Halter, kein wirtschaftlicher Eigentümer",
     "legalName": "Firmenname laut Register",
