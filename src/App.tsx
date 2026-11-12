@@ -418,13 +418,21 @@ function AppInner() {
         }
         if (willRunSlow) {
           const wrote = [outcome.sec13f, outcome.secEx21, outcome.secAcq].some(secRunWrote)
-          if (wrote) {
+          // Only into the graph this refresh started from: minutes have
+          // passed, and the reader may have built a different one since.
+          if (wrote && token === enrichSeqRef.current) {
             try {
-              const { data: fresh } = await ensureScrape(node.label, 1, false, country)
-              // Only into the graph this refresh started from: minutes have
-              // passed, and the reader may have built a different one since.
-              if (token === enrichSeqRef.current && fresh.profile && !isPersonResult(fresh) && isAbout(fresh, node.id)) {
-                appendProfile(fresh.profile as FullProfile)
+              // Read back BY ID, as a page reload would. The name went through
+              // the resolver: it could land on a namesake twin, and while a
+              // slow read for the company was still running (Quaker Chemical's
+              // 13F, 7.5 minutes, 2026-11-12) the server answered "in progress"
+              // with no profile — the 140 subsidiaries Exhibit 21 had written
+              // stayed off the graph until the user reloaded the page.
+              if (node.id === centerIdRef.current) {
+                await reloadCentreRef.current?.()
+              } else {
+                const { data: fresh } = await getFullProfile(node.id, asOfRef.current)
+                appendProfile(fresh)
               }
             } catch { /* the holders are in the database; the next open shows them */ }
           }
