@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import type { FullProfile, Entity, SearchResult } from './types'
@@ -8,14 +8,23 @@ import type { FullProfile, Entity, SearchResult } from './types'
 // search → select → enrich flow without cytoscape, leaflet, or real network.
 vi.mock('./components/Graph', () => ({
   // Exposes the one prop the graph-focus wiring is about.
-  default: ({ focusedId, onNodeHover, onNodeClick, onExampleClick, selectedNode, elements }: { focusedId?: string | null
+  default: ({ focusedId, onNodeHover, onNodeClick, onExampleClick, onExpand, selectedNode, elements }: { focusedId?: string | null
                                           onExampleClick?: (e: { label: string; id: string }) => void
-                                          elements?: { data: { id: string } }[]
+                                          onExpand?: (id: string) => void
+                                          elements?: { data: { id: string; source?: string; target?: string } }[]
                                           onNodeHover?: (id: string | null) => void
                                           onNodeClick?: (n: unknown) => void
                                           selectedNode?: { id: string } | null }) =>
     <div data-testid="graph" data-focused={focusedId ?? ''} data-hover-wired={onNodeHover ? 'yes' : 'no'}
          data-ids={(elements ?? []).map(e => e.data.id).join(',')}
+         // What Cytoscape would throw on: an edge whose end is not a node, an id twice.
+         data-broken={(() => {
+           const els = elements ?? []
+           const nodes = new Set(els.filter(e => !e.data.source).map(e => e.data.id))
+           const ids = els.map(e => e.data.id)
+           return [...els.filter(e => e.data.source && (!nodes.has(e.data.source) || !nodes.has(e.data.target!))).map(e => e.data.id),
+                   ...ids.filter((id, i) => ids.indexOf(id) !== i)].join(',')
+         })()}
          data-action-node={selectedNode?.id ?? ''}>
       {onNodeHover && <button onClick={() => onNodeHover('own1')}>hover-own1</button>}
       {onNodeHover && <button onClick={() => onNodeHover(null)}>hover-none</button>}
@@ -23,6 +32,7 @@ vi.mock('./components/Graph', () => ({
       {onNodeClick && <button onClick={() => onNodeClick({ id: 'sub1', label: 'Sub One', nodeType: 'entity', raw: {} })}>tap-sub1</button>}
       {onNodeClick && <button onClick={() => onNodeClick({ id: 'far', label: 'Far Co', nodeType: 'entity', raw: {} })}>tap-far</button>}
       {onExampleClick && <button onClick={() => onExampleClick({ label: 'SoftBank Group', id: 'lei:SBG' })}>chip-softbank</button>}
+      {onExpand && <button onClick={() => onExpand('e1')}>expand-e1</button>}
     </div>,
 }))
 vi.mock('./components/MapView', () => ({ default: () => null }))
@@ -745,5 +755,101 @@ describe('a start-page suggestion', () => {
     await userEvent.click(screen.getAllByText('chip-softbank')[0])
     await waitFor(() => expect(mockSearch).toHaveBeenCalledWith('SoftBank Group'))
     await waitFor(() => expect(screen.getAllByTestId('graph')[0].dataset.ids).toContain('e9'))
+  })
+})
+
+
+describe('one graph at a time — two loads in flight (2026-11-12, a blank page on a phone)', () => {
+  // A promise per profile id, resolved by the test in the order it chooses.
+  const deferProfiles = () => {
+    const pending = new Map<string, ((v: unknown) => void)[]>()
+    mockProfile.mockImplementation(((id: string) => new Promise(res => {
+      pending.set(id, [...(pending.get(id) ?? []), res])
+    })) as never)
+    // every request for that id still open
+    return (id: string, p: FullProfile) => act(async () => {
+      const waiting = pending.get(id) ?? []
+      pending.delete(id)
+      for (const res of waiting) res({ data: p })
+    })
+  }
+  const withSub = (id: string, name: string, subId: string): FullProfile => ({
+    ...fullProfile(id, name),
+    subsidiaries: [{ entity: entity(subId, 'Shared Sub'), relationship: { stake_percent: 100 } }],
+  } as FullProfile)
+  const graph = () => screen.getAllByTestId('graph')[0]
+
+  async function openE1(resolve: (id: string, p: FullProfile) => Promise<void>) {
+    mockSearch.mockResolvedValue({ data: [result('e1', 'Microsoft Corporation')] } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'microsoft', { delay: null })
+    await userEvent.click(await screen.findByText('Microsoft Corporation'))
+    await waitFor(() => expect(mockProfile).toHaveBeenCalledWith('e1', null))
+    await resolve('e1', fullProfile('e1', 'Microsoft Corporation'))
+    await waitFor(() => expect(graph().dataset.ids).toBe('e1'))
+  }
+
+  it('the older answer landing first does not leave the newer graph an edge without its node', async () => {
+    const resolve = deferProfiles()
+    await openE1(resolve)
+    // far, then the SoftBank chip, before either answers; both hold the same subsidiary
+    await userEvent.click(screen.getByRole('button', { name: 'navigate-far' }))
+    await userEvent.click(screen.getAllByText('chip-softbank')[0])
+    await resolve('far', withSub('far', 'Far Co', 'x'))
+    await resolve('lei:SBG', withSub('lei:SBG', 'SOFTBANK GROUP CORP.', 'x'))
+    await waitFor(() => expect(graph().dataset.ids).toContain('lei:SBG'))
+    expect(graph().dataset.broken).toBe('')
+    expect(graph().dataset.ids!.split(',').sort()).toEqual(['lei:SBG', 'lei:SBG__owns__x', 'x'])
+  })
+
+  it('the older answer landing last does not replace the newer graph', async () => {
+    const resolve = deferProfiles()
+    await openE1(resolve)
+    await userEvent.click(screen.getByRole('button', { name: 'navigate-far' }))
+    await userEvent.click(screen.getAllByText('chip-softbank')[0])
+    await resolve('lei:SBG', fullProfile('lei:SBG', 'SOFTBANK GROUP CORP.'))
+    await waitFor(() => expect(graph().dataset.ids).toBe('lei:SBG'))
+    await resolve('far', fullProfile('far', 'Far Co'))
+    await new Promise(r => setTimeout(r, 20))
+    expect(graph().dataset.ids).toBe('lei:SBG')
+  })
+
+  it('an enrichment answered after a chip replaced the graph is not appended to it', async () => {
+    const resolve = deferProfiles()
+    let answer: (v: unknown) => void = () => {}
+    mockEnsure.mockImplementation((() => new Promise(res => { answer = res })) as never)
+    await openE1(resolve)
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
+    // the chip does not cancel the enrichment of e1 still in flight
+    await userEvent.click(screen.getAllByText('chip-softbank')[0])
+    await resolve('lei:SBG', fullProfile('lei:SBG', 'SOFTBANK GROUP CORP.'))
+    await waitFor(() => expect(graph().dataset.ids).toBe('lei:SBG'))
+    await act(async () => answer({ data: { scraped: true, reason: 'stale', entity_id: 'e1', depth_reached: 1, sources_run: [],
+                                           profile: withSub('e1', 'Microsoft Corporation', 'x') } }))
+    await new Promise(r => setTimeout(r, 20))
+    expect(graph().dataset.ids).toBe('lei:SBG')
+  })
+
+  it('an expand answered after a navigate is not appended to the next graph', async () => {
+    const resolve = deferProfiles()
+    await openE1(resolve)
+    await userEvent.click(screen.getByRole('button', { name: 'expand-e1' }))
+    await userEvent.click(screen.getByRole('button', { name: 'navigate-far' }))
+    await resolve('far', fullProfile('far', 'Far Co'))
+    await waitFor(() => expect(graph().dataset.ids).toBe('far'))
+    await resolve('e1', withSub('e1', 'Microsoft Corporation', 'x'))
+    await new Promise(r => setTimeout(r, 20))
+    expect(graph().dataset.ids).toBe('far')
+    expect(graph().dataset.broken).toBe('')
+  })
+
+  it('two expands in flight do not add the same box twice', async () => {
+    const resolve = deferProfiles()
+    await openE1(resolve)
+    await userEvent.click(screen.getByRole('button', { name: 'expand-e1' }))
+    await userEvent.click(screen.getByRole('button', { name: 'expand-e1' }))
+    await resolve('e1', withSub('e1', 'Microsoft Corporation', 'x'))
+    await waitFor(() => expect(graph().dataset.ids).toContain('x'))
+    expect(graph().dataset.broken).toBe('')
   })
 })

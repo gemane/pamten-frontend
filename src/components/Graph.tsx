@@ -365,20 +365,36 @@ export function classifyElements(
  *  or nothing in common), or the difference — what to add AND what to take
  *  away. It only ever added: turning "all levels" off rebuilt the list with
  *  the direct holdings alone, found nothing new, and left Chubb's nine levels
- *  on screen however often the button was pressed. */
+ *  on screen however often the button was pressed.
+ *
+ *  An edge whose end will not be on the canvas is left out and named in
+ *  `dropped`, and so is an id given twice: Cytoscape throws on either, and the
+ *  throw blanked the whole page for one line ("Can not create edge … with
+ *  nonexistent source", 2026-11-12 — two loads in flight; App now keeps them
+ *  apart, this keeps any other slip from costing the page). */
 export function diffElements(
   existingIds: Set<string>,
   elements: GraphElement[],
   centerChanged: boolean,
-): { isReset: boolean; toAdd: GraphElement[]; toRemove: string[] } {
+): { isReset: boolean; toAdd: GraphElement[]; toRemove: string[]; dropped: string[] } {
   const isReset = centerChanged || !elements.some(el => existingIds.has(el.data.id))
-  if (isReset) return { isReset, toAdd: elements, toRemove: [] }
   const wanted = new Set(elements.map(el => el.data.id))
-  return {
-    isReset,
-    toAdd: elements.filter(el => !existingIds.has(el.data.id)),
-    toRemove: [...existingIds].filter(id => !wanted.has(id)),
-  }
+  const candidates = isReset ? elements : elements.filter(el => !existingIds.has(el.data.id))
+  const toRemove = isReset ? [] : [...existingIds].filter(id => !wanted.has(id))
+  // The nodes on the canvas once the change is made: the ones kept plus the
+  // ones added (an edge id is never a node's, so the kept set may hold edges).
+  const nodes = new Set<string>(isReset ? [] : [...existingIds].filter(id => wanted.has(id)))
+  for (const el of candidates) if (!('source' in el.data)) nodes.add(el.data.id)
+  const seen = new Set<string>()
+  const dropped: string[] = []
+  const toAdd = candidates.filter(el => {
+    const d = el.data as EdgeData
+    const ok = !seen.has(d.id) && (!('source' in d) || (nodes.has(d.source) && nodes.has(d.target)))
+    seen.add(d.id)
+    if (!ok) dropped.push(d.id)
+    return ok
+  })
+  return { isReset, toAdd, toRemove, dropped }
 }
 
 /** Where every node goes, and how the tree's lines run: owners (and people)
@@ -982,7 +998,8 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     const centerChanged = centerId !== prevCenterIdRef.current
     prevCenterIdRef.current = centerId
     const existingIds = new Set(cy.elements().map(el => el.id()))
-    const { isReset, toAdd, toRemove } = diffElements(existingIds, elements, centerChanged)
+    const { isReset, toAdd, toRemove, dropped } = diffElements(existingIds, elements, centerChanged)
+    if (dropped.length > 0) console.warn('Graph: left out elements whose ends are missing or ids repeat', dropped)
     // The mode follows the ELEMENTS, not the switch: the switch flips at once,
     // its elements arrive a moment later, and re-fitting the old elements to
     // the new mode's zoom floor in between made the picture swell before every
@@ -992,7 +1009,7 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
     if (isReset) {
       cy.elements().remove()
-      cy.add(elements as cytoscape.ElementDefinition[])
+      cy.add(toAdd as cytoscape.ElementDefinition[])
     } else {
       if (toAdd.length === 0 && toRemove.length === 0 && !modeChanged) return
       // Edges first: removing a node takes its edges with it, and removing an

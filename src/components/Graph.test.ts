@@ -399,6 +399,32 @@ describe('diffElements — the canvas follows the list both ways', () => {
     expect(d.toRemove).toEqual([])
   })
 
+  const e = (s: string, t: string) =>
+    ({ data: { id: `${s}__owns__${t}`, source: s, target: t, label: '', edgeType: 'owns' } }) as unknown as GraphElement
+
+  it('leaves out an edge whose end is not on the canvas — a reset (2026-11-12, the blank page)', () => {
+    const d = diffElements(new Set(), [n('sbg'), n('x'), e('sbg', 'x'), e('dominos', 'x')], true)
+    expect(d.toAdd.map(el => el.data.id)).toEqual(['sbg', 'x', 'sbg__owns__x'])
+    expect(d.dropped).toEqual(['dominos__owns__x'])
+  })
+
+  it('an added edge may hang on a node already drawn, not on one being removed', () => {
+    const d = diffElements(new Set(['c', 'a', 'gone']), [n('c'), n('a'), n('b'), e('a', 'b'), e('gone', 'b')], false)
+    expect(d.toAdd.map(el => el.data.id)).toEqual(['b', 'a__owns__b'])
+    expect(d.toRemove).toEqual(['gone'])
+    expect(d.dropped).toEqual(['gone__owns__b'])
+  })
+
+  it('an id given twice is added once', () => {
+    const d = diffElements(new Set(), [n('c'), n('x'), n('x'), e('c', 'x'), e('c', 'x')], true)
+    expect(d.toAdd.map(el => el.data.id)).toEqual(['c', 'x', 'c__owns__x'])
+    expect(d.dropped).toEqual(['x', 'c__owns__x'])
+  })
+
+  it('nothing is dropped from a whole list', () => {
+    expect(diffElements(new Set(), [n('c'), n('x'), e('c', 'x')], true).dropped).toEqual([])
+  })
+
   it('a new centre, or nothing in common, is a full reset', () => {
     expect(diffElements(new Set(['c', 'a']), [n('c'), n('a')], true).isReset).toBe(true)
     expect(diffElements(new Set(['x']), [n('c')], false).isReset).toBe(true)
