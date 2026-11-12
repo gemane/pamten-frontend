@@ -405,10 +405,17 @@ describe('the explicit refresh brings the 13F holders along', () => {
     await userEvent.click(await screen.findByText((res.node as Entity).name))
     await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
     mockEnsure.mockClear()
+    mockProfile.mockClear()
     await userEvent.click(await screen.findByRole('button', { name: 'refresh-from-sources' }))
     await waitFor(() => expect(mockEnsure).toHaveBeenCalled())
   }
   const settled = () => screen.findByText(/finished/)
+  // The graph is re-read BY ID once the slow phase wrote something, as a page
+  // reload would — never by name through the resolver (Quaker Chemical, 2026-11-12).
+  const reReadById = async () => {
+    await waitFor(() => expect(mockProfile).toHaveBeenCalledWith('e1', null))
+    expect(mockEnsure.mock.calls.filter(c => c[2] === false)).toHaveLength(0)
+  }
 
   it('a viewer refresh never touches the contributor endpoint', async () => {
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
@@ -423,9 +430,9 @@ describe('the explicit refresh brings the 13F holders along', () => {
     mock13f.mockResolvedValue({ data: { status: 'ok', total: 89 } } as never)
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     await waitFor(() => expect(mock13f).toHaveBeenCalledWith('Acme GmbH'))
-    // The holders were written server-side; the profile is re-read WITHOUT
-    // force so the new edges appear with no second scrape.
-    await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
+    // The holders were written server-side; the graph is re-read by id, so
+    // the new edges appear with no second scrape.
+    await reReadById()
     await settled()
   })
 
@@ -434,7 +441,7 @@ describe('the explicit refresh brings the 13F holders along', () => {
     mockEx21.mockResolvedValue({ data: { status: 'ok', total: 12 } } as never)
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     await waitFor(() => expect(mockEx21).toHaveBeenCalledWith('Acme GmbH'))
-    await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
+    await reReadById()
     await settled()
   })
 
@@ -446,7 +453,7 @@ describe('the explicit refresh brings the 13F holders along', () => {
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     await waitFor(() => expect(mockAcq).toHaveBeenCalledWith('Acme GmbH'))
     expect(mockEx21.mock.invocationCallOrder[0]).toBeLessThan(mockAcq.mock.invocationCallOrder[0])
-    await waitFor(() => expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE'))
+    await reReadById()
     await settled()
   })
 
@@ -466,8 +473,8 @@ describe('the explicit refresh brings the 13F holders along', () => {
     expect(toast.textContent).toContain('13F: 89 holders')
     expect(toast.textContent).toContain('read back from the server')
     expect(mockRuns).toHaveBeenCalledWith(200)
-    // The holders are in the database: the profile is re-read as after a heard answer.
-    expect(mockEnsure).toHaveBeenCalledWith('Acme GmbH', 1, false, 'DE')
+    // The holders are in the database: the graph is re-read as after a heard answer.
+    await reReadById()
   })
 
   it('a refused call has no run in the log and reads as before', async () => {
@@ -491,8 +498,45 @@ describe('the explicit refresh brings the 13F holders along', () => {
     mock13f.mockResolvedValue({ data: { status: 'fresh', total: 0 } } as never)
     await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
     await waitFor(() => expect(mock13f).toHaveBeenCalled())
-    expect(mockEnsure.mock.calls.filter(c => c[2] === false)).toHaveLength(0)
     await settled()
+    expect(mockEnsure.mock.calls.filter(c => c[2] === false)).toHaveLength(0)
+    expect(mockProfile).not.toHaveBeenCalled()
+  })
+
+  it('the new subsidiaries reach the graph even when the name would resolve elsewhere', async () => {
+    // Quaker Chemical (2026-11-12): the read-back by name met a twin node or an
+    // "in progress" answer, and the 140 subsidiaries stayed off the graph
+    auth.role = 'contributor'
+    mockEx21.mockResolvedValue({ data: { status: 'ok', total: 1 } } as never)
+    // the open reads the company as it was; the read-back after the refresh, with the new row
+    mockProfile.mockResolvedValueOnce({ data: fullProfile('e1', 'Acme GmbH') } as never)
+    mockProfile.mockResolvedValue({ data: { ...fullProfile('e1', 'Acme GmbH'),
+      subsidiaries: [{ entity: entity('s1', 'Acme Tochter GmbH'), relationship: { stake_percent: 100 } }] } } as never)
+    await openAndRefresh(result('e1', 'Acme GmbH', 'DE'))
+    await settled()
+    await waitFor(() => expect(screen.getAllByTestId('graph')[0].dataset.ids).toContain('s1'))
+  })
+
+  it('a refreshed company that is not the centre is read by its own id and appended', async () => {
+    auth.role = 'contributor'
+    mockEx21.mockResolvedValue({ data: { status: 'ok', total: 3 } } as never)
+    mockSearch.mockResolvedValue({ data: [result('e1', 'Acme GmbH', 'DE')] } as never)
+    mockProfile.mockResolvedValue({ data: { ...fullProfile('e1', 'Acme GmbH'),
+      subsidiaries: [{ entity: entity('far', 'Far Co'), relationship: { stake_percent: 100 } }] } } as never)
+    render(<App />)
+    await userEvent.type(screen.getByPlaceholderText(/Search companies/i), 'acme', { delay: null })
+    await userEvent.click(await screen.findByText('Acme GmbH'))
+    await waitFor(() => expect(screen.getAllByTestId('graph')[0].dataset.ids).toContain('far'))
+    await userEvent.click(screen.getByRole('button', { name: 'tap-far' }))
+    await waitFor(() => expect(screen.getByTestId('node-panel').getAttribute('data-node')).toBe('far'))
+    mockProfile.mockClear()
+    mockProfile.mockResolvedValue({ data: { ...fullProfile('far', 'Far Co'),
+      subsidiaries: [{ entity: entity('farsub', 'Far Sub'), relationship: { stake_percent: 100 } }] } } as never)
+    await userEvent.click(await screen.findByRole('button', { name: 'refresh-from-sources' }))
+    await screen.findByText(/finished/)
+    await waitFor(() => expect(mockProfile).toHaveBeenCalledWith('far', null))
+    await waitFor(() => expect(screen.getAllByTestId('graph')[0].dataset.ids).toContain('farsub'))
+    expect(screen.getAllByTestId('graph')[0].dataset.ids).toContain('e1')   // the centre's graph stays
   })
 })
 
