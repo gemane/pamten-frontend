@@ -1471,6 +1471,20 @@ describe('a company whose filings measure different securities', () => {
     expect(screen.queryByText('44.2%')).toBeNull()
   })
 
+  it('warns with the one security whose stakes pass 100 % (findings item 110)', async () => {
+    // Symbotic: no total across its classes, but Class A alone summed 133 %
+    await withSummary({ disclosed_pct: null, multi_class: true, unknown_owners: 0, exceeds_100: true,
+                        exceeds_pct: 133, exceeds_class: 'Class A Common Stock' })
+    expect(screen.getByText(/Class A Common Stock sum to 133%/)).toBeInTheDocument()
+    expect(screen.queryByText(/null%/)).toBeNull()
+  })
+
+  it('warns with the total when there is one', async () => {
+    await withSummary({ disclosed_pct: 143, multi_class: false, unknown_owners: 0, exceeds_100: true,
+                        exceeds_pct: 143, exceeds_class: null })
+    expect(screen.getByText(/Disclosed ownership sums to 143%/)).toBeInTheDocument()
+  })
+
   it('stays silent for an ordinary single-class company', async () => {
     await withSummary({ disclosed_pct: 12, free_float_pct: 88, multi_class: false,
                         unknown_owners: 0, exceeds_100: false })

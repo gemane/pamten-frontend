@@ -1786,7 +1786,11 @@ function EntityOverview({ profile, sources, onExportPng, onExportSpreadsheet, on
           )}
           {ownership?.exceeds_100 && (
             <div className="ownership-warning">
-              ⚠ {t('panel.ownershipExceeds', { pct: ownership.disclosed_pct })}
+              {/* With several securities there is no total; the sum that passed
+                  100 % is one security's, named (findings item 110). */}
+              ⚠ {ownership.exceeds_class
+                  ? t('panel.ownershipExceedsClass', { pct: ownership.exceeds_pct, security: ownership.exceeds_class })
+                  : t('panel.ownershipExceeds', { pct: ownership.exceeds_pct ?? ownership.disclosed_pct })}
             </div>
           )}
           {/* Several securities, several denominators — so there is no total to
