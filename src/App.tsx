@@ -199,15 +199,31 @@ function AppInner() {
     setToast({ message, type, sticky: opts?.sticky })
   }, [])
 
-  const loadEntity = useCallback(async (entityId: string): Promise<GraphElement[]> => {
+  // ── One graph at a time ──────────────────────────────────────────────────
+  // Every load that REPLACES the graph starts a new generation with its own
+  // loaded-id set, and commits both only if it is still the newest when its
+  // answers arrive. Two loads in flight used to share loadedIds.current: the
+  // later one skipped the nodes the earlier one had marked but still emitted
+  // their edges, then replaced the graph — "Can not create edge … with
+  // nonexistent source", a blank page (a phone, scrolling over the boxes,
+  // 2026-11-12: lei:25490005ZWM1IF9UXU57 Domino's → a subsidiary). An expand
+  // that came back after a navigate appended the old graph's edges the same way.
+  const graphGenRef = useRef(0)
+  const beginGraph = useCallback(() => {
+    graphGenRef.current += 1
+    return { gen: graphGenRef.current, ids: new Set<string>() }
+  }, [])
+  const isCurrentGraph = useCallback((gen: number) => gen === graphGenRef.current, [])
+
+  const loadEntity = useCallback(async (entityId: string, ids: Set<string>): Promise<GraphElement[]> => {
     const { data: profile } = await getFullProfile(entityId, asOfRef.current)
-    const els = buildElements(profile, loadedIds.current)
+    const els = buildElements(profile, ids)
     if (allLevelsRef.current) {
       // The tree's own failure must not cost the user the company: the direct
       // holdings are already built. As of the same day as the profile.
       try {
         const { data: tree } = await getSubsidiaryTree(entityId, asOfRef.current)
-        els.push(...buildTreeElements(tree, loadedIds.current))
+        els.push(...buildTreeElements(tree, ids))
         if (tree.truncated) showToast(t('toast.treeTruncated', { count: tree.nodes.length }), 'info')
       } catch { /* direct holdings only */ }
     }
@@ -216,9 +232,9 @@ function AppInner() {
 
   // Build the graph around a person: their ownerships (owns edges) and the
   // companies they currently lead (one dashed role edge per company).
-  const loadPerson = useCallback(async (personId: string): Promise<{ els: GraphElement[]; person: Person }> => {
+  const loadPerson = useCallback(async (personId: string, ids: Set<string>): Promise<{ els: GraphElement[]; person: Person }> => {
     const { data: profile } = await getPersonProfile(personId)
-    return { els: buildPersonProfileElements(profile, loadedIds.current, asOfRef.current), person: profile.person }
+    return { els: buildPersonProfileElements(profile, ids, asOfRef.current), person: profile.person }
   }, [])
 
   // ── On-demand enrichment ──────────────────────────────────────────────────
@@ -231,6 +247,10 @@ function AppInner() {
       void reloadCentreRef.current?.()
       return
     }
+    // It fills a company on screen. Some loads (the map, a chip, back/forward)
+    // replace the graph without cancelling an enrichment in flight; its profile
+    // belongs to a graph that is gone.
+    if (!loadedIds.current.has(profile.entity.id)) return
     const draftIds = new Set(loadedIds.current)
     const newEls = buildElements(profile, draftIds)
     if (newEls.length > 0) {
@@ -429,17 +449,18 @@ function AppInner() {
     setSearchLabel(query)
     setScrapingCompany(query)   // prominent centered overlay while the new company is fetched
     setLoading(true)
-    loadedIds.current = new Set()
+    const { gen, ids } = beginGraph()
     try {
       reportEvent({ kind: 'usage', event: 'scrape.requested' })
       const { data } = await ensureScrape(query, 1, true, country)
+      if (!isCurrentGraph(gen)) return
       if (isPersonResult(data)) {
         // A person, not a company. The graph is built around them — their roles
         // and holdings as connected companies — the same shape as clicking a
         // person already produces.
         const profile = data.profile
-        loadedIds.current = new Set()
-        const els = buildPersonProfileElements(profile, loadedIds.current)
+        const els = buildPersonProfileElements(profile, ids)
+        loadedIds.current = ids
         const node: NodeData = {
           id: profile.person.id, label: profile.person.full_name,
           nodeType: 'person', raw: profile.person,
@@ -454,8 +475,10 @@ function AppInner() {
           id: entity.id, label: entity.name, nodeType: 'entity',
           entitySubtype: entity.type ?? null, raw: entity,
         }
+        const els = buildElements(data.profile as FullProfile, ids)
+        loadedIds.current = ids
         setCenterId(entity.id)
-        setElements(buildElements(data.profile as FullProfile, loadedIds.current))
+        setElements(els)
         setSelectedNode(newNode)
         setNavHistory([newNode])
         scheduleDepth2Enrich(query, country)
@@ -474,12 +497,14 @@ function AppInner() {
           : t('toast.scrapeNoResults', { query }), 'info')
       }
     } catch {
-      showToast(t('toast.scrapeError'), 'error')
+      if (isCurrentGraph(gen)) showToast(t('toast.scrapeError'), 'error')
     } finally {
-      setLoading(false)
-      setScrapingCompany(null)
+      if (isCurrentGraph(gen)) {
+        setLoading(false)
+        setScrapingCompany(null)
+      }
     }
-  }, [user, resetEnrichment, scheduleDepth2Enrich, showToast, t])
+  }, [user, resetEnrichment, scheduleDepth2Enrich, showToast, t, beginGraph, isCurrentGraph])
 
   const handleSearchSelect = useCallback(async (result: SearchResult) => {
     resetEnrichment()
@@ -489,27 +514,32 @@ function AppInner() {
 
     if (result.type === 'Person') {
       setLoading(true)
-      loadedIds.current = new Set()
+      const { gen, ids } = beginGraph()
       try {
-        const { els, person } = await loadPerson(result.node.id)
+        const { els, person } = await loadPerson(result.node.id, ids)
+        if (!isCurrentGraph(gen)) return
+        loadedIds.current = ids
         const newNode: NodeData = { id: person.id, nodeType: 'person', label: person.full_name, raw: person }
         setCenterId(person.id)
         setElements(els)
         setSelectedNode(newNode)
         setNavHistory([newNode])
       } catch {
+        if (!isCurrentGraph(gen)) return
         showToast(t('toast.personGraphError'), 'error')
         setSelectedNode({ id: result.node.id, nodeType: 'person', label: ('full_name' in result.node ? result.node.full_name : result.node.name) || '', raw: result.node })
       } finally {
-        setLoading(false)
+        if (isCurrentGraph(gen)) setLoading(false)
       }
       return
     }
 
     setLoading(true)
-    loadedIds.current = new Set()
+    const { gen, ids } = beginGraph()
     try {
-      const els = await loadEntity(result.node.id)
+      const els = await loadEntity(result.node.id, ids)
+      if (!isCurrentGraph(gen)) return
+      loadedIds.current = ids
       const newNode: NodeData = {
         id:            result.node.id,
         label:         ('name' in result.node ? result.node.name : result.node.full_name) || '',
@@ -527,11 +557,11 @@ function AppInner() {
       // holds, and asking the sources by its name finds some other company.
       if (newNode.entitySubtype !== 'voting_group') void enrichExisting(newNode.label, result.node.id)
     } catch {
-      showToast(t('toast.entityLoadError'), 'error')
+      if (isCurrentGraph(gen)) showToast(t('toast.entityLoadError'), 'error')
     } finally {
-      setLoading(false)
+      if (isCurrentGraph(gen)) setLoading(false)
     }
-  }, [loadEntity, loadPerson, showToast, t, resetEnrichment, enrichExisting])
+  }, [loadEntity, loadPerson, showToast, t, resetEnrichment, enrichExisting, beginGraph, isCurrentGraph])
 
   const handleNavigateTo = useCallback(async (nodeData: NodeData) => {
     resetEnrichment()
@@ -539,54 +569,65 @@ function AppInner() {
     setSelectedNode(null)
     setSearchLabel(nodeData.label)
     setLoading(true)
-    loadedIds.current = new Set()
+    const { gen, ids } = beginGraph()
     try {
       if (nodeData.nodeType === 'person') {
-        const { els } = await loadPerson(nodeData.id)
+        const { els } = await loadPerson(nodeData.id, ids)
+        if (!isCurrentGraph(gen)) return
+        loadedIds.current = ids
         setCenterId(nodeData.id)
         setElements(els)
         setSelectedNode(nodeData)
         setNavHistory(prev => [...prev, nodeData])
       } else {
-        const els = await loadEntity(nodeData.id)
+        const els = await loadEntity(nodeData.id, ids)
+        if (!isCurrentGraph(gen)) return
+        loadedIds.current = ids
         setCenterId(nodeData.id)
         setElements(els)
         setSelectedNode(nodeData)
         setNavHistory(prev => [...prev, nodeData])
       }
     } catch {
-      showToast(t('toast.nodeLoadError'), 'error')
+      if (isCurrentGraph(gen)) showToast(t('toast.nodeLoadError'), 'error')
     } finally {
-      setLoading(false)
+      if (isCurrentGraph(gen)) setLoading(false)
     }
-  }, [loadEntity, loadPerson, showToast, resetEnrichment])
+  }, [loadEntity, loadPerson, showToast, resetEnrichment, beginGraph, isCurrentGraph])
 
   const handleExpand = useCallback(async (nodeId: string) => {
     reportEvent({ kind: 'usage', event: 'graph.expand' })
     setExpandingId(nodeId)
+    // The graph this expand belongs to: a navigate while it is in flight
+    // replaces it, and the answer must not be appended to the next one.
+    const gen = graphGenRef.current
     try {
-      // Build against a draft copy: the build functions mark every ID they
-      // emit, so mutating loadedIds directly and then discarding the elements
-      // would make those edges unloadable forever.
-      const draftIds = new Set(loadedIds.current)
       const node = elementsRef.current.find(el => !('source' in el.data) && el.data.id === nodeId)
+      const isPerson = !!node && (node.data as NodeData).nodeType === 'person'
+      const personProfile = isPerson ? (await getPersonProfile(nodeId)).data : null
+      const entityProfile = isPerson ? null : (await getFullProfile(nodeId, asOfRef.current)).data
+      if (!isCurrentGraph(gen)) return
+      // Built only now, against the loaded set as it stands when the answer
+      // lands: two expands in flight each copied the set before their await,
+      // and the second commit dropped the first one's ids, so its nodes were
+      // emitted a second time. A draft copy still, because the build functions
+      // mark every ID they emit and an empty result is discarded.
+      const draftIds = new Set(loadedIds.current)
       let newEls: GraphElement[]
-      if (node && (node.data as NodeData).nodeType === 'person') {
+      if (personProfile) {
         // Person: pull in their positions/ownerships around the existing graph.
-        const { data: profile } = await getPersonProfile(nodeId)
-        newEls = buildPersonProfileElements(profile, draftIds, asOfRef.current)
+        newEls = buildPersonProfileElements(personProfile, draftIds, asOfRef.current)
       } else {
-        const { data: profile } = await getFullProfile(nodeId, asOfRef.current)
         const cur = elementsRef.current
         const isAbove = cur.some(el =>
           'source' in el.data && el.data.source === nodeId && el.data.edgeDir === 'in')
         const isBelow = cur.some(el =>
           'source' in el.data && el.data.target === nodeId && el.data.edgeDir === 'out')
         newEls = isAbove && !isBelow
-          ? buildElementsUpward(profile as FullProfile, draftIds)
+          ? buildElementsUpward(entityProfile as FullProfile, draftIds)
           : isBelow && !isAbove
-            ? buildElementsDownward(profile as FullProfile, draftIds)
-            : buildElements(profile as FullProfile, draftIds)
+            ? buildElementsDownward(entityProfile as FullProfile, draftIds)
+            : buildElements(entityProfile as FullProfile, draftIds)
       }
       if (newEls.length > 0) {
         loadedIds.current = draftIds
@@ -595,11 +636,11 @@ function AppInner() {
         showToast(t('toast.noNewConnections'), 'info')
       }
     } catch {
-      showToast(t('toast.expandError'), 'error')
+      if (isCurrentGraph(gen)) showToast(t('toast.expandError'), 'error')
     } finally {
       setExpandingId(null)
     }
-  }, [showToast])
+  }, [showToast, isCurrentGraph])
 
   const handleClearGraph = useCallback(() => {
     resetEnrichment()
@@ -610,8 +651,9 @@ function AppInner() {
     setSearchLabel(undefined)
     setNavHistory([])
     setToast(null)
+    beginGraph()                  // a load still in flight must not bring it back
     loadedIds.current = new Set()
-  }, [resetEnrichment])
+  }, [resetEnrichment, beginGraph])
 
   const handleExportPng = useCallback(() => {
     reportEvent({ kind: 'usage', event: 'export.png' })
@@ -677,11 +719,13 @@ function AppInner() {
   const handleExampleClick = useCallback(async (example: StartExample) => {
     setToast(null)
     setLoading(true)
-    loadedIds.current = new Set()
+    const { gen, ids } = beginGraph()
     try {
-      const els = await loadEntity(example.id)
+      const els = await loadEntity(example.id, ids)
+      if (!isCurrentGraph(gen)) return
       const center = els.find(el => !('source' in el.data) && el.data.id === example.id)
       if (center) {
+        loadedIds.current = ids
         setCenterId(example.id)
         setElements(els)
         setSelectedNode(center.data as NodeData)
@@ -690,13 +734,16 @@ function AppInner() {
         return
       }
     } catch { /* fall back to the name */ }
-    loadedIds.current = new Set()
+    if (!isCurrentGraph(gen)) return
+    const fallback = beginGraph()
     const query = example.label
     try {
       const { data: results } = await search(query)
       const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('not found')
-      const els = await loadEntity(entity.node.id)
+      const els = await loadEntity(entity.node.id, fallback.ids)
+      if (!isCurrentGraph(fallback.gen)) return
+      loadedIds.current = fallback.ids
       const newNode: NodeData = {
         id:            entity.node.id,
         label:         ('name' in entity.node ? entity.node.name : entity.node.full_name) || '',
@@ -710,11 +757,11 @@ function AppInner() {
       setSearchLabel(newNode.label)
       setNavHistory([newNode])
     } catch {
-      showToast(t('toast.noResults', { query }), 'info')
+      if (isCurrentGraph(fallback.gen)) showToast(t('toast.noResults', { query }), 'info')
     } finally {
-      setLoading(false)
+      if (isCurrentGraph(fallback.gen)) setLoading(false)
     }
-  }, [loadEntity, showToast])
+  }, [loadEntity, showToast, beginGraph, isCurrentGraph])
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab)
@@ -874,9 +921,11 @@ function AppInner() {
     setSelectedCountry(null)
     setToast(null)
     setLoading(true)
-    loadedIds.current = new Set()
+    const { gen, ids } = beginGraph()
     try {
-      const els = await loadEntity(entityId)
+      const els = await loadEntity(entityId, ids)
+      if (!isCurrentGraph(gen)) return
+      loadedIds.current = ids
       setCenterId(entityId)
       setElements(els)
       const center = els.find(el => !('source' in el.data) && el.data.id === entityId)
@@ -886,31 +935,33 @@ function AppInner() {
         setNavHistory([center.data as NodeData])
       }
     } catch {
-      showToast(t('toast.entityIntoGraphError'), 'error')
+      if (isCurrentGraph(gen)) showToast(t('toast.entityIntoGraphError'), 'error')
     } finally {
-      setLoading(false)
+      if (isCurrentGraph(gen)) setLoading(false)
     }
-  }, [loadEntity, showToast])
+  }, [loadEntity, showToast, beginGraph, isCurrentGraph])
 
   const handleLoadIntoGraph = useCallback(async (queryStr: string) => {
     setActiveTab('graph')
     setToast(null)
     setLoading(true)
-    loadedIds.current = new Set()
+    const { gen, ids } = beginGraph()
     try {
       const { data: results } = await search(queryStr)
       const entity = results.find((r: SearchResult) => r.type === 'Entity')
       if (!entity) throw new Error('Entity not found')
-      const els = await loadEntity(entity.node.id)
+      const els = await loadEntity(entity.node.id, ids)
+      if (!isCurrentGraph(gen)) return
+      loadedIds.current = ids
       setCenterId(entity.node.id)
       setElements(els)
       showToast(t('toast.loadedIntoGraph', { query: queryStr }), 'success')
     } catch {
-      showToast(t('toast.scrapedIntoGraphError'), 'error')
+      if (isCurrentGraph(gen)) showToast(t('toast.scrapedIntoGraphError'), 'error')
     } finally {
-      setLoading(false)
+      if (isCurrentGraph(gen)) setLoading(false)
     }
-  }, [loadEntity, showToast])
+  }, [loadEntity, showToast, beginGraph, isCurrentGraph])
 
   // ── Browser history integration ──────────────────────────────────────────
   // Navigation state (tab, centered node, selected country) is mirrored into
@@ -932,14 +983,16 @@ function AppInner() {
     setToast(null)
     setSelectedNode(null)
     setLoading(true)
-    loadedIds.current = new Set()
+    const { gen, ids } = beginGraph()
     try {
       let els: GraphElement[]
       if (entityType === 'person') {
-        els = (await loadPerson(entityId)).els
+        els = (await loadPerson(entityId, ids)).els
       } else {
-        els = await loadEntity(entityId)
+        els = await loadEntity(entityId, ids)
       }
+      if (!isCurrentGraph(gen)) return
+      loadedIds.current = ids
       setCenterId(entityId)
       setElements(els)
       const center = els.find(el => !('source' in el.data) && el.data.id === entityId)
@@ -949,12 +1002,13 @@ function AppInner() {
         setNavHistory([center.data as NodeData])
       }
     } catch {
+      if (!isCurrentGraph(gen)) return
       restoreTargetRef.current = null  // give up so normal URL syncing resumes
       showToast(t('toast.entityLoadError'), 'error')
     } finally {
-      setLoading(false)
+      if (isCurrentGraph(gen)) setLoading(false)
     }
-  }, [loadEntity, loadPerson, showToast])
+  }, [loadEntity, loadPerson, showToast, beginGraph, isCurrentGraph])
 
   // Rebuild the graph around the current centre for the day in asOfRef and the
   // mode in allLevelsRef — the loaded set belongs to one day and one mode, so
@@ -963,16 +1017,18 @@ function AppInner() {
     const id = centerIdRef.current
     if (!id) return
     setLoading(true)
-    loadedIds.current = new Set()
+    const { gen, ids } = beginGraph()
     try {
-      const els = centerType === 'person' ? (await loadPerson(id)).els : await loadEntity(id)
+      const els = centerType === 'person' ? (await loadPerson(id, ids)).els : await loadEntity(id, ids)
+      if (!isCurrentGraph(gen)) return
+      loadedIds.current = ids
       setElements(els)
     } catch {
-      showToast(t('toast.entityLoadError'), 'error')
+      if (isCurrentGraph(gen)) showToast(t('toast.entityLoadError'), 'error')
     } finally {
-      setLoading(false)
+      if (isCurrentGraph(gen)) setLoading(false)
     }
-  }, [centerType, loadEntity, loadPerson, showToast, t])
+  }, [centerType, loadEntity, loadPerson, showToast, t, beginGraph, isCurrentGraph])
   reloadCentreRef.current = reloadCentre
 
   // Time travel: a year clicked in the timeline (null = back to the present).
