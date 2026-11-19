@@ -23,9 +23,10 @@ vi.mock('../services/api', () => ({
   removeSuppression: vi.fn(),
   getPins: vi.fn(),
   removePin: vi.fn(),
+  undoPersonMerge: vi.fn(),
 }))
 vi.mock('./PinModal', () => ({ default: () => null }))
-import { getFlags, getFlagGroups, getSuppressions, getPins } from '../services/api'
+import { getFlags, getFlagGroups, getSuppressions, getPins, suppressFlag, undoPersonMerge } from '../services/api'
 
 const flagGroup = (o: Partial<FlagGroup> = {}): FlagGroup => ({
   target_kind: 'entity', from_id: '', to_id: '', role: '', node_id: 'Acme Corp',
@@ -171,3 +172,79 @@ describe('always', () => {
     expect(onClose).toHaveBeenCalled()
   })
 })
+
+/**
+ * A person made by merging two is not suppressed at once. What somebody reports
+ * as "not mine" may be the other person's, and then the fix is to undo the
+ * merge — so the server answers 409 and the queue has to put the question.
+ */
+describe('a merged person', () => {
+  const question = {
+    code: 'merged_person', message: 'm', fields: [],
+    merges: [{ snapshot_id: 's1', keep_id: 'p-keep', keep_name: 'Jane Smith', dup_id: 'choff:dup',
+               dup_name: 'Jane Mary Smith', at: '2026-11-16T18:14:00+00:00', reason: 'same birth month',
+               fields: {}, link: 'duplicate' }],
+  }
+  const seat = flagGroup({ target_kind: 'role', from_id: 'p-keep', to_id: 'co-b', role: 'Company Secretary', node_id: '' })
+
+  beforeEach(() => {
+    vi.mocked(getFlagGroups).mockResolvedValue({ data: [seat] } as never)
+    vi.mocked(suppressFlag).mockReset()
+    vi.mocked(undoPersonMerge).mockReset()
+    vi.mocked(suppressFlag).mockRejectedValueOnce({ response: { status: 409, data: { detail: question } } })
+  })
+
+  const ask = async () => {
+    render(<ModeratorQueue relatedTo="p-keep" onClose={vi.fn()} />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Suppress' }))
+    await screen.findByText('This person was made by a merge')
+  }
+
+  it('asks about the merge instead of suppressing, and says whose seat it was', async () => {
+    await ask()
+    expect(suppressFlag).toHaveBeenCalledTimes(1)
+    expect(suppressFlag).toHaveBeenCalledWith('f1')
+    expect(screen.getByText('Jane Smith')).toBeTruthy()
+    expect(screen.getByText('This came from Jane Mary Smith.')).toBeTruthy()
+    expect(screen.getByText(/same birth month/)).toBeTruthy()
+    // the report is still in the queue: nothing happened yet
+    expect(screen.getByText('p-keep → co-b (Company Secretary)')).toBeTruthy()
+  })
+
+  it('"the merge is right" suppresses with the confirmation and drops the report', async () => {
+    vi.mocked(suppressFlag).mockResolvedValueOnce({ data: { id: 'x', flag_id: 'f1', status: 'suppressed' } } as never)
+    await ask()
+    await userEvent.click(screen.getByRole('button', { name: /The merge is right/ }))
+    await waitFor(() => expect(suppressFlag).toHaveBeenLastCalledWith('f1', true))
+    await waitFor(() => expect(screen.queryByText('p-keep → co-b (Company Secretary)')).toBeNull())
+    expect(screen.queryByText('This person was made by a merge')).toBeNull()
+    expect(undoPersonMerge).not.toHaveBeenCalled()
+  })
+
+  it('"undo this merge" splits the person, suppresses nothing and keeps the report', async () => {
+    vi.mocked(undoPersonMerge).mockResolvedValueOnce({ data: {
+      snapshot_id: 's1', kept_id: 'p-keep', restored_id: 'choff:dup',
+      written_since: ['HAS_ROLE -> co-x (Director)'], held_back: [], not_restored: [] } } as never)
+    await ask()
+    await userEvent.click(screen.getByRole('button', { name: /Undo this merge/ }))
+    await screen.findByText('The merge is undone: they are two persons again.')
+    expect(undoPersonMerge).toHaveBeenCalledWith('s1')
+    expect(suppressFlag).toHaveBeenCalledTimes(1)                    // only the first, refused one
+    expect(screen.getByText(/1 item written since the merge stays/)).toBeTruthy()
+    expect(screen.getByText('Nothing was suppressed. The report stays in the queue.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /The merge is right/ })).toBeNull()
+    // the queue was read again: the undo changed what the report points at
+    expect(vi.mocked(getFlagGroups).mock.calls.length).toBeGreaterThan(1)
+  })
+
+  it('any other failure leaves the row alone and asks nothing', async () => {
+    vi.mocked(suppressFlag).mockReset()
+    vi.mocked(suppressFlag).mockRejectedValueOnce({ response: { status: 500, data: { detail: 'boom' } } })
+    render(<ModeratorQueue relatedTo="p-keep" onClose={vi.fn()} />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Suppress' }))
+    await waitFor(() => expect(suppressFlag).toHaveBeenCalled())
+    expect(screen.queryByText('This person was made by a merge')).toBeNull()
+    expect(screen.getByText('p-keep → co-b (Company Secretary)')).toBeTruthy()
+  })
+})
+

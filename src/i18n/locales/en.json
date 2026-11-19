@@ -274,6 +274,26 @@
     "next": "Next",
     "range": "{{from}}–{{to}} of {{total}}"
   },
+  "mergeQuestion": {
+    "title": "This person was made by a merge",
+    "intro": "Before you suppress {{name}}: the person was made by merging two records. If the report is right because the merge is wrong, undo the merge instead.",
+    "undo": "Undo this merge",
+    "confirm": "The merge is right — suppress",
+    "close": "Close",
+    "undoError": "The merge could not be undone.",
+    "confirmError": "Couldn't suppress. Please try again.",
+    "undone": "The merge is undone: they are two persons again.",
+    "heldBack_one": "{{count}} item removed since the merge was not given back.",
+    "heldBack_other": "{{count}} items removed since the merge were not given back.",
+    "writtenSince_one": "{{count}} item written since the merge stays with the kept person — please check it.",
+    "writtenSince_other": "{{count}} items written since the merge stay with the kept person — please check them.",
+    "reportStays": "Nothing was suppressed. The report stays in the queue.",
+    "whose": {
+      "kept": "This came from {{kept}}.",
+      "duplicate": "This came from {{duplicate}}.",
+      "both": "Both had this."
+    }
+  },
   "pin": {
     "title": "Pin a correction",
     "subtitle": "Set the correct values for {{name}}.",

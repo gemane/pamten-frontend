@@ -21,6 +21,7 @@ import type {
   DedupResult,
   KeptSeparateList,
   MergeLogList,
+  MergeUndoReport,
   FederationStatus,
   FederationPeer,
   FederationPublicKey,
@@ -291,6 +292,10 @@ export const getKeptSeparate = (): Promise<AxiosResponse<KeptSeparateList>> =>
 export const getMergeLog = (): Promise<AxiosResponse<MergeLogList>> =>
   client.get('/persons/merge-log')
 
+// Split a merged person back into the two it was made of.
+export const undoPersonMerge = (snapshotId: string): Promise<AxiosResponse<MergeUndoReport>> =>
+  client.post(`/persons/merge-log/${encodeURIComponent(snapshotId)}/undo`)
+
 // ── Federation (trusted-peer sync) ──────────────────────────────────────────
 export const getFederationStatus = (): Promise<AxiosResponse<FederationStatus>> =>
   client.get('/federation/status')
@@ -389,8 +394,10 @@ export const getFlagGroups = (
   client.get('/flags', { params: { ...params, group: true, limit: 500 } })
 
 // Suppress an edge flag: deletes the edge + records a re-scrape-surviving override.
-export const suppressFlag = (id: string): Promise<AxiosResponse<{ id: string; flag_id: string; status: string }>> =>
-  client.post(`/flags/${id}/suppress`)
+// On a person made by a merge the server answers 409 `merged_person` first (see
+// MergeQuestionModal); `mergeConfirmed` is the answer "the merge is right".
+export const suppressFlag = (id: string, mergeConfirmed = false): Promise<AxiosResponse<{ id: string; flag_id: string; status: string }>> =>
+  client.post(`/flags/${id}/suppress`, null, mergeConfirmed ? { params: { merge_confirmed: true } } : undefined)
 
 export const getSuppressions = (): Promise<AxiosResponse<Suppression[]>> =>
   client.get('/flags/suppressions')
