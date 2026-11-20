@@ -274,6 +274,26 @@
     "next": "Weiter",
     "range": "{{from}}–{{to}} von {{total}}"
   },
+  "mergeQuestion": {
+    "title": "Diese Person ist aus einer Zusammenführung entstanden",
+    "intro": "Bevor Sie {{name}} unterdrücken: Die Person wurde aus zwei Einträgen zusammengeführt. Wenn die Meldung stimmt, weil die Zusammenführung falsch ist, machen Sie stattdessen die Zusammenführung rückgängig.",
+    "undo": "Diese Zusammenführung rückgängig machen",
+    "confirm": "Die Zusammenführung stimmt — unterdrücken",
+    "close": "Schließen",
+    "undoError": "Die Zusammenführung konnte nicht rückgängig gemacht werden.",
+    "confirmError": "Unterdrücken fehlgeschlagen. Bitte erneut versuchen.",
+    "undone": "Die Zusammenführung ist rückgängig gemacht: Es sind wieder zwei Personen.",
+    "heldBack_one": "{{count}} seit der Zusammenführung entfernter Eintrag wurde nicht zurückgegeben.",
+    "heldBack_other": "{{count}} seit der Zusammenführung entfernte Einträge wurden nicht zurückgegeben.",
+    "writtenSince_one": "{{count}} seit der Zusammenführung geschriebener Eintrag bleibt bei der behaltenen Person — bitte prüfen.",
+    "writtenSince_other": "{{count}} seit der Zusammenführung geschriebene Einträge bleiben bei der behaltenen Person — bitte prüfen.",
+    "reportStays": "Es wurde nichts unterdrückt. Die Meldung bleibt in der Warteschlange.",
+    "whose": {
+      "kept": "Das stammt von {{kept}}.",
+      "duplicate": "Das stammt von {{duplicate}}.",
+      "both": "Beide hatten das."
+    }
+  },
   "pin": {
     "title": "Korrektur festsetzen",
     "subtitle": "Korrekte Werte für {{name}} festlegen.",

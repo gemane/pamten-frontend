@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { describeTarget } from './ModeratorQueue'
+import { describeTarget, mergeQuestionOf } from './ModeratorQueue'
 import type { Flag } from '../types'
 
 const base: Flag = {
@@ -20,3 +20,18 @@ describe('describeTarget', () => {
       .toBe('p → e (CEO)')
   })
 })
+
+describe('mergeQuestionOf', () => {
+  const detail = { code: 'merged_person', message: '', fields: [], merges: [] }
+  it('reads the question out of the 409', () => {
+    expect(mergeQuestionOf({ response: { status: 409, data: { detail } } })).toEqual(detail)
+  })
+  it('is not fooled by another 409, another status, or no response at all', () => {
+    expect(mergeQuestionOf({ response: { status: 409, data: { detail: 'this merge was already undone' } } })).toBeNull()
+    expect(mergeQuestionOf({ response: { status: 409, data: { detail: { ...detail, code: 'something_else' } } } })).toBeNull()
+    expect(mergeQuestionOf({ response: { status: 500, data: { detail } } })).toBeNull()
+    expect(mergeQuestionOf(new Error('network'))).toBeNull()
+    expect(mergeQuestionOf(null)).toBeNull()
+  })
+})
+

@@ -6,8 +6,9 @@ import {
   getFlags, getFlagGroups, updateFlagStatus, suppressFlag,
   getSuppressions, removeSuppression, getPins, removePin,
 } from '../services/api'
-import type { Flag, FlagGroup, Suppression, Pin } from '../types'
+import type { Flag, FlagGroup, Suppression, Pin, MergedPersonQuestion } from '../types'
 import PinModal from './PinModal'
+import MergeQuestionModal from './MergeQuestionModal'
 
 // Human-readable target for a flag/suppression row. Exported for unit testing.
 export function describeTarget(t: { target_kind: string; from_id: string; to_id: string; role: string; node_id?: string }): string {
@@ -22,6 +23,14 @@ const PINS = 'pins'
 const TABS = [...STATUSES, SUPPRESSIONS, PINS] as const
 
 const gid = (g: FlagGroup) => g.flag_ids[0]   // stable client-side key for a group
+
+/** The server's "this person was made by a merge — is the merge wrong?" (409),
+ *  or null for any other failure. Exported for unit testing. */
+export function mergeQuestionOf(err: unknown): MergedPersonQuestion | null {
+  const res = (err as { response?: { status?: number; data?: { detail?: unknown } } } | null)?.response
+  const detail = res?.data?.detail as MergedPersonQuestion | undefined
+  return res?.status === 409 && detail?.code === 'merged_person' && Array.isArray(detail.merges) ? detail : null
+}
 
 /** How many individual reports a page of the full queue holds. */
 export const PAGE_SIZE = 25
@@ -54,6 +63,7 @@ export default function ModeratorQueue({ onClose, relatedTo }: { onClose: () => 
   const [loading,   setLoading]   = useState<boolean>(true)
   const [busy,      setBusy]      = useState<string | null>(null)
   const [pinTarget, setPinTarget] = useState<FlagGroup | null>(null)
+  const [asked,     setAsked]     = useState<{ group: FlagGroup; question: MergedPersonQuestion } | null>(null)
   const [page,      setPage]      = useState<number>(0)
   const [total,     setTotal]     = useState<number | null>(null)
 
@@ -89,7 +99,13 @@ export default function ModeratorQueue({ onClose, relatedTo }: { onClose: () => 
   }
   // Reject/reviewing apply to every flag in the group; suppress cascades server-side.
   const act        = (g: FlagGroup, next: string) => withBusy(gid(g), () => Promise.all(g.flag_ids.map(id => updateFlagStatus(id, next))), () => dropGroup(g))
-  const suppress   = (g: FlagGroup) => withBusy(gid(g), () => suppressFlag(g.flag_ids[0]), () => dropGroup(g))
+  // A person made by a merge is not suppressed at once: the server asks whether
+  // the merge is the mistake, and the dialog puts that to the moderator.
+  const suppress   = (g: FlagGroup) => withBusy(gid(g), () => suppressFlag(g.flag_ids[0]).catch(err => {
+    const question = mergeQuestionOf(err)
+    if (question) setAsked({ group: g, question })
+    throw err
+  }), () => dropGroup(g))
   const unsuppress = (id: string) => withBusy(id, () => removeSuppression(id), () => setSups(ss => ss.filter(s => s.id !== id)))
   const unpin      = (id: string) => withBusy(id, () => removePin(id),         () => setPins(ps => ps.filter(p => p.id !== id)))
 
@@ -216,6 +232,13 @@ export default function ModeratorQueue({ onClose, relatedTo }: { onClose: () => 
           </div>
         )}
       </div>
+
+      {asked && (
+        <MergeQuestionModal question={asked.question} targetLabel={describeTarget(asked.group)}
+                            onClose={() => setAsked(null)}
+                            onConfirm={async () => { await suppressFlag(asked.group.flag_ids[0], true); dropGroup(asked.group) }}
+                            onUndone={load} />
+      )}
 
       {pinTarget && (
         <PinModal flagId={pinTarget.flag_ids[0]} targetLabel={describeTarget(pinTarget)}

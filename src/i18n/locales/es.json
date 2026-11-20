@@ -274,6 +274,26 @@
     "next": "Siguiente",
     "range": "{{from}}–{{to}} de {{total}}"
   },
+  "mergeQuestion": {
+    "title": "Esta persona es el resultado de una fusión",
+    "intro": "Antes de suprimir {{name}}: la persona se creó al fusionar dos registros. Si el aviso es correcto porque la fusión es errónea, deshaga la fusión en su lugar.",
+    "undo": "Deshacer esta fusión",
+    "confirm": "La fusión es correcta — suprimir",
+    "close": "Cerrar",
+    "undoError": "No se pudo deshacer la fusión.",
+    "confirmError": "No se pudo suprimir. Inténtelo de nuevo.",
+    "undone": "La fusión se ha deshecho: vuelven a ser dos personas.",
+    "heldBack_one": "{{count}} elemento eliminado desde la fusión no se ha devuelto.",
+    "heldBack_other": "{{count}} elementos eliminados desde la fusión no se han devuelto.",
+    "writtenSince_one": "{{count}} elemento escrito desde la fusión queda en la persona conservada — revíselo.",
+    "writtenSince_other": "{{count}} elementos escritos desde la fusión quedan en la persona conservada — revíselos.",
+    "reportStays": "No se ha suprimido nada. El aviso sigue en la cola.",
+    "whose": {
+      "kept": "Esto procede de {{kept}}.",
+      "duplicate": "Esto procede de {{duplicate}}.",
+      "both": "Ambos lo tenían."
+    }
+  },
   "pin": {
     "title": "Fijar una corrección",
     "subtitle": "Indica los valores correctos para {{name}}.",

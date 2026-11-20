@@ -579,6 +579,39 @@ export interface MergeLogEntry {
   count?: number
 }
 
+/** One merge a person is made of, as the server shows it before a removal. */
+interface StandingMerge {
+  snapshot_id: string
+  keep_id: string
+  keep_name: string | null
+  dup_id: string
+  dup_name: string | null
+  at: string | null
+  reason: string | null
+  /** Per field named in the request: whose value it was. */
+  fields: Record<string, 'kept' | 'duplicate' | 'both' | null>
+  /** Who brought the seat or holding being suppressed into the merge. */
+  link?: 'kept' | 'duplicate' | 'both' | null
+}
+
+/** The 409 a removal on a merged person gets: is the merge wrong, or the value? */
+export interface MergedPersonQuestion {
+  code: 'merged_person'
+  message: string
+  fields: string[]
+  merges: StandingMerge[]
+}
+
+/** What an undo of a person merge did. */
+export interface MergeUndoReport {
+  snapshot_id: string
+  kept_id: string
+  restored_id: string
+  written_since: string[]
+  held_back: string[]
+  not_restored: string[]
+}
+
 export interface MergeLogList {
   count: number
   entries: MergeLogEntry[]
