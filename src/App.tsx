@@ -70,7 +70,7 @@ import type {
   Person,
   RegisteredAddress,
 } from './types'
-import { buildAddressElements, removeAddressElements, shownAddressKeys } from './utils/addressElements'
+import { buildAddressElements, removeAddressElements, replaceSubsidiaries, shownAddressKeys } from './utils/addressElements'
 import {
   buildElements,
   buildElementsUpward,
@@ -632,6 +632,10 @@ function AppInner() {
     setSelectedNode(sel => (sel && removed.has(sel.id) ? null : sel))
   }, [elements, centerId])
   const addressesInGraph = useMemo(() => shownAddressKeys(elements), [elements])
+  // What the graph draws: while a registered office is shown, it stands in
+  // place of that company's subsidiaries (utils/addressElements).
+  const drawnElements = useMemo(
+    () => replaceSubsidiaries(elements, centerId ? [centerId] : []), [elements, centerId])
 
   const handleExpand = useCallback(async (nodeId: string) => {
     reportEvent({ kind: 'usage', event: 'graph.expand' })
@@ -1309,7 +1313,7 @@ function AppInner() {
                   {elements.length > 0 && <GraphLegend />}
                   <Graph
                     ref={graphRef}
-                    elements={elements}
+                    elements={drawnElements}
                     centerId={centerId}
                     selectedNode={graphPick ?? selectedNode}   /* the tapped box, else the panel's node: what Expand graph acts on */
                     onNodeClick={handleNodeClick}
@@ -1442,7 +1446,7 @@ function AppInner() {
                   />
                 : <Graph
                     ref={graphRef}
-                    elements={elements}
+                    elements={drawnElements}
                     centerId={centerId}
                     selectedNode={graphPick ?? selectedNode}   /* the tapped box, else the panel's node: what Expand graph acts on */
                     onNodeClick={handleNodeClick}

@@ -164,3 +164,40 @@ describe('taking a registered office out of the graph again', () => {
     expect(removeAddressElements(els, KEY, ['B']).removed.has('B')).toBe(false)
   })
 })
+
+describe('the address in place of the subsidiaries', () => {
+  const n = (id: string): GraphElement => ({ data: { id, label: id, nodeType: 'entity', raw: co(id, id) } })
+  const owns = (a: string, b: string): GraphElement =>
+    ({ data: { id: `${a}__owns__${b}`, source: a, target: b, label: '', edgeType: 'owns', stakePct: 100 } })
+  const base = (): GraphElement[] => [
+    n('A'), n('O'), owns('O', 'A'), n('S1'), owns('A', 'S1'), n('S2'), owns('A', 'S2'), n('G'), owns('S1', 'G'),
+    { data: { id: 'P', label: 'P', nodeType: 'person', raw: co('P', 'P') } },
+    { data: { id: 'P__role__G', source: 'P', target: 'G', label: 'Director', edgeType: 'role', stakePct: null } },
+  ]
+  it('hides the subsidiaries and what hangs below them, keeps the owners', async () => {
+    const { replaceSubsidiaries } = await import('./addressElements')
+    const all = base()
+    const els = [...all, ...buildAddressElements('A', section([co('B', 'Beta'), co('S2', 'S2')]), new Set(all.map(e => e.data.id)))]
+    const ids = replaceSubsidiaries(els, ['A']).map(e => e.data.id)
+    for (const gone of ['S1', 'G', 'P', 'A__owns__S1', 'S1__owns__G', 'P__role__G', 'A__owns__S2']) expect(ids).not.toContain(gone)
+    for (const kept of ['A', 'O', 'O__owns__A', 'B', 'S2', addressNodeId(KEY)]) expect(ids).toContain(kept)   // S2 shares the door
+    expect(els.map(e => e.data.id)).toContain('S1')            // a view: the elements themselves are untouched
+  })
+  it('is the graph itself when no address is shown', async () => {
+    const { replaceSubsidiaries } = await import('./addressElements')
+    const all = base()
+    expect(replaceSubsidiaries(all, ['A'])).toBe(all)
+  })
+  it('puts the address right under the company once the subsidiaries are out of the way', async () => {
+    const { replaceSubsidiaries } = await import('./addressElements')
+    const all = base()
+    const els = replaceSubsidiaries(
+      [...all, ...buildAddressElements('A', section([co('B', 'Beta')]), new Set(all.map(e => e.data.id)))], ['A'])
+    const pos = computeArcPositions(els, 'A')
+    const hub = pos.get(addressNodeId(KEY))!
+    expect(hub.x).toBe(0)
+    expect(hub.y).toBeGreaterThan(0)
+    expect(hub.y).toBeLessThan(400)
+  })
+})
+

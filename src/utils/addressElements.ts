@@ -123,3 +123,65 @@ export function removeAddressElements(
   for (const id of others) if (!linked.has(id) && !kept.has(id)) removed.add(id)
   return { elements: elements.filter(el => !removed.has((el.data as { id: string }).id)), removed }
 }
+
+/**
+ * The graph as drawn while a registered office is shown: the address and its
+ * companies take the place of the subsidiaries of the company the reader came
+ * from (the user, 2026-11-21 — beside or below the subsidiaries the two crowds
+ * competed; the letterbox is a different question from "what does it own").
+ *
+ * Nothing is forgotten: this is a view of `elements`, which keep the
+ * subsidiaries, so taking the address out again shows them as before. Hidden
+ * is everything reached downwards from that company along holdings — except
+ * the companies registered at the address (a subsidiary that shares the door
+ * stays, now under the door) and everything in `keep` (the graph's centre).
+ */
+export function replaceSubsidiaries(elements: GraphElement[], keep: Iterable<string> = []): GraphElement[] {
+  type Edge = { id: string; source: string; target: string; edgeType?: string }
+  const edges = elements.map(el => el.data as Edge).filter(d => d.source && d.target)
+  const hubs = new Set(elements.map(el => el.data as NodeData).filter(isAddressNode).map(d => d.id))
+  if (hubs.size === 0) return elements
+  const stay = new Set<string>([...keep, ...hubs])
+  const focus = new Set<string>()
+  for (const e of edges) {
+    if (e.edgeType !== 'registered_at') continue
+    if (hubs.has(e.target)) { focus.add(e.source); stay.add(e.source) }
+    if (hubs.has(e.source)) stay.add(e.target)
+  }
+  const below = new Map<string, string[]>()
+  for (const e of edges) {
+    if (e.edgeType === 'registered_at' || e.edgeType === 'role') continue
+    if (!below.has(e.source)) below.set(e.source, [])
+    below.get(e.source)!.push(e.target)
+  }
+  const gone = new Set<string>()
+  const queue = [...focus]
+  const seen = new Set<string>(focus)
+  while (queue.length) {
+    for (const next of below.get(queue.pop() as string) ?? []) {
+      if (seen.has(next)) continue
+      seen.add(next)
+      if (!stay.has(next)) gone.add(next)
+      queue.push(next)
+    }
+  }
+  if (gone.size === 0) return elements
+  // a holding line between two that stay (the company and a subsidiary at its
+  // own door) goes too: the door's dotted line is what joins them now
+  const left = elements.filter(el => {
+    const d = el.data as Edge
+    if (!d.source) return !gone.has(d.id)
+    if (gone.has(d.source) || gone.has(d.target)) return false
+    return !(focus.has(d.source) && d.edgeType !== 'registered_at' && d.edgeType !== 'role' && seen.has(d.target))
+  })
+  // …and whoever was only there through a hidden node (a person on a hidden subsidiary's board)
+  const linked = new Set<string>()
+  for (const el of left) { const d = el.data as Edge; if (d.source) { linked.add(d.source); linked.add(d.target) } }
+  const hadLine = new Set<string>()
+  for (const e of edges) { hadLine.add(e.source); hadLine.add(e.target) }
+  return left.filter(el => {
+    const d = el.data as Edge
+    return !!d.source || linked.has(d.id) || stay.has(d.id) || !hadLine.has(d.id)
+  })
+}
+
