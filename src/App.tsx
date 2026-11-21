@@ -70,7 +70,7 @@ import type {
   Person,
   RegisteredAddress,
 } from './types'
-import { buildAddressElements } from './utils/addressElements'
+import { buildAddressElements, removeAddressElements, shownAddressKeys } from './utils/addressElements'
 import {
   buildElements,
   buildElementsUpward,
@@ -619,6 +619,19 @@ function AppInner() {
       showToast(t('toast.noNewConnections'), 'info')
     }
   }, [showToast, t])
+
+  // …and out again. "Show in graph" had no way back: the hub and the companies
+  // it brought stayed until the graph was loaded anew (the user, 2026-11-21).
+  const handleHideAddress = useCallback((key: string) => {
+    const { elements: left, removed } = removeAddressElements(elements, key, centerId ? [centerId] : [])
+    if (removed.size === 0) return
+    const ids = new Set(loadedIds.current)
+    removed.forEach(id => ids.delete(id))
+    loadedIds.current = ids
+    setElements(left)
+    setSelectedNode(sel => (sel && removed.has(sel.id) ? null : sel))
+  }, [elements, centerId])
+  const addressesInGraph = useMemo(() => shownAddressKeys(elements), [elements])
 
   const handleExpand = useCallback(async (nodeId: string) => {
     reportEvent({ kind: 'usage', event: 'graph.expand' })
@@ -1218,6 +1231,8 @@ function AppInner() {
                 <NodePanel
                   node={selectedNode}
                   onShowAddress={handleShowAddress}
+                  onHideAddress={handleHideAddress}
+                  addressesInGraph={addressesInGraph}
                   refreshKey={enrichNonce}
                   refreshingId={refreshing?.id ?? null}
                   onExportPng={elements.length > 0 ? handleExportPng : undefined}
@@ -1323,6 +1338,8 @@ function AppInner() {
                   <NodePanel
                     node={selectedNode}
                     onShowAddress={handleShowAddress}
+                  onHideAddress={handleHideAddress}
+                  addressesInGraph={addressesInGraph}
                     refreshKey={enrichNonce}
                   refreshingId={refreshing?.id ?? null}
                     onExportPng={elements.length > 0 ? handleExportPng : undefined}

@@ -219,6 +219,7 @@
     "sameAddress": "Registered at the same address",
     "sameAddressHint": "Companies that give the same registered office — often an agent's or a law firm's address rather than where a company is run.",
     "sameAddressShowInGraph": "Show in graph",
+    "sameAddressHideFromGraph": "Remove from graph",
     "sameAddressMore": "Show more ({{shown}} of {{count}})",
     "addressTitle": "Registered office",
     "addressCount_one": "{{count}} company registered here",
@@ -575,8 +576,7 @@
     "backToWorld": "Back to world",
     "hintStates": "Click a state to see its companies",
     "sameDoor_one": "{{count}} other company registered at this address",
-    "sameDoor_other": "{{count}} other companies registered at this address",
-    "sameDoorMore": "and {{count}} more"
+    "sameDoor_other": "{{count}} other companies registered at this address"
   },
   "settings": {
     "title": "Settings",

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiExternalLink } from 'react-icons/fi'
-import { getCompaniesAtAddress } from '../services/api'
-import type { Entity } from '../types'
+import { useAddressPages } from '../hooks/useAddressPages'
 import * as maplibregl from 'maplibre-gl'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { countryName } from '../utils/isoCountries'
@@ -32,26 +31,15 @@ function SameDoor({ address, selfId, onOpenEntity }: {
   address: string; selfId?: string; onOpenEntity?: (id: string) => void
 }) {
   const { t } = useTranslation()
-  const [others, setOthers] = useState<{ rows: Entity[]; count: number } | null>(null)
-  useEffect(() => {
-    let live = true
-    setOthers(null)
-    getCompaniesAtAddress(address, 0, DOOR_ROWS + 1)
-      .then(({ data }) => {
-        if (!live) return
-        const rows = data.entities.filter(e => e.id !== selfId)
-        // the company is registered at its own address: it is one of the count
-        setOthers({ rows: rows.slice(0, DOOR_ROWS), count: Math.max(data.count - (selfId ? 1 : 0), rows.length) })
-      })
-      .catch(() => { /* a 404 is "alone there"; any failure shows nothing */ })
-    return () => { live = false }
-  }, [address, selfId])
-  if (!others || others.count === 0) return null
+  // the first request names a handful; "show more" fetches the rest, page by page
+  const { rows, count, busy, more } = useAddressPages(address, null, null, selfId, DOOR_ROWS + 1)
+  const total = count ?? 0
+  if (total <= 0 || rows.length === 0) return null
   return (
     <div className="map-detail__door">
-      <span className="map-detail__door-title">{t('map.sameDoor', { count: others.count })}</span>
+      <span className="map-detail__door-title">{t('map.sameDoor', { count: total })}</span>
       <ul className="map-detail__door-list">
-        {others.rows.map(e => (
+        {rows.map(e => (
           <li key={e.id}>
             {onOpenEntity
               ? <button type="button" className="map-detail__door-item" onClick={() => onOpenEntity(e.id)}>{e.name}</button>
@@ -59,8 +47,11 @@ function SameDoor({ address, selfId, onOpenEntity }: {
           </li>
         ))}
       </ul>
-      {others.count > others.rows.length && (
-        <span className="map-detail__door-more">{t('map.sameDoorMore', { count: others.count - others.rows.length })}</span>
+      {/* It said "and 43 more" and showed none of them (the user, 2026-11-21) */}
+      {rows.length < total && (
+        <button type="button" className="map-detail__door-more" disabled={busy} onClick={() => void more()}>
+          {t('panel.sameAddressMore', { shown: rows.length, count: total })}
+        </button>
       )}
     </div>
   )

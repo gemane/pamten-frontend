@@ -219,6 +219,7 @@
     "sameAddress": "An derselben Adresse eingetragen",
     "sameAddressHint": "Firmen mit demselben eingetragenen Sitz – oft die Adresse eines Treuhänders oder einer Kanzlei, nicht der Ort, von dem aus eine Firma geführt wird.",
     "sameAddressShowInGraph": "Im Graphen zeigen",
+    "sameAddressHideFromGraph": "Aus dem Graphen entfernen",
     "sameAddressMore": "Mehr zeigen ({{shown}} von {{count}})",
     "addressTitle": "Eingetragener Sitz",
     "addressCount_one": "{{count}} Firma hier eingetragen",
@@ -575,8 +576,7 @@
     "backToWorld": "Zurück zur Weltkarte",
     "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen",
     "sameDoor_one": "{{count}} weitere Firma an dieser Adresse eingetragen",
-    "sameDoor_other": "{{count}} weitere Firmen an dieser Adresse eingetragen",
-    "sameDoorMore": "und {{count}} weitere"
+    "sameDoor_other": "{{count}} weitere Firmen an dieser Adresse eingetragen"
   },
   "settings": {
     "title": "Einstellungen",

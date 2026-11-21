@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiMoreVertical, FiShare2, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiExternalLink, FiList, FiClock, FiDownload, FiChevronRight, FiChevronDown, FiFlag, FiTag, FiBriefcase, FiHash, FiGlobe, FiSearch, FiBookOpen, FiTrendingUp, FiActivity } from 'react-icons/fi'
-import { getCompaniesAtAddress, getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, getStakeHistory, type MediaImage } from '../services/api'
+import { getFullProfile, getEntitySources, getPersonProfile, getPersonSources, getSubsidiaryTree, getStakeHistory, type MediaImage } from '../services/api'
 import ImageCredit, { useMediaImage } from './ImageCredit'
 import ImageZoom from './ImageZoom'
 import { countryName } from '../utils/isoCountries'
@@ -14,6 +14,7 @@ import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
 import PersonTimeline, { hasDatedRows } from './PersonTimeline'
+import { useAddressPages } from '../hooks/useAddressPages'
 import PersonIdentitySection from './PersonIdentity'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
@@ -270,6 +271,10 @@ interface NodePanelProps {
   /** Draw a company's registered office as a hub joining the companies
    *  registered at it (the letterbox view). */
   onShowAddress?: (focusId: string, section: RegisteredAddress) => void
+  /** Take that hub and what it brought out of the graph again. */
+  onHideAddress?: (key: string) => void
+  /** The address keys whose hub the graph shows now. */
+  addressesInGraph?: Set<string>
   onExportPng?: () => void
   /** The company's spreadsheet, built server-side; given the entity's id. */
   onExportSpreadsheet?: (entityId: string) => void
@@ -1459,6 +1464,10 @@ interface EntityOverviewProps {
   /** Rows appeared or vanished (a group opened): the row markers re-run. */
   onRowsChange?: () => void
   onShowAddress?: (focusId: string, section: RegisteredAddress) => void
+  /** Take that hub and what it brought out of the graph again. */
+  onHideAddress?: (key: string) => void
+  /** The address keys whose hub the graph shows now. */
+  addressesInGraph?: Set<string>
 }
 
 function credibilityColor(score: number): string {
@@ -1560,7 +1569,7 @@ function SourceStatements({ ids }: { ids?: string[] }) {
   )
 }
 
-function EntityOverview({ profile, sources, onShowAddress, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, node, onReScrape, canReScrape = true, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null, graphPickId = null, onRowsChange }: EntityOverviewProps) {
+function EntityOverview({ profile, sources, onShowAddress, onHideAddress, addressesInGraph, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, node, onReScrape, canReScrape = true, refreshingId, stakeFilter = ANY_STAKE, tree = null, asOf = null, graphPickId = null, onRowsChange }: EntityOverviewProps) {
   const { t, i18n } = useTranslation()
   const { entity, counts, industry = null, owners = [], subsidiaries = [], executives = [], dual_listed = [],
           succeeded_by = [], replaces = [], ownership, cross_holdings = [], registered_address: sameAddress = null,
@@ -1714,6 +1723,14 @@ function EntityOverview({ profile, sources, onShowAddress, onExportPng, onExport
           what the company does (folded to its section), then who founded it —
           all about the company itself, before who holds what. */}
       <DetailsSection entity={entity} hasOwners={owners.length > 0} />
+      {/* Beneath the details, where the registered address itself stands (the
+          user, 2026-11-21): who else gives that address belongs to the facts
+          about the company, not among its owners and subsidiaries. */}
+      {sameAddress && sameAddress.count > 0 && (
+        <SameAddressSection section={sameAddress} focusId={entity.id} onNavigate={onNavigate}
+                            onShowAddress={onShowAddress} onHideAddress={onHideAddress}
+                            inGraph={!!addressesInGraph?.has(sameAddress.key)} />
+      )}
       <SectorSection industry={industry} />
       {founders.length > 0 && (
         <Section title={t('panel.foundedBy')} count={founders.length}>
@@ -1852,11 +1869,6 @@ function EntityOverview({ profile, sources, onShowAddress, onExportPng, onExport
         </Section>
       )}
 
-      {sameAddress && sameAddress.count > 0 && (
-        <SameAddressSection section={sameAddress} focusId={entity.id} onNavigate={onNavigate}
-                            onShowAddress={onShowAddress} />
-      )}
-
       {replaces.length > 0 && (
         <Section title={t('panel.replaces')}>
           {[...replaces].sort(byName(p => p.name ?? '')).map((p, i) => (
@@ -1989,49 +2001,18 @@ function EntityOverview({ profile, sources, onShowAddress, onExportPng, onExport
   )
 }
 
-/** Pages of the companies at one address, the list growing by "show more":
- *  `first` is what the caller already holds (the profile's section, or
- *  nothing), `skip` an id never listed (the company whose profile it is —
- *  the endpoint lists everyone at the door). */
-function useAddressPages(key: string | undefined, first: Entity[] | null, firstCount: number | null, skip?: string) {
-  const [rows, setRows] = useState<Entity[]>(first ?? [])
-  const [count, setCount] = useState<number | null>(firstCount)
-  const [address, setAddress] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  // where the next page starts on the server, which also lists `skip`
-  const [offset, setOffset] = useState(first ? first.length + (skip ? 1 : 0) : 0)
-  const load = useCallback(async (from: number) => {
-    if (!key) return
-    setBusy(true)
-    try {
-      const { data } = await getCompaniesAtAddress(key, from)
-      setRows(prev => {
-        const seen = new Set(prev.map(e => e.id))
-        return [...prev, ...data.entities.filter(e => e.id !== skip && !seen.has(e.id))]
-      })
-      setCount(data.count - (skip ? 1 : 0))
-      setAddress(data.address ?? null)
-      setOffset(from + data.entities.length)
-    } catch { /* the rows shown stay; the button stays to try again */ }
-    finally { setBusy(false) }
-  }, [key, skip])
-  useEffect(() => {
-    setRows(first ?? []); setCount(firstCount); setAddress(null)
-    setOffset(first ? first.length + (skip ? 1 : 0) : 0)
-    if (!first) void load(0)
-  }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
-  return { rows, count, address, busy, more: () => load(offset) }
-}
-
 /** The companies registered at the same office as this one — the letterbox
  *  view. Closed by default: a group's own subsidiaries often share its door
  *  (Barclays at 1 Churchill Place), and the list is a question to ask, not
  *  the profile's headline. */
-function SameAddressSection({ section, focusId, onNavigate, onShowAddress }: {
+function SameAddressSection({ section, focusId, onNavigate, onShowAddress, onHideAddress, inGraph = false }: {
   section: RegisteredAddress
   focusId: string
   onNavigate?: (node: NodeData) => void
   onShowAddress?: (focusId: string, section: RegisteredAddress) => void
+  onHideAddress?: (key: string) => void
+  /** The hub is drawn: the button takes it out again instead of adding it. */
+  inGraph?: boolean
 }) {
   const { t } = useTranslation()
   const { rows, count, busy, more } = useAddressPages(section.key, section.entities, section.count, focusId)
@@ -2039,7 +2020,14 @@ function SameAddressSection({ section, focusId, onNavigate, onShowAddress }: {
   return (
     <CollapsibleSection title={t('panel.sameAddress')} count={total}>
       <p className="panel-desc">{t('panel.sameAddressHint')}</p>
-      {onShowAddress && (
+      {/* One button, two states: what "show in graph" drew can be taken out
+          again — the hub, and the companies that were only there because of it. */}
+      {inGraph && onHideAddress ? (
+        <button type="button" className="panel-export__btn panel-export__btn--spaced"
+                onClick={() => onHideAddress(section.key)}>
+          <FiMapPin /> {t('panel.sameAddressHideFromGraph')}
+        </button>
+      ) : onShowAddress && (
         <button type="button" className="panel-export__btn panel-export__btn--spaced"
                 onClick={() => onShowAddress(focusId, { ...section, entities: rows })}>
           <FiMapPin /> {t('panel.sameAddressShowInGraph')}
@@ -2060,7 +2048,9 @@ function SameAddressSection({ section, focusId, onNavigate, onShowAddress }: {
 }
 
 /** An address node's panel: the registered office and every company there. */
-function AddressView({ node, onNavigate }: { node: NodeData; onNavigate?: (node: NodeData) => void }) {
+function AddressView({ node, onNavigate, onHideAddress }: {
+  node: NodeData; onNavigate?: (node: NodeData) => void; onHideAddress?: (key: string) => void
+}) {
   const { t } = useTranslation()
   const { rows, count, address, busy, more } = useAddressPages(node.addressKey, null, null)
   return (
@@ -2072,6 +2062,13 @@ function AddressView({ node, onNavigate }: { node: NodeData; onNavigate?: (node:
           <MetaRow icon={FiMapPin} label={t('panel.regAddress')} value={address ?? node.label} />
           {count != null && <p className="panel-desc">{t('panel.addressCount', { count })}</p>}
           <p className="panel-desc">{t('panel.addressSpelling')}</p>
+          {/* The hub is in the graph or this panel would not be open: the way out */}
+          {onHideAddress && node.addressKey && (
+            <button type="button" className="panel-export__btn panel-export__btn--spaced"
+                    onClick={() => onHideAddress(node.addressKey as string)}>
+              <FiMapPin /> {t('panel.sameAddressHideFromGraph')}
+            </button>
+          )}
         </div>
         <div className="panel-section">
           {busy && rows.length === 0 && <span className="panel-spinner" />}
@@ -2120,7 +2117,7 @@ function PanelTabs({ active, onChange }: { active: string; onChange: (tab: strin
   )
 }
 
-export default function NodePanel({ node, onShowAddress, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null, graphPickId = null, onPickMiss }: NodePanelProps) {
+export default function NodePanel({ node, onShowAddress, onHideAddress, addressesInGraph, onExportPng, onExportSpreadsheet, onViewOnMap, onShare, onNavigate, onReScrape, canReScrape = true, refreshingId, refreshKey, stakeFilter = ANY_STAKE, allLevels = false, asOf = null, onYearSelect, onGraphFocus, graphFocusMode = 'hover', graphHoverId = null, graphFocusId = null, graphPickId = null, onPickMiss }: NodePanelProps) {
   const { t } = useTranslation()
   const [profile,    setProfile]    = useState<FullProfile | null>(null)
   const [sources,    setSources]    = useState<Source[]>([])
@@ -2206,7 +2203,7 @@ export default function NodePanel({ node, onShowAddress, onExportPng, onExportSp
   }
 
   if (node.nodeType === 'address') {
-    return <AddressView node={node} onNavigate={onNavigate} />
+    return <AddressView node={node} onNavigate={onNavigate} onHideAddress={onHideAddress} />
   }
 
   if (node.nodeType === 'person') {
@@ -2233,7 +2230,7 @@ export default function NodePanel({ node, onShowAddress, onExportPng, onExportSp
       <div className="node-panel__scroll">
       {activeView === 'overview'
         ? <div ref={focusScopeRef}>
-            <EntityOverview refreshingId={refreshingId} onShowAddress={onShowAddress} profile={profile} sources={sources} node={node} onReScrape={onReScrape} canReScrape={canReScrape} graphPickId={graphPickId} onRowsChange={bumpRows} onExportPng={onExportPng} onExportSpreadsheet={onExportSpreadsheet} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
+            <EntityOverview refreshingId={refreshingId} onShowAddress={onShowAddress} onHideAddress={onHideAddress} addressesInGraph={addressesInGraph} profile={profile} sources={sources} node={node} onReScrape={onReScrape} canReScrape={canReScrape} graphPickId={graphPickId} onRowsChange={bumpRows} onExportPng={onExportPng} onExportSpreadsheet={onExportSpreadsheet} onViewOnMap={onViewOnMap} onShare={onShare} onNavigate={onNavigate} stakeFilter={stakeFilter} tree={tree} asOf={asOf} />
           </div>
         : <TimelinePanel entityId={profile.entity.id} asOf={asOf} onYearSelect={onYearSelect} />}
       </div>

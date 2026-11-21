@@ -64,8 +64,8 @@ describe('the hub in the arc layout', () => {
     ]
     const pos = computeArcPositions(els, 'A')
     const hub = pos.get(addressNodeId(KEY))!
-    expect(hub.y).toBeGreaterThan(0)                          // below the centre
-    expect(hub.x).toBeLessThan(pos.get('S')!.x)               // after the subsidiary: the arc runs right to left
+    expect(hub.x).toBeLessThan(pos.get('S')!.x)               // beside the graph, not on the subsidiaries' arc
+    expect(hub.x).toBeLessThan(pos.get('A')!.x)
     expect(pos.get('B')!.y).toBeGreaterThan(hub.y)            // the others below the hub
   })
 })
@@ -93,5 +93,74 @@ describe('a crowded registered office', () => {
     expect(ys.size).toBe(3)                                   // 8 + 8 + 4
     const hub = pos.get(addressNodeId(KEY))!
     for (const e of many) expect(pos.get(e.id)!.y).toBeGreaterThan(hub.y)
+  })
+})
+
+describe('a registered office beside a company with subsidiaries', () => {
+  // The user, 2026-11-21: "Show in graph" laid the rows of eight across the subsidiaries.
+  it('keeps every box of the address block clear of every other box', () => {
+    const subs = Array.from({ length: 12 }, (_, i) => co(`S${i}`, `Subsidiary ${i}`))
+    const many = Array.from({ length: 20 }, (_, i) => co(`N${i}`, `Nominee ${i}`))
+    const base: GraphElement[] = [
+      { data: { id: 'A', label: 'Alpha', nodeType: 'entity', raw: co('A', 'Alpha') } },
+      { data: { id: 'O', label: 'Owner', nodeType: 'entity', raw: co('O', 'Owner') } },
+      { data: { id: 'O__owns__A', source: 'O', target: 'A', label: '', edgeType: 'owns', stakePct: 60 } },
+      ...subs.flatMap(e => [
+        { data: { id: e.id, label: e.name, nodeType: 'entity', raw: e } },
+        { data: { id: `A__owns__${e.id}`, source: 'A', target: e.id, label: '', edgeType: 'owns', stakePct: 100 } },
+      ] as GraphElement[]),
+    ]
+    const loaded = new Set(base.map(el => el.data.id))
+    const els = [...base, ...buildAddressElements('A', section(many), loaded)]
+    const pos = computeArcPositions(els, 'A')
+    const block = [addressNodeId(KEY), ...many.map(e => e.id)]
+    const rest = ['A', 'O', ...subs.map(e => e.id)]
+    const W = 152, H = 60                                     // the layout's default box
+    for (const b of block) for (const r of rest) {
+      const p = pos.get(b)!, q = pos.get(r)!
+      const apart = Math.abs(p.x - q.x) >= W || Math.abs(p.y - q.y) >= H
+      expect(apart, `${b} over ${r}`).toBe(true)
+    }
+    // and the whole block lies to one side
+    const blockRight = Math.max(...block.map(id => pos.get(id)!.x))
+    expect(blockRight).toBeLessThan(Math.min(...rest.map(id => pos.get(id)!.x)))
+  })
+})
+
+describe('taking a registered office out of the graph again', () => {
+  const start = (): GraphElement[] => [
+    { data: { id: 'A', label: 'Alpha', nodeType: 'entity', raw: co('A', 'Alpha') } },
+    { data: { id: 'S', label: 'Sub', nodeType: 'entity', raw: co('S', 'Sub') } },
+    { data: { id: 'A__owns__S', source: 'A', target: 'S', label: '100%', edgeType: 'owns', stakePct: 100 } },
+  ]
+  it('removes the hub, its lines and the companies only it brought', async () => {
+    const { removeAddressElements, shownAddressKeys } = await import('./addressElements')
+    const base = start()
+    const els = [...base, ...buildAddressElements('A', section([co('B', 'Beta'), co('S', 'Sub')]), new Set(['A', 'S', 'A__owns__S']))]
+    expect([...shownAddressKeys(els)]).toEqual([KEY])
+    const { elements, removed } = removeAddressElements(els, KEY)
+    expect(elements).toEqual(base)                            // S was there before: it stays
+    expect(removed.has('B')).toBe(true)
+    expect(removed.has('S')).toBe(false)
+    expect(removed.has('A')).toBe(false)
+    expect(shownAddressKeys(elements).size).toBe(0)
+  })
+  it('keeps a company the reader has expanded since, and the one they came from', async () => {
+    const { removeAddressElements } = await import('./addressElements')
+    const els: GraphElement[] = [
+      { data: { id: 'A', label: 'Alpha', nodeType: 'entity', raw: co('A', 'Alpha') } },
+      ...buildAddressElements('A', section([co('B', 'Beta'), co('C', 'Charlie')]), new Set(['A'])),
+      { data: { id: 'X', label: 'X', nodeType: 'entity', raw: co('X', 'X') } },
+      { data: { id: 'B__owns__X', source: 'B', target: 'X', label: '', edgeType: 'owns', stakePct: 50 } },
+    ]
+    const ids = removeAddressElements(els, KEY).elements.map(el => el.data.id)
+    expect(ids).toEqual(['A', 'B', 'X', 'B__owns__X'])        // A has no other line and stays; C goes
+  })
+  it('changes nothing for an address that is not drawn, and never removes a kept node', async () => {
+    const { removeAddressElements } = await import('./addressElements')
+    const base = start()
+    expect(removeAddressElements(base, KEY).elements).toBe(base)
+    const els = [...base, ...buildAddressElements('A', section([co('B', 'Beta')]), new Set(['A', 'S', 'A__owns__S']))]
+    expect(removeAddressElements(els, KEY, ['B']).removed.has('B')).toBe(false)
   })
 })

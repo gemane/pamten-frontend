@@ -62,6 +62,32 @@ describe('registered at the same address', () => {
     expect(onShowAddress).toHaveBeenCalledWith('A', expect.objectContaining({ key: KEY, entities: [co('B', 'Beta Finance LLC')] }))
   })
 
+  it('offers the way back once the door is drawn: remove from graph', async () => {
+    const section = { key: KEY, address: CSC, count: 1, entities: [co('B', 'Beta Finance LLC')] }
+    vi.mocked(getFullProfile).mockResolvedValue({ data: withAddress(section) } as never)
+    const onShowAddress = vi.fn(), onHideAddress = vi.fn()
+    render(<NodePanel node={node('A', 'Alpha Holdings LLC')} refreshKey={0} onShowAddress={onShowAddress}
+                      onHideAddress={onHideAddress} addressesInGraph={new Set([KEY])} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Registered at the same address/ }))
+    expect(screen.queryByRole('button', { name: /Show in graph/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Remove from graph/ }))
+    expect(onHideAddress).toHaveBeenCalledWith(KEY)
+    expect(onShowAddress).not.toHaveBeenCalled()
+  })
+
+  it('stands right beneath the details', async () => {
+    vi.mocked(getFullProfile).mockResolvedValue({ data: { ...withAddress(
+      { key: KEY, address: CSC, count: 1, entities: [co('B', 'Beta Finance LLC')] }),
+      subsidiaries: [{ entity: co('S', 'Sub LLC'), relationship: {} }] } } as never)
+    render(<NodePanel node={node('A', 'Alpha Holdings LLC')} refreshKey={0} />)
+    const door = await screen.findByRole('button', { name: /Registered at the same address/ })
+    const details = screen.getByRole('button', { name: /^Details/ })
+    const subs = screen.getByText(/^Subsidiaries/)
+    const after = (a: Node, b: Node) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(after(details, door)).toBe(true)
+    expect(after(door, subs)).toBe(true)
+  })
+
   it('pages the rest from the address, never listing the company itself', async () => {
     vi.mocked(getFullProfile).mockResolvedValue({ data: withAddress(
       { key: KEY, address: CSC, count: 3, entities: [co('B', 'Beta Finance LLC')] }) } as never)
@@ -92,6 +118,14 @@ describe('registered at the same address', () => {
 })
 
 describe('an address node', () => {
+  it('can be taken out of the graph from its own panel', async () => {
+    vi.mocked(getCompaniesAtAddress).mockResolvedValue({ data: { key: KEY, address: CSC, count: 1, entities: [co('A', 'Alpha Holdings LLC')] } } as never)
+    const onHideAddress = vi.fn()
+    render(<NodePanel node={addressNode({ key: KEY, address: CSC, count: 1 })} refreshKey={0} onHideAddress={onHideAddress} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Remove from graph/ }))
+    expect(onHideAddress).toHaveBeenCalledWith(KEY)
+  })
+
   it('lists every company there, no profile asked', async () => {
     vi.mocked(getCompaniesAtAddress).mockResolvedValue({ data: {
       key: KEY, address: CSC, count: 2, entities: [co('A', 'Alpha Holdings LLC'), co('B', 'Beta Finance LLC')],

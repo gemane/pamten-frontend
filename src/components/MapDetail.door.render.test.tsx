@@ -44,8 +44,14 @@ describe('the others at a registered office, on the map', () => {
     answer(53, many)
     render(<MapDetail data={pin} onClose={() => {}} />)
     expect(await screen.findByText('52 other companies registered at this address')).toBeInTheDocument()
-    expect(screen.getByText(`and ${52 - DOOR_ROWS} more`)).toBeInTheDocument()
-    expect(screen.getAllByText(/^Nominee \d+ LLC$/)).toHaveLength(DOOR_ROWS)
+    expect(screen.getAllByText(/^Nominee \d+ LLC$/)).toHaveLength(DOOR_ROWS + 1)
+    // "N more" is a button that fetches them — it used to be a sentence (the user, 2026-11-21)
+    const next = Array.from({ length: 5 }, (_, i) => co(`M${i}`, `Nominee ${100 + i} LLC`))
+    answer(53, next)
+    fireEvent.click(screen.getByRole('button', { name: `Show more (${DOOR_ROWS + 1} of 52)` }))
+    expect(await screen.findByText('Nominee 104 LLC')).toBeInTheDocument()
+    expect(getCompaniesAtAddress).toHaveBeenLastCalledWith(CSC, DOOR_ROWS + 1)
+    expect(screen.getAllByText(/^Nominee \d+ LLC$/)).toHaveLength(DOOR_ROWS + 6)
   })
 
   it('shows nothing when it is alone there, or when no registered office is known', async () => {

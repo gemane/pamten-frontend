@@ -299,6 +299,7 @@ const ARC_DEPTH    = 0.3            // a crowded arc's height, as a share of its
 const LEVEL_GAP    = 220            // vertical px between hop levels beyond the 1st
 const ADDRESS_ROW  = 8              // companies per row under a registered office
 const ADDRESS_ROW_GAP = 110         // vertical px between those rows
+const ADDRESS_BLOCK_GAP = 160       // clear px between an address's block and the rest of the graph
 
 // Pure function — works on the React elements array, no Cytoscape required.
 // Returns a map of nodeId → {x, y} to use when calling cy.add().
@@ -618,7 +619,7 @@ export function computeArcPositions(
   const topIds    = (incomersOf.get(centerId) ?? []).filter(id => id !== centerId)
   const topSet    = new Set(topIds)
   const bottomIds = (outgoersOf.get(centerId) ?? [])
-    .filter(id => !topSet.has(id) && id !== centerId && !placed?.has(id))
+    .filter(id => !topSet.has(id) && id !== centerId && !placed?.has(id) && !addressIds.has(id))
 
   // Left-to-right order along each arc follows the panel's stake ordering.
   topIds.sort(cmpByStake(id => edgeKey(id, centerId)))       // owners → center
@@ -628,8 +629,8 @@ export function computeArcPositions(
   // holding: it sits after the subsidiaries, not sorted in among them as if
   // the centre owned it (Berkshire's DaVita group, 2026-10-26).
   bottomIds.sort((a, b) => Number(groupIds.has(a)) - Number(groupIds.has(b)))
-  // A registered office the centre shares is no holding either: last of all.
-  bottomIds.sort((a, b) => Number(addressIds.has(a)) - Number(addressIds.has(b)))
+  // A registered office is no holding and takes no seat on the arc: it and the
+  // companies registered there are set down beside the finished graph (below).
 
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)
@@ -668,7 +669,7 @@ export function computeArcPositions(
   // For every queued node, owners go ABOVE it and subsidiaries go BELOW it,
   // regardless of which direction the node was reached from.
   const positioned = new Set<string>(pos.keys())
-  const queue: string[] = [...topIds, ...bottomIds, ...[...(placed?.keys() ?? [])].filter(id => id !== centerId)]
+  const walk = (queue: string[]) => {
   let qi = 0
   while (qi < queue.length) {
     const id = queue[qi++]
@@ -685,7 +686,8 @@ export function computeArcPositions(
       queue.push(nid)
     })
 
-    const newSubs = (outgoersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
+    // an address hub is never laid out under the company that points at it
+    const newSubs = (outgoersOf.get(id) ?? []).filter(nid => !positioned.has(nid) && (addressIds.has(id) || !addressIds.has(nid)))
     newSubs.sort(cmpByStake(nid => edgeKey(id, nid)))
     // A registered office can hold fifty companies: in one row they ran
     // across the screen and the graph zoomed out to a smear. Under an
@@ -701,6 +703,28 @@ export function computeArcPositions(
         queue.push(nid)
       })
     }
+  }
+  }
+  walk([...topIds, ...bottomIds, ...[...(placed?.keys() ?? [])].filter(id => id !== centerId)])
+
+  // The registered offices, each with the companies it brought, as a block of
+  // its own to the left of everything drawn so far. On the arc below the
+  // centre its rows of eight lay across the subsidiaries (the user,
+  // 2026-11-21): a block that is laid out first and then moved clear of the
+  // rest cannot overlap it, however large the graph or the address.
+  for (const hub of addressIds) {
+    if (positioned.has(hub)) continue
+    let left = Infinity
+    for (const [id, p] of pos) left = Math.min(left, p.x - size(id).w / 2)
+    const before = new Set(positioned)
+    pos.set(hub, { x: 0, y: 0 })
+    positioned.add(hub)
+    walk([hub])
+    const block = [...positioned].filter(id => !before.has(id))
+    let right = -Infinity
+    for (const id of block) right = Math.max(right, pos.get(id)!.x + size(id).w / 2)
+    const dx = left - ADDRESS_BLOCK_GAP - right
+    for (const id of block) { const p = pos.get(id)!; pos.set(id, { x: p.x + dx, y: p.y }) }
   }
 
   return pos
