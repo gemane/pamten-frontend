@@ -64,8 +64,8 @@ describe('the hub in the arc layout', () => {
     ]
     const pos = computeArcPositions(els, 'A')
     const hub = pos.get(addressNodeId(KEY))!
-    expect(hub.x).toBeLessThan(pos.get('S')!.x)               // beside the graph, not on the subsidiaries' arc
-    expect(hub.x).toBeLessThan(pos.get('A')!.x)
+    expect(hub.y).toBeGreaterThan(pos.get('S')!.y)            // below the graph, not on the subsidiaries' arc
+    expect(hub.x).toBe(pos.get('A')!.x)                       // centred under the centre
     expect(pos.get('B')!.y).toBeGreaterThan(hub.y)            // the others below the hub
   })
 })
@@ -121,9 +121,9 @@ describe('a registered office beside a company with subsidiaries', () => {
       const apart = Math.abs(p.x - q.x) >= W || Math.abs(p.y - q.y) >= H
       expect(apart, `${b} over ${r}`).toBe(true)
     }
-    // and the whole block lies to one side
-    const blockRight = Math.max(...block.map(id => pos.get(id)!.x))
-    expect(blockRight).toBeLessThan(Math.min(...rest.map(id => pos.get(id)!.x)))
+    // and the whole block lies below the rest
+    const blockTop = Math.min(...block.map(id => pos.get(id)!.y))
+    expect(blockTop).toBeGreaterThan(Math.max(...rest.map(id => pos.get(id)!.y)))
   })
 })
 

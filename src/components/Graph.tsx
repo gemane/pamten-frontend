@@ -708,23 +708,24 @@ export function computeArcPositions(
   walk([...topIds, ...bottomIds, ...[...(placed?.keys() ?? [])].filter(id => id !== centerId)])
 
   // The registered offices, each with the companies it brought, as a block of
-  // its own to the left of everything drawn so far. On the arc below the
-  // centre its rows of eight lay across the subsidiaries (the user,
-  // 2026-11-21): a block that is laid out first and then moved clear of the
-  // rest cannot overlap it, however large the graph or the address.
+  // its own below everything drawn so far, centred under the centre. On the
+  // arc below the centre its rows of eight lay across the subsidiaries (the
+  // user, 2026-11-21, who then chose below over beside): a block that is laid
+  // out first and then moved clear of the rest cannot overlap it, however
+  // large the graph or the address.
   for (const hub of addressIds) {
     if (positioned.has(hub)) continue
-    let left = Infinity
-    for (const [id, p] of pos) left = Math.min(left, p.x - size(id).w / 2)
+    let bottom = -Infinity
+    for (const [id, p] of pos) bottom = Math.max(bottom, p.y + size(id).h / 2)
     const before = new Set(positioned)
     pos.set(hub, { x: 0, y: 0 })
     positioned.add(hub)
     walk([hub])
     const block = [...positioned].filter(id => !before.has(id))
-    let right = -Infinity
-    for (const id of block) right = Math.max(right, pos.get(id)!.x + size(id).w / 2)
-    const dx = left - ADDRESS_BLOCK_GAP - right
-    for (const id of block) { const p = pos.get(id)!; pos.set(id, { x: p.x + dx, y: p.y }) }
+    let top = Infinity
+    for (const id of block) top = Math.min(top, pos.get(id)!.y - size(id).h / 2)
+    const dy = bottom + ADDRESS_BLOCK_GAP - top
+    for (const id of block) { const p = pos.get(id)!; pos.set(id, { x: p.x, y: p.y + dy }) }
   }
 
   return pos
