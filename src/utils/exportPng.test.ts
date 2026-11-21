@@ -244,3 +244,17 @@ describe('legendItems — only what the picture draws', () => {
     expect(legendItems([], t)).toEqual([])
   })
 })
+
+describe('the exported key and a shared registered office', () => {
+  it('names the address node and its lines only when the picture has them', () => {
+    const t = (k: string) => k
+    const els: GraphElement[] = [
+      { data: { id: 'A', label: 'Alpha', nodeType: 'entity', raw: { id: 'A', name: 'Alpha' } } },
+      { data: { id: 'address:k', label: '1209 Orange St', nodeType: 'address', addressKey: 'k', raw: { id: 'address:k', name: '1209 Orange St' } } },
+      { data: { id: 'A__registered_at__address:k', source: 'A', target: 'address:k', label: '', edgeType: 'registered_at', stakePct: null } },
+    ] as GraphElement[]
+    const labels = legendItems(els, t).map(i => i.label)
+    expect(labels).toEqual(['legend.company', 'legend.address', 'legend.registeredAt'])
+    expect(legendItems(els.slice(0, 1), t).map(i => i.label)).toEqual(['legend.company'])
+  })
+})

@@ -264,6 +264,7 @@ export function legendItems(
       if (d.edgeType === 'role') lineKinds.add('role')
       else if (d.edgeType === 'votes') lineKinds.add('votingPower')
       else if (d.edgeType === 'member') lineKinds.add('voting_group')
+      else if (d.edgeType === 'registered_at') lineKinds.add('registeredAt')
       else if (d.edgeType === 'owns') {
         if (d.directOrIndirect === 'indirect') lineKinds.add('ultimateParent')
         if (d.ownershipType === 'full' || d.ownershipType === 'majority') lineKinds.add('fullMajority')
@@ -271,14 +272,16 @@ export function legendItems(
         else if (d.ownershipType === 'controlling') lineKinds.add('controlling')
       }
     } else if (d.nodeType === 'person') nodeTypes.add('person')
+    else if (d.nodeType === 'address') nodeTypes.add('address')
     else nodeTypes.add(typeof d.entitySubtype === 'string' && (ENTITY_SUBTYPES as readonly string[]).includes(d.entitySubtype) ? d.entitySubtype : 'company')
   }
-  const nodes: LegendItem[] = [...['company'], ...ENTITY_SUBTYPES, 'person'].filter(k => nodeTypes.has(k))
+  const nodes: LegendItem[] = [...['company'], ...ENTITY_SUBTYPES, 'person', 'address'].filter(k => nodeTypes.has(k))
     .map(k => ({ kind: 'node', label: t(`legend.${k}`), fill: ENTITY_COLORS[k].fill, border: ENTITY_COLORS[k].border, round: k === 'person' }))
   const LINES: Record<string, { color: string; dashed?: boolean }> = {
     fullMajority: { color: '#2ECC71' }, minority: { color: '#F39C12' }, controlling: { color: '#E74C3C' },
     votingPower: { color: '#9B59B6', dashed: true }, ultimateParent: { color: '#8892a4', dashed: true },
     role: { color: '#6c7ae0', dashed: true }, voting_group: { color: '#b7791f', dashed: true },
+    registeredAt: { color: ENTITY_COLORS.address.fill, dashed: true },
   }
   const lines: LegendItem[] = Object.keys(LINES).filter(k => lineKinds.has(k))
     .map(k => ({ kind: 'line', label: t(`legend.${k}`), ...LINES[k] }))

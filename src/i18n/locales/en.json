@@ -115,6 +115,8 @@
     "highPct": "High %",
     "ultimateParent": "Ultimate parent (no direct chain)",
     "voting_group": "Voting group",
+    "address": "Registered office",
+    "registeredAt": "Registered at the same address",
     "joint_filing": "Joint filing"
   },
   "panel": {
@@ -213,7 +215,16 @@
     "subsidiariesAllLevels": "Subsidiaries — all levels",
     "companiesBelow_one": "{{n}} subsidiary",
     "companiesBelow_other": "{{n}} subsidiaries",
-    "companiesBelowHint": "Its own subsidiaries, at all levels, each counted once"
+    "companiesBelowHint": "Its own subsidiaries, at all levels, each counted once",
+    "sameAddress": "Registered at the same address",
+    "sameAddressHint": "Companies that give the same registered office — often an agent's or a law firm's address rather than where a company is run.",
+    "sameAddressShowInGraph": "Show in graph",
+    "sameAddressHideFromGraph": "Remove from graph",
+    "sameAddressMore": "Show more ({{shown}} of {{count}})",
+    "addressTitle": "Registered office",
+    "addressCount_one": "{{count}} company registered here",
+    "addressCount_other": "{{count}} companies registered here",
+    "addressSpelling": "The same building under another spelling is listed as a separate address."
   },
   "identity": {
     "title": "How this record was put together",
@@ -563,7 +574,9 @@
     "subdivisionsOf": "Show where in {{country}}",
     "subdivisionNotStated": "Not stated",
     "backToWorld": "Back to world",
-    "hintStates": "Click a state to see its companies"
+    "hintStates": "Click a state to see its companies",
+    "sameDoor_one": "{{count}} other company registered at this address",
+    "sameDoor_other": "{{count}} other companies registered at this address"
   },
   "settings": {
     "title": "Settings",

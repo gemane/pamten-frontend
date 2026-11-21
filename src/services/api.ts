@@ -3,6 +3,7 @@ import i18n from '../i18n'
 import type { MapBasis } from '../utils/mapBasis'
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import type {
+  RegisteredAddress,
   SearchResult,
   FullProfile,
   PersonProfile,
@@ -209,6 +210,11 @@ export const getStats = (): Promise<AxiosResponse<StatsResponse>> =>
  *  time-travel view; omitted, the present. */
 export const getFullProfile = (id: string, asOf?: string | null): Promise<AxiosResponse<FullProfile>> =>
   client.get(`/search/entity/${id}/full-profile`, asOf ? { params: { as_of: asOf } } : undefined)
+
+/** Every company registered at one address, by name, paged — an address
+ *  node's list. `key` as the profile's `registered_address.key` gives it. */
+export const getCompaniesAtAddress = (key: string, offset = 0, limit = 100): Promise<AxiosResponse<RegisteredAddress>> =>
+  client.get('/search/address', { params: { key, offset, limit } })
 
 /** The whole tree below a company — the "all levels" view. */
 export const getSubsidiaryTree = (id: string, asOf?: string | null): Promise<AxiosResponse<SubsidiaryTree>> =>

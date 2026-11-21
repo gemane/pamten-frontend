@@ -54,6 +54,8 @@ export function buildContextCountries(
       hqAddress: basis === 'hq' ? raw.hq_address : raw.address,
       legalAddress: basis === 'hq' ? raw.address : undefined,
       precise: coords?.precise ?? false,
+      entityId: id,
+      registeredAddress: raw.address ?? undefined,
     })
   }
 

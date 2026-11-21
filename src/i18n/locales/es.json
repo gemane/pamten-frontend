@@ -115,6 +115,8 @@
     "highPct": "% alto",
     "ultimateParent": "Matriz última (sin cadena directa)",
     "voting_group": "Grupo de voto",
+    "address": "Domicilio social",
+    "registeredAt": "Registrada en la misma dirección",
     "joint_filing": "Declaración conjunta"
   },
   "panel": {
@@ -213,7 +215,16 @@
     "subsidiariesAllLevels": "Filiales — todos los niveles",
     "companiesBelow_one": "{{n}} filial",
     "companiesBelow_other": "{{n}} filiales",
-    "companiesBelowHint": "Sus propias filiales, todos los niveles, cada una contada una vez"
+    "companiesBelowHint": "Sus propias filiales, todos los niveles, cada una contada una vez",
+    "sameAddress": "Registradas en la misma dirección",
+    "sameAddressHint": "Empresas con el mismo domicilio social: a menudo la dirección de un agente o de un despacho de abogados, no el lugar desde donde se dirige la empresa.",
+    "sameAddressShowInGraph": "Mostrar en el grafo",
+    "sameAddressHideFromGraph": "Quitar del grafo",
+    "sameAddressMore": "Mostrar más ({{shown}} de {{count}})",
+    "addressTitle": "Domicilio social",
+    "addressCount_one": "{{count}} empresa registrada aquí",
+    "addressCount_other": "{{count}} empresas registradas aquí",
+    "addressSpelling": "El mismo edificio escrito de otra forma aparece como otra dirección."
   },
   "identity": {
     "title": "Cómo se formó este registro",
@@ -563,7 +574,9 @@
     "subdivisionsOf": "Mostrar dónde en {{country}}",
     "subdivisionNotStated": "No indicado",
     "backToWorld": "Volver al mundo",
-    "hintStates": "Haz clic en un estado para ver sus empresas"
+    "hintStates": "Haz clic en un estado para ver sus empresas",
+    "sameDoor_one": "{{count}} empresa más registrada en esta dirección",
+    "sameDoor_other": "{{count}} empresas más registradas en esta dirección"
   },
   "settings": {
     "title": "Ajustes",

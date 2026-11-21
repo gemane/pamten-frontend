@@ -9,6 +9,7 @@ import type { CountryEntityGroup, Entity, NodeData } from '../types'
 import { colorFor } from '../utils/entityColors'
 import ActionMenu from './ActionMenu'
 import ReportModal from './ReportModal'
+import { useAddressPages } from '../hooks/useAddressPages'
 
 // Was a three-entry copy of the palette — see ScraperPanel for the same fix.
 const typeColor = (type?: string | null) => colorFor('entity', type).fill
@@ -28,6 +29,41 @@ function EntityItem({ entity, onLoad }: EntityItemProps) {
       <span className="map-entity-name">{entity.name}</span>
       <span className="map-entity-type">{entity.type}</span>
     </button>
+  )
+}
+
+/** How many neighbours the map panel names before "show more". */
+export const PANEL_DOOR_ROWS = 8
+
+/**
+ * The other companies registered at the selected company's registered office —
+ * the letterbox view in the map panel (the user, 2026-11-21: the pin's popup
+ * had it, the panel beside the map did not). Keyed by the address as the
+ * company states it, like the popup. Nothing while loading, on an error, or
+ * when the company is alone there.
+ */
+function SameAddressList({ address, selfId, onLoad }: {
+  address: string; selfId: string; onLoad: (id: string) => void
+}) {
+  const { t } = useTranslation()
+  const { rows, count, busy, more } = useAddressPages(address, null, null, selfId, PANEL_DOOR_ROWS + 1)
+  const total = count ?? 0
+  if (total <= 0 || rows.length === 0) return null
+  return (
+    <div className="map-panel__door">
+      <div className="map-panel__door-title">
+        {t('panel.sameAddress')} <span className="map-country-row__count">{total}</span>
+      </div>
+      <p className="map-panel__door-hint">{t('panel.sameAddressHint')}</p>
+      <div className="map-panel__entity-list">
+        {rows.map(e => <EntityItem key={e.id} entity={e} onLoad={onLoad} />)}
+      </div>
+      {rows.length < total && (
+        <button type="button" className="map-panel__door-more" disabled={busy} onClick={() => void more()}>
+          {t('panel.sameAddressMore', { shown: rows.length, count: total })}
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -176,6 +212,9 @@ export default function MapPanel({
           </div>
         ) : (
           <p className="map-panel__hint">{t('map.noSubsidiaries')}</p>
+        )}
+        {primary.address && (
+          <SameAddressList address={primary.address} selfId={contextNode.id} onLoad={onLoadEntity} />
         )}
       </div>
     )

@@ -8,6 +8,7 @@ import type { NodeData, FullProfile, Entity } from '../types'
 // Mock the api + the children that do their own fetching, so the test isolates NodePanel's
 // own load/refresh behaviour.
 vi.mock('../services/api', () => ({
+  getCompaniesAtAddress: vi.fn(),
   getFullProfile: vi.fn(),
   getEntitySources: vi.fn(),
   getPersonProfile: vi.fn(),

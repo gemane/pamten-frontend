@@ -40,6 +40,8 @@ interface MapViewProps {
    *  panel and the fetches depend on it too. */
   basis?: MapBasis
   onBasisChange?: (basis: MapBasis) => void
+  /** Open a company listed in a pin's detail (the others at its registered office). */
+  onOpenEntity?: (entityId: string) => void
 }
 
 function buildNumericMap(countryData: CountryEntityGroup[]): Map<number, CountryEntityGroup> {
@@ -187,6 +189,7 @@ export default function MapView({
   flyTo,
   basis = 'jurisdiction',
   onBasisChange,
+  onOpenEntity,
 }: MapViewProps) {
   const { t, i18n } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
@@ -445,7 +448,8 @@ export default function MapView({
             <Marker key={i} coordinates={[c.lng!, c.lat!]}
               onClick={() => setDetail({ label: c.label, city: c.city, country: c.country,
                                          lat: c.lat!, lng: c.lng!, hqAddress: c.hqAddress,
-                                         legalAddress: c.legalAddress, precise: c.precise })}
+                                         legalAddress: c.legalAddress, precise: c.precise,
+                                         entityId: c.entityId, registeredAddress: c.registeredAddress })}
               onMouseEnter={() => setTooltip({ x: 0, y: 0, text: c.label })}
               onMouseLeave={() => setTooltip(null)}
             >
@@ -476,7 +480,8 @@ export default function MapView({
 
       {detail && (
         <Suspense fallback={null}>
-          <MapDetail data={detail} onClose={() => setDetail(null)} />
+          <MapDetail data={detail} onClose={() => setDetail(null)}
+                     onOpenEntity={onOpenEntity ? (id) => { setDetail(null); onOpenEntity(id) } : undefined} />
         </Suspense>
       )}
 

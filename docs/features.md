@@ -59,6 +59,16 @@ What the web app does, panel by panel. Setup and the project layout are in the [
 - **Export as PNG** (panel menu): the whole graph at 2× in a frame of its own background, with a header band — the logo, the name and the subtitle on the left, the **company and the date** (and "As of {year}" when the graph is a past one) on the right — and a footer band: a **legend of what the picture draws** (only the node types and line kinds in it, the ⓘ panel's colours) on the left; on the right **what it leaves out** (`Subsidiaries: Direct · Minimum stake: ≥1%`) over the **link to the live graph**. A picture pasted into a deck then says what it shows, what it hides and where it came from — filtered to ≥ 5 %, it used to look like the whole company. **Export as spreadsheet (.ods)** asks the server for the open company's workbook — Overview, Owners, Subsidiaries, Roles, Timeline, Sources, Claims, Stake history — as of the day, with the levels and the stake band the graph shows, but **every row**, not what the graph loaded (it replaced a CSV built from the graph's elements: two tables in one file, every number a string); the file is named by the server (`Microsoft as of 2019.ods`)
 - **Timeline for people too**, built from the positions and holdings the panel already fetched — Steve Jobs founding Apple in 1976, off the board in 1985, back in 1997, CEO until 2011. Grouped by year, newest first, with undated entries in their own group rather than given an invented date (a role from Wikidata's reverse lookup carries none). The tab appears only when something is dated: about half the people in the graph have no dated position, and a tab that always opens onto "no date recorded" is worse than no tab
 
+### Registered at the same address
+
+A company's panel lists, right beneath **Details**, the other companies that give the same registered office (backend `registered_address`, paged from `GET /search/address`). The address is often an agent's or a law firm's, not where a company is run; the hint says so, and the same building under another spelling is a separate address.
+
+- **Show in graph** draws the address as a node with the companies registered there in rows of eight. While it is shown it stands **in place of that company's subsidiaries** (`replaceSubsidiaries` in `utils/addressElements.ts` — a view; the loaded graph keeps them). The button then reads **Remove from graph** and brings the subsidiaries back; the address node's own panel has the same button.
+- **Map panel**: under a selected company, the same list with "show more"; a click loads the company.
+- **Pin detail** on the map: the first eight others, and "show more" for the rest.
+
+All three lists page through one hook, `hooks/useAddressPages.ts`.
+
 ## Timeline view
 - Shows ownership changes, subsidiaries acquired, and executive roles grouped by year
 - Undated relationships appear under "No date recorded"

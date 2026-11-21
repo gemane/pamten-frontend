@@ -1828,6 +1828,7 @@ a.source-item__name:hover { color: #4A90D9; }
   transition: color 0.15s, border-color 0.15s;
 }
 
+.panel-export__btn--spaced { margin-bottom: 8px; }
 .panel-export__btn:hover {
   color: #eaeaea;
   border-color: rgba(255,255,255,0.2);
@@ -2095,6 +2096,13 @@ a.source-item__name:hover { color: #4A90D9; }
 .map-detail__place { color: #9fb3d1; font-size: 12px; }
 .map-detail__addr  { color: #7f8ea8; font-size: 11px; line-height: 1.3; }
 .map-detail__addr--legal { color: #6b7688; font-style: italic; }
+.map-detail__door { padding: 6px 12px 8px; font-size: 12px; border-top: 1px solid var(--border-color, rgba(128,128,128,.25)); }
+.map-detail__door-title { display: block; font-weight: 600; margin-bottom: 4px; }
+.map-detail__door-list { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 12px; max-height: 168px; overflow-y: auto; }
+.map-detail__door-item { background: none; border: 0; padding: 1px 0; color: inherit; cursor: pointer; text-align: left; font: inherit; text-decoration: underline dotted; }
+.map-detail__door-more { display: block; margin-top: 6px; padding: 0; background: none; border: 0; font: inherit; color: #6c7ae0; cursor: pointer; text-decoration: underline; }
+.map-detail__door-more:disabled { opacity: .6; cursor: default; }
+@media (max-width: 640px) { .map-detail__door-list { columns: 1; } }
 .map-detail__approx {
   align-self: flex-start;
   margin-top: 2px;
@@ -2494,6 +2502,14 @@ a.source-item__name:hover { color: #4A90D9; }
   font-size: 11px;
   color: #4a5568;
 }
+
+/* The letterbox list under a selected company: who else is registered there */
+.map-panel__door { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(113, 128, 150, 0.25); }
+.map-panel__door-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; font-size: 12px; font-weight: 600; color: #a0aec0; text-transform: uppercase; letter-spacing: .04em; }
+.map-panel__door-hint { margin: 6px 0 8px; padding: 0 10px; font-size: 11px; line-height: 1.4; color: #718096; }
+.map-panel__door-more { margin: 8px 10px 0; padding: 0; background: none; border: 0; font: inherit; font-size: 12px; color: #6c7ae0; cursor: pointer; text-decoration: underline; }
+.map-panel__door-more:disabled { opacity: .6; cursor: default; }
+[data-theme="light"] .map-panel__door-title { color: #4a5568; }
 
 .map-entity-dot {
   width: 8px;

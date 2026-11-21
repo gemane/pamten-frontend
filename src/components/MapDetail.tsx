@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiX, FiExternalLink } from 'react-icons/fi'
+import { useAddressPages } from '../hooks/useAddressPages'
 import * as maplibregl from 'maplibre-gl'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { countryName } from '../utils/isoCountries'
@@ -15,6 +16,45 @@ export interface MapDetailData {
   hqAddress?: string     // the pinned (HQ) address
   legalAddress?: string  // registered/legal address — shown as info when it differs
   precise?: boolean      // exact street-level pin vs approximate (city) circle
+  entityId?: string      // the company the pin is
+  registeredAddress?: string   // its registered office as stated — the letterbox list's key
+}
+
+/** How many of the others the popup names before "and N more" — it sits over
+ *  the map, and the full list is the panel's (and GET /search/address's). */
+export const DOOR_ROWS = 8
+
+/** The other companies registered at this company's registered office — the
+ *  letterbox view on the map (backend app/registered_address.py). Nothing
+ *  while loading, on an error, or when it is alone there. */
+function SameDoor({ address, selfId, onOpenEntity }: {
+  address: string; selfId?: string; onOpenEntity?: (id: string) => void
+}) {
+  const { t } = useTranslation()
+  // the first request names a handful; "show more" fetches the rest, page by page
+  const { rows, count, busy, more } = useAddressPages(address, null, null, selfId, DOOR_ROWS + 1)
+  const total = count ?? 0
+  if (total <= 0 || rows.length === 0) return null
+  return (
+    <div className="map-detail__door">
+      <span className="map-detail__door-title">{t('map.sameDoor', { count: total })}</span>
+      <ul className="map-detail__door-list">
+        {rows.map(e => (
+          <li key={e.id}>
+            {onOpenEntity
+              ? <button type="button" className="map-detail__door-item" onClick={() => onOpenEntity(e.id)}>{e.name}</button>
+              : <span>{e.name}</span>}
+          </li>
+        ))}
+      </ul>
+      {/* It said "and 43 more" and showed none of them (the user, 2026-11-21) */}
+      {rows.length < total && (
+        <button type="button" className="map-detail__door-more" disabled={busy} onClick={() => void more()}>
+          {t('panel.sameAddressMore', { shown: rows.length, count: total })}
+        </button>
+      )}
+    </div>
+  )
 }
 
 /** The basemap: OpenFreeMap's vector tiles — free, no account, no key, no
@@ -149,7 +189,9 @@ function drawTarget(map: maplibregl.Map, markerRef: { current: maplibregl.Marker
 // A closeable street-level detail map for one company, over the world map. Pins the HQ
 // at its server-geocoded coordinate — a precise marker when the full address resolved,
 // otherwise a circle at the city to signal the location is approximate.
-export default function MapDetail({ data, onClose }: { data: MapDetailData; onClose: () => void }) {
+export default function MapDetail({ data, onClose, onOpenEntity }: {
+  data: MapDetailData; onClose: () => void; onOpenEntity?: (entityId: string) => void
+}) {
   const { t, i18n } = useTranslation()
   const precise = data.precise ?? false
   const place = [data.city, countryName(data.country, i18n.language)].filter(Boolean).join(', ')
@@ -173,6 +215,10 @@ export default function MapDetail({ data, onClose }: { data: MapDetailData; onCl
           <FiX />
         </button>
       </div>
+
+      {data.registeredAddress && (
+        <SameDoor address={data.registeredAddress} selfId={data.entityId} onOpenEntity={onOpenEntity} />
+      )}
 
       <Basemap lat={data.lat} lng={data.lng} zoom={precise ? 16 : 12} precise={precise} />
 
