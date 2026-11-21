@@ -14,6 +14,7 @@ import OwnershipBadge from './OwnershipBadge'
 import TimelinePanel  from './TimelinePanel'
 import NodeFlags      from './NodeFlags'
 import PersonTimeline, { hasDatedRows } from './PersonTimeline'
+import PersonIdentitySection from './PersonIdentity'
 import ActionMenu     from './ActionMenu'
 import ReportModal    from './ReportModal'
 import { useLongPress } from '../hooks/useLongPress'
@@ -974,6 +975,13 @@ function PersonView({ node, onNavigate, onShare, onReScrape, canReScrape = true,
           ))}
         </Section>
       )}
+
+      {/* Which records this person was made of, how sure each merge is, and
+          who else carries the name and birth month (backend findings item 124). */}
+      <PersonIdentitySection
+        identity={profile?.identity}
+        onOpenPerson={onNavigate && (n => onNavigate(personToNode(
+          { id: n.id, full_name: n.full_name, birth_date: n.birth_date ?? undefined } as Person)))} />
 
       {/* People can be scraped now, so they can be refreshed — the same control
           the company panel has, and it was missing here purely because until

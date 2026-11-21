@@ -215,6 +215,45 @@
     "companiesBelow_other": "{{n}} subsidiaries",
     "companiesBelowHint": "Its own subsidiaries, at all levels, each counted once"
   },
+  "identity": {
+    "title": "How this record was put together",
+    "merged_one": "Combined with {{count}} other record",
+    "merged_other": "Combined with {{count}} other records",
+    "mergedList": "Records combined into this person",
+    "unnamed": "Unnamed record",
+    "tier": {
+      "proof": "Certain",
+      "confirmed": "Checked by an editor",
+      "strong": "Well supported",
+      "likely": "Likely"
+    },
+    "tierHint": {
+      "proof": "The source's own number identifies this person",
+      "confirmed": "An editor combined these records by hand",
+      "strong": "Name and full birth date match, or the birth month and a second fact",
+      "likely": "Name and birth month match under an uncommon name, or name and company — the first place to look if this seems to be two people"
+    },
+    "basis": {
+      "manual": "Combined by an editor",
+      "register_number": "Same filer number at the SEC",
+      "birth_date": "Same name and birth date",
+      "birth_month_rare_name": "Same uncommon name and birth month",
+      "name_and_company": "Same name at the same company",
+      "name": "Same name",
+      "birth_month_and_company": "Same name, birth month and company",
+      "birth_month_and_co_owner": "Same name and birth month; their companies share an owner or officer",
+      "birth_month_and_ownership": "Same name and birth month; one of their companies owns the other",
+      "birth_month_and_office": "Same name and birth month; their companies share a registered office",
+      "birth_month_and_verification": "Same name and birth month; identity verified on the same day",
+      "birth_month_and_postcode": "Same name and birth month; same correspondence postcode"
+    },
+    "namesakes_one": "{{count}} other entry has this name and birth month",
+    "namesakes_other": "{{count}} other entries have this name and birth month",
+    "namesakesList": "Other entries with this name and birth month",
+    "namesakesNote": "Not combined with this record: nothing shows they are the same person.",
+    "more_one": "and {{count}} more",
+    "more_other": "and {{count}} more"
+  },
   "report": {
     "button": "Report",
     "disputed": "Disputed ({{count}})",

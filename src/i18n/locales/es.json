@@ -215,6 +215,45 @@
     "companiesBelow_other": "{{n}} filiales",
     "companiesBelowHint": "Sus propias filiales, todos los niveles, cada una contada una vez"
   },
+  "identity": {
+    "title": "Cómo se formó este registro",
+    "merged_one": "Combinado con {{count}} registro más",
+    "merged_other": "Combinado con {{count}} registros más",
+    "mergedList": "Registros combinados en esta persona",
+    "unnamed": "Registro sin nombre",
+    "tier": {
+      "proof": "Seguro",
+      "confirmed": "Revisado por un editor",
+      "strong": "Bien fundado",
+      "likely": "Probable"
+    },
+    "tierHint": {
+      "proof": "El número de la propia fuente identifica a esta persona",
+      "confirmed": "Un editor combinó estos registros a mano",
+      "strong": "Coinciden el nombre y la fecha de nacimiento completa, o el mes de nacimiento y un segundo dato",
+      "likely": "Coinciden el nombre y el mes de nacimiento con un nombre poco común, o el nombre y la empresa — el primer lugar donde mirar si parecen dos personas"
+    },
+    "basis": {
+      "manual": "Combinado por un editor",
+      "register_number": "Mismo número de declarante en la SEC",
+      "birth_date": "Mismo nombre y fecha de nacimiento",
+      "birth_month_rare_name": "Mismo nombre poco común y mes de nacimiento",
+      "name_and_company": "Mismo nombre en la misma empresa",
+      "name": "Mismo nombre",
+      "birth_month_and_company": "Mismo nombre, mes de nacimiento y empresa",
+      "birth_month_and_co_owner": "Mismo nombre y mes de nacimiento; sus empresas comparten un propietario o directivo",
+      "birth_month_and_ownership": "Mismo nombre y mes de nacimiento; una de sus empresas es dueña de la otra",
+      "birth_month_and_office": "Mismo nombre y mes de nacimiento; sus empresas comparten domicilio social",
+      "birth_month_and_verification": "Mismo nombre y mes de nacimiento; identidad verificada el mismo día",
+      "birth_month_and_postcode": "Mismo nombre y mes de nacimiento; mismo código postal de correspondencia"
+    },
+    "namesakes_one": "{{count}} registro más tiene este nombre y mes de nacimiento",
+    "namesakes_other": "{{count}} registros más tienen este nombre y mes de nacimiento",
+    "namesakesList": "Otros registros con este nombre y mes de nacimiento",
+    "namesakesNote": "No combinados con este registro: nada indica que sean la misma persona.",
+    "more_one": "y {{count}} más",
+    "more_other": "y {{count}} más"
+  },
   "report": {
     "button": "Reportar",
     "disputed": "En disputa ({{count}})",
