@@ -400,6 +400,38 @@ export interface PersonProfile {
   /** Filing groups this person is a party to. A bloc's members are as often
    *  people as companies — AB InBev's includes Lemann, Sicupira and Telles. */
   voting_groups?: VotingGroupEntry[]
+  /** Which records this person was made of and how sure each merge is, and who
+   *  else carries the name and birth month. Absent from an older backend. */
+  identity?: PersonIdentity | null
+}
+
+/** How sure a merge of two person records is — weakest to strongest: `likely`
+ *  (name and birth month under an uncommon name, or name and company),
+ *  `strong` (a birth date to the day, or the month beside a second fact),
+ *  `confirmed` (an editor merged them), `proof` (the source's own number). */
+export type MergeTier = 'likely' | 'strong' | 'confirmed' | 'proof'
+
+export interface PersonMergeEntry {
+  name: string | null
+  at: string | null
+  /** The evidence, as a code the client words (`identity.basis.*`). */
+  basis: string
+  tier: MergeTier
+}
+
+/** Another person of the same name and birth month that was NOT merged. */
+export interface PersonNamesake {
+  id: string
+  full_name: string
+  birth_date: string | null
+  companies: string[]
+}
+
+export interface PersonIdentity {
+  /** `tier` is the weakest of the entries' — null when nothing was merged. */
+  merged: { count: number; tier: MergeTier | null; entries: PersonMergeEntry[] }
+  /** null for a person without a birth month. */
+  namesakes: { count: number; entries: PersonNamesake[] } | null
 }
 
 /** A filing group a node is a party to, and what the group's bloc controls:

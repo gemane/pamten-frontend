@@ -1360,6 +1360,62 @@ body {
 
 .panel-section__title--inline { margin-bottom: 0; }
 
+/* "How this record was put together" (PersonIdentity): the summary lines stay
+   visible, the lists open with the section. */
+.identity__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #a0aec0;
+}
+[data-theme="light"] .identity__summary { color: #4a5568; }
+.identity__list { list-style: none; margin: 4px 0 10px; padding: 0; }
+.identity__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(139,149,167,0.15);
+  font-size: 13px;
+}
+.identity__name { font-weight: 600; color: #e2e8f0; }
+[data-theme="light"] .identity__name { color: #1a202c; }
+.identity__basis { flex: 1 1 100%; font-size: 12px; color: #8b95a7; }
+[data-theme="light"] .identity__basis { color: #718096; }
+.identity__note { margin: 6px 0; font-size: 12px; color: #8b95a7; }
+[data-theme="light"] .identity__note { color: #718096; }
+.identity__link {
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 600;
+  color: #6c7ae0;
+  cursor: pointer;
+  text-align: left;
+}
+.identity__link:hover { text-decoration: underline; }
+/* How sure a merge is. Worded, never colour alone: the badge carries its label. */
+.identity__tier {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  color: #8b95a7;
+  background: rgba(139,149,167,0.15);
+}
+.identity__tier--proof, .identity__tier--confirmed { color: #48bb78; background: rgba(72,187,120,0.15); }
+.identity__tier--strong { color: #6c7ae0; background: rgba(108,122,224,0.15); }
+.identity__tier--likely { color: #d69e2e; background: rgba(214,158,46,0.15); }
+[data-theme="light"] .identity__tier--proof, [data-theme="light"] .identity__tier--confirmed { color: #276749; }
+[data-theme="light"] .identity__tier--strong { color: #434190; }
+[data-theme="light"] .identity__tier--likely { color: #975a16; }
+
 .panel-section__cut {
   margin: 6px 0 2px;
   font-size: 11px;

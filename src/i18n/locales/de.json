@@ -215,6 +215,45 @@
     "companiesBelow_other": "{{n}} Tochtergesellschaften",
     "companiesBelowHint": "Ihre eigenen Tochtergesellschaften, alle Ebenen, jede einmal gezählt"
   },
+  "identity": {
+    "title": "Wie dieser Eintrag entstanden ist",
+    "merged_one": "Mit {{count}} weiteren Eintrag zusammengeführt",
+    "merged_other": "Mit {{count}} weiteren Einträgen zusammengeführt",
+    "mergedList": "Zu dieser Person zusammengeführte Einträge",
+    "unnamed": "Eintrag ohne Namen",
+    "tier": {
+      "proof": "Sicher",
+      "confirmed": "Von Redaktion geprüft",
+      "strong": "Gut belegt",
+      "likely": "Wahrscheinlich"
+    },
+    "tierHint": {
+      "proof": "Die Nummer der Quelle selbst weist diese Person aus",
+      "confirmed": "Die Einträge wurden von Hand zusammengeführt",
+      "strong": "Name und vollständiges Geburtsdatum stimmen überein, oder der Geburtsmonat und eine zweite Tatsache",
+      "likely": "Name und Geburtsmonat stimmen bei einem seltenen Namen überein, oder Name und Unternehmen — hier zuerst nachsehen, falls es zwei Personen sein könnten"
+    },
+    "basis": {
+      "manual": "Von Redaktion zusammengeführt",
+      "register_number": "Dieselbe Melde-Nummer bei der SEC",
+      "birth_date": "Gleicher Name und gleiches Geburtsdatum",
+      "birth_month_rare_name": "Gleicher seltener Name und Geburtsmonat",
+      "name_and_company": "Gleicher Name im selben Unternehmen",
+      "name": "Gleicher Name",
+      "birth_month_and_company": "Gleicher Name, Geburtsmonat und Unternehmen",
+      "birth_month_and_co_owner": "Gleicher Name und Geburtsmonat; die Unternehmen haben einen gemeinsamen Eigentümer oder Amtsträger",
+      "birth_month_and_ownership": "Gleicher Name und Geburtsmonat; eines der Unternehmen gehört dem anderen",
+      "birth_month_and_office": "Gleicher Name und Geburtsmonat; die Unternehmen haben denselben Sitz",
+      "birth_month_and_verification": "Gleicher Name und Geburtsmonat; Identität am selben Tag geprüft",
+      "birth_month_and_postcode": "Gleicher Name und Geburtsmonat; gleiche Postleitzahl der Zustelladresse"
+    },
+    "namesakes_one": "{{count}} weiterer Eintrag hat diesen Namen und Geburtsmonat",
+    "namesakes_other": "{{count}} weitere Einträge haben diesen Namen und Geburtsmonat",
+    "namesakesList": "Weitere Einträge mit diesem Namen und Geburtsmonat",
+    "namesakesNote": "Nicht mit diesem Eintrag zusammengeführt: Nichts belegt, dass es dieselbe Person ist.",
+    "more_one": "und {{count}} weiterer",
+    "more_other": "und {{count}} weitere"
+  },
   "report": {
     "button": "Melden",
     "disputed": "Umstritten ({{count}})",
