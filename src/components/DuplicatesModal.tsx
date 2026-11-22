@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   FiX, FiLoader, FiAlertCircle, FiCheckCircle, FiGitMerge, FiZap, FiStar,
@@ -130,6 +130,9 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
   const from = page * PAGE_SIZE
   const onPage = <T,>(rows: T[]): T[] => rows.slice(from, from + PAGE_SIZE)
   const turn = (by: number) => setPages(p => ({ ...p, [tab]: clampPage(page + by, total) }))
+  // a new page starts at its top, not where the last one was scrolled to
+  const list = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (list.current) list.current.scrollTop = 0 }, [page, tab])
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -164,7 +167,7 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
         {notice && <div className="dup-notice"><FiCheckCircle /> {notice}</div>}
         {error  && <div className="scraper-error"><FiAlertCircle /> {error}</div>}
 
-        <div className="dup-list">
+        <div className="dup-list" ref={list}>
           {loading && <div className="dup-empty"><FiLoader className="spin" /> {t('duplicates.loading')}</div>}
 
           {/* ── Review (pending duplicate groups) ─────────────────────────────── */}

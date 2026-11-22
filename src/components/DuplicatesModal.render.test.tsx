@@ -97,6 +97,16 @@ describe('DuplicatesModal — pages', () => {
     expect(screen.queryByText('Next')).not.toBeInTheDocument()            // twenty left: one page
   })
 
+  it('starts a new page at its top', async () => {
+    vi.mocked(getPersonDuplicates).mockResolvedValue({ data: { groups: many(45) } } as never)
+    const { container } = render(<DuplicatesModal onClose={vi.fn()} />)
+    await screen.findByText('Person 0 A')
+    const list = container.querySelector('.dup-list') as HTMLElement
+    list.scrollTop = 900
+    await userEvent.click(screen.getByRole('button', { name: /Next/ }))
+    expect(list.scrollTop).toBe(0)
+  })
+
   it('keeps a page per tab', async () => {
     vi.mocked(getPersonDuplicates).mockResolvedValue({ data: { groups: many(45) } } as never)
     vi.mocked(getMergeLog).mockResolvedValue({ data: { entries: Array.from({ length: 25 }, (_, i) => ({
