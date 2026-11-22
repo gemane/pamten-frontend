@@ -61,13 +61,10 @@ What the web app does, panel by panel. Setup and the project layout are in the [
 
 ### Registered at the same address
 
-A company's panel lists, right beneath **Details**, the other companies that give the same registered office (backend `registered_address`, paged from `GET /search/address`). The address is often an agent's or a law firm's, not where a company is run; the hint says so, and the same building under another spelling is a separate address.
+A company's panel shows, right beneath **Details**, the title with **how many** other companies give the same registered office (backend `registered_address`) — the number only, no list (2026-11-22). The title is a link: it opens the map on the company, where the list is. The address is not drawn in the graph: the hub with its rows of companies was removed the same day. The address is often an agent's or a law firm's, not where a company is run, and the same building under another spelling is a separate address.
 
-- **Show in graph** draws the address as a node with the companies registered there in rows of eight. While it is shown it stands **in place of that company's subsidiaries** (`replaceSubsidiaries` in `utils/addressElements.ts` — a view; the loaded graph keeps them). The button then reads **Remove from graph** and brings the subsidiaries back; the address node's own panel has the same button.
-- **Map panel**: under a selected company, the same list with "show more"; a click loads the company.
-- **Pin detail** on the map: the first eight others, and "show more" for the rest.
-
-All three lists page through one hook, `hooks/useAddressPages.ts`.
+- **Map panel** — the one place that lists them: a framed block right under the selected company, above its subsidiaries, with the number in the title, the hint and "show more" (paged from `GET /search/address` through `hooks/useAddressPages.ts`); a click loads the company.
+- **Pin detail** on the map (the small street map) names nobody: the list crowded out the map it sat on.
 
 ## Timeline view
 - Shows ownership changes, subsidiaries acquired, and executive roles grouped by year

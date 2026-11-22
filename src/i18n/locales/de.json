@@ -115,8 +115,6 @@
     "highPct": "Hoher %",
     "ultimateParent": "Oberste Muttergesellschaft (keine direkte Kette)",
     "voting_group": "Stimmrechtsgruppe",
-    "address": "Eingetragener Sitz",
-    "registeredAt": "An derselben Adresse eingetragen",
     "joint_filing": "Gemeinsame Meldung"
   },
   "panel": {
@@ -218,13 +216,8 @@
     "companiesBelowHint": "Ihre eigenen Tochtergesellschaften, alle Ebenen, jede einmal gezählt",
     "sameAddress": "An derselben Adresse eingetragen",
     "sameAddressHint": "Firmen mit demselben eingetragenen Sitz – oft die Adresse eines Treuhänders oder einer Kanzlei, nicht der Ort, von dem aus eine Firma geführt wird.",
-    "sameAddressShowInGraph": "Im Graphen zeigen",
-    "sameAddressHideFromGraph": "Aus dem Graphen entfernen",
     "sameAddressMore": "Mehr zeigen ({{shown}} von {{count}})",
-    "addressTitle": "Eingetragener Sitz",
-    "addressCount_one": "{{count}} Firma hier eingetragen",
-    "addressCount_other": "{{count}} Firmen hier eingetragen",
-    "addressSpelling": "Dasselbe Gebäude in anderer Schreibweise erscheint als eigene Adresse."
+    "sameAddressLess": "Weniger anzeigen"
   },
   "identity": {
     "title": "Wie dieser Eintrag entstanden ist",
@@ -574,9 +567,7 @@
     "subdivisionsOf": "Zeigen, wo in {{country}}",
     "subdivisionNotStated": "Nicht angegeben",
     "backToWorld": "Zurück zur Weltkarte",
-    "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen",
-    "sameDoor_one": "{{count}} weitere Firma an dieser Adresse eingetragen",
-    "sameDoor_other": "{{count}} weitere Firmen an dieser Adresse eingetragen"
+    "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen"
   },
   "settings": {
     "title": "Einstellungen",

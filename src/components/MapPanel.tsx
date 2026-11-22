@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiMapPin, FiLoader, FiChevronRight, FiChevronDown, FiMoreVertical, FiShare2, FiFlag } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
@@ -37,8 +37,9 @@ export const PANEL_DOOR_ROWS = 8
 
 /**
  * The other companies registered at the selected company's registered office —
- * the letterbox view in the map panel (the user, 2026-11-21: the pin's popup
- * had it, the panel beside the map did not). Keyed by the address as the
+ * the letterbox view, and since 2026-11-22 the ONE place that lists them (the
+ * user: not in the pin's small map, not in the profile panel, and more visible
+ * here): a framed block right under the company, above its subsidiaries. Keyed by the address as the
  * company states it, like the popup. Nothing while loading, on an error, or
  * when the company is alone there.
  */
@@ -48,19 +49,37 @@ function SameAddressList({ address, selfId, onLoad }: {
   const { t } = useTranslation()
   const { rows, count, busy, more } = useAddressPages(address, null, null, selfId, PANEL_DOOR_ROWS + 1)
   const total = count ?? 0
+  // "Show more" had no way back (the user, 2026-11-22): the list can be folded
+  // to the rows it opened with. What was fetched stays, so opening it again
+  // asks the server for nothing it already gave.
+  const [first, setFirst] = useState<number | null>(null)
+  const [folded, setFolded] = useState(false)
+  useEffect(() => { if (first == null && rows.length > 0) setFirst(rows.length) }, [first, rows.length])
   if (total <= 0 || rows.length === 0) return null
+  const visible = folded && first != null ? rows.slice(0, first) : rows
+  const showMore = () => {
+    if (folded) { setFolded(false); return }
+    void more()
+  }
   return (
     <div className="map-panel__door">
       <div className="map-panel__door-title">
-        {t('panel.sameAddress')} <span className="map-country-row__count">{total}</span>
+        <FiMapPin size={14} className="map-panel__door-icon" aria-hidden="true" />
+        <span className="map-panel__door-label">{t('panel.sameAddress')}</span>
+        <span className="map-panel__door-count">{total}</span>
       </div>
       <p className="map-panel__door-hint">{t('panel.sameAddressHint')}</p>
       <div className="map-panel__entity-list">
-        {rows.map(e => <EntityItem key={e.id} entity={e} onLoad={onLoad} />)}
+        {visible.map(e => <EntityItem key={e.id} entity={e} onLoad={onLoad} />)}
       </div>
-      {rows.length < total && (
-        <button type="button" className="map-panel__door-more" disabled={busy} onClick={() => void more()}>
-          {t('panel.sameAddressMore', { shown: rows.length, count: total })}
+      {visible.length < total && (
+        <button type="button" className="map-panel__door-more" disabled={busy} onClick={showMore}>
+          {t('panel.sameAddressMore', { shown: visible.length, count: total })}
+        </button>
+      )}
+      {!folded && first != null && rows.length > first && (
+        <button type="button" className="map-panel__door-more" onClick={() => setFolded(true)}>
+          {t('panel.sameAddressLess')}
         </button>
       )}
     </div>
@@ -189,6 +208,9 @@ export default function MapPanel({
           <ReportModal targetKind="entity" targetLabel={contextNode.label}
                        nodeId={contextNode.id} onClose={() => setReporting(false)} />
         )}
+        {primary.address && (
+          <SameAddressList address={primary.address} selfId={contextNode.id} onLoad={onLoadEntity} />
+        )}
         {contextSubsidiaries.length > 0 ? (
           <div className="map-panel__entity-list">
             {sortSubsidiaries(contextSubsidiaries, basis, i18n.language).map(sub => {
@@ -212,9 +234,6 @@ export default function MapPanel({
           </div>
         ) : (
           <p className="map-panel__hint">{t('map.noSubsidiaries')}</p>
-        )}
-        {primary.address && (
-          <SameAddressList address={primary.address} selfId={contextNode.id} onLoad={onLoadEntity} />
         )}
       </div>
     )

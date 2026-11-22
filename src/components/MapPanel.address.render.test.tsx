@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 
 // The letterbox view in the map panel: under a selected company, who else is
-// registered at its registered office (the user, 2026-11-21).
+// registered at its registered office (the user, 2026-11-21) — since
+// 2026-11-22 the only place that lists them.
 vi.mock('../services/api', () => ({ getCompaniesAtAddress: vi.fn() }))
 vi.mock('./ReportModal', () => ({ default: () => null }))
 
@@ -39,6 +40,19 @@ describe('registered at the same address, in the map panel', () => {
     expect(onLoad).toHaveBeenCalledWith('C')
   })
 
+  it('stands right under the company, above its subsidiaries (the one place that lists them)', async () => {
+    answer(2, [co('A', 'Alpha Holdings LLC'), co('B', 'Beta Finance LLC')])
+    const sub: NodeData = { id: 'S', label: 'Sub One Ltd', nodeType: 'entity', raw: co('S', 'Sub One Ltd') }
+    render(<MapPanel countryData={[]} selectedCountry={null} onSelectCountry={() => {}} onLoadEntity={() => {}}
+                     loading={false} contextNode={context(CSC)} contextSubsidiaries={[sub]} />)
+    const door = await screen.findByText('Registered at the same address')
+    const after = (a: Node, b: Node) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(after(screen.getByText('Alpha Holdings LLC'), door)).toBe(true)
+    expect(after(screen.getByText('Beta Finance LLC'), screen.getByText('Sub One Ltd'))).toBe(true)
+    // the number stands in the title
+    expect(door.parentElement).toHaveTextContent('Registered at the same address1')
+  })
+
   it('fetches the rest on "show more"', async () => {
     answer(44, Array.from({ length: PANEL_DOOR_ROWS + 1 }, (_, i) => co(`N${i}`, `Nominee ${i} LLC`)))
     panel(context(CSC))
@@ -47,6 +61,24 @@ describe('registered at the same address, in the map panel', () => {
     fireEvent.click(more)
     expect(await screen.findByText('Zulu LLC')).toBeInTheDocument()
     expect(getCompaniesAtAddress).toHaveBeenLastCalledWith(CSC, PANEL_DOOR_ROWS + 1)
+  })
+
+  it('folds back to the rows it opened with, and opens again without asking the server', async () => {
+    answer(44, Array.from({ length: PANEL_DOOR_ROWS + 1 }, (_, i) => co(`N${i}`, `Nominee ${i} LLC`)))
+    panel(context(CSC))
+    const more = await screen.findByRole('button', { name: /Show more/ })
+    expect(screen.queryByRole('button', { name: 'Show less' })).toBeNull()      // nothing to fold yet
+    answer(44, [co('Z', 'Zulu LLC')])
+    fireEvent.click(more)
+    expect(await screen.findByText('Zulu LLC')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Show less' }))
+    expect(screen.queryByText('Zulu LLC')).toBeNull()
+    expect(screen.getAllByText(/^Nominee \d+ LLC$/)).toHaveLength(PANEL_DOOR_ROWS + 1)
+    expect(screen.queryByRole('button', { name: 'Show less' })).toBeNull()
+    const calls = vi.mocked(getCompaniesAtAddress).mock.calls.length
+    fireEvent.click(screen.getByRole('button', { name: `Show more (${PANEL_DOOR_ROWS + 1} of 43)` }))
+    expect(screen.getByText('Zulu LLC')).toBeInTheDocument()
+    expect(getCompaniesAtAddress).toHaveBeenCalledTimes(calls)                  // what was fetched stays
   })
 
   it('shows nothing for a company alone there, and asks nothing without an address', async () => {

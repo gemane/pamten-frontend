@@ -59,6 +59,13 @@ beforeEach(() => { FakeMap.maps.length = 0; FakeMarker.live = []; vi.useFakeTime
 afterEach(() => { vi.useRealTimers(); document.documentElement.removeAttribute('data-theme') })
 
 describe('the detail map on OpenFreeMap', () => {
+  it('names no other company at the address: that list is the map panel\'s (the user, 2026-11-22)', () => {
+    const { container } = render(<MapDetail data={{ ...data, hqAddress: '1 Main St', legalAddress: '251 Little Falls Drive' }}
+                                            onClose={() => {}} />)
+    expect(container.querySelectorAll('button')).toHaveLength(1)   // the close button, no rows, no "show more"
+    expect(container.querySelector('ul')).toBeNull()
+  })
+
   it('opens on the light Liberty style at the address, street-level zoom for a precise pin', () => {
     render(<MapDetail data={data} onClose={() => {}} />)
     const m = FakeMap.maps[0]

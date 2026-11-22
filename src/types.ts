@@ -467,9 +467,7 @@ export interface HistoryEntry {
 }
 
 // Graph element types (Cytoscape)
-/** `address`: a registered office drawn as the hub joining the companies
- *  registered at it (utils/addressElements) — no profile of its own. */
-type NodeType = 'entity' | 'person' | 'address'
+type NodeType = 'entity' | 'person'
 
 export interface NodeData {
   id: string
@@ -478,8 +476,6 @@ export interface NodeData {
   entitySubtype?: EntityType | null
   raw: Entity | Person
   importance?: number   // voting_power_pct or stake_percent — drives node size and arc radius
-  /** An address node's key, for listing the companies registered there. */
-  addressKey?: string
 }
 
 export interface EdgeData {
@@ -487,7 +483,7 @@ export interface EdgeData {
   source: string
   target: string
   label: string
-  edgeType: 'owns' | 'role' | 'votes' | 'member' | 'registered_at'
+  edgeType: 'owns' | 'role' | 'votes' | 'member'
   edgeDir?: 'in' | 'out'
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null
@@ -806,10 +802,6 @@ export interface ContextCountry {
   legalAddress?: string  // registered/legal address (shown as info when it differs)
   basis?: 'jurisdiction' | 'hq'   // which place this pin is, so it can be styled and labelled
   precise?: boolean      // geo precision 'exact' → pin vs approximate circle
-  entityId?: string      // the company the pin is
-  /** Its registered office as stated, whichever basis is drawn: the detail
-   *  lists the other companies registered there (the letterbox view). */
-  registeredAddress?: string
 }
 
 // ── Verification flags (report a wrong node/edge) ───────────────────────────

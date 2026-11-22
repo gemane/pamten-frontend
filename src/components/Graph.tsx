@@ -119,24 +119,6 @@ export function buildStylesheet(theme: 'dark' | 'light'): cytoscape.StylesheetSt
       },
     },
     {
-      // A registered office joining the companies registered at it (the
-      // letterbox view, utils/addressElements): a place, not a party.
-      selector: 'node[nodeType = "address"]',
-      style: {
-        'background-color': ENTITY_COLORS.address.fill, shape: 'tag',
-        'border-width': 2, 'border-color': ENTITY_COLORS.address.border, 'border-style': 'dashed',
-      },
-    },
-    {
-      // Registered at the same door: no holding, so no arrow and no stake —
-      // thin and dotted in the address's slate.
-      selector: 'edge[edgeType = "registered_at"]',
-      style: {
-        'line-color': ENTITY_COLORS.address.fill, 'line-style': 'dotted', width: 1.5,
-        'target-arrow-shape': 'none', opacity: 0.8,
-      },
-    },
-    {
       // Scale padding (= visual size) for owner nodes by their importance
       selector: 'node[importance > 0]',
       style: { padding: 'mapData(importance, 0, 60, 14, 34)' },
@@ -297,26 +279,12 @@ const OWNER_B_MIN  = 120            // vertical distance for most-important owne
 const OWNER_B_MAX  = 300            // vertical distance for least-important owner
 const ARC_DEPTH    = 0.3            // a crowded arc's height, as a share of its half-width
 const LEVEL_GAP    = 220            // vertical px between hop levels beyond the 1st
-const ADDRESS_ROW  = 8              // companies per row under a registered office
-const ADDRESS_ROW_GAP = 110         // vertical px between those rows
-const ADDRESS_BLOCK_GAP = 160       // clear px between an address's block and the rest of the graph
 
 // Pure function — works on the React elements array, no Cytoscape required.
 // Returns a map of nodeId → {x, y} to use when calling cy.add().
 /** The elements that survive a stake filter: ownership edges below the band
  *  go, nodes left with no visible edge go (the centre always stays), role
  *  edges are never filtered. Pure, so the re-layout it feeds is testable. */
-/** What the stake filter can judge: the links that are holdings and state a
- *  percentage, out of the holdings there are. A seat and a shared registered
- *  office are no holding — counted, a graph showing a letterbox's 50
- *  neighbours would read "12 of 62 links state a stake". */
-export function stakeCoverageOf(elements: GraphElement[]): { stated: number; total: number } {
-  const owns = elements
-    .map(el => el.data)
-    .filter((d): d is EdgeData => 'edgeType' in d && d.edgeType !== 'role' && d.edgeType !== 'registered_at')
-  return { stated: owns.filter(d => d.stakePct != null).length, total: owns.length }
-}
-
 export function filterVisibleElements(
   elements: GraphElement[],
   filter: StakeFilter,
@@ -350,8 +318,7 @@ export function classifyElements(
   const presence = new Map<string, Presence>()
   const edgeVisible = (d: EdgeData): boolean => {
     if (exists.get(d.source) === false || exists.get(d.target) === false) return false
-    // a seat and a shared registered office state no stake to filter on
-    if (d.edgeType !== 'role' && d.edgeType !== 'registered_at') {
+    if (d.edgeType !== 'role') {
       const eff = effectiveStakePct(d.stakePct ?? null, d.shares, d.sharesOutstanding)
       if (!keepsEdge(eff, filter)) return false
     }
@@ -569,7 +536,6 @@ export function computeArcPositions(
   const nodeImportance = new Map<string, number>()
   const nodeLabel   = new Map<string, string>()
   const groupIds    = new Set<string>()          // 13D voting groups (entitySubtype voting_group)
-  const addressIds  = new Set<string>()          // registered offices (utils/addressElements)
   // key: edgeKey(src, tgt) → the holding's stake and share count, as the
   // panel's rows have them: from the owns line; a voting line only stands in
   // when there is no owns line.
@@ -603,7 +569,6 @@ export function computeArcPositions(
       if (d.importance != null) nodeImportance.set(d.id, d.importance)
       nodeLabel.set(d.id, d.label ?? '')
       if (d.entitySubtype === 'voting_group') groupIds.add(d.id)
-      if (d.nodeType === 'address') addressIds.add(d.id)
     }
   }
 
@@ -619,7 +584,7 @@ export function computeArcPositions(
   const topIds    = (incomersOf.get(centerId) ?? []).filter(id => id !== centerId)
   const topSet    = new Set(topIds)
   const bottomIds = (outgoersOf.get(centerId) ?? [])
-    .filter(id => !topSet.has(id) && id !== centerId && !placed?.has(id) && !addressIds.has(id))
+    .filter(id => !topSet.has(id) && id !== centerId && !placed?.has(id))
 
   // Left-to-right order along each arc follows the panel's stake ordering.
   topIds.sort(cmpByStake(id => edgeKey(id, centerId)))       // owners → center
@@ -629,8 +594,6 @@ export function computeArcPositions(
   // holding: it sits after the subsidiaries, not sorted in among them as if
   // the centre owned it (Berkshire's DaVita group, 2026-10-26).
   bottomIds.sort((a, b) => Number(groupIds.has(a)) - Number(groupIds.has(b)))
-  // A registered office is no holding and takes no seat on the arc: it and the
-  // companies registered there are set down beside the finished graph (below).
 
   const importances = topIds.map(id => nodeImportance.get(id) ?? 0)
   const maxImp      = Math.max(...importances, 1)
@@ -669,7 +632,7 @@ export function computeArcPositions(
   // For every queued node, owners go ABOVE it and subsidiaries go BELOW it,
   // regardless of which direction the node was reached from.
   const positioned = new Set<string>(pos.keys())
-  const walk = (queue: string[]) => {
+  const queue: string[] = [...topIds, ...bottomIds, ...[...(placed?.keys() ?? [])].filter(id => id !== centerId)]
   let qi = 0
   while (qi < queue.length) {
     const id = queue[qi++]
@@ -686,46 +649,14 @@ export function computeArcPositions(
       queue.push(nid)
     })
 
-    // an address hub is never laid out under the company that points at it
-    const newSubs = (outgoersOf.get(id) ?? []).filter(nid => !positioned.has(nid) && (addressIds.has(id) || !addressIds.has(nid)))
+    const newSubs = (outgoersOf.get(id) ?? []).filter(nid => !positioned.has(nid))
     newSubs.sort(cmpByStake(nid => edgeKey(id, nid)))
-    // A registered office can hold fifty companies: in one row they ran
-    // across the screen and the graph zoomed out to a smear. Under an
-    // address, rows of ADDRESS_ROW, each a box height and a gap below the last.
-    const perRow = addressIds.has(id) ? ADDRESS_ROW : newSubs.length
-    for (let start = 0; start < newSubs.length; start += perRow) {
-      const row = newSubs.slice(start, start + perRow)
-      const subX = rowCentres(row.map(nid => size(nid).w), parentPos.x)
-      const dy = LEVEL_GAP + (start / perRow) * ADDRESS_ROW_GAP
-      row.forEach((nid, i) => {
-        pos.set(nid, { x: subX[i], y: parentPos.y + dy })
-        positioned.add(nid)
-        queue.push(nid)
-      })
-    }
-  }
-  }
-  walk([...topIds, ...bottomIds, ...[...(placed?.keys() ?? [])].filter(id => id !== centerId)])
-
-  // The registered offices, each with the companies it brought, as a block of
-  // its own below everything drawn so far, centred under the centre. On the
-  // arc below the centre its rows of eight lay across the subsidiaries (the
-  // user, 2026-11-21, who then chose below over beside): a block that is laid
-  // out first and then moved clear of the rest cannot overlap it, however
-  // large the graph or the address.
-  for (const hub of addressIds) {
-    if (positioned.has(hub)) continue
-    let bottom = -Infinity
-    for (const [id, p] of pos) bottom = Math.max(bottom, p.y + size(id).h / 2)
-    const before = new Set(positioned)
-    pos.set(hub, { x: 0, y: 0 })
-    positioned.add(hub)
-    walk([hub])
-    const block = [...positioned].filter(id => !before.has(id))
-    let top = Infinity
-    for (const id of block) top = Math.min(top, pos.get(id)!.y - size(id).h / 2)
-    const dy = bottom + ADDRESS_BLOCK_GAP - top
-    for (const id of block) { const p = pos.get(id)!; pos.set(id, { x: p.x, y: p.y + dy }) }
+    const subX = rowCentres(newSubs.map(nid => size(nid).w), parentPos.x)
+    newSubs.forEach((nid, i) => {
+      pos.set(nid, { x: subX[i], y: parentPos.y + LEVEL_GAP })
+      positioned.add(nid)
+      queue.push(nid)
+    })
   }
 
   return pos
@@ -985,8 +916,6 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const nodeData = evt.target.data() as NodeData
       if (nodeData.nodeType === 'entity') {
         onExpand?.(nodeData.id)
-      } else if (nodeData.nodeType === 'address') {
-        // no profile to centre on: the panel lists the companies there
       } else {
         onNavigateTo?.(nodeData)
       }
@@ -1233,12 +1162,16 @@ const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
   // What the filter can actually judge on this graph: ownership links that state
   // a percentage, out of the ownership links there are.
-  const stakeCoverage = useMemo(() => stakeCoverageOf(elements), [elements])
+  const stakeCoverage = useMemo(() => {
+    const owns = elements
+      .map(el => el.data)
+      .filter((d): d is EdgeData => 'edgeType' in d && d.edgeType !== 'role')
+    return { stated: owns.filter(d => d.stakePct != null).length, total: owns.length }
+  }, [elements])
 
   const showNodeActions = elements.length > 0
     && !!selectedNode
     && selectedNode.id !== centerId
-    && selectedNode.nodeType !== 'address'   // nothing to expand: its list is the panel
 
   return (
     <div className="graph-wrapper">
