@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, lazy, Suspense } from 'react'
+import { useState, useMemo, useEffect, useRef, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import coarseWorld from 'world-atlas/countries-110m.json'
@@ -8,6 +8,7 @@ import { loadDetailedWorld, loadedWorld, loadUsStates, loadedUsStates, type Topo
 import { pinFill, type MapBasis } from '../utils/mapBasis'
 import { countryCentroid, WORLD_CENTER } from '../utils/mapFit'
 import { FiRotateCcw, FiArrowLeft } from 'react-icons/fi'
+import { primaryPin, pinDetail } from '../utils/mapPins'
 import type { MapDetailData } from './MapDetail'   // type only — no Leaflet at import
 import type { CountryEntityGroup, ContextCountry } from '../types'
 
@@ -40,6 +41,9 @@ interface MapViewProps {
    *  panel and the fetches depend on it too. */
   basis?: MapBasis
   onBasisChange?: (basis: MapBasis) => void
+  /** A counter: each new value opens the street map of the selected company's
+   *  own pin, as a click on the pin does (the address in the map panel asks). */
+  openPrimaryPin?: number
 }
 
 function buildNumericMap(countryData: CountryEntityGroup[]): Map<number, CountryEntityGroup> {
@@ -187,6 +191,7 @@ export default function MapView({
   flyTo,
   basis = 'jurisdiction',
   onBasisChange,
+  openPrimaryPin = 0,
 }: MapViewProps) {
   const { t, i18n } = useTranslation()
   const [hoveredNum, setHoveredNum] = useState<number | null>(null)
@@ -198,6 +203,16 @@ export default function MapView({
   const [, setGeoVersion] = useState(0)
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [detail,     setDetail]     = useState<MapDetailData | null>(null)
+  // The address under the company's name in the map panel opens its street
+  // map (the user, 2026-11-22). Only a NEW request opens it: the pins change
+  // with every selection, and an old request must not reopen the popup.
+  const pinsRef = useRef(contextCountries)
+  pinsRef.current = contextCountries
+  useEffect(() => {
+    if (openPrimaryPin <= 0) return
+    const pin = primaryPin(pinsRef.current)
+    if (pin) setDetail(pinDetail(pin))
+  }, [openPrimaryPin])
   const [resetKey,   setResetKey]   = useState<number>(0)
   // Pin markers are sized as radius / zoom, so this has to track the real zoom.
   // Seeded from flyTo for the first paint after an auto-zoom.
@@ -443,9 +458,7 @@ export default function MapView({
 
           {gpsMarkers.map(({ c, ox, oy, clustered }, i) => (
             <Marker key={i} coordinates={[c.lng!, c.lat!]}
-              onClick={() => setDetail({ label: c.label, city: c.city, country: c.country,
-                                         lat: c.lat!, lng: c.lng!, hqAddress: c.hqAddress,
-                                         legalAddress: c.legalAddress, precise: c.precise })}
+              onClick={() => setDetail(pinDetail(c))}
               onMouseEnter={() => setTooltip({ x: 0, y: 0, text: c.label })}
               onMouseLeave={() => setTooltip(null)}
             >

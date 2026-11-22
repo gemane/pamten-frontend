@@ -8,8 +8,9 @@
  * bases and compare what comes out.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import MapView, { countryFill } from './MapView'
+import { primaryPin, pinDetail } from '../utils/mapPins'
 import { pinFill } from '../utils/mapBasis'
 import type { ContextCountry } from '../types'
 
@@ -182,5 +183,51 @@ describe('pin size follows the zoom', () => {
     rerender(<MapView countryData={[]} contextCountries={[london]} basis="hq"
                       flyTo={{ center: [-6.26, 53.34], zoom: 8 }} onCountryClick={vi.fn()} />)
     expect(radius(container)).toBe(String(8 / 8))
+  })
+})
+
+
+// The address under the company's name in the map panel opens the street map
+// of the company's own pin (the user, 2026-11-22).
+vi.mock('./MapDetail', () => ({
+  default: ({ data }: { data: { label: string; lat: number } }) => <div data-testid="street-map">{data.label}@{data.lat}</div>,
+}))
+
+describe('opening the selected company\'s pin on request', () => {
+  const sub: ContextCountry = { country: 'IE', role: 'subsidiary', lat: 53.3, lng: -6.2, label: 'Sub Ltd', basis: 'hq' }
+  const view = (n: number, pins: ContextCountry[]) =>
+    <MapView countryData={[]} contextCountries={pins} basis="hq" onCountryClick={vi.fn()} openPrimaryPin={n} />
+
+  it('finds the primary pin with a coordinate, never a subsidiary', () => {
+    expect(primaryPin([sub, london])).toBe(london)
+    expect(primaryPin([sub])).toBeNull()
+    expect(primaryPin([{ ...london, lat: undefined }])).toBeNull()
+    expect(pinDetail(london)).toMatchObject({ label: london.label, lat: 51.5074, lng: -0.0757, precise: true })
+  })
+
+  it('opens nothing by itself, and the street map on a request', async () => {
+    const { rerender } = render(view(0, [sub, london]))
+    expect(screen.queryByTestId('street-map')).toBeNull()
+    rerender(view(1, [sub, london]))
+    expect(await screen.findByTestId('street-map')).toHaveTextContent(`${london.label}@51.5074`)
+    cleanup()
+  })
+
+  it('does not reopen for another company without a new request', async () => {
+    const { rerender } = render(view(1, [london]))
+    await screen.findByTestId('street-map')
+    cleanup()
+    const again = render(view(0, [london]))
+    again.rerender(view(0, [grandCayman]))
+    expect(screen.queryByTestId('street-map')).toBeNull()
+    void rerender
+    cleanup()
+  })
+
+  it('opens nothing when the company has no pin', () => {
+    const { rerender } = render(view(0, [sub]))
+    rerender(view(1, [sub]))
+    expect(screen.queryByTestId('street-map')).toBeNull()
+    cleanup()
   })
 })

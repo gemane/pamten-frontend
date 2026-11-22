@@ -64,6 +64,7 @@ What the web app does, panel by panel. Setup and the project layout are in the [
 A company's panel shows, right beneath **Details**, the title with **how many** other companies give the same registered office (backend `registered_address`) — the number only, no list (2026-11-22). The title is a link: it opens the map on the company, where the list is. The address is not drawn in the graph: the hub with its rows of companies was removed the same day. The address is often an agent's or a law firm's, not where a company is run, and the same building under another spelling is a separate address.
 
 - **Map panel** — the one place that lists them: a framed block right under the selected company, above its subsidiaries, with the number in the title, the hint and "show more" (paged from `GET /search/address` through `hooks/useAddressPages.ts`); a click loads the company.
+- **The address under the company's name** in the map panel is a link: it opens the street map of the company's pin, as a click on the pin does (plain text when the company has no coordinate).
 - **Pin detail** on the map (the small street map) names nobody: the list crowded out the map it sat on.
 
 ## Timeline view
