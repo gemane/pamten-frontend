@@ -574,9 +574,7 @@
     "subdivisionsOf": "Mostrar dónde en {{country}}",
     "subdivisionNotStated": "No indicado",
     "backToWorld": "Volver al mundo",
-    "hintStates": "Haz clic en un estado para ver sus empresas",
-    "sameDoor_one": "{{count}} empresa más registrada en esta dirección",
-    "sameDoor_other": "{{count}} empresas más registradas en esta dirección"
+    "hintStates": "Haz clic en un estado para ver sus empresas"
   },
   "settings": {
     "title": "Ajustes",

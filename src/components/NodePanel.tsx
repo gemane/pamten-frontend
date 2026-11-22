@@ -1727,7 +1727,7 @@ function EntityOverview({ profile, sources, onShowAddress, onHideAddress, addres
           user, 2026-11-21): who else gives that address belongs to the facts
           about the company, not among its owners and subsidiaries. */}
       {sameAddress && sameAddress.count > 0 && (
-        <SameAddressSection section={sameAddress} focusId={entity.id} onNavigate={onNavigate}
+        <SameAddressSection section={sameAddress} focusId={entity.id} onViewOnMap={onViewOnMap}
                             onShowAddress={onShowAddress} onHideAddress={onHideAddress}
                             inGraph={!!addressesInGraph?.has(sameAddress.key)} />
       )}
@@ -2001,49 +2001,56 @@ function EntityOverview({ profile, sources, onShowAddress, onHideAddress, addres
   )
 }
 
-/** The companies registered at the same office as this one — the letterbox
- *  view. Closed by default: a group's own subsidiaries often share its door
- *  (Barclays at 1 Churchill Place), and the list is a question to ask, not
- *  the profile's headline. */
-function SameAddressSection({ section, focusId, onNavigate, onShowAddress, onHideAddress, inGraph = false }: {
+/** How many companies are registered at the same office as this one — the
+ *  letterbox view's pointer. The title and the number only (the user,
+ *  2026-11-22): the list of them is the map panel's, where the address is
+ *  drawn; here it was one more long list in a profile, and the title links
+ *  to the map. The graph button
+ *  stays — it draws the address, it lists nobody in the panel. */
+function SameAddressSection({ section, focusId, onShowAddress, onHideAddress, onViewOnMap, inGraph = false }: {
   section: RegisteredAddress
   focusId: string
-  onNavigate?: (node: NodeData) => void
+  /** Open the map on this company: its panel lists the companies at the address. */
+  onViewOnMap?: () => void
   onShowAddress?: (focusId: string, section: RegisteredAddress) => void
   onHideAddress?: (key: string) => void
   /** The hub is drawn: the button takes it out again instead of adding it. */
   inGraph?: boolean
 }) {
   const { t } = useTranslation()
-  const { rows, count, busy, more } = useAddressPages(section.key, section.entities, section.count, focusId)
-  const total = count ?? section.count
+  const heading = (
+    <>
+      <FiMapPin size={12} />
+      <span className="panel-section__title panel-section__title--inline">{t('panel.sameAddress')}</span>
+      <span className="panel-section__count">{section.count}</span>
+    </>
+  )
   return (
-    <CollapsibleSection title={t('panel.sameAddress')} count={total}>
-      <p className="panel-desc">{t('panel.sameAddressHint')}</p>
+    <div className="panel-section" data-testid="same-address">
+      {/* The title is the way to the list: it opens the map, whose panel names
+          them (the user, 2026-11-22). Without a map to open it is a plain title. */}
+      {onViewOnMap ? (
+        <button type="button" className="panel-section__toggle panel-section__toggle--link"
+                onClick={onViewOnMap} title={t('panel.viewOnMap')}>
+          {heading}
+        </button>
+      ) : (
+        <div className="panel-section__toggle panel-section__toggle--static">{heading}</div>
+      )}
       {/* One button, two states: what "show in graph" drew can be taken out
           again — the hub, and the companies that were only there because of it. */}
       {inGraph && onHideAddress ? (
-        <button type="button" className="panel-export__btn panel-export__btn--spaced"
+        <button type="button" className="panel-export__btn"
                 onClick={() => onHideAddress(section.key)}>
           <FiMapPin /> {t('panel.sameAddressHideFromGraph')}
         </button>
       ) : onShowAddress && (
-        <button type="button" className="panel-export__btn panel-export__btn--spaced"
-                onClick={() => onShowAddress(focusId, { ...section, entities: rows })}>
+        <button type="button" className="panel-export__btn"
+                onClick={() => onShowAddress(focusId, section)}>
           <FiMapPin /> {t('panel.sameAddressShowInGraph')}
         </button>
       )}
-      {rows.map(e => (
-        <RelRow key={e.id} node={entityToNode(e)} onNavigate={onNavigate}>
-          <CompanyName e={e} />
-        </RelRow>
-      ))}
-      {rows.length < total && (
-        <button type="button" className="panel-export__btn" disabled={busy} onClick={() => void more()}>
-          {t('panel.sameAddressMore', { shown: rows.length, count: total })}
-        </button>
-      )}
-    </CollapsibleSection>
+    </div>
   )
 }
 

@@ -574,9 +574,7 @@
     "subdivisionsOf": "Zeigen, wo in {{country}}",
     "subdivisionNotStated": "Nicht angegeben",
     "backToWorld": "Zurück zur Weltkarte",
-    "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen",
-    "sameDoor_one": "{{count}} weitere Firma an dieser Adresse eingetragen",
-    "sameDoor_other": "{{count}} weitere Firmen an dieser Adresse eingetragen"
+    "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen"
   },
   "settings": {
     "title": "Einstellungen",

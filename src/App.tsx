@@ -1377,7 +1377,6 @@ function AppInner() {
                     basis={mapBasis}
                     onBasisChange={handleBasisChange}
                     contextCountries={contextCountries}
-                    onOpenEntity={handleEntityFromMap}
                     theme={theme}
                     flyTo={mapFlyTo}
                   />
@@ -1440,7 +1439,6 @@ function AppInner() {
                     basis={mapBasis}
                     onBasisChange={handleBasisChange}
                     contextCountries={contextCountries}
-                    onOpenEntity={handleEntityFromMap}
                     theme={theme}
                     flyTo={mapFlyTo}
                   />

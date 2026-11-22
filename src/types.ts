@@ -806,10 +806,6 @@ export interface ContextCountry {
   legalAddress?: string  // registered/legal address (shown as info when it differs)
   basis?: 'jurisdiction' | 'hq'   // which place this pin is, so it can be styled and labelled
   precise?: boolean      // geo precision 'exact' → pin vs approximate circle
-  entityId?: string      // the company the pin is
-  /** Its registered office as stated, whichever basis is drawn: the detail
-   *  lists the other companies registered there (the letterbox view). */
-  registeredAddress?: string
 }
 
 // ── Verification flags (report a wrong node/edge) ───────────────────────────

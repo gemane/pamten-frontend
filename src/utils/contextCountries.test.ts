@@ -155,16 +155,3 @@ describe('nothing to show', () => {
     expect(build(person, [], 'hq')).toEqual([])
   })
 })
-
-describe('a pin knows its company and registered office', () => {
-  it('carries both whichever basis is drawn, for the detail list of the others there', async () => {
-    const { buildContextCountries } = await import('./contextCountries')
-    const raw = { id: 'A', name: 'Alpha', country: 'US', address: '1209 Orange St, Wilmington', hq_country: 'GB', hq_address: '1 Churchill Place' }
-    const node = { id: 'A', label: 'Alpha', nodeType: 'entity' as const, raw: raw as never }
-    for (const basis of ['jurisdiction', 'hq'] as const) {
-      const [pin] = buildContextCountries(node, [], basis, new Map())
-      expect(pin.entityId).toBe('A')
-      expect(pin.registeredAddress).toBe('1209 Orange St, Wilmington')
-    }
-  })
-})
