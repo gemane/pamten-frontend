@@ -28,6 +28,27 @@ const panel = (node: NodeData, onLoadEntity = vi.fn()) => {
 beforeEach(() => vi.mocked(getCompaniesAtAddress).mockReset())
 afterEach(cleanup)
 
+describe('the address under the company\'s name', () => {
+  const mount = (onOpenPin?: () => void) => {
+    vi.mocked(getCompaniesAtAddress).mockResolvedValue({ data: { key: 'k', address: CSC, count: 1, entities: [] } } as never)
+    render(<MapPanel countryData={[]} selectedCountry={null} onSelectCountry={() => {}} onLoadEntity={() => {}}
+                     loading={false} contextNode={context(CSC)} onOpenPin={onOpenPin} />)
+  }
+
+  it('opens the street map of the pin when clicked (the user, 2026-11-22)', () => {
+    const onOpenPin = vi.fn()
+    mount(onOpenPin)
+    fireEvent.click(screen.getByRole('button', { name: CSC }))
+    expect(onOpenPin).toHaveBeenCalledTimes(1)
+  })
+
+  it('is plain text when the company has no pin to open', () => {
+    mount(undefined)
+    expect(screen.getByText(CSC)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: CSC })).toBeNull()
+  })
+})
+
 describe('registered at the same address, in the map panel', () => {
   it('lists the others without the company itself, and loads one', async () => {
     answer(3, [co('A', 'Alpha Holdings LLC'), co('B', 'Beta Finance LLC'), co('C', 'Charlie Capital LLC')])

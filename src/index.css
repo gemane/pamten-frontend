@@ -2466,6 +2466,11 @@ a.source-item__name:hover { color: #4A90D9; }
   overflow-wrap: anywhere;
 }
 
+/* the same line as a button: it opens the street map of the company's pin */
+.map-panel__address--link { display: block; padding: 0; background: none; border: 0; font-family: inherit; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+.map-panel__address--link:hover { color: #b794f4; text-decoration-style: solid; }
+[data-theme="light"] .map-panel__address--link:hover { color: #6b46c1; }
+
 .map-panel__entity-list {
   display: flex;
   flex-direction: column;

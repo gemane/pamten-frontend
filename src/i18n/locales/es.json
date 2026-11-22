@@ -567,7 +567,8 @@
     "subdivisionsOf": "Mostrar dónde en {{country}}",
     "subdivisionNotStated": "No indicado",
     "backToWorld": "Volver al mundo",
-    "hintStates": "Haz clic en un estado para ver sus empresas"
+    "hintStates": "Haz clic en un estado para ver sus empresas",
+    "openStreetMap": "Mostrar en el mapa de calles"
   },
   "settings": {
     "title": "Ajustes",

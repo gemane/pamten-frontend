@@ -567,7 +567,8 @@
     "subdivisionsOf": "Zeigen, wo in {{country}}",
     "subdivisionNotStated": "Nicht angegeben",
     "backToWorld": "Zurück zur Weltkarte",
-    "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen"
+    "hintStates": "Bundesstaat anklicken, um dessen Unternehmen zu sehen",
+    "openStreetMap": "Auf der Straßenkarte zeigen"
   },
   "settings": {
     "title": "Einstellungen",

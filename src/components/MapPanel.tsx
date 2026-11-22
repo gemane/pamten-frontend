@@ -131,11 +131,14 @@ interface MapPanelProps {
   contextSubsidiaries?: NodeData[]
   onSelectSubsidiary?: (node: NodeData) => void
   onShare?: () => void
+  /** Open the street map of the selected company's pin; absent when the pin
+   *  has no coordinate — the address is then plain text. */
+  onOpenPin?: () => void
 }
 
 export default function MapPanel({
   countryData, subdivisionData = [], selectedCountry, onSelectCountry, onLoadEntity, loading,
-  basis = 'jurisdiction', contextNode, contextSubsidiaries = [], onSelectSubsidiary, onShare,
+  basis = 'jurisdiction', contextNode, contextSubsidiaries = [], onSelectSubsidiary, onShare, onOpenPin,
 }: MapPanelProps) {
   const { t, i18n } = useTranslation()
   // The unplaced group arrives as country: null but is selected by sentinel. A
@@ -188,7 +191,10 @@ export default function MapPanel({
               <div className="map-panel__country-count">{countryName(primaryCountry, i18n.language)}</div>
             )}
             {primaryAddress && (
-              <div className="map-panel__address" title={primaryAddress}>{primaryAddress}</div>
+              onOpenPin
+                ? <button type="button" className="map-panel__address map-panel__address--link"
+                          title={t('map.openStreetMap')} onClick={onOpenPin}>{primaryAddress}</button>
+                : <div className="map-panel__address" title={primaryAddress}>{primaryAddress}</div>
             )}
           </div>
           {/* Same ⋮ as the node panel: the map is another place a company is

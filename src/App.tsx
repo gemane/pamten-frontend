@@ -22,6 +22,7 @@ import ScraperPanel  from './components/ScraperPanel'
 import CoveragePage from './components/CoveragePage'
 import SettingsPanel from './components/SettingsPanel'
 import MapView       from './components/MapView'
+import { primaryPin } from './utils/mapPins'
 import MapPanel      from './components/MapPanel'
 import AuthModal     from './components/AuthModal'
 import Toast         from './components/Toast'
@@ -170,6 +171,9 @@ function AppInner() {
   // panel, used by the search bar — so it lives above both.
   const [searchCountry, setSearchCountry] = useState<string>('')
   const [mapFlyTo,        setMapFlyTo]        = useState<{ center: [number, number]; zoom: number } | null>(null)
+  // The address in the map panel opens the street map of the company's pin:
+  // a counter the map view watches (it owns the popup).
+  const [pinRequest, setPinRequest] = useState(0)
   const loadedIds          = useRef<Set<string>>(new Set())
   // On-demand enrichment: a monotonically-increasing token invalidates a stale phase-2
   // (idle) append when the user navigates away; idleCancelRef cancels the pending idle.
@@ -831,6 +835,8 @@ function AppInner() {
     () => buildContextCountries(selectedNode, elements, mapBasis, entityCountryCache.current),
     [selectedNode, elements, mapBasis],
   )
+  const canOpenPin = useMemo(() => primaryPin(contextCountries) != null, [contextCountries])
+  const openPin = useCallback(() => setPinRequest(n => n + 1), [])
   // Fly to what the map is currently about: on opening the tab, when a
   // subsidiary is clicked in the panel, and when Back restores the one before
   // it. The view is fitted to EVERY highlighted country — the company and its
@@ -1225,6 +1231,7 @@ function AppInner() {
             <div className="left-panel__detail">
               <MapPanel
                 countryData={countryData}
+                onOpenPin={canOpenPin ? openPin : undefined}
                 subdivisionData={subdivisionData}
                 selectedCountry={selectedCountry}
                 onSelectCountry={setSelectedCountry}
@@ -1338,11 +1345,13 @@ function AppInner() {
                     contextCountries={contextCountries}
                     theme={theme}
                     flyTo={mapFlyTo}
+                    openPrimaryPin={pinRequest}
                   />
                 </div>
                 <div className="mobile-panel">
                   <MapPanel
                     countryData={countryData}
+                    onOpenPin={canOpenPin ? openPin : undefined}
                     subdivisionData={subdivisionData}
                     selectedCountry={selectedCountry}
                     onSelectCountry={setSelectedCountry}
@@ -1400,6 +1409,7 @@ function AppInner() {
                     contextCountries={contextCountries}
                     theme={theme}
                     flyTo={mapFlyTo}
+                    openPrimaryPin={pinRequest}
                   />
                 : <Graph
                     ref={graphRef}
