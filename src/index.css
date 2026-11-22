@@ -4116,7 +4116,13 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 .dup-compare-btn:hover, .dup-compare-btn--on { color: #eaeaea; border-color: #3d7cef; }
 .dup-compare { overflow-x: auto; margin-bottom: 10px; border: 1px solid #22304a; border-radius: 8px; }
-.dup-compare__table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+/* a column keeps a readable width however many records the group has (13 of
+   one name on dev): the table grows sideways and the box scrolls, the row
+   labels staying in view */
+.dup-compare__table { min-width: 100%; width: max-content; border-collapse: collapse; font-size: 12px; }
+.dup-compare__table thead th:not(:first-child), .dup-compare__table td { min-width: 150px; max-width: 220px; }
+.dup-compare__table th:first-child { position: sticky; left: 0; background: #12203c; z-index: 1; }
+.dup-compare__table thead th:first-child { background: #16264a; }
 .dup-compare__table th, .dup-compare__table td {
   text-align: left; vertical-align: top; padding: 6px 9px; border-bottom: 1px solid #22304a; color: #c3ccda;
   overflow-wrap: anywhere;
@@ -4140,6 +4146,8 @@ a.source-item__name:hover { color: #4A90D9; }
 [data-theme="light"] .dup-compare { border-color: #d0d8e4; }
 [data-theme="light"] .dup-compare__table th, [data-theme="light"] .dup-compare__table td { border-bottom-color: #d0d8e4; color: #2d3748; }
 [data-theme="light"] .dup-compare__table thead th { background: #e2e8f4; color: #1a202c; }
+[data-theme="light"] .dup-compare__table th:first-child { background: #f4f7fb; }
+[data-theme="light"] .dup-compare__table thead th:first-child { background: #e2e8f4; }
 [data-theme="light"] .dup-compare__table th[scope="row"] { color: #5a6b8a; }
 [data-theme="light"] .dup-compare__company { color: #1a202c; }
 [data-theme="light"] .dup-compare__company--shared { border-left-color: #2e8a4f !important; }
