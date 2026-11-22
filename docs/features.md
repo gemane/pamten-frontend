@@ -148,6 +148,8 @@ The run form is hidden rather than disabled for those who can't use it, and no s
 - **BODS bulk import** — a separate card for the **GLEIF** and **UK PSC** beneficial-ownership datasets (bulk file import with jurisdiction / limit filters), distinct from the per-company scrapers above
 - **Recent activity** — a live run log (polls every 6s) showing each scrape's status (running / ok / failed / stale) and node count; covers UI *and* `update.sh` runs (backed by `/scraper/runs`). Public, but the error text is served only to contributors and admins
 - **Review duplicate persons** opens a modal (tabs: To review / Merged / Kept separate) to merge duplicate people, keep confirmed-different ones separate, or run an auto-dedupe — backed by the backend duplicate scan
+  - Each tab shows **20 rows a page** (Previous / Next, "1–20 of 241"); a tab keeps its own page, and a page that empties after a merge falls back to the one before.
+  - **Compare** on a group lays its records side by side — born, died, nationality, description, records already merged in, and the companies each is tied to with role and years. A company more than one record names is marked green: the strongest sign the records are one person. The profiles are read when the comparison is opened, not with the list. The icon beside a name opens that person in the graph in a new tab.
 
 ## Federation panel (admin only)
 Inside the Scraper tab, and shown only to admins — sync ownership data with **trusted peer** instances (setup: the backend's [`docs/federation.md`](https://github.com/gemane/pamten-backend/blob/develop/docs/federation.md)):

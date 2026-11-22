@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   FiX, FiLoader, FiAlertCircle, FiCheckCircle, FiGitMerge, FiZap, FiStar,
-  FiAlertTriangle, FiUserX, FiRotateCcw,
+  FiAlertTriangle, FiUserX, FiRotateCcw, FiChevronLeft, FiChevronRight, FiColumns,
 } from 'react-icons/fi'
 import {
   getPersonDuplicates, mergePersons, runDeduplicate,
   keepSeparate, undoKeepSeparate, getKeptSeparate, getMergeLog,
 } from '../services/api'
+import DuplicateCompare from './DuplicateCompare'
 import type { DuplicateGroup, KeptSeparatePair, MergeLogEntry } from '../types'
 
 interface DuplicatesModalProps {
@@ -16,6 +17,17 @@ interface DuplicatesModalProps {
 }
 
 type Tab = 'review' | 'merged' | 'separate'
+
+/** Rows of a tab shown at once. The scan returns every group — a few hundred on
+ *  a graph of some thousand people — and one long list was all of them in the
+ *  page at once, each with its buttons. */
+export const PAGE_SIZE = 20
+
+/** The page to show: the one asked for, pulled back when the list got shorter
+ *  (the last group of the last page was merged). */
+export function clampPage(page: number, total: number): number {
+  return Math.max(0, Math.min(page, Math.ceil(total / PAGE_SIZE) - 1))
+}
 
 function groupKey(g: DuplicateGroup): string {
   return g.members.map(m => m.id).sort().join('|')
@@ -33,6 +45,8 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
   const [autoRun, setAutoRun] = useState<boolean>(false)
   const [notice,  setNotice]  = useState<string | null>(null)
   const [keepSel, setKeepSel] = useState<Record<string, string>>({})
+  const [pages,   setPages]   = useState<Record<Tab, number>>({ review: 0, merged: 0, separate: 0 })
+  const [compare, setCompare] = useState<string | null>(null)      // the group laid out side by side
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -111,6 +125,15 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
     { key: 'separate', label: t('duplicates.tabSeparate'), n: separate.length },
   ]
 
+  const total = tabs.find(tb => tb.key === tab)!.n
+  const page = clampPage(pages[tab], total)
+  const from = page * PAGE_SIZE
+  const onPage = <T,>(rows: T[]): T[] => rows.slice(from, from + PAGE_SIZE)
+  const turn = (by: number) => setPages(p => ({ ...p, [tab]: clampPage(page + by, total) }))
+  // a new page starts at its top, not where the last one was scrolled to
+  const list = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (list.current) list.current.scrollTop = 0 }, [page, tab])
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal--wide dup-modal" onClick={e => e.stopPropagation()}>
@@ -144,14 +167,14 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
         {notice && <div className="dup-notice"><FiCheckCircle /> {notice}</div>}
         {error  && <div className="scraper-error"><FiAlertCircle /> {error}</div>}
 
-        <div className="dup-list">
+        <div className="dup-list" ref={list}>
           {loading && <div className="dup-empty"><FiLoader className="spin" /> {t('duplicates.loading')}</div>}
 
           {/* ── Review (pending duplicate groups) ─────────────────────────────── */}
           {!loading && tab === 'review' && groups.length === 0 && !error && (
             <div className="dup-empty"><FiCheckCircle /> {t('duplicates.none')}</div>
           )}
-          {!loading && tab === 'review' && groups.map(g => {
+          {!loading && tab === 'review' && onPage(groups).map(g => {
             const key  = groupKey(g)
             const keep = keepSel[key] || g.suggested_keep_id
             const busy = busyKey === key
@@ -163,6 +186,11 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
                     <span className="dup-distinct"><FiAlertTriangle /> {t('duplicates.likelyDistinct')}</span>
                   )}
                   <span className="dup-group__reason">{g.reason}</span>
+                  <button className={`dup-compare-btn ${compare === key ? 'dup-compare-btn--on' : ''}`}
+                    aria-expanded={compare === key}
+                    onClick={() => setCompare(c => (c === key ? null : key))}>
+                    <FiColumns /> {t(compare === key ? 'duplicates.compare.hide' : 'duplicates.compare.show')}
+                  </button>
                 </div>
                 <div className="dup-group__members">
                   {g.members.map(m => (
@@ -177,6 +205,7 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
                     </button>
                   ))}
                 </div>
+                {compare === key && <DuplicateCompare members={g.members} />}
                 <div className="dup-group__actions">
                   <span className="dup-group__hint">{t('duplicates.keepHint')}</span>
                   <button className="dup-sep-btn" onClick={() => handleKeepSeparate(g)} disabled={busy}
@@ -197,7 +226,7 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
           {!loading && tab === 'merged' && merged.length === 0 && (
             <div className="dup-empty">{t('duplicates.noneMerged')}</div>
           )}
-          {!loading && tab === 'merged' && merged.map(e => (
+          {!loading && tab === 'merged' && onPage(merged).map(e => (
             <div key={e.id} className="dup-row">
               <FiGitMerge className="dup-row__icon dup-row__icon--merged" />
               <span className="dup-row__from">{e.dup_name}</span>
@@ -211,7 +240,7 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
           {!loading && tab === 'separate' && separate.length === 0 && (
             <div className="dup-empty">{t('duplicates.noneSeparate')}</div>
           )}
-          {!loading && tab === 'separate' && separate.map(p => {
+          {!loading && tab === 'separate' && onPage(separate).map(p => {
             const key = `${p.a_id}|${p.b_id}`
             return (
               <div key={key} className="dup-row">
@@ -227,6 +256,20 @@ export default function DuplicatesModal({ onClose, onAfterMerge }: DuplicatesMod
             )
           })}
         </div>
+
+        {!loading && total > PAGE_SIZE && (
+          <div className="dup-pager">
+            <button className="dup-undo-btn" disabled={page === 0} onClick={() => turn(-1)}>
+              <FiChevronLeft /> {t('duplicates.prev')}
+            </button>
+            <span className="dup-pager__range">
+              {t('duplicates.range', { from: from + 1, to: Math.min(from + PAGE_SIZE, total), total })}
+            </span>
+            <button className="dup-undo-btn" disabled={from + PAGE_SIZE >= total} onClick={() => turn(1)}>
+              {t('duplicates.next')} <FiChevronRight />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

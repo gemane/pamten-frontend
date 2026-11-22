@@ -746,7 +746,24 @@
     "noneMerged": "Noch nichts zusammengeführt.",
     "noneSeparate": "Keine als getrennt markiert.",
     "undo": "Rückgängig",
-    "undoSeparate": "Zurück zur Prüfung"
+    "undoSeparate": "Zurück zur Prüfung",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "range": "{{from}}–{{to}} von {{total}}",
+    "compare": {
+      "show": "Vergleichen",
+      "hide": "Vergleich ausblenden",
+      "open": "Im Graphen öffnen (neuer Tab)",
+      "loadError": "konnte nicht geladen werden",
+      "born": "Geboren",
+      "died": "Gestorben",
+      "nationality": "Staatsangehörigkeit",
+      "description": "Beschreibung",
+      "merged": "Bereits zusammengeführte Einträge",
+      "companies": "Unternehmen",
+      "holding": "Beteiligung",
+      "shared": "Mehr als einer dieser Einträge nennt dieses Unternehmen"
+    }
   },
   "federation": {
     "title": "Föderation vertrauenswürdiger Peers",
