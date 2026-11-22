@@ -4102,6 +4102,48 @@ a.source-item__name:hover { color: #4A90D9; }
 }
 .dup-undo-btn:hover:not(:disabled) { background: #22304a; }
 .dup-undo-btn:disabled { opacity: 0.6; cursor: default; }
+/* The review list by pages, and one group's records side by side */
+.dup-pager {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3a5a;
+}
+.dup-pager .dup-undo-btn { margin-left: 0; }
+.dup-pager__range { font-size: 12px; color: #8892a4; }
+.dup-compare-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 5px;
+  background: transparent; color: #9db0d0; border: 1px solid #2a3a5a; border-radius: 6px;
+  padding: 3px 9px; font-size: 11.5px; cursor: pointer;
+}
+.dup-compare-btn:hover, .dup-compare-btn--on { color: #eaeaea; border-color: #3d7cef; }
+.dup-compare { overflow-x: auto; margin-bottom: 10px; border: 1px solid #22304a; border-radius: 8px; }
+.dup-compare__table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.dup-compare__table th, .dup-compare__table td {
+  text-align: left; vertical-align: top; padding: 6px 9px; border-bottom: 1px solid #22304a; color: #c3ccda;
+  overflow-wrap: anywhere;
+}
+.dup-compare__table tr:last-child th, .dup-compare__table tr:last-child td { border-bottom: 0; }
+.dup-compare__table thead th { background: #16264a; color: #eaeaea; font-weight: 600; }
+.dup-compare__table th[scope="row"] { width: 108px; color: #8892a4; font-weight: 500; }
+.dup-compare__name { margin-right: 6px; }
+.dup-compare__open { color: #7aa2e0; vertical-align: middle; }
+.dup-compare__open:hover { color: #a9c4f5; }
+.dup-compare__error { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; color: #f0837a; font-weight: 400; }
+.dup-compare__companies { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.dup-compare__companies li { display: flex; flex-direction: column; padding-left: 7px; border-left: 2px solid transparent; }
+.dup-compare__company { color: #eaeaea; }
+.dup-compare__what { font-size: 11px; color: #8892a4; }
+.dup-compare__company--shared { border-left-color: #7ee29b !important; }
+.dup-compare__company--shared .dup-compare__company { color: #7ee29b; }
+[data-theme="light"] .dup-pager { border-top-color: #d0d8e4; }
+[data-theme="light"] .dup-compare-btn { color: #4a5568; border-color: #b8c4d4; }
+[data-theme="light"] .dup-compare-btn:hover, [data-theme="light"] .dup-compare-btn--on { color: #1a202c; border-color: #3d7cef; }
+[data-theme="light"] .dup-compare { border-color: #d0d8e4; }
+[data-theme="light"] .dup-compare__table th, [data-theme="light"] .dup-compare__table td { border-bottom-color: #d0d8e4; color: #2d3748; }
+[data-theme="light"] .dup-compare__table thead th { background: #e2e8f4; color: #1a202c; }
+[data-theme="light"] .dup-compare__table th[scope="row"] { color: #5a6b8a; }
+[data-theme="light"] .dup-compare__company { color: #1a202c; }
+[data-theme="light"] .dup-compare__company--shared { border-left-color: #2e8a4f !important; }
+[data-theme="light"] .dup-compare__company--shared .dup-compare__company { color: #1f6b3a; }
 
 /* The question a removal asks first: the merges a person is made of. */
 .merge-question { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 14px; }

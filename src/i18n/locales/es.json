@@ -746,7 +746,24 @@
     "noneMerged": "Nada fusionado todavía.",
     "noneSeparate": "Ninguna marcada como aparte.",
     "undo": "Deshacer",
-    "undoSeparate": "Volver a revisar"
+    "undoSeparate": "Volver a revisar",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "range": "{{from}}–{{to}} de {{total}}",
+    "compare": {
+      "show": "Comparar",
+      "hide": "Ocultar comparación",
+      "open": "Abrir en el grafo (pestaña nueva)",
+      "loadError": "no se pudo cargar",
+      "born": "Nacimiento",
+      "died": "Fallecimiento",
+      "nationality": "Nacionalidad",
+      "description": "Descripción",
+      "merged": "Registros ya fusionados",
+      "companies": "Empresas",
+      "holding": "participación",
+      "shared": "Más de uno de estos registros nombra esta empresa"
+    }
   },
   "federation": {
     "title": "Federación de pares de confianza",
