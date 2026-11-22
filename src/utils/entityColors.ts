@@ -39,9 +39,6 @@ export const ENTITY_COLORS: Record<string, NodeColor> = {
   // another firm.
   voting_group: { fill: '#b7791f', border: '#ecc94b' },
   person:     { fill: '#27AE60', border: '#1a7a42' },
-  // A registered office drawn as the hub of the companies registered at it
-  // (utils/addressElements): a place, not a party — slate, a tag shape.
-  address:    { fill: '#5d6d7e', border: '#3e4a56' },
 }
 
 /**
@@ -63,7 +60,6 @@ export const ENTITY_SUBTYPES = [
  */
 export function colorFor(nodeType?: string | null, entitySubtype?: string | null): NodeColor {
   if (nodeType === 'person') return ENTITY_COLORS.person
-  if (nodeType === 'address') return ENTITY_COLORS.address
   if (entitySubtype && ENTITY_COLORS[entitySubtype]) return ENTITY_COLORS[entitySubtype]
   if (nodeType === 'entity') return ENTITY_COLORS.company   // the graph's default entity style
   return NEUTRAL
@@ -78,7 +74,6 @@ export function colorFor(nodeType?: string | null, entitySubtype?: string | null
 export function typeLabelKey(nodeType?: string | null, entitySubtype?: string | null,
                              kind?: string | null): string {
   if (nodeType === 'person') return 'legend.person'
-  if (nodeType === 'address') return 'legend.address'
   // a 13D group of one holder with its affiliates is no voting group (item 103)
   if (entitySubtype === 'voting_group' && kind === 'joint_filing') return 'legend.joint_filing'
   if (entitySubtype && ENTITY_COLORS[entitySubtype]) return `legend.${entitySubtype}`

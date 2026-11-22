@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import NodePanel from './NodePanel'
-import { addressNode } from '../utils/addressElements'
 import type { NodeData, FullProfile, Entity, RegisteredAddress } from '../types'
 
-// The letterbox view in the panel: the companies registered at the same
-// office as the one open, and an address node's own list.
+// The letterbox view's pointer in the panel: how many companies are
+// registered at the same office as the one open, and the way to the map.
 vi.mock('../services/api', () => ({
   getCompaniesAtAddress: vi.fn(),
   getFullProfile: vi.fn(),
@@ -65,23 +64,12 @@ describe('registered at the same address', () => {
     expect(screen.queryByText('Beta Finance LLC')).toBeNull()       // a link, not a section that opens
   })
 
-  it('draws the door in the graph with the rows the profile brought', async () => {
+  it('offers no way into the graph: the address is not drawn there (the user, 2026-11-22)', async () => {
     vi.mocked(getFullProfile).mockResolvedValue({ data: withAddress(section) } as never)
-    const onShowAddress = vi.fn()
-    render(<NodePanel node={node('A', 'Alpha Holdings LLC')} refreshKey={0} onShowAddress={onShowAddress} />)
-    fireEvent.click(await screen.findByRole('button', { name: /Show in graph/ }))
-    expect(onShowAddress).toHaveBeenCalledWith('A', expect.objectContaining({ key: KEY, entities: section.entities }))
-  })
-
-  it('offers the way back once the door is drawn: remove from graph', async () => {
-    vi.mocked(getFullProfile).mockResolvedValue({ data: withAddress(section) } as never)
-    const onShowAddress = vi.fn(), onHideAddress = vi.fn()
-    render(<NodePanel node={node('A', 'Alpha Holdings LLC')} refreshKey={0} onShowAddress={onShowAddress}
-                      onHideAddress={onHideAddress} addressesInGraph={new Set([KEY])} />)
-    fireEvent.click(await screen.findByRole('button', { name: /Remove from graph/ }))
+    render(<NodePanel node={node('A', 'Alpha Holdings LLC')} refreshKey={0} onViewOnMap={() => {}} />)
+    await screen.findByTestId('same-address')
     expect(screen.queryByRole('button', { name: /Show in graph/ })).toBeNull()
-    expect(onHideAddress).toHaveBeenCalledWith(KEY)
-    expect(onShowAddress).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: /Remove from graph/ })).toBeNull()
   })
 
   it('stands right beneath the details', async () => {
@@ -106,29 +94,5 @@ describe('registered at the same address', () => {
     render(<NodePanel node={node('A', 'Alpha Holdings LLC')} refreshKey={0} />)
     await screen.findAllByText('Alpha Holdings LLC')
     expect(screen.queryByTestId('same-address')).toBeNull()
-  })
-})
-
-describe('an address node', () => {
-  it('can be taken out of the graph from its own panel', async () => {
-    vi.mocked(getCompaniesAtAddress).mockResolvedValue({ data: { key: KEY, address: CSC, count: 1, entities: [co('A', 'Alpha Holdings LLC')] } } as never)
-    const onHideAddress = vi.fn()
-    render(<NodePanel node={addressNode({ key: KEY, address: CSC, count: 1 })} refreshKey={0} onHideAddress={onHideAddress} />)
-    fireEvent.click(await screen.findByRole('button', { name: /Remove from graph/ }))
-    expect(onHideAddress).toHaveBeenCalledWith(KEY)
-  })
-
-  it('lists every company there, no profile asked', async () => {
-    vi.mocked(getCompaniesAtAddress).mockResolvedValue({ data: {
-      key: KEY, address: CSC, count: 2, entities: [co('A', 'Alpha Holdings LLC'), co('B', 'Beta Finance LLC')],
-    } } as never)
-    const onNavigate = vi.fn()
-    render(<NodePanel node={addressNode({ key: KEY, address: CSC, count: 2 })} refreshKey={0} onNavigate={onNavigate} />)
-    await screen.findByText('Beta Finance LLC')
-    expect(getCompaniesAtAddress).toHaveBeenCalledWith(KEY, 0)
-    expect(getFullProfile).not.toHaveBeenCalled()
-    expect(screen.getByText('2 companies registered here')).toBeInTheDocument()
-    fireEvent.click(screen.getByText('Alpha Holdings LLC'))
-    await waitFor(() => expect(onNavigate).toHaveBeenCalledWith(expect.objectContaining({ id: 'A', nodeType: 'entity' })))
   })
 })

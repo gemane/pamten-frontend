@@ -33,7 +33,7 @@ export default function GraphLegend() {
           {/* Driven from the shared palette so the key cannot describe colours
               the graph no longer draws. Person last, matching the graph's rule
               order, and round like its node. */}
-          {[...['company'], ...ENTITY_SUBTYPES, 'person', 'address'].map(type => (
+          {[...['company'], ...ENTITY_SUBTYPES, 'person'].map(type => (
             <div className="graph-legend__row" key={type}>
               <span
                 className="graph-legend__node"
@@ -56,7 +56,6 @@ export default function GraphLegend() {
           <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: 'none', borderTop: '2px dashed #9B59B6' }} />{t('legend.votingPower')}</div>
           <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: 'none', borderTop: '2px dashed #8892a4' }} />{t('legend.ultimateParent')}</div>
           <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: 'none', borderTop: '2px dashed #6c7ae0' }} />{t('legend.role')}</div>
-          <div className="graph-legend__row"><span className="graph-legend__edge" style={{ background: 'none', borderTop: `2px dotted ${ENTITY_COLORS.address.fill}` }} />{t('legend.registeredAt')}</div>
 
           <div className="graph-legend__section" style={{ marginTop: 10 }}>{t('legend.edgeWidth')}</div>
           <div className="graph-legend__row"><span className="graph-legend__edge" style={{ height: 2, background: '#8892a4' }} />{t('legend.lowPct')}</div>

@@ -467,9 +467,7 @@ export interface HistoryEntry {
 }
 
 // Graph element types (Cytoscape)
-/** `address`: a registered office drawn as the hub joining the companies
- *  registered at it (utils/addressElements) — no profile of its own. */
-type NodeType = 'entity' | 'person' | 'address'
+type NodeType = 'entity' | 'person'
 
 export interface NodeData {
   id: string
@@ -478,8 +476,6 @@ export interface NodeData {
   entitySubtype?: EntityType | null
   raw: Entity | Person
   importance?: number   // voting_power_pct or stake_percent — drives node size and arc radius
-  /** An address node's key, for listing the companies registered there. */
-  addressKey?: string
 }
 
 export interface EdgeData {
@@ -487,7 +483,7 @@ export interface EdgeData {
   source: string
   target: string
   label: string
-  edgeType: 'owns' | 'role' | 'votes' | 'member' | 'registered_at'
+  edgeType: 'owns' | 'role' | 'votes' | 'member'
   edgeDir?: 'in' | 'out'
   ownershipType?: OwnershipType | string | null
   votingPowerPct?: number | null

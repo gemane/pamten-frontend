@@ -1832,7 +1832,6 @@ a.source-item__name:hover { color: #4A90D9; }
   transition: color 0.15s, border-color 0.15s;
 }
 
-.panel-export__btn--spaced { margin-bottom: 8px; }
 .panel-export__btn:hover {
   color: #eaeaea;
   border-color: rgba(255,255,255,0.2);
