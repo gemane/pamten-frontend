@@ -216,7 +216,8 @@
     "companiesBelowHint": "Sus propias filiales, todos los niveles, cada una contada una vez",
     "sameAddress": "Registradas en la misma dirección",
     "sameAddressHint": "Empresas con el mismo domicilio social: a menudo la dirección de un agente o de un despacho de abogados, no el lugar desde donde se dirige la empresa.",
-    "sameAddressMore": "Mostrar más ({{shown}} de {{count}})"
+    "sameAddressMore": "Mostrar más ({{shown}} de {{count}})",
+    "sameAddressLess": "Mostrar menos"
   },
   "identity": {
     "title": "Cómo se formó este registro",

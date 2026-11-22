@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiArrowLeft, FiMapPin, FiLoader, FiChevronRight, FiChevronDown, FiMoreVertical, FiShare2, FiFlag } from 'react-icons/fi'
 import { countryName } from '../utils/isoCountries'
@@ -49,7 +49,18 @@ function SameAddressList({ address, selfId, onLoad }: {
   const { t } = useTranslation()
   const { rows, count, busy, more } = useAddressPages(address, null, null, selfId, PANEL_DOOR_ROWS + 1)
   const total = count ?? 0
+  // "Show more" had no way back (the user, 2026-11-22): the list can be folded
+  // to the rows it opened with. What was fetched stays, so opening it again
+  // asks the server for nothing it already gave.
+  const [first, setFirst] = useState<number | null>(null)
+  const [folded, setFolded] = useState(false)
+  useEffect(() => { if (first == null && rows.length > 0) setFirst(rows.length) }, [first, rows.length])
   if (total <= 0 || rows.length === 0) return null
+  const visible = folded && first != null ? rows.slice(0, first) : rows
+  const showMore = () => {
+    if (folded) { setFolded(false); return }
+    void more()
+  }
   return (
     <div className="map-panel__door">
       <div className="map-panel__door-title">
@@ -59,11 +70,16 @@ function SameAddressList({ address, selfId, onLoad }: {
       </div>
       <p className="map-panel__door-hint">{t('panel.sameAddressHint')}</p>
       <div className="map-panel__entity-list">
-        {rows.map(e => <EntityItem key={e.id} entity={e} onLoad={onLoad} />)}
+        {visible.map(e => <EntityItem key={e.id} entity={e} onLoad={onLoad} />)}
       </div>
-      {rows.length < total && (
-        <button type="button" className="map-panel__door-more" disabled={busy} onClick={() => void more()}>
-          {t('panel.sameAddressMore', { shown: rows.length, count: total })}
+      {visible.length < total && (
+        <button type="button" className="map-panel__door-more" disabled={busy} onClick={showMore}>
+          {t('panel.sameAddressMore', { shown: visible.length, count: total })}
+        </button>
+      )}
+      {!folded && first != null && rows.length > first && (
+        <button type="button" className="map-panel__door-more" onClick={() => setFolded(true)}>
+          {t('panel.sameAddressLess')}
         </button>
       )}
     </div>

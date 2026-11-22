@@ -216,7 +216,8 @@
     "companiesBelowHint": "Its own subsidiaries, at all levels, each counted once",
     "sameAddress": "Registered at the same address",
     "sameAddressHint": "Companies that give the same registered office — often an agent's or a law firm's address rather than where a company is run.",
-    "sameAddressMore": "Show more ({{shown}} of {{count}})"
+    "sameAddressMore": "Show more ({{shown}} of {{count}})",
+    "sameAddressLess": "Show less"
   },
   "identity": {
     "title": "How this record was put together",

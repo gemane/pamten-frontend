@@ -216,7 +216,8 @@
     "companiesBelowHint": "Ihre eigenen Tochtergesellschaften, alle Ebenen, jede einmal gezählt",
     "sameAddress": "An derselben Adresse eingetragen",
     "sameAddressHint": "Firmen mit demselben eingetragenen Sitz – oft die Adresse eines Treuhänders oder einer Kanzlei, nicht der Ort, von dem aus eine Firma geführt wird.",
-    "sameAddressMore": "Mehr zeigen ({{shown}} von {{count}})"
+    "sameAddressMore": "Mehr zeigen ({{shown}} von {{count}})",
+    "sameAddressLess": "Weniger anzeigen"
   },
   "identity": {
     "title": "Wie dieser Eintrag entstanden ist",
