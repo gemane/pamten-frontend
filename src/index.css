@@ -4140,18 +4140,63 @@ a.source-item__name:hover { color: #4A90D9; }
 .dup-compare__what { font-size: 11px; color: #8892a4; }
 .dup-compare__company--shared { border-left-color: #7ee29b !important; }
 .dup-compare__company--shared .dup-compare__company { color: #7ee29b; }
+/* on a phone the row labels take a third of the box: narrower labels and
+   columns, so the second record starts inside the view */
+@media (max-width: 600px) {
+  .dup-compare__table th[scope="row"] { width: auto; max-width: 84px; padding-right: 4px; }
+  .dup-compare__table thead th:not(:first-child), .dup-compare__table td { min-width: 128px; max-width: 170px; }
+}
 [data-theme="light"] .dup-pager { border-top-color: #d0d8e4; }
 [data-theme="light"] .dup-compare-btn { color: #4a5568; border-color: #b8c4d4; }
 [data-theme="light"] .dup-compare-btn:hover, [data-theme="light"] .dup-compare-btn--on { color: #1a202c; border-color: #3d7cef; }
 [data-theme="light"] .dup-compare { border-color: #d0d8e4; }
 [data-theme="light"] .dup-compare__table th, [data-theme="light"] .dup-compare__table td { border-bottom-color: #d0d8e4; color: #2d3748; }
 [data-theme="light"] .dup-compare__table thead th { background: #e2e8f4; color: #1a202c; }
-[data-theme="light"] .dup-compare__table th:first-child { background: #f4f7fb; }
+[data-theme="light"] .dup-compare__table th:first-child { background: #ffffff; }
 [data-theme="light"] .dup-compare__table thead th:first-child { background: #e2e8f4; }
 [data-theme="light"] .dup-compare__table th[scope="row"] { color: #5a6b8a; }
 [data-theme="light"] .dup-compare__company { color: #1a202c; }
 [data-theme="light"] .dup-compare__company--shared { border-left-color: #2e8a4f !important; }
 [data-theme="light"] .dup-compare__company--shared .dup-compare__company { color: #1f6b3a; }
+/* The rest of the duplicates modal in the light theme: until November 2026 only
+   its undo button had light colours — the window turned white, the title stayed
+   near-white on it and every card stayed dark, so the comparison's dark text
+   stood on a dark card. */
+[data-theme="light"] .dup-modal__title { color: #1a202c; }
+[data-theme="light"] .dup-modal__desc, [data-theme="light"] .dup-modal__count { color: #5a6b8a; }
+[data-theme="light"] .dup-tabs { border-bottom-color: #d0d8e4; }
+[data-theme="light"] .dup-tab { color: #5a6b8a; }
+[data-theme="light"] .dup-tab:hover { color: #2d3748; }
+[data-theme="light"] .dup-tab--active { color: #1a202c; }
+[data-theme="light"] .dup-tab__n, [data-theme="light"] .dup-row__badge { color: #3a4a66; background: #e2e8f4; }
+[data-theme="light"] .dup-notice { background: #e6f6ec; border-color: #9fd3b0; color: #1f6b3a; }
+[data-theme="light"] .dup-empty { color: #5a6b8a; }
+[data-theme="light"] .dup-group, [data-theme="light"] .dup-row { background: #f4f7fb; border-color: #d0d8e4; color: #2d3748; }
+[data-theme="light"] .dup-group--high   { border-left-color: #d0453c; }
+[data-theme="light"] .dup-group--medium { border-left-color: #c98a1a; }
+[data-theme="light"] .dup-group--low    { border-left-color: #8a9ab8; }
+[data-theme="light"] .dup-conf--high   { background: #fbe4e2; color: #a8322a; }
+[data-theme="light"] .dup-conf--medium { background: #fbefd5; color: #8a5a08; }
+[data-theme="light"] .dup-conf--low    { background: #e2e8f4; color: #3a4a66; }
+[data-theme="light"] .dup-distinct { color: #8a5a08; }
+[data-theme="light"] .dup-group__reason, [data-theme="light"] .dup-group__hint,
+[data-theme="light"] .dup-row__from, [data-theme="light"] .dup-row__arrow,
+[data-theme="light"] .dup-member__links, [data-theme="light"] .dup-compare__what,
+[data-theme="light"] .dup-pager__range { color: #5a6b8a; }
+[data-theme="light"] .dup-member { background: #ffffff; border-color: #b8c4d4; color: #2d3748; }
+[data-theme="light"] .dup-member--keep { background: #e6f6ec; border-color: #6fb98a; color: #14522b; }
+[data-theme="light"] .dup-member__star { color: #2e8a4f; }
+[data-theme="light"] .dup-member__wd { color: #2a5cb8; background: #dde8fb; }
+[data-theme="light"] .dup-merge-btn { background: #ffffff; color: #1a202c; border-color: #b8c4d4; }
+[data-theme="light"] .dup-merge-btn:hover:not(:disabled) { background: #e2e8f4; }
+[data-theme="light"] .dup-sep-btn { color: #8a5a08; border-color: #d9b565; }
+[data-theme="light"] .dup-sep-btn:hover:not(:disabled) { background: #fbefd5; }
+[data-theme="light"] .dup-row__to { color: #1a202c; }
+[data-theme="light"] .dup-row__icon--merged { color: #2e8a4f; }
+[data-theme="light"] .dup-row__icon--sep { color: #a8700e; }
+[data-theme="light"] .dup-compare { background: #ffffff; }
+[data-theme="light"] .dup-compare__open { color: #2a5cb8; }
+[data-theme="light"] .dup-compare__error { color: #a8322a; }
 
 /* The question a removal asks first: the merges a person is made of. */
 .merge-question { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 14px; }
